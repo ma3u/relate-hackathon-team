@@ -16,12 +16,22 @@ QUERIES: dict[str, tuple[str, str]] = {
         "Trend of one analyte (param loinc) across all reports, with provenance",
         """
         MATCH (:Patient)-[:HAS_OBSERVATION]->(o:Observation)-[:CODED_BY]->(lc:LoincCode {code: $loinc})
-        MATCH (dr:DiagnosticReport)-[:HAS_RESULT]->(o)
-        RETURN o.effectiveDate AS date, o.display AS label,
+        OPTIONAL MATCH (dr:DiagnosticReport)-[:HAS_RESULT]->(o)
+        RETURN left(o.effectiveDate, 10) AS date, o.display AS label,
                coalesce(o.comparator, '') + toString(o.valueQuantity) AS value, o.unit AS unit,
                o.referenceText AS printedRange, o.sourceKind AS source,
-               o.verifiedByPatientAt IS NOT NULL AS verified, dr.performer AS lab
+               o.verifiedByPatientAt IS NOT NULL AS verified,
+               coalesce(dr.performer, o.performer) AS lab
         ORDER BY date
+        """,
+    ),
+    "wearables": (
+        "Apple Health weekly means (resting HR, HRV, steps, weight) sent by Klarbefund",
+        """
+        MATCH (:Patient)-[:HAS_OBSERVATION]->(o:Observation {sourceReport: 'apple-health-weekly'})
+        RETURN o.display AS metric, o.effectiveStart AS weekStart, o.valueQuantity AS mean,
+               o.unit AS unit, o.performer AS devices
+        ORDER BY metric, weekStart
         """,
     ),
     "analytes": (

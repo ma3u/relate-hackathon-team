@@ -5,7 +5,7 @@ from pathlib import Path
 
 import relate
 
-from .fhir import ParsedReport
+from .fhir import WEARABLE_SOURCE_REPORT, ParsedReport
 
 HERE = Path(__file__).parent
 
@@ -108,6 +108,48 @@ def import_report(conn, parsed: ParsedReport) -> int:
         raise
     finally:
         conn.autocommit = True
+
+
+REPLACE_WEARABLES = """
+MERGE (p:Patient {id: $patientId})
+WITH p
+OPTIONAL MATCH (p)-[:HAS_OBSERVATION]->(old:Observation {sourceReport: $source})
+OPTIONAL MATCH (old)-[:MAPPED_TO]->(om:OMOPMeasurement)
+DETACH DELETE om, old
+"""
+
+UPSERT_WEARABLES = """
+MATCH (p:Patient {id: $patientId})
+UNWIND $rows AS r
+MERGE (o:Observation {resourceId: r.resourceId})
+SET o += r, o.sourceReport = $source, o.contributedBy = 'klarbefund-app'
+MERGE (p)-[:HAS_OBSERVATION]->(o)
+MERGE (lc:LoincCode {code: r.code})
+ON CREATE SET lc.display = r.loincDisplay
+MERGE (o)-[:CODED_BY]->(lc)
+RETURN count(o) AS stored
+"""
+
+
+def import_wearables(conn, patient_id: str, rows: list[dict]) -> int:
+    """Replace the patient's Apple Health weekly means (same rule as the Hub)."""
+    conn.autocommit = False
+    try:
+        params = {"patientId": patient_id, "source": WEARABLE_SOURCE_REPORT}
+        conn.execute(REPLACE_WEARABLES, params)
+        stored = conn.execute(UPSERT_WEARABLES, {**params, "rows": rows}).single()["stored"] if rows else 0
+        conn.commit()
+        return stored
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.autocommit = True
+
+
+def single_patient(conn, default: str = "meinbefund-local") -> str:
+    ids = [r["id"] for r in conn.execute("MATCH (p:Patient) RETURN p.id AS id")]
+    return ids[0] if len(ids) == 1 else default
 
 
 def omop_transform(conn) -> dict[str, int]:

@@ -3,6 +3,7 @@
   python -m health_graph import --db health.rl fixtures/fhir/*.json
   python -m health_graph query --db health.rl trend --param loinc=4548-4
   python -m health_graph list
+  python -m health_graph receive --db health.rl      # pair Klarbefund by QR code
 """
 import argparse
 import sys
@@ -36,12 +37,26 @@ def main(argv=None) -> int:
     q.add_argument("name", choices=sorted(QUERIES))
     q.add_argument("--param", action="append", default=[], metavar="KEY=VALUE")
 
+    rc = sub.add_parser("receive", help="receive reports + Apple Health from Klarbefund (QR pairing)")
+    rc.add_argument("--db", required=True)
+    rc.add_argument("--port", type=int, default=8787)
+    rc.add_argument("--host", help="address to put in the QR code (default: this Mac's Wi-Fi address)")
+    rc.add_argument("--rotate", action="store_true", help="new token: phones paired before must scan again")
+    rc.add_argument("--qr-png", help="also save the QR code as a PNG (contains the token)")
+    rc.add_argument("--print-link", action="store_true", help="also print the pairing link (contains the token)")
+
     sub.add_parser("list", help="list the named queries")
     args = ap.parse_args(argv)
 
     if args.cmd == "list":
         for name, (desc, _) in sorted(QUERIES.items()):
             print(f"{name:11} {desc}")
+        return 0
+
+    if args.cmd == "receive":
+        from .receiver import serve
+        serve(args.db, port=args.port, rotate=args.rotate, host=args.host, qr_png=args.qr_png,
+              print_link=args.print_link)
         return 0
 
     if args.cmd == "import":

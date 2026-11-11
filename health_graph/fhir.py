@@ -172,3 +172,70 @@ def parse_bundle(bundle: dict, report_id: str | None = None) -> ParsedReport:
         observations.append(row)
 
     return ParsedReport(patient_id, rid, report, document, provenance, observations)
+
+
+# ── Apple Health weekly means (Klarbefund WearableFHIR.swift) ────────────────
+# Same contract as the Hub's ui/src/lib/patient/app-wearables.ts.
+WEARABLE_SOURCE_REPORT = "apple-health-weekly"
+WEARABLE_SOURCE_KIND = "device-weekly-mean"
+WEARABLE_METRICS = {  # LOINC -> (UCUM unit, min, max)
+    "40443-4": ("/min", 20, 250),     # resting heart rate
+    "80404-7": ("ms", 1, 500),        # HRV SDNN
+    "41950-7": ("/d", 0, 200000),     # steps per day
+    "29463-7": ("kg", 2, 500),        # body weight
+}
+
+
+def parse_wearables(bundle: dict, patient_id: str) -> tuple[list[dict], list[dict]]:
+    """Weekly-mean Observations -> (rows, skipped). The bundle carries no Patient."""
+    rows, skipped, seen = [], [], set()
+    for index, e in enumerate(bundle.get("entry", []), start=1):
+        o = e.get("resource", {})
+        if o.get("resourceType") != "Observation":
+            continue
+        rid = o.get("id") or f"#{index}"
+
+        def refuse(reason: str):
+            skipped.append({"id": rid, "reason": reason})
+
+        if o.get("status") != "final":
+            refuse("a device value is sent as final"); continue
+        loinc = _coding(o.get("code"), LOINC)
+        code = loinc["code"] if loinc else None
+        if code not in WEARABLE_METRICS:
+            refuse("not one of the four device metrics"); continue
+        unit_expected, lo, hi = WEARABLE_METRICS[code]
+        q = o.get("valueQuantity") or {}
+        value = q.get("value")
+        if not isinstance(value, (int, float)) or q.get("system") != UCUM or q.get("code") != unit_expected:
+            refuse(f"a number in {unit_expected} (UCUM) is required"); continue
+        if not lo <= value <= hi:
+            refuse("the value is not plausible"); continue
+        period = o.get("effectivePeriod") or {}
+        start, end = period.get("start"), period.get("end")
+        if not start or not end or end < start:
+            refuse("a week (effectivePeriod start and end) is required"); continue
+        key = f"{code}-{start[:10]}"
+        if key in seen:
+            refuse("the same metric and week twice"); continue
+        seen.add(key)
+        category = _coding((o.get("category") or [{}])[0],
+                           "http://terminology.hl7.org/CodeSystem/observation-category")
+        rows.append({
+            "resourceId": f"{patient_id}-wear-{key}",
+            "fhirId": o.get("id"),
+            "code": code,
+            "loincDisplay": loinc.get("display"),
+            "display": (o.get("code") or {}).get("text") or loinc.get("display"),
+            "valueQuantity": value,
+            "unit": unit_expected,
+            "effectiveStart": start,
+            "effectiveDate": end,
+            "category": category["code"] if category else "vital-signs",
+            "status": "final",
+            "sourceKind": WEARABLE_SOURCE_KIND,
+            "performer": (o.get("device") or {}).get("display"),
+            "note": ((o.get("note") or [{}])[0]).get("text"),
+            "hubEligible": True,
+        })
+    return rows, skipped

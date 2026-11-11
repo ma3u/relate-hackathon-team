@@ -1,0 +1,726 @@
+{
+  "resourceType": "Bundle",
+  "type": "collection",
+  "entry": [
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "wear-restingHeartRate-2026-08-17",
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "vital-signs"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "40443-4",
+              "display": "Heart rate --resting"
+            }
+          ],
+          "text": "Resting heart rate"
+        },
+        "effectivePeriod": {
+          "start": "2026-08-17",
+          "end": "2026-08-23"
+        },
+        "valueQuantity": {
+          "value": 58.2,
+          "unit": "/min",
+          "system": "http://unitsofmeasure.org",
+          "code": "/min"
+        },
+        "note": [
+          {
+            "text": "Weekly mean of 7 day(s) of device readings"
+          }
+        ],
+        "device": {
+          "display": "Demo Watch"
+        }
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "wear-restingHeartRate-2026-08-24",
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "vital-signs"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "40443-4",
+              "display": "Heart rate --resting"
+            }
+          ],
+          "text": "Resting heart rate"
+        },
+        "effectivePeriod": {
+          "start": "2026-08-24",
+          "end": "2026-08-30"
+        },
+        "valueQuantity": {
+          "value": 57.4,
+          "unit": "/min",
+          "system": "http://unitsofmeasure.org",
+          "code": "/min"
+        },
+        "note": [
+          {
+            "text": "Weekly mean of 7 day(s) of device readings"
+          }
+        ],
+        "device": {
+          "display": "Demo Watch"
+        }
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "wear-restingHeartRate-2026-08-31",
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "vital-signs"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "40443-4",
+              "display": "Heart rate --resting"
+            }
+          ],
+          "text": "Resting heart rate"
+        },
+        "effectivePeriod": {
+          "start": "2026-08-31",
+          "end": "2026-09-06"
+        },
+        "valueQuantity": {
+          "value": 56.9,
+          "unit": "/min",
+          "system": "http://unitsofmeasure.org",
+          "code": "/min"
+        },
+        "note": [
+          {
+            "text": "Weekly mean of 7 day(s) of device readings"
+          }
+        ],
+        "device": {
+          "display": "Demo Watch"
+        }
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "wear-restingHeartRate-2026-09-07",
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "vital-signs"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "40443-4",
+              "display": "Heart rate --resting"
+            }
+          ],
+          "text": "Resting heart rate"
+        },
+        "effectivePeriod": {
+          "start": "2026-09-07",
+          "end": "2026-09-13"
+        },
+        "valueQuantity": {
+          "value": 57.8,
+          "unit": "/min",
+          "system": "http://unitsofmeasure.org",
+          "code": "/min"
+        },
+        "note": [
+          {
+            "text": "Weekly mean of 7 day(s) of device readings"
+          }
+        ],
+        "device": {
+          "display": "Demo Watch"
+        }
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "wear-heartRateVariability-2026-08-17",
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "vital-signs"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "80404-7",
+              "display": "R-R interval.standard deviation (Heart rate variability)"
+            }
+          ],
+          "text": "Heart rate variability"
+        },
+        "effectivePeriod": {
+          "start": "2026-08-17",
+          "end": "2026-08-23"
+        },
+        "valueQuantity": {
+          "value": 41.5,
+          "unit": "ms",
+          "system": "http://unitsofmeasure.org",
+          "code": "ms"
+        },
+        "note": [
+          {
+            "text": "Weekly mean of 7 day(s) of device readings"
+          }
+        ],
+        "device": {
+          "display": "Demo Watch"
+        }
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "wear-heartRateVariability-2026-08-24",
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "vital-signs"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "80404-7",
+              "display": "R-R interval.standard deviation (Heart rate variability)"
+            }
+          ],
+          "text": "Heart rate variability"
+        },
+        "effectivePeriod": {
+          "start": "2026-08-24",
+          "end": "2026-08-30"
+        },
+        "valueQuantity": {
+          "value": 43.0,
+          "unit": "ms",
+          "system": "http://unitsofmeasure.org",
+          "code": "ms"
+        },
+        "note": [
+          {
+            "text": "Weekly mean of 7 day(s) of device readings"
+          }
+        ],
+        "device": {
+          "display": "Demo Watch"
+        }
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "wear-heartRateVariability-2026-08-31",
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "vital-signs"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "80404-7",
+              "display": "R-R interval.standard deviation (Heart rate variability)"
+            }
+          ],
+          "text": "Heart rate variability"
+        },
+        "effectivePeriod": {
+          "start": "2026-08-31",
+          "end": "2026-09-06"
+        },
+        "valueQuantity": {
+          "value": 44.2,
+          "unit": "ms",
+          "system": "http://unitsofmeasure.org",
+          "code": "ms"
+        },
+        "note": [
+          {
+            "text": "Weekly mean of 7 day(s) of device readings"
+          }
+        ],
+        "device": {
+          "display": "Demo Watch"
+        }
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "wear-heartRateVariability-2026-09-07",
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "vital-signs"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "80404-7",
+              "display": "R-R interval.standard deviation (Heart rate variability)"
+            }
+          ],
+          "text": "Heart rate variability"
+        },
+        "effectivePeriod": {
+          "start": "2026-09-07",
+          "end": "2026-09-13"
+        },
+        "valueQuantity": {
+          "value": 42.7,
+          "unit": "ms",
+          "system": "http://unitsofmeasure.org",
+          "code": "ms"
+        },
+        "note": [
+          {
+            "text": "Weekly mean of 7 day(s) of device readings"
+          }
+        ],
+        "device": {
+          "display": "Demo Watch"
+        }
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "wear-steps-2026-08-17",
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "activity"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "41950-7",
+              "display": "Number of steps in 24 hour Measured"
+            }
+          ],
+          "text": "Steps"
+        },
+        "effectivePeriod": {
+          "start": "2026-08-17",
+          "end": "2026-08-23"
+        },
+        "valueQuantity": {
+          "value": 8120,
+          "unit": "/d",
+          "system": "http://unitsofmeasure.org",
+          "code": "/d"
+        },
+        "note": [
+          {
+            "text": "Weekly mean of 7 day(s) of device readings"
+          }
+        ],
+        "device": {
+          "display": "Demo Watch"
+        }
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "wear-steps-2026-08-24",
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "activity"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "41950-7",
+              "display": "Number of steps in 24 hour Measured"
+            }
+          ],
+          "text": "Steps"
+        },
+        "effectivePeriod": {
+          "start": "2026-08-24",
+          "end": "2026-08-30"
+        },
+        "valueQuantity": {
+          "value": 9433,
+          "unit": "/d",
+          "system": "http://unitsofmeasure.org",
+          "code": "/d"
+        },
+        "note": [
+          {
+            "text": "Weekly mean of 7 day(s) of device readings"
+          }
+        ],
+        "device": {
+          "display": "Demo Watch"
+        }
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "wear-steps-2026-08-31",
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "activity"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "41950-7",
+              "display": "Number of steps in 24 hour Measured"
+            }
+          ],
+          "text": "Steps"
+        },
+        "effectivePeriod": {
+          "start": "2026-08-31",
+          "end": "2026-09-06"
+        },
+        "valueQuantity": {
+          "value": 7610,
+          "unit": "/d",
+          "system": "http://unitsofmeasure.org",
+          "code": "/d"
+        },
+        "note": [
+          {
+            "text": "Weekly mean of 7 day(s) of device readings"
+          }
+        ],
+        "device": {
+          "display": "Demo Watch"
+        }
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "wear-steps-2026-09-07",
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "activity"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "41950-7",
+              "display": "Number of steps in 24 hour Measured"
+            }
+          ],
+          "text": "Steps"
+        },
+        "effectivePeriod": {
+          "start": "2026-09-07",
+          "end": "2026-09-13"
+        },
+        "valueQuantity": {
+          "value": 10204,
+          "unit": "/d",
+          "system": "http://unitsofmeasure.org",
+          "code": "/d"
+        },
+        "note": [
+          {
+            "text": "Weekly mean of 7 day(s) of device readings"
+          }
+        ],
+        "device": {
+          "display": "Demo Watch"
+        }
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "wear-bodyMass-2026-08-17",
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "vital-signs"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "29463-7",
+              "display": "Body weight"
+            }
+          ],
+          "text": "Weight"
+        },
+        "effectivePeriod": {
+          "start": "2026-08-17",
+          "end": "2026-08-23"
+        },
+        "valueQuantity": {
+          "value": 80.6,
+          "unit": "kg",
+          "system": "http://unitsofmeasure.org",
+          "code": "kg"
+        },
+        "note": [
+          {
+            "text": "Weekly mean of 7 day(s) of device readings"
+          }
+        ],
+        "device": {
+          "display": "Demo Watch"
+        }
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "wear-bodyMass-2026-08-24",
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "vital-signs"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "29463-7",
+              "display": "Body weight"
+            }
+          ],
+          "text": "Weight"
+        },
+        "effectivePeriod": {
+          "start": "2026-08-24",
+          "end": "2026-08-30"
+        },
+        "valueQuantity": {
+          "value": 80.3,
+          "unit": "kg",
+          "system": "http://unitsofmeasure.org",
+          "code": "kg"
+        },
+        "note": [
+          {
+            "text": "Weekly mean of 7 day(s) of device readings"
+          }
+        ],
+        "device": {
+          "display": "Demo Watch"
+        }
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "wear-bodyMass-2026-08-31",
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "vital-signs"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "29463-7",
+              "display": "Body weight"
+            }
+          ],
+          "text": "Weight"
+        },
+        "effectivePeriod": {
+          "start": "2026-08-31",
+          "end": "2026-09-06"
+        },
+        "valueQuantity": {
+          "value": 80.1,
+          "unit": "kg",
+          "system": "http://unitsofmeasure.org",
+          "code": "kg"
+        },
+        "note": [
+          {
+            "text": "Weekly mean of 7 day(s) of device readings"
+          }
+        ],
+        "device": {
+          "display": "Demo Watch"
+        }
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "wear-bodyMass-2026-09-07",
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "vital-signs"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "29463-7",
+              "display": "Body weight"
+            }
+          ],
+          "text": "Weight"
+        },
+        "effectivePeriod": {
+          "start": "2026-09-07",
+          "end": "2026-09-13"
+        },
+        "valueQuantity": {
+          "value": 79.8,
+          "unit": "kg",
+          "system": "http://unitsofmeasure.org",
+          "code": "kg"
+        },
+        "note": [
+          {
+            "text": "Weekly mean of 7 day(s) of device readings"
+          }
+        ],
+        "device": {
+          "display": "Demo Watch"
+        }
+      }
+    }
+  ]
+}
