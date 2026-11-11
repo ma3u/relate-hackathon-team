@@ -135,3 +135,28 @@ def test_store_opens_read_only_from_cli(db):
          "MATCH (o:Observation) RETURN count(o) AS n"],
         capture_output=True, text=True, check=True)
     assert '"n":21' in out.stdout.replace(" ", "")
+
+
+def test_unmapped_value_from_klarbefund_local_export():
+    """LocalGraphExport.swift adds uncoded Observations: label, raw unit, reason."""
+    bundle = fhir.load_bundle(GOLDEN)
+    report = next(e["resource"] for e in bundle["entry"] if e["resource"]["resourceType"] == "DiagnosticReport")
+    bundle["entry"].append({"resource": {
+        "resourceType": "Observation", "id": "unmapped-1", "status": "preliminary",
+        "extension": [{"url": fhir.EXT + "source-kind", "valueCode": "ocr-transcribed"},
+                      {"url": fhir.EXT + "source-line", "valueString": "Zonulin  >48,2  ng/ml  < 55"}],
+        "category": [{"coding": [{"system": "http://terminology.hl7.org/CodeSystem/observation-category", "code": "laboratory"}]}],
+        "code": {"text": "Zonulin", "extension": [{"url": fhir.DATA_ABSENT, "valueCode": "unknown",
+                 "_valueCode": {"extension": [{"url": fhir.RENDERED, "valueString": "Not coded: not in the analyte dictionary"}]}}]},
+        "subject": {"reference": "Patient/example-patient"}, "effectiveDateTime": "2026-09-04",
+        "valueQuantity": {"value": 48.2, "unit": "ng/ml", "comparator": ">"},
+        "referenceRange": [{"high": {"value": 55, "unit": "ng/ml"}, "text": "< 55"}]}})
+    report["result"].append({"reference": "Observation/unmapped-1"})
+    p = fhir.parse_bundle(bundle)
+    z = p.observations[-1]
+    assert z["code"] is None and z["display"] == "Zonulin"
+    assert z["unmappedReason"] == "Not coded: not in the analyte dictionary"
+    assert z["valueQuantity"] == 48.2 and z["unit"] == "ng/ml" and z["comparator"] == ">"
+    assert z["hubEligible"] is False
+    # coded values keep their Hub-compatible ids; the new one comes after them
+    assert p.observations[0]["resourceId"].endswith("-1") and z["resourceId"].endswith("-8")

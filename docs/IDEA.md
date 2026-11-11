@@ -48,39 +48,124 @@ flowchart LR
   RL2 -. "relate push<br/>ONLY with explicit consent" .-> Hub[("EHDS Hub<br/>Neo4j / Aura sandbox")]
 ```
 
-## Local graph model (subset of the EHDS 5 layers)
+## Meta model of the local Relate graph (as built)
 
-For labels and keys shared with the Hub we use the **Hub's actual code-level schema** (not the spec, where the two drift; see Risks), so a pushed subgraph merges cleanly. `HAS_RESULT`, `DERIVED_FROM` and the local-only nodes are **new proposals** for this project.
+Read from the live store `~/RelateHealth/health.rl` (structure only): **10 node labels, 12 relationship types**, in three of the EHDS layers. Keys and Observation properties follow the EHDS Hub's *code* (`storeReportRows`, `app-wearables.ts`), so a `relate push` merges cleanly. Relationship types marked ✳ are new in this project.
 
-| Layer | Nodes (local) | Relationships |
-|---|---|---|
-| **L3 FHIR** | `Patient`, `Observation`, `DiagnosticReport`, `DocumentReference`, `Provenance` | `HAS_OBSERVATION`, `(DiagnosticReport)-[:HAS_RESULT]->(Observation)`, `(Observation)-[:DERIVED_FROM]->(DocumentReference)` |
-| **L4 OMOP** | `OMOPPerson`, `OMOPMeasurement` (`measurementConceptId = 0`, LOINC in `measurementSourceValue`, since Athena isn't on the device) | `HAS_MEASUREMENT`, `(Observation)-[:MAPPED_TO]->(OMOPMeasurement)` |
-| **L5 Ontology** | `LoincCode` (built from `Analytes.generated.swift`), `SnomedConcept` where present | `(Observation)-[:CODED_BY]->(LoincCode)` |
-| **Local-only** | `Report` (scan session), `Lab` (performer), `WearableWeek`, `ConsentEvent` | `FROM_REPORT`, `PERFORMED_BY`, `HAS_WEEK` |
+```mermaid
+flowchart LR
+  subgraph L3["L3 · FHIR R4 (clinical)"]
+    P(("Patient<br/><small>id</small>"))
+    DR(("DiagnosticReport<br/><small>resourceId · reportId<br/>effectiveDate · status · performer</small>"))
+    O(("Observation<br/><small>resourceId · code · display<br/>valueQuantity · unit · comparator<br/>referenceLow/High/Text · effectiveDate<br/>sourceKind · sourceLine · status<br/>unmappedReason · hubEligible</small>"))
+    DOC(("DocumentReference<br/><small>title · created</small>"))
+    PV(("Provenance<br/><small>activity · agent · recorded</small>"))
+    ORG(("Organization<br/><small>name</small>"))
+  end
+  subgraph L4["L4 · OMOP CDM v5.4 (research)"]
+    OP(("OMOPPerson<br/><small>id · genderConceptId</small>"))
+    OM(("OMOPMeasurement<br/><small>measurementDate · valueAsNumber<br/>measurementSourceValue = LOINC<br/>measurementConceptId = 0</small>"))
+  end
+  subgraph L5["L5 · Ontology"]
+    LC(("LoincCode<br/><small>code · display</small>"))
+    TX(("NcbiTaxon<br/><small>code · display</small>"))
+  end
 
-Rules carried over from Klarbefund:
-- **Provenance survives**: every `Observation` keeps `sourceKind` (`lab-issued-digital` / `ocr-transcribed` / `self-tracked`); OCR values are never `final`.
-- **No fake codes**: an unmapped analyte gets an `UnmappedReason`, not a guessed LOINC.
-- **No verdicts**: reference ranges are shown as printed by the lab, never as normal/abnormal (not a medical device; MDCG 2019-11).
-- **No names**: `OMOPPerson` gets the year of birth only, matching Hub issue #475.
+  P -- "HAS_DIAGNOSTIC_REPORT ✳" --> DR
+  P -- HAS_OBSERVATION --> O
+  DR -- "HAS_RESULT ✳" --> O
+  DR -- "DERIVED_FROM ✳" --> DOC
+  DR -- "PERFORMED_BY ✳" --> ORG
+  PV -- "TARGET ✳" --> DR
+  O -- CODED_BY --> LC
+  O -- "IDENTIFIES ✳" --> TX
+  P -- MAPPED_TO --> OP
+  O -- MAPPED_TO --> OM
+  OP -- HAS_MEASUREMENT --> OM
+  OM -- CODED_BY --> LC
 
-### Example queries the demo shows
-
-```cypher
-// Trend of one analyte across all my reports, with where each value came from
-MATCH (:Patient)-[:HAS_OBSERVATION]->(o:Observation)-[:CODED_BY]->(:LoincCode {code: $loinc})
-MATCH (o)-[:FROM_REPORT]->(r:Report)
-RETURN o.effectiveDate AS date, o.valueQuantity AS value, o.unit AS unit,
-       o.sourceKind AS source, r.labName AS lab
-ORDER BY date;
-
-// Which of my values could NOT be coded, and why (honesty about data quality)
-MATCH (o:Observation) WHERE o.code IS NULL
-RETURN o.display, o.unmappedReason, count(*) ORDER BY count(*) DESC;
+  classDef fhir fill:#e8f1fb,stroke:#3b78c2,color:#0b2545
+  classDef omop fill:#fdf1e3,stroke:#d08a2e,color:#4a2c05
+  classDef onto fill:#e9f7ef,stroke:#2f9e5b,color:#0f3d22
+  class P,DR,O,DOC,PV,ORG fhir
+  class OP,OM omop
+  class LC,TX onto
 ```
 
-Plus hybrid search ("find my iron values" matches *Ferritin*, *Transferrin saturation*, …) via a full-text + vector index over `LoincCode` display names.
+**One `Observation` label, four kinds of value.** `sourceKind` says where it came from, so a lab value, an OCR reading and a watch's weekly mean live side by side and never get mixed up:
+
+| `sourceKind` | From | `sourceReport` | Example `code` |
+|---|---|---|---|
+| `lab-issued-digital` | a lab's digital report (status `final`) | report UUID | 2089-1 LDL cholesterol |
+| `ocr-transcribed` | a scanned / photographed paper (status `preliminary`) | report UUID | 4548-4 HbA1c |
+| `self-tracked` | typed in by the person | report UUID | 29463-7 body weight |
+| `device-weekly-mean` | Apple Health via Klarbefund, one per metric and week | `apple-health-weekly` | 40443-4 resting HR, 94122-9 VO2 max, 93832-4 sleep |
+
+**Where the context connects.** The `LoincCode` node is the hub of the graph. Body weight from a lab sheet, a body-composition scale and Apple Health share **29463-7**. Resting heart rate from an ECG sheet and the watch share **40443-4**. The watch's VO2 max estimate and a spiroergometry's measured VO2 peak share **94122-9**. A value Klarbefund could not code has `code = null`, the printed label in `display`, and the reason in `unmappedReason`; a microbiome organism has no LOINC term and is linked to `NcbiTaxon` instead.
+
+Rules carried over from Klarbefund:
+- **Provenance survives**: `sourceKind`, `sourceLine` (the printed line), OCR confidence, patient verification and corrections (`originalReading`) stay on the value; OCR values are never `final`.
+- **No fake codes**: an unmapped value keeps `code = null` and its reason; nothing is guessed.
+- **No verdicts**: ranges are stored as printed (`referenceText`), never as normal/abnormal (not a medical device; MDCG 2019-11).
+- **No names**: `Patient` has an id only; `OMOPPerson` carries no name (Hub #475).
+
+### Example queries (run against the live graph)
+
+```cypher
+// One analyte across lab reports and devices, with where each value came from
+MATCH (:Patient)-[:HAS_OBSERVATION]->(o:Observation)-[:CODED_BY]->(:LoincCode {code: $loinc})
+OPTIONAL MATCH (dr:DiagnosticReport)-[:HAS_RESULT]->(o)
+RETURN left(o.effectiveDate, 10) AS date, o.valueQuantity AS value, o.unit AS unit,
+       o.sourceKind AS source, coalesce(dr.performer, o.performer) AS lab_or_device
+ORDER BY date;
+
+// Which values could NOT be coded, and why (honesty about data quality)
+MATCH (o:Observation) WHERE o.code IS NULL
+OPTIONAL MATCH (o)-[:IDENTIFIES]->(t:NcbiTaxon)
+RETURN o.display, o.unmappedReason, t.code AS ncbiTaxon, count(*) ORDER BY count(*) DESC;
+```
+
+Full-text search over printed labels, source lines and LOINC names is built in (`weight` finds *Körpergewicht*); vector search over LOINC names is next.
+
+## Encryption at rest and in transit
+
+```mermaid
+flowchart LR
+  subgraph PHONE["📱 iPhone · at rest"]
+    direction TB
+    KC["🔑 Keychain<br/>256-bit key<br/>WhenUnlockedThisDeviceOnly"]
+    SEALED["Reports: one AES-256-GCM<br/>sealed file per record<br/>FileProtection.complete<br/>excluded from backup"]
+    PAIR["Pairing link<br/>(URL · token · cert pin)<br/>in Keychain"]
+    KC --> SEALED
+  end
+  subgraph WIFI["📶 Home Wi-Fi · in transit"]
+    TLS["HTTPS · TLS 1.2+ · ECDHE<br/>receiver cert P-256, self-signed<br/>SHA-256 pinned from QR code<br/>+ 256-bit bearer token"]
+  end
+  subgraph MAC["💻 Mac · at rest"]
+    direction TB
+    RL["~/RelateHealth/health.rl<br/>plaintext Relate store"]
+    FV["FileVault full-disk encryption<br/>folder 0700 · file 0600<br/>outside every git repo"]
+    FV --- RL
+  end
+  subgraph CLOUD["☁️ Only if you ask Claude"]
+    API["Query results → Anthropic API<br/>TLS in transit"]
+  end
+  SEALED -- "Send everything now" --> TLS --> RL
+  RL -- "MCP stdio, read-only<br/>(local, no network)" --> API
+
+  classDef safe fill:#e9f7ef,stroke:#2f9e5b,color:#0f3d22
+  classDef note fill:#fdf1e3,stroke:#d08a2e,color:#4a2c05
+  class KC,SEALED,PAIR,TLS,FV safe
+  class RL,API note
+```
+
+| Where | Protected by | Detail |
+|---|---|---|
+| **iPhone, at rest** | ✅ App-level encryption | Each report, its scan and its diagnostics are sealed **individually** with **AES-256-GCM** (CryptoKit). The key is created on the device and kept in the Keychain as `kSecAttrAccessibleWhenUnlockedThisDeviceOnly`: unavailable while the phone is locked, never synced to iCloud Keychain, never restored onto another device. Files use `FileProtectionType.complete` and are **excluded from backup**. The Mac pairing (address, token, certificate pin) is in the Keychain too. The current build adds an optional Face ID / passcode app lock. |
+| **iPhone → Mac, in transit** | ✅ TLS with certificate pinning | The receiver presents an X.509 v3 certificate with a P-256 key. The app accepts **only** the certificate whose SHA-256 fingerprint was in the QR code, so even a TLS-capable impostor on the same Wi-Fi gets nothing. `http://` links are refused, as are hosts outside private, loopback and `.local` ranges. Every request carries a 256-bit bearer token. The receiver only accepts data and returns a count, so nothing can be *read* from it. |
+| **Mac, at rest** | ✅ FileVault (full disk) | Relate stores the graph **in plaintext**: no built-in encryption. Protection comes from **FileVault** (on), a 0700 folder with a 0600 file, and keeping the store out of every repository. The receiver's private key and token are 0600 in `~/.config/relate-health-graph`. Decision (Nov 11): FileVault is enough; an encrypted disk image would be the next step. |
+| **Mac → Claude** | ⚠️ TLS, but leaves the Mac | MCP runs locally over stdio, read-only. Claude Desktop/Code then send the **rows a query returns** to Anthropic's API over TLS. Ask aggregate questions, or use a local model, if nothing may leave the Mac. |
+| **Mac → EHDS Hub** | (planned) | Only via an explicit, consented `relate push`, audited as a `TransferEvent`. Not built yet. |
 
 ## Demo storyline (≤ 3 min, ElevenLabs narration)
 
@@ -116,7 +201,7 @@ All demo data is **synthetic / fictional** (Synthea-style). No real health data 
 
 ## Privacy and sovereignty guardrails
 
-- `health.rl` gets the **same treatment as the sealed store**: `NSFileProtectionComplete`, excluded from backup. Relate has no documented encryption at rest, so we rely on iOS Data Protection.
+- Encryption at rest and in transit: see [Encryption at rest and in transit](#encryption-at-rest-and-in-transit). Real health data never goes into this repository; docs show counts only.
 - **New, separate consent** for "build a local graph". The Hub record that Klarbefund reads is currently promised to be "kept nowhere", so we **don't import it** into the local graph unless the user explicitly opts in with new wording.
 - **A push is a transfer**: it needs registry consent from `ConsentLedger`, follows the Hub's `app/record` contract (preliminary, LOINC, UCUM, sandbox only), and is audited as a `TransferEvent` (EHDS Art. 73).
 - The MCP server is opened **`--read-only`**, and any AI answer names its provider and model (AI Act Art. 50).
