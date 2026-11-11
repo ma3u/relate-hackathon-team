@@ -9,6 +9,8 @@ labels: team
 
 **Skills you'd bring** (e.g. Rust, Python, agents/LLMs, Cypher/graphs, frontend/WASM, design, video)
 
+**Devices you can test with** (iPhone? Apple Watch / Oura Ring / other wearable? Mac?) See "What you need to test with us" in the README.
+
 **Time zone and rough hours per week until Dec 11**
 
 **Project idea(s) you're excited about** (optional)

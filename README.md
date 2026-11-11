@@ -36,6 +36,20 @@ This repo summarizes the hackathon so we can get going quickly. It will become o
 - 🦀 **Rust** developers (Relate's core is Rust)
 - 🐍 **Python / AI agent** builders (MCP, tool use, RAG, coding agents)
 
+### What you need to test with us
+
+The project runs on **your own devices**, with your own (or synthetic) health data that never leaves your home:
+
+| You need | Why | Notes |
+|---|---|---|
+| 📱 **iPhone** (iOS 26) | Runs **Klarbefund**, which scans lab reports and reads Apple Health | Installed via **TestFlight**: I invite you by email |
+| ⌚ **A wearable**: Apple Watch, **Oura Ring**, Garmin, Withings, Whoop, a smart scale … | Pulse, HRV, sleep and sleep stages, VO2 max, SpO₂, steps, weight | Anything that syncs into **Apple Health** works, since Klarbefund reads from Apple Health. Sleep stages and VO2 max need a device that records them (Apple Watch, Oura, Garmin …) |
+| 💻 **Mac** (Apple silicon, macOS 26) | Runs the **Relate** graph database (Neo4j's embedded graph DB), the receiver the phone pairs with by QR code, and Claude for questions | Setup in ~10 min: [docs/INSTALL.md](docs/INSTALL.md). Relate also runs on Linux/Windows, but the encrypted-vault script and the iOS build are macOS-only |
+| 📶 Mac and iPhone on the **same Wi-Fi** | The phone sends data straight to your Mac, encrypted, no cloud | Guest networks with client isolation don't work |
+| 📄 *Optional:* a few **paper lab reports** | Real-world test material for the scanner | Your data stays on your devices; nothing goes into this repo |
+
+No iPhone or wearable? You can still help: frontend/WASM, design and the demo video need only a computer, and Klarbefund has a demo mode with fictional data in the iOS Simulator (Mac with Xcode).
+
 **How we'd work:** async, GitHub issues + PRs, a short weekly call. Ideas welcome — see [Project ideas](#project-ideas).
 
 ---
