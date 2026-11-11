@@ -130,7 +130,7 @@ Relate is an **open-source, embedded graph database for AI agents** and the engi
 
 ### ⭐ Current favorite: [Sovereign Health Graph: Klarbefund × Relate](docs/IDEA.md)
 
-Export lab results from the Klarbefund iOS app into a **local Relate graph on the device**, using the FHIR → OMOP → ontology model of the [EHDS Integration Hub](https://ma3u.github.io/MinimumViableHealthDataspacev2/docs). Explore it privately (in the app, or with a local agent over MCP) and push to the Hub **only with explicit consent**. → [Full write-up, architecture and 4-week plan](docs/IDEA.md)
+Export lab results from the Klarbefund iOS app into a **local Relate graph on the device**, using the FHIR → OMOP → ontology model of the [EHDS Integration Hub](https://ma3u.github.io/MinimumViableHealthDataspacev2/docs). Explore it privately (in the app, or with a local agent over MCP) and push to the Hub **only with explicit consent**. → [Full write-up, architecture and 4-week plan](docs/IDEA.md) · ✅ **Week 1 proof is running:** [schema & queries](docs/SCHEMA.md)
 
 More ideas welcome via an issue or PR. Browse <https://github.com/jexp/relate-ideas> for inspiration.
 

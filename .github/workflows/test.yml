@@ -1,0 +1,26 @@
+name: test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - name: Install relate CLI (signature-checked installer)
+        run: |
+          curl -sSfL https://relatedb.ai/install.sh | bash
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - run: relate --version && relate telemetry off
+      - name: Python deps
+        run: |
+          uv venv --python 3.12 .venv
+          uv pip install --python .venv/bin/python -e ".[dev]"
+      - run: .venv/bin/python -m pytest -q
+      - name: Import fixtures with the CLI
+        run: |
+          .venv/bin/python -m health_graph import --db health.rl fixtures/fhir/*.json
+          .venv/bin/python -m health_graph query --db health.rl reports

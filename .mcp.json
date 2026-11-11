@@ -2,11 +2,31 @@
   "mcpServers": {
     "relate": {
       "command": "relate",
-      "args": ["serve", "--mcp", "stdio", "--database", "./examples/first-graph/team.rl", "--read-only"]
+      "args": [
+        "serve",
+        "--mcp",
+        "stdio",
+        "--database",
+        "./examples/first-graph/team.rl",
+        "--read-only"
+      ]
+    },
+    "health-graph": {
+      "command": "relate",
+      "args": [
+        "serve",
+        "--mcp",
+        "stdio",
+        "--database",
+        "./health.rl",
+        "--read-only"
+      ]
     },
     "elevenlabs": {
       "command": "uvx",
-      "args": ["elevenlabs-mcp"],
+      "args": [
+        "elevenlabs-mcp"
+      ],
       "env": {
         "ELEVENLABS_API_KEY": "${ELEVENLABS_API_KEY}",
         "ELEVENLABS_MCP_BASE_PATH": "./media"

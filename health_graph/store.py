@@ -1,0 +1,120 @@
+"""Write parsed reports into a local Relate store (.rl file)."""
+from __future__ import annotations
+
+from pathlib import Path
+
+import relate
+
+from .fhir import ParsedReport
+
+HERE = Path(__file__).parent
+
+
+def statements(path: Path) -> list[str]:
+    """Split a .cypher file into statements (on ';'), dropping // comments."""
+    text = "\n".join(line for line in path.read_text(encoding="utf-8").splitlines()
+                     if not line.lstrip().startswith("//"))
+    return [s.strip() for s in text.split(";") if s.strip()]
+
+
+def connect(db: str | Path, read_only: bool = False) -> relate.Connection:
+    return relate.connect(str(db), read_only=read_only) if read_only else relate.connect(str(db))
+
+
+def init_schema(conn) -> None:
+    for stmt in statements(HERE / "schema.cypher"):
+        conn.execute(stmt)
+
+
+# A report sent again replaces its earlier values (same rule as the Hub's
+# storeReportRows), so imports are idempotent.
+DELETE_REPORT = """
+MATCH (o:Observation {sourceReport: $reportId})
+OPTIONAL MATCH (o)-[:MAPPED_TO]->(om:OMOPMeasurement)
+DETACH DELETE om, o
+"""
+
+UPSERT_REPORT = """
+MERGE (p:Patient {id: $patientId})
+MERGE (dr:DiagnosticReport {resourceId: $report.resourceId})
+SET dr += $report
+MERGE (p)-[:HAS_DIAGNOSTIC_REPORT]->(dr)
+WITH p, dr
+CALL (dr) {
+  WITH dr WHERE $report.performer IS NOT NULL
+  MERGE (org:Organization {name: $report.performer})
+  MERGE (dr)-[:PERFORMED_BY]->(org)
+}
+CALL (dr) {
+  WITH dr WHERE $document IS NOT NULL
+  MERGE (doc:DocumentReference {resourceId: $document.resourceId})
+  SET doc += $document
+  MERGE (dr)-[:DERIVED_FROM]->(doc)
+}
+CALL (dr) {
+  WITH dr WHERE $provenance IS NOT NULL
+  MERGE (pv:Provenance {resourceId: $provenance.resourceId})
+  SET pv += $provenance
+  MERGE (pv)-[:TARGET]->(dr)
+}
+RETURN dr.resourceId AS report
+"""
+
+UPSERT_OBSERVATIONS = """
+MATCH (p:Patient {id: $patientId})
+MATCH (dr:DiagnosticReport {resourceId: $reportResourceId})
+UNWIND $rows AS r
+MERGE (o:Observation {resourceId: r.resourceId})
+SET o += r, o.sourceReport = $reportId, o.contributedBy = 'klarbefund-app'
+MERGE (p)-[:HAS_OBSERVATION]->(o)
+MERGE (dr)-[:HAS_RESULT]->(o)
+WITH o, r
+CALL (o, r) {
+  WITH o, r WHERE r.code IS NOT NULL
+  MERGE (lc:LoincCode {code: r.code})
+  ON CREATE SET lc.display = r.loincDisplay
+  MERGE (o)-[:CODED_BY]->(lc)
+}
+CALL (o, r) {
+  WITH o, r WHERE r.taxonCode IS NOT NULL
+  MERGE (t:NcbiTaxon {code: r.taxonCode})
+  ON CREATE SET t.display = r.taxonDisplay
+  MERGE (o)-[:IDENTIFIES]->(t)
+}
+RETURN count(o) AS stored
+"""
+
+
+def import_report(conn, parsed: ParsedReport) -> int:
+    conn.autocommit = False
+    try:
+        conn.execute(DELETE_REPORT, {"reportId": parsed.report_id})
+        conn.execute(UPSERT_REPORT, {
+            "patientId": parsed.patient_id,
+            "report": parsed.report,
+            "document": parsed.document,
+            "provenance": parsed.provenance,
+        })
+        stored = conn.execute(UPSERT_OBSERVATIONS, {
+            "patientId": parsed.patient_id,
+            "reportId": parsed.report_id,
+            "reportResourceId": parsed.report["resourceId"],
+            "rows": parsed.observations,
+        }).single()["stored"]
+        conn.commit()
+        return stored
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.autocommit = True
+
+
+def omop_transform(conn) -> dict[str, int]:
+    """Run the local FHIR -> OMOP CDM v5.4 transform (idempotent)."""
+    counts = {}
+    for stmt in statements(HERE / "omop.cypher"):
+        rec = conn.execute(stmt).single()
+        if rec:
+            counts.update(dict(rec))
+    return counts

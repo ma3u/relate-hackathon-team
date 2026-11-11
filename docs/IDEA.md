@@ -97,7 +97,7 @@ All demo data is **synthetic / fictional** (Synthea-style). No real health data 
 
 | Week | Goal |
 |---|---|
-| **1 · Nov 11–17** | Team formed · schema doc and Cypher DDL · `seed-synthetic.cypher` · CLI proof: FHIR Bundle JSON → `.rl` (Python), with the queries above passing |
+| **1 · Nov 11–17** ✅ | Schema + Cypher DDL · synthetic fixtures · Python proof FHIR Bundle → `health.rl` with 8 queries + OMOP transform, 15 tests, CI → **[SCHEMA.md](SCHEMA.md)** · *open: team formed* |
 | **2 · Nov 18–24** | `RelateExport.swift` in a Swift package with Relate SPM, unit tests on macOS via `LabFile`/`ScanReplay` fixtures · iOS device build |
 | **3 · Nov 25–Dec 1** | In-app "Export to my graph" and trend view · MCP + Claude flow on Mac · WASM graph viewer |
 | **4 · Dec 2–11** | Consented `relate push` to the Hub sandbox · README/setup polish · demo video + voice-over · **submit by Dec 11 (CET evening)** |

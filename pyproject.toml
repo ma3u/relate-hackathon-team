@@ -1,0 +1,14 @@
+[project]
+name = "relate-health-graph"
+version = "0.1.0"
+description = "Sovereign Health Graph: Klarbefund FHIR bundles in a local Relate graph (Relate by Neo4j Hackathon)"
+requires-python = ">=3.11"
+dependencies = ["relate-db>=1.0.0"]
+
+[project.optional-dependencies]
+voice = ["elevenlabs>=2.0", "python-dotenv"]
+dev = ["pytest>=8"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
