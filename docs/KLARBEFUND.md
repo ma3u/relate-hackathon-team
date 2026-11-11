@@ -1,6 +1,6 @@
 # Klarbefund + Apple Health → local Relate graph → Claude
 
-Your lab reports (scanned with Klarbefund) and your Apple Health weekly means land in a **Relate graph on your own Mac**, over your own Wi-Fi, encrypted and pinned to that one Mac. Claude (Desktop or Code) can then read the graph through Relate's MCP server, read-only. No cloud is involved at any step.
+Your lab reports (scanned with Klarbefund) and your Apple Health weekly means land in a **Relate graph on your own Mac**, over your own Wi-Fi, encrypted and pinned to that one Mac. No cloud is involved in getting the data to the Mac. Claude (Desktop or Code) can then read the graph through Relate's MCP server, read-only. **Note:** whatever Claude reads to answer you (query results) is sent to Anthropic's API over TLS. Use a local model as the MCP client if nothing may leave the Mac.
 
 ```mermaid
 flowchart LR
@@ -156,10 +156,11 @@ Example prompts:
 | A QR code pointing somewhere else | Only private / loopback / `.local` addresses accepted; public hosts refused before any request |
 | Another device posts junk | 256-bit bearer token; private-network clients only; 10 MB body limit; FHIR Bundle required |
 | A stalled client blocks the receiver | TLS per connection with a 15 s handshake timeout; one writer at a time with retry on a locked store |
-| Data at rest on the Mac | Store outside any repo in a 0700 folder. Relate has no built-in encryption, so use FileVault |
+| Data at rest on the Mac | **The `.rl` file is not encrypted by Relate** (labels, units and values are readable in the file). It is protected by FileVault full-disk encryption, a 0700 folder with a 0600 file, and living outside every repo. For more, keep it in an encrypted APFS disk image you mount only when needed. If you use Time Machine, use an encrypted backup or exclude `~/RelateHealth` |
+| Data sent to Claude | MCP runs locally over stdio, but Claude Desktop/Code send the rows a query returns to Anthropic's API (TLS). Ask aggregate questions, or use a local LLM client for full sovereignty |
 | Data at rest on the phone | Unchanged: Klarbefund's sealed AES-GCM store; pairing in the Keychain (`ThisDeviceOnly`) |
 
-The phone sends only after an explicit switch (or button) in this screen. Nothing reaches the EHDS Hub or any other server through this feature.
+The phone sends only after an explicit switch (or button) in this screen. The export itself sends nothing to the EHDS Hub or any other server.
 
 ## Lessons learned (worth knowing for the Swift port)
 
