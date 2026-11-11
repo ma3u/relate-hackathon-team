@@ -53,36 +53,30 @@ flowchart LR
 Read from the live store `~/RelateHealth/health.rl` (structure only): **10 node labels, 12 relationship types**, in three of the EHDS layers. Keys and Observation properties follow the EHDS Hub's *code* (`storeReportRows`, `app-wearables.ts`), so a `relate push` merges cleanly. Relationship types marked ✳ are new in this project.
 
 ```mermaid
-flowchart LR
+flowchart TB
   subgraph L3["L3 · FHIR R4 (clinical)"]
-    P(("Patient<br/><small>id</small>"))
-    DR(("DiagnosticReport<br/><small>resourceId · reportId<br/>effectiveDate · status · performer</small>"))
-    O(("Observation<br/><small>resourceId · code · display<br/>valueQuantity · unit · comparator<br/>referenceLow/High/Text · effectiveDate<br/>sourceKind · sourceLine · status<br/>unmappedReason · hubEligible</small>"))
-    DOC(("DocumentReference<br/><small>title · created</small>"))
-    PV(("Provenance<br/><small>activity · agent · recorded</small>"))
-    ORG(("Organization<br/><small>name</small>"))
+    direction LR
+    PV["Provenance"] -- "TARGET ✳" --> DR["DiagnosticReport"]
+    P["Patient"] -- "HAS_DIAGNOSTIC_REPORT ✳" --> DR
+    P -- "HAS_OBSERVATION" --> O["Observation"]
+    DR -- "HAS_RESULT ✳" --> O
+    DR -- "DERIVED_FROM ✳" --> DOC["DocumentReference"]
+    DR -- "PERFORMED_BY ✳" --> ORG["Organization"]
   end
   subgraph L4["L4 · OMOP CDM v5.4 (research)"]
-    OP(("OMOPPerson<br/><small>id · genderConceptId</small>"))
-    OM(("OMOPMeasurement<br/><small>measurementDate · valueAsNumber<br/>measurementSourceValue = LOINC<br/>measurementConceptId = 0</small>"))
+    direction LR
+    OP["OMOPPerson"] -- "HAS_MEASUREMENT" --> OM["OMOPMeasurement"]
   end
   subgraph L5["L5 · Ontology"]
-    LC(("LoincCode<br/><small>code · display</small>"))
-    TX(("NcbiTaxon<br/><small>code · display</small>"))
+    direction LR
+    LC["LoincCode"]
+    TX["NcbiTaxon"]
   end
-
-  P -- "HAS_DIAGNOSTIC_REPORT ✳" --> DR
-  P -- HAS_OBSERVATION --> O
-  DR -- "HAS_RESULT ✳" --> O
-  DR -- "DERIVED_FROM ✳" --> DOC
-  DR -- "PERFORMED_BY ✳" --> ORG
-  PV -- "TARGET ✳" --> DR
-  O -- CODED_BY --> LC
+  P -- "MAPPED_TO" --> OP
+  O -- "MAPPED_TO" --> OM
+  O -- "CODED_BY" --> LC
+  OM -- "CODED_BY" --> LC
   O -- "IDENTIFIES ✳" --> TX
-  P -- MAPPED_TO --> OP
-  O -- MAPPED_TO --> OM
-  OP -- HAS_MEASUREMENT --> OM
-  OM -- CODED_BY --> LC
 
   classDef fhir fill:#e8f1fb,stroke:#3b78c2,color:#0b2545
   classDef omop fill:#fdf1e3,stroke:#d08a2e,color:#4a2c05
@@ -91,6 +85,19 @@ flowchart LR
   class OP,OM omop
   class LC,TX onto
 ```
+
+| Label | Layer | Key | Main properties |
+|---|---|---|---|
+| `Patient` | L3 | `id` | (no name, no birth date) |
+| `DiagnosticReport` | L3 | `resourceId` | `reportId`, `effectiveDate`, `status`, `performer`, `title` |
+| `Observation` | L3 | `resourceId` | `code`, `display`, `valueQuantity`, `unit`, `comparator`, `referenceLow/High/Text`, `effectiveDate` (`effectiveStart` for weekly means), `category`, `status`, `sourceKind`, `sourceLine`, `sourceReport`, `unmappedReason`, `hubEligible` |
+| `DocumentReference` | L3 | `resourceId` | `title`, `created` |
+| `Provenance` | L3 | `resourceId` | `activity`, `agent`, `recorded` |
+| `Organization` | L3 | `name` | the lab or practice |
+| `OMOPPerson` | L4 | `id` | `genderConceptId` |
+| `OMOPMeasurement` | L4 | `id` | `measurementDate`, `valueAsNumber`, `unitSourceValue`, `measurementSourceValue` (= LOINC), `measurementConceptId = 0` (no Athena on the device) |
+| `LoincCode` | L5 | `code` | `display` |
+| `NcbiTaxon` | L5 | `code` | `display` (microbiome organisms) |
 
 **One `Observation` label, four kinds of value.** `sourceKind` says where it came from, so a lab value, an OCR reading and a watch's weekly mean live side by side and never get mixed up:
 
