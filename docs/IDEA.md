@@ -137,33 +137,18 @@ Full-text search over printed labels, source lines and LOINC names is built in (
 ## Encryption at rest and in transit
 
 ```mermaid
-flowchart LR
-  subgraph PHONE["📱 iPhone · at rest"]
-    direction TB
-    KC["🔑 Keychain<br/>256-bit key<br/>WhenUnlockedThisDeviceOnly"]
-    SEALED["Reports: one AES-256-GCM<br/>sealed file per record<br/>FileProtection.complete<br/>excluded from backup"]
-    PAIR["Pairing link<br/>(URL · token · cert pin)<br/>in Keychain"]
-    KC --> SEALED
-  end
-  subgraph WIFI["📶 Home Wi-Fi · in transit"]
-    TLS["HTTPS · TLS 1.2+ · ECDHE<br/>receiver cert P-256, self-signed<br/>SHA-256 pinned from QR code<br/>+ 256-bit bearer token"]
-  end
-  subgraph MAC["💻 Mac · at rest"]
-    direction TB
-    RL["~/RelateHealth/health.rl<br/>plaintext Relate store"]
-    FV["FileVault full-disk encryption<br/>folder 0700 · file 0600<br/>outside every git repo"]
-    FV --- RL
-  end
-  subgraph CLOUD["☁️ Only if you ask Claude"]
-    API["Query results → Anthropic API<br/>TLS in transit"]
-  end
-  SEALED -- "Send everything now" --> TLS --> RL
-  RL -- "MCP stdio, read-only<br/>(local, no network)" --> API
+flowchart TB
+  PHONE["📱 <b>iPhone · at rest</b><br/>AES-256-GCM per report<br/>key in Keychain, this device only<br/>no backup · Face ID lock"]
+  WIFI["📶 <b>Wi-Fi · in transit</b><br/>HTTPS / TLS<br/>certificate pinned from QR code<br/>+ bearer token"]
+  MAC["💻 <b>Mac · at rest</b><br/>health.rl (Relate, plaintext)<br/>inside FileVault · file 0600"]
+  CLAUDE["☁️ <b>Claude · only when you ask</b><br/>query results → Anthropic API<br/>TLS, but leaves the Mac"]
+  PHONE -- "Send everything now" --> WIFI --> MAC
+  MAC -. "MCP stdio, read-only" .-> CLAUDE
 
   classDef safe fill:#e9f7ef,stroke:#2f9e5b,color:#0f3d22
-  classDef note fill:#fdf1e3,stroke:#d08a2e,color:#4a2c05
-  class KC,SEALED,PAIR,TLS,FV safe
-  class RL,API note
+  classDef warn fill:#fdf1e3,stroke:#d08a2e,color:#4a2c05
+  class PHONE,WIFI,MAC safe
+  class CLAUDE warn
 ```
 
 | Where | Protected by | Detail |
