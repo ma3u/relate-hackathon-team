@@ -178,11 +178,21 @@ def parse_bundle(bundle: dict, report_id: str | None = None) -> ParsedReport:
 # Same contract as the Hub's ui/src/lib/patient/app-wearables.ts.
 WEARABLE_SOURCE_REPORT = "apple-health-weekly"
 WEARABLE_SOURCE_KIND = "device-weekly-mean"
-WEARABLE_METRICS = {  # LOINC -> (UCUM unit, min, max)
-    "40443-4": ("/min", 20, 250),     # resting heart rate
-    "80404-7": ("ms", 1, 500),        # HRV SDNN
-    "41950-7": ("/d", 0, 200000),     # steps per day
-    "29463-7": ("kg", 2, 500),        # body weight
+WEARABLE_METRICS = {  # LOINC -> (UCUM unit, plausible min, max), as Klarbefund's WearableFHIR codes them
+    "40443-4": ("/min", 20, 250),        # resting heart rate
+    "80404-7": ("ms", 1, 500),           # HRV SDNN
+    "41950-7": ("/d", 0, 200000),        # steps per day
+    "29463-7": ("kg", 2, 500),           # body weight
+    "55411-3": ("min/d", 0, 1440),       # exercise minutes per day
+    "94122-9": ("mL/min/kg", 5, 95),     # VO2 max (Apple Watch cardio fitness estimate)
+    "9279-1": ("/min", 3, 70),           # respiratory rate
+    "59408-5": ("%", 50, 100),           # blood oxygen (SpO2)
+    "41981-2": ("kcal/d", 0, 15000),     # active energy per day
+    "41982-0": ("%", 1, 75),             # body fat
+    "93832-4": ("h/d", 0, 24),           # sleep, all stages
+    "93831-6": ("min/d", 0, 1440),       # deep sleep
+    "93829-0": ("min/d", 0, 1440),       # REM sleep
+    "93830-8": ("min/d", 0, 1440),       # light (Apple: core) sleep
 }
 
 
@@ -203,7 +213,7 @@ def parse_wearables(bundle: dict, patient_id: str) -> tuple[list[dict], list[dic
         loinc = _coding(o.get("code"), LOINC)
         code = loinc["code"] if loinc else None
         if code not in WEARABLE_METRICS:
-            refuse("not one of the four device metrics"); continue
+            refuse("not a device metric Klarbefund sends"); continue
         unit_expected, lo, hi = WEARABLE_METRICS[code]
         q = o.get("valueQuantity") or {}
         value = q.get("value")

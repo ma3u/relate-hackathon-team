@@ -103,6 +103,27 @@ def test_concurrent_sends_and_status(server):
     assert n == 3 * 7 + 16
 
 
+def test_new_apple_health_metrics_are_accepted():
+    from health_graph import fhir
+    def obs(code, ucum, value, cat="vital-signs"):
+        return {"resource": {"resourceType": "Observation", "id": f"w-{code}", "status": "final",
+            "category": [{"coding": [{"system": "http://terminology.hl7.org/CodeSystem/observation-category", "code": cat}]}],
+            "code": {"coding": [{"system": "http://loinc.org", "code": code, "display": code}], "text": code},
+            "effectivePeriod": {"start": "2026-11-02", "end": "2026-11-08"},
+            "valueQuantity": {"value": value, "unit": ucum, "system": "http://unitsofmeasure.org", "code": ucum}}}
+    bundle = {"resourceType": "Bundle", "entry": [
+        obs("94122-9", "mL/min/kg", 42.3), obs("9279-1", "/min", 14.8), obs("59408-5", "%", 96.4),
+        obs("41981-2", "kcal/d", 610, "activity"), obs("41982-0", "%", 18.2), obs("55411-3", "min/d", 31, "activity"),
+        obs("93832-4", "h/d", 7.2, "activity"), obs("93831-6", "min/d", 64, "activity"),
+        obs("93829-0", "min/d", 101, "activity"), obs("93830-8", "min/d", 270, "activity"),
+        obs("59408-5", "%", 12.0)]}  # implausible SpO2 -> refused
+    bundle["entry"][-1]["resource"]["effectivePeriod"]["start"] = "2026-11-09"
+    bundle["entry"][-1]["resource"]["effectivePeriod"]["end"] = "2026-11-15"
+    rows, skipped = fhir.parse_wearables(bundle, "p")
+    assert len(rows) == 10
+    assert [s["reason"] for s in skipped] == ["the value is not plausible"]
+
+
 def test_rejects_non_bundle(server):
     assert call(server, "POST", "/v1/record", {"resourceType": "Patient"}, server["token"])[0] == 400
 

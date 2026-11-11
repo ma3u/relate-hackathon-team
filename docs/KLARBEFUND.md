@@ -75,6 +75,25 @@ From then on:
 | A report: `ReportExport.fhirJSON` (FHIR R4 Bundle: Patient, DiagnosticReport, DocumentReference, Observations, Provenance), header `X-Klarbefund-Report: <uuid>` | `POST /v1/record` | `DiagnosticReport -HAS_RESULT-> Observation -CODED_BY-> LoincCode`, `DERIVED_FROM` document, `Provenance`, OMOP measurements |
 | Apple Health: `WearableFHIR.json` (weekly-mean Observations with `effectivePeriod`) | `POST /v1/wearables` | `Observation {sourceKind: 'device-weekly-mean', sourceReport: 'apple-health-weekly'}` on the **same `LoincCode`** as lab values |
 
+### Apple Health metrics (weekly means)
+
+| Metric (HealthKit) | LOINC | Unit | Joins lab data? |
+|---|---|---|---|
+| Resting heart rate | 40443-4 | /min | ✅ resting HR on ECG/Holter sheets |
+| Heart rate variability (SDNN) | 80404-7 | ms | |
+| Steps | 41950-7 | /d | |
+| Body weight | 29463-7 | kg | ✅ weight on lab sheets and body-composition scales |
+| Exercise minutes | 55411-3 | min/d | |
+| **Cardio fitness (VO2 max)** | 94122-9 | mL/min/kg | ✅ VO2 peak from a spiroergometry (CPET), same code |
+| **Respiratory rate** | 9279-1 | /min | |
+| **Blood oxygen (SpO₂)** | 59408-5 | % | |
+| **Active energy** | 41981-2 | kcal/d | |
+| **Body fat** | 41982-0 | % | ✅ body-fat % from DXA / body-composition reports |
+| **Sleep, all stages** | 93832-4 | h/d | |
+| **Deep / REM / light (core) sleep** | 93831-6 / 93829-0 / 93830-8 | min/d | |
+
+**New in this version** (bold). Sleep comes from HealthKit sleep analysis: a night belongs to the day you woke up, "in bed" and "awake" don't count, and if two sources logged the same night (Watch and iPhone) the one with more sleep is used instead of adding both. Klarbefund asks for read access again when new types are added. The EHDS Hub still accepts only its original metrics and skips the rest; the local graph keeps all of them.
+
 These are the **same payloads and replace rules** as the EHDS Hub's `/api/patient/app/record` and `/app/wearables`, so the same graph can later be pushed to the Hub with consent (`relate push`). Body weight from a lab sheet and from Apple Health meet on `LoincCode 29463-7`, and the `trend` query shows both:
 
 ```bash
