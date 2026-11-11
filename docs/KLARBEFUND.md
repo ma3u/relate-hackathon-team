@@ -96,6 +96,12 @@ Observation 131 · OMOPMeasurement 91 · LoincCode 11
 
 Klarbefund on an iPhone 17 Pro, paired by QR code with the receiver on a MacBook over home Wi-Fi. One tap on **Send everything now**:
 
+<img src="img/klarbefund/08-iphone-paired.png" width="320" alt="Klarbefund on the iPhone: paired with the Mac, 780 values on the Mac, 324 Apple Health weekly values sent">
+
+*On the phone: paired with the Mac, both switches on, **780 values on the Mac**, "Sent 324 weekly values from 4 device trends".*
+
+On the Mac, the receiver logs each report and the Apple Health series as they arrive:
+
 ![Receiver log: 26 reports and 324 Apple Health weekly values from the iPhone](img/klarbefund/06-iphone-receiver-log.png)
 
 What the graph holds afterwards. **Counts only**: real health values never go into this repository.
