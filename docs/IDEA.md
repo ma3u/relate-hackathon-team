@@ -3,6 +3,8 @@
 > **Your lab results, as a connected graph that never leaves your device.**
 > Klarbefund turns paper lab reports into structured, LOINC-coded values. This feature exports them into a **local Relate graph** (one `.rl` file) using the same **FHIR R4 → OMOP CDM → ontology** model as the [EHDS Integration Hub](https://ma3u.github.io/MinimumViableHealthDataspacev2/docs). The patient (or their own local agent) can then explore connected health context privately, and **push to the Hub only with explicit consent**.
 
+> 👋 **New here, or not a developer or health professional?** Start with the plain-language version: **[Your health data, connected and kept at home](EXPLAINED.md)**.
+
 Status: draft, Nov 11, 2026 · Owner: [@ma3u](https://github.com/ma3u) · Feedback welcome in [issues](../../../issues)
 
 ---
