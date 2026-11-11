@@ -9,15 +9,28 @@ This repo summarizes the hackathon so we can get going quickly. It will become o
 
 ## Looking for teammates
 
-**Me:** _TODO: role / main skills / time zone (CET) / availability per week_
+### About me
 
-**Who would be a great fit** (any of these, no need to tick every box):
+**Matthias Buchhorn ([@ma3u](https://github.com/ma3u))**: AI & Cloud Software Engineer, Berlin (CET) · [LinkedIn](https://www.linkedin.com/in/mbuchhorn)
 
-- 🦀 / 🐍 **Rust or Python** developers (Relate is a Rust/Python library)
-- 🤖 **AI agent / LLM** builders (MCP, tool use, RAG, coding agents)
-- 🕸️ **Graph / Cypher** people (Neo4j, knowledge graphs, graph data modeling)
-- 🌐 **Frontend / WebAssembly** (Relate runs in the browser for interactive graph views)
-- 🎬 **Storytelling / demo / design** — clarity is 1/5 of the score, and a ≤3 min demo video is required
+- 🕸️ Lots of **Neo4j / knowledge graph** work: GraphRAG for [EU regulations](https://github.com/ma3u/EU-GraphRAG) and German social law, an [EHDS health data space demo](https://github.com/ma3u/MinimumViableHealthDataspacev2), and investigation and case-file graphs
+- 🤖 **Agents & memory**: [neo4j-agent-memory + MCP demo](https://github.com/ma3u/neo4j-aura-agent-memory-demo), [Haystack + Neo4j workshop](https://github.com/ma3u/haystack-workshop) (RAG, GraphRAG, agent memory), MCP servers
+- 🏆 Hackathon experience: [healthgraph-agent](https://github.com/ma3u/healthgraph-agent) (Neo4j Aura Agent Hackathon 2026), SPARK Challenge
+- 🛠️ Stack: Python, TypeScript, Azure; some Swift
+- ⏱️ Availability: **~5 h/week** until Dec 11, so I'm looking for teammates who can help carry the build
+
+### Who I'm looking for
+
+**Top priorities:**
+
+- 🌐 **Frontend / WebAssembly**: Relate runs in the browser, so we could build interactive graph views with nothing to install
+- 🎬 **Design / storytelling / demo video**: Clarity is 1/5 of the score, and a demo video of up to 3 minutes is required
+- 🧭 **Domain expert**: someone who brings a real problem (and ideally data) where connected context makes a difference
+
+**Also welcome:**
+
+- 🦀 **Rust** developers (Relate's core is Rust)
+- 🐍 **Python / AI agent** builders (MCP, tool use, RAG, coding agents)
 
 **How we'd work:** async, GitHub issues + PRs, a short weekly call. Ideas welcome — see [Project ideas](#project-ideas).
 
