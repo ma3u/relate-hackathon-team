@@ -1,0 +1,11 @@
+# secrets
+.env
+# local Python env
+.venv/
+__pycache__/
+# generated audio / media
+media/
+# relate store files (regenerate with the examples)
+*.rl
+*.rl-wal
+.DS_Store

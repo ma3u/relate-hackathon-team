@@ -1,9 +1,13 @@
 # Relate by Neo4j Hackathon — Team Up 🤝
 
-I'm taking part in the **[Relate by Neo4j Hackathon](https://relate.devpost.com/)** and I'm **looking for teammates** (teams can have up to 4 people).
+I'm taking part in the **[Relate by Neo4j Hackathon](https://relate.devpost.com/)** and I'm **looking for 2–3 teammates** (teams can have up to 4 people).
 This repo summarizes the hackathon so we can get going quickly. It will become our project repo once the team is set.
 
-👉 **Want to join?** [Open a "Join the team" issue](../../issues/new?template=join-the-team.md) and tell me a bit about yourself.
+👉 **Want to join?** [Open a "Join the team" issue](../../issues/new?template=join-the-team.md) and tell me a bit about yourself, or find me ([@ma3u](https://relate.devpost.com/participants)) on Devpost.
+
+💬 **Community:** [Neo4j Discord — "Relate by Neo4j Launch and Hackathon" event](https://discord.com/events/787399249741479977/1570141373531955240)
+
+![My Devpost participant card: looking for teammates](docs/img/devpost-profile.png)
 
 ---
 
@@ -57,7 +61,9 @@ Times from the Devpost schedule (shown in CET / GMT+1):
 | **Submissions** | Thu, Nov 12, 2026 03:00 CET (= Wed, Nov 11, 6 PM PST) | **Sat, Dec 12, 2026 03:00 CET** (= Fri, Dec 11, 6 PM PST) |
 | Public voting | Nov 12, 03:00 CET | Dec 17, 03:00 CET |
 | Judging | Dec 12, 03:15 CET | Dec 17, 08:45 CET |
-| Winners announced | Dec 19, 02:00 CET (Devpost schedule) — the rules text says Thu, Dec 17 | |
+| Winners announced | Thu, Dec 17 (rules + Discord); the Devpost schedule widget says Dec 19, 02:00 CET | |
+
+The Neo4j Discord announcement confirms: **submissions due Fri, Dec 11, 6 PM PST** (Sat, Dec 12, 03:00 CET), judging Dec 12–16, winners Dec 17.
 
 > ⏰ **Practical deadline:** have everything submitted by **Friday, Dec 11 evening (CET)**.
 
@@ -69,7 +75,10 @@ Times from the Devpost schedule (shown in CET / GMT+1):
 | 🥈 2nd | Mac mini M6, 32 GB / 512 GB | $1,499 |
 | 🥉 3rd | Mac mini M6, 16 GB / 256 GB | $899 |
 
-Prizes go **per winning team, not per member** — one physical item, the team names one recipient. Winners pay their own taxes/import duties.
+**Does every team member get a Mac? No.** Prizes are awarded **per winning entry, not per team member**: each prize is a single item, and the team names one recipient (Neo4j stays out of disputes within a team). Winners pay their own taxes and import duties.
+👉 We'll agree up front, in writing, how we handle a win (for example the recipient pays the others their share of the value, or we raffle it).
+
+**Neo4j community**: [Discord event](https://discord.com/events/787399249741479977/1570141373531955240) · docs, playground and cookbook at [relatedb.ai](https://relatedb.ai)
 
 ### Judging criteria (all weighted equally)
 
@@ -108,6 +117,7 @@ Relate is an **open-source, embedded graph database for AI agents** and the engi
 
 ### Resources
 
+- 🛠️ **Our setup guide, with screenshots: [docs/INSTALL.md](docs/INSTALL.md)** (Relate CLI, agent skill, Python, MCP, ElevenLabs)
 - 🌐 Website: <https://relatedb.ai>
 - ⚡ Quickstart / install: <https://relatedb.ai/docs/get-started/install>
 - 💻 Source: <https://github.com/relatedb/relate>
