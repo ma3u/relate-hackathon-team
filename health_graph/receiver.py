@@ -243,10 +243,15 @@ def make_handler(db: Path, token: str, name: str, log=print):
 
 
 def serve(db: str, port: int = 8787, rotate: bool = False, host: str | None = None,
-          qr_png: str | None = None, print_link: bool = False) -> None:
+          qr_png: str | None = None, print_link: bool = False, require_mount: bool = False) -> None:
     import segno
 
     db_path = Path(db).resolve()
+    if require_mount and not os.path.ismount(db_path.parent):
+        # The encrypted volume is not open: writing here would create a new,
+        # unencrypted store in the empty mount-point folder.
+        raise SystemExit(f"{db_path.parent} is not a mounted volume; open the encrypted vault first "
+                         "(scripts/health_vault.sh mount)")
     conn = store.connect(db_path)  # create the store and schema up front
     store.init_schema(conn)
     conn.close()

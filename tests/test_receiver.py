@@ -153,3 +153,9 @@ def test_certificate_is_x509_v3_for_server_auth(tmp_path, monkeypatch):
     text = subprocess.run(["openssl", "x509", "-in", str(cert), "-noout", "-text"],
                           capture_output=True, text=True, check=True).stdout
     assert "Field Type: prime-field" not in text and "prime256v1" in text
+
+
+def test_require_mount_refuses_an_unmounted_folder(tmp_path):
+    with pytest.raises(SystemExit, match="not a mounted volume"):
+        receiver.serve(str(tmp_path / "health.rl"), require_mount=True)
+    assert not (tmp_path / "health.rl").exists()  # nothing written

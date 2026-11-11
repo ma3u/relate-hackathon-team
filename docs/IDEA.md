@@ -142,7 +142,7 @@ Full-text search over printed labels, source lines and LOINC names is built in (
 flowchart TB
   PHONE["📱 <b>iPhone · at rest</b><br/>AES-256-GCM per report<br/>key in Keychain, this device only<br/>no backup · Face ID lock"]
   WIFI["📶 <b>Wi-Fi · in transit</b><br/>HTTPS / TLS<br/>certificate pinned from QR code<br/>+ bearer token"]
-  MAC["💻 <b>Mac · at rest</b><br/>health.rl (Relate, plaintext)<br/>inside FileVault · file 0600"]
+  MAC["💻 <b>Mac · at rest</b><br/>health.rl in an AES-256<br/>encrypted disk image, unlocked<br/>only while used · FileVault"]
   CLAUDE["☁️ <b>Claude · only when you ask</b><br/>query results → Anthropic API<br/>TLS, but leaves the Mac"]
   PHONE -- "Send everything now" --> WIFI --> MAC
   MAC -. "MCP stdio, read-only" .-> CLAUDE
@@ -157,7 +157,7 @@ flowchart TB
 |---|---|---|
 | **iPhone, at rest** | ✅ App-level encryption | Each report, its scan and its diagnostics are sealed **individually** with **AES-256-GCM** (CryptoKit). The key is created on the device and kept in the Keychain as `kSecAttrAccessibleWhenUnlockedThisDeviceOnly`: unavailable while the phone is locked, never synced to iCloud Keychain, never restored onto another device. Files use `FileProtectionType.complete` and are **excluded from backup**. The Mac pairing (address, token, certificate pin) is in the Keychain too. The current build adds an optional Face ID / passcode app lock. |
 | **iPhone → Mac, in transit** | ✅ TLS with certificate pinning | The receiver presents an X.509 v3 certificate with a P-256 key. The app accepts **only** the certificate whose SHA-256 fingerprint was in the QR code, so even a TLS-capable impostor on the same Wi-Fi gets nothing. `http://` links are refused, as are hosts outside private, loopback and `.local` ranges. Every request carries a 256-bit bearer token. The receiver only accepts data and returns a count, so nothing can be *read* from it. |
-| **Mac, at rest** | ✅ FileVault (full disk) | Relate stores the graph **in plaintext**: no built-in encryption. Protection comes from **FileVault** (on), a 0700 folder with a 0600 file, and keeping the store out of every repository. The receiver's private key and token are 0600 in `~/.config/relate-health-graph`. Decision (Nov 11): FileVault is enough; an encrypted disk image would be the next step. |
+| **Mac, at rest** | ✅ Encrypted disk image + FileVault | Relate itself stores the graph unencrypted, so `health.rl` lives inside an **AES-256 encrypted APFS disk image** (`~/RelateHealthVault.sparsebundle`), mounted at `~/RelateHealth` only while the receiver or Claude needs it ([`scripts/health_vault.sh`](../scripts/health_vault.sh)). Its password is a random 256-bit secret in the macOS login Keychain. While locked, `~/RelateHealth` is empty, and the receiver refuses to start (`--require-mount`), so it can never write a new plaintext store. FileVault encrypts the whole disk underneath. Verified: the image's bytes contain none of the 251 readable health strings the plain file had. |
 | **Mac → Claude** | ⚠️ TLS, but leaves the Mac | MCP runs locally over stdio, read-only. Claude Desktop/Code then send the **rows a query returns** to Anthropic's API over TLS. Ask aggregate questions, or use a local model, if nothing may leave the Mac. |
 | **Mac → EHDS Hub** | (planned) | Only via an explicit, consented `relate push`, audited as a `TransferEvent`. Not built yet. |
 
@@ -195,7 +195,7 @@ All demo data is **synthetic / fictional** (Synthea-style). No real health data 
 
 ## Privacy and sovereignty guardrails
 
-- Encryption at rest and in transit: see [Encryption at rest and in transit](#encryption-at-rest-and-in-transit). Real health data never goes into this repository; docs show counts only.
+- Encryption at rest and in transit: see [Encryption at rest and in transit](#encryption-at-rest-and-in-transit). On the Mac the graph lives in an AES-256 encrypted disk image (decided Nov 11). Real health data never goes into this repository; docs show counts only.
 - **New, separate consent** for "build a local graph". The Hub record that Klarbefund reads is currently promised to be "kept nowhere", so we **don't import it** into the local graph unless the user explicitly opts in with new wording.
 - **A push is a transfer**: it needs registry consent from `ConsentLedger`, follows the Hub's `app/record` contract (preliminary, LOINC, UCUM, sandbox only), and is audited as a `TransferEvent` (EHDS Art. 73).
 - The MCP server is opened **`--read-only`**, and any AI answer names its provider and model (AI Act Art. 50).

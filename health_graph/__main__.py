@@ -44,6 +44,8 @@ def main(argv=None) -> int:
     rc.add_argument("--rotate", action="store_true", help="new token: phones paired before must scan again")
     rc.add_argument("--qr-png", help="also save the QR code as a PNG (contains the token)")
     rc.add_argument("--print-link", action="store_true", help="also print the pairing link (contains the token)")
+    rc.add_argument("--require-mount", action="store_true",
+                    help="refuse to start unless the store's folder is a mounted volume (encrypted vault)")
 
     sub.add_parser("list", help="list the named queries")
     args = ap.parse_args(argv)
@@ -56,7 +58,7 @@ def main(argv=None) -> int:
     if args.cmd == "receive":
         from .receiver import serve
         serve(args.db, port=args.port, rotate=args.rotate, host=args.host, qr_png=args.qr_png,
-              print_link=args.print_link)
+              print_link=args.print_link, require_mount=args.require_mount)
         return 0
 
     if args.cmd == "import":

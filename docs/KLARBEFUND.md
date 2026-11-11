@@ -29,8 +29,11 @@ One-time setup is in [INSTALL.md](INSTALL.md) (Relate CLI, `.venv` with `relate-
 
 ```bash
 cd ~/projects/Neo4j-relate
-.venv/bin/python -m health_graph receive --db ~/RelateHealth/health.rl
+scripts/health_vault.sh create     # once: AES-256 encrypted disk image, password in your Keychain
+scripts/health_vault.sh receive    # unlock it, then start the receiver
 ```
+
+`receive` runs `python -m health_graph receive --db ~/RelateHealth/health.rl --require-mount`: the receiver refuses to start unless the encrypted image is open, so no unencrypted store can ever be created. `scripts/health_vault.sh unmount` locks it again; `status` shows whether it's open. (Already have a plaintext `~/RelateHealth/health.rl`? `scripts/health_vault.sh migrate` moves it into a new vault, checks the copy byte for byte, then deletes the plaintext file.)
 
 It prints a QR code in the terminal:
 
@@ -140,7 +143,7 @@ What the graph holds afterwards. **Counts only**: real health values never go in
 
 ```bash
 claude mcp add --scope user klarbefund-health -- \
-  ~/.local/bin/relate serve --mcp stdio --database ~/RelateHealth/health.rl --read-only
+  ~/projects/Neo4j-relate/scripts/health_vault.sh mcp   # unlocks the vault, then relate serve --mcp --read-only
 claude mcp get klarbefund-health      # Status: ✔ Connected
 ```
 
@@ -148,8 +151,8 @@ claude mcp get klarbefund-health      # Status: ✔ Connected
 
 ```json
 "klarbefund-health": {
-  "command": "/Users/<you>/.local/bin/relate",
-  "args": ["serve", "--mcp", "stdio", "--database", "/Users/<you>/RelateHealth/health.rl", "--read-only"]
+  "command": "/Users/<you>/projects/Neo4j-relate/scripts/health_vault.sh",
+  "args": ["mcp"]
 }
 ```
 
@@ -181,7 +184,7 @@ Example prompts:
 | A QR code pointing somewhere else | Only private / loopback / `.local` addresses accepted; public hosts refused before any request |
 | Another device posts junk | 256-bit bearer token; private-network clients only; 10 MB body limit; FHIR Bundle required |
 | A stalled client blocks the receiver | TLS per connection with a 15 s handshake timeout; one writer at a time with retry on a locked store |
-| Data at rest on the Mac | **The `.rl` file is not encrypted by Relate** (labels, units and values are readable in the file). It is protected by FileVault full-disk encryption, a 0700 folder with a 0600 file, and living outside every repo. For more, keep it in an encrypted APFS disk image you mount only when needed. If you use Time Machine, use an encrypted backup or exclude `~/RelateHealth` |
+| Data at rest on the Mac | Relate stores the graph unencrypted, so it lives inside an **AES-256 encrypted disk image** opened only while used ([`scripts/health_vault.sh`](../scripts/health_vault.sh)), password in the Keychain, FileVault underneath. While locked, `~/RelateHealth` is empty and the receiver refuses to start (`--require-mount`). If you use Time Machine, the image is backed up encrypted. |
 | Data sent to Claude | MCP runs locally over stdio, but Claude Desktop/Code send the rows a query returns to Anthropic's API (TLS). Ask aggregate questions, or use a local LLM client for full sovereignty |
 | Data at rest on the phone | Unchanged: Klarbefund's sealed AES-GCM store; pairing in the Keychain (`ThisDeviceOnly`) |
 
