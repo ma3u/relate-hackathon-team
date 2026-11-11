@@ -19,7 +19,7 @@ flowchart LR
   end
 ```
 
-> **Status (Nov 11, 2026):** working end to end in the iOS Simulator (screenshots below are from that run, with Klarbefund's fictional demo data). Klarbefund code is on branch `feat/klarbefund-local-relate` of [MinimumViableHealthDataspacev2](https://github.com/ma3u/MinimumViableHealthDataspacev2). On a real iPhone you also need the macOS firewall step in [Pairing a real iPhone](#pairing-a-real-iphone).
+> **Status (Nov 11, 2026):** working end to end **on a real iPhone 17 Pro over Wi-Fi** ([results](#real-iphone-run-nov-11-2026)) and in the iOS Simulator (the app screenshots below are from the Simulator, with Klarbefund's fictional demo data). Klarbefund code: branch `feat/klarbefund-local-relate-main` of [MinimumViableHealthDataspacev2](https://github.com/ma3u/MinimumViableHealthDataspacev2). In the current app the entry is under **Menu → Privacy and sharing → Export to my Mac (Relate)**.
 
 ---
 
@@ -91,6 +91,21 @@ Result of the Simulator run (demo data: 2 reports, 3 Apple Health trends × 40 w
 | 2026-09-04 | Praxis Dr. Muster | Lipid panel, Praxis Dr. Muster | ocr-transcribed | 8      | 8        |
 Observation 131 · OMOPMeasurement 91 · LoincCode 11
 ```
+
+## Real iPhone run (Nov 11, 2026)
+
+Klarbefund on an iPhone 17 Pro, paired by QR code with the receiver on a MacBook over home Wi-Fi. One tap on **Send everything now**:
+
+![Receiver log: 26 reports and 324 Apple Health weekly values from the iPhone](img/klarbefund/06-iphone-receiver-log.png)
+
+What the graph holds afterwards. **Counts only**: real health values never go into this repository.
+
+![Graph counts after the iPhone export](img/klarbefund/07-iphone-graph-counts.png)
+
+- **26 reports, 456 lab values**: 255 OCR-read, 190 from digital lab reports, 11 entered by hand, each with its provenance. 155 distinct LOINC codes; 44 microbiome organisms as NCBI taxa (no LOINC term exists).
+- **Apple Health: 324 weekly means**: resting heart rate and HRV (105 weeks each), steps (104), body weight (10).
+- **Connected context:** body weight and resting heart rate from lab sheets and from Apple Health land on the **same `LoincCode`**, so one Cypher query follows a value across both sources.
+- 520 OMOP CDM measurements were derived locally, ready for research tooling, without leaving the Mac.
 
 ## 3. Ask Claude about your graph
 
