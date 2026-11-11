@@ -56,6 +56,10 @@ The certificate, key and token live in `~/.config/relate-health-graph/` (mode 06
 
 ## 2. In Klarbefund: pair by QR code
 
+**Get the app:** [Klarbefund on TestFlight](https://testflight.apple.com/join/ssADSXX6) (public beta, iPhone with iOS 26+). The public group gets a build after Apple's Beta App Review, so "Export to my Mac (Relate)" appears there once a build with it (13 or later) has passed review. Hackathon teammates can be added as internal testers to get it right away.
+
+<img src="img/klarbefund/testflight-qr.svg" width="140" alt="QR code: Klarbefund TestFlight beta">
+
 **Menu (⋯) → Export to my Mac (Relate)**
 
 | Menu entry | Not paired yet | Paired | Reports sent | Apple Health sent |
