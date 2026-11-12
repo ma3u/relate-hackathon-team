@@ -47,3 +47,18 @@ def test_tyg_and_units():
     assert scores.to_mg_dl(5.0, "mmol/l", scores.CHOL_MG_PER_MMOL) == pytest.approx(193.35)
     assert scores.creatinine_mg_dl(88.42, "µmol/l") == pytest.approx(1.0)
     assert scores.to_mg_dl(5.0, "furlongs", 1) is None
+
+
+def test_traffic_lights_follow_the_published_categories():
+    G, A, R = scores.GREEN, scores.AMBER, scores.RED
+    assert [scores.score2_light(b) for b in ("low to moderate", "high", "very high")] == [G, A, R]
+    assert [scores.egfr_light(x) for x in (95, 75, 45, 20)] == [G, G, A, R]
+    assert [scores.fib4_light(scores.fib4_band(x, 50)) for x in (1.0, 2.0, 3.0)] == [G, A, R]
+    assert [scores.lpa_light(x)[0] for x in (20, 30, 50, 51)] == [G, A, A, R]
+    assert [scores.hba1c_light(x)[0] for x in (5.4, 5.7, 6.5)] == [G, A, R]
+    assert [scores.bmi_light(x)[0] for x in (17, 22, 27, 31)] == [A, G, A, R]
+    assert [scores.bp_light(*x)[0] for x in ((115, 65), (125, 75), (118, 72), (150, 85))] == [G, A, A, R]
+    assert scores.non_hdl_goal("low to moderate") == 3.4 and scores.non_hdl_goal("high") == 2.6
+    assert [scores.non_hdl_light(x, 3.4)[0] for x in (3.0, 4.9, 6.0)] == [G, A, R]
+    assert scores.range_light(5, 1, 10) == G and scores.range_light(11, 1, 10) == A
+    assert scores.range_light(5, None, None) is None

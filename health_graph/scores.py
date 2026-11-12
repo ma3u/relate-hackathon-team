@@ -48,6 +48,7 @@ class Score:
     source: str                 # citation
     inputs: dict[str, str] = field(default_factory=dict)
     note: str | None = None
+    light: str | None = None    # GREEN / AMBER / RED, from the same published categories
 
 
 # ── kidney: CKD-EPI 2021 (race-free) ─────────────────────────────────────────
@@ -137,3 +138,88 @@ def score2_band(risk: float, age: int) -> str:
 def tyg(triglycerides_mg_dl: float, fasting_glucose_mg_dl: float) -> float:
     """Simental-Mendía LE et al., Metab Syndr Relat Disord 2008;6:299-304."""
     return math.log(triglycerides_mg_dl * fasting_glucose_mg_dl / 2)
+
+
+# ── traffic lights ───────────────────────────────────────────────────────────
+# Each light follows the published categories of the score or guideline it
+# names; a light is never shown without its label. GREEN / AMBER / RED.
+GREEN, AMBER, RED = "green", "amber", "red"
+
+
+def score2_light(band: str) -> str:
+    """ESC 2021: low to moderate / high / very high."""
+    return {"low to moderate": GREEN, "high": AMBER}.get(band, RED)
+
+
+def egfr_light(egfr: float) -> str:
+    """KDIGO 2012 heat map without albuminuria: G1-G2 / G3a-G3b / G4-G5."""
+    return GREEN if egfr >= 60 else AMBER if egfr >= 30 else RED
+
+
+def fib4_light(band: str) -> str:
+    """EASL 2021: below the low cut-off / indeterminate / above 2.67."""
+    return GREEN if band.startswith("below") else RED if band.startswith("above") else AMBER
+
+
+def lpa_light(mg_dl: float) -> tuple[str, str]:
+    """EAS consensus 2022: <30 mg/dL rules raised risk out, 30-50 grey zone, >50 raised."""
+    if mg_dl < 30:
+        return GREEN, "below 30 mg/dL, where EAS 2022 rules out raised risk"
+    if mg_dl <= 50:
+        return AMBER, "30 to 50 mg/dL, the EAS 2022 grey zone"
+    return RED, "above 50 mg/dL, raised risk (EAS 2022)"
+
+
+def hba1c_light(percent: float) -> tuple[str, str]:
+    """ADA Standards of Care 2024: <5.7 normal, 5.7-6.4 prediabetes range, >=6.5 diabetes range."""
+    if percent < 5.7:
+        return GREEN, "below 5.7 %"
+    if percent < 6.5:
+        return AMBER, "5.7 to 6.4 %, the ADA prediabetes range"
+    return RED, "6.5 % or more, the ADA diabetes range"
+
+
+def bmi_light(bmi: float) -> tuple[str, str]:
+    """WHO: <25, 25-29.9 overweight, >=30 obesity (18.5 is the lower bound of the normal range)."""
+    if bmi < 18.5:
+        return AMBER, "below 18.5, underweight (WHO)"
+    if bmi < 25:
+        return GREEN, "18.5 to 24.9 (WHO)"
+    if bmi < 30:
+        return AMBER, "25 to 29.9, overweight (WHO)"
+    return RED, "30 or more, obesity (WHO)"
+
+
+def bp_light(systolic: float, diastolic: float | None) -> tuple[str, str]:
+    """ESC 2024 hypertension guideline: non-elevated <120/70, elevated 120-139/70-89, hypertension >=140/90."""
+    d = diastolic if diastolic is not None else 0
+    if systolic >= 140 or d >= 90:
+        return RED, "140/90 or more, hypertension (ESC 2024)"
+    if systolic >= 120 or d >= 70:
+        return AMBER, "120-139 / 70-89, elevated (ESC 2024)"
+    return GREEN, "below 120/70, non-elevated (ESC 2024)"
+
+
+def non_hdl_goal(score2_band: str | None) -> float:
+    """ESC/EAS 2019 non-HDL cholesterol goals (mmol/L) by risk category.
+    SCORE2's 'low to moderate' maps to the moderate goal."""
+    return {"very high": 2.2, "high": 2.6}.get(score2_band or "", 3.4)
+
+
+def non_hdl_light(mmol: float, goal: float) -> tuple[str, str]:
+    """Green below the goal, amber above it, red from 5.7 mmol/L (about LDL 4.9 mmol/L,
+    which ESC/EAS 2019 counts as high risk on its own)."""
+    if mmol < goal:
+        return GREEN, f"below the ESC/EAS goal of {goal} mmol/L"
+    if mmol < 5.7:
+        return AMBER, f"above the ESC/EAS goal of {goal} mmol/L"
+    return RED, "5.7 mmol/L or more (≈ LDL 4.9, high risk on its own, ESC/EAS 2019)"
+
+
+def range_light(value: float, low: float | None, high: float | None) -> str | None:
+    """Against the range the laboratory printed: inside green, outside amber, none None."""
+    if low is None and high is None:
+        return None
+    if (low is not None and value < low) or (high is not None and value > high):
+        return AMBER
+    return GREEN

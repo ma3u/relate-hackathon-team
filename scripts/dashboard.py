@@ -106,14 +106,19 @@ def series(conn, codes, convert=None):
         WHERE lc.code IN $codes AND o.duplicateOf IS NULL AND o.valueQuantity IS NOT NULL
         OPTIONAL MATCH (dr:DiagnosticReport)-[:HAS_RESULT]->(o)
         RETURN lc.code AS code, left(o.effectiveDate, 10) AS date, o.valueQuantity AS value,
-               o.unit AS unit, o.sourceKind AS source, coalesce(dr.performer, o.performer) AS lab
+               o.unit AS unit, o.sourceKind AS source, coalesce(dr.performer, o.performer) AS lab,
+               o.referenceLow AS low, o.referenceHigh AS high
         ORDER BY date
         """, {"codes": codes})
     out = []
     for r in rows:
         v = convert(r) if convert else r["value"]
         if v is not None and r["date"]:
-            out.append((r["date"], float(v), r["source"] or "", r["lab"] or ""))
+            # The printed range, in the same unit as the converted value.
+            f = float(v) / r["value"] if r["value"] else 1.0
+            low = r["low"] * f if r["low"] is not None else None
+            high = r["high"] * f if r["high"] is not None else None
+            out.append((r["date"], float(v), r["source"] or "", r["lab"] or "", low, high))
     return out
 
 
@@ -141,7 +146,9 @@ def compute_scores(conn, age, sex, smoker, region):
         e = scores.egfr_ckd_epi_2021(creat[1], age, sex)
         out.append(scores.Score("eGFR (CKD-EPI 2021)", e, "mL/min/1.73 m²", scores.egfr_stage(e),
                                 "Inker et al., NEJM 2021; KDIGO 2012 categories",
-                                {"creatinine": f"{creat[1]:.2f} mg/dL ({creat[0]})", "age": str(age), "sex": sex}))
+                                {"creatinine": f"{creat[1]:.2f} mg/dL ({creat[0]})", "age": str(age), "sex": sex},
+                                note="albuminuria not measured; the KDIGO light assumes A1",
+                                light=scores.egfr_light(e)))
     else:
         out.append(scores.Score("eGFR (CKD-EPI 2021)", None, "", None, "Inker et al., NEJM 2021",
                                 note="needs creatinine and " + need))
@@ -154,7 +161,8 @@ def compute_scores(conn, age, sex, smoker, region):
         out.append(scores.Score("FIB-4 (liver fibrosis)", f, "", scores.fib4_band(f, age),
                                 "Sterling et al., Hepatology 2006; EASL 2021 cut-offs",
                                 {"AST": f"{ast[1]:.0f} U/L ({ast[0]})", "ALT": f"{alt[1]:.0f} U/L ({alt[0]})",
-                                 "platelets": f"{plt[1]:.0f} ×10⁹/L ({plt[0]})", "age": str(age)}))
+                                 "platelets": f"{plt[1]:.0f} ×10⁹/L ({plt[0]})", "age": str(age)},
+                                light=scores.fib4_light(scores.fib4_band(f, age))))
     else:
         out.append(scores.Score("FIB-4 (liver fibrosis)", None, "", None, "Sterling et al., Hepatology 2006",
                                 note="needs AST, ALT, platelets and " + need))
@@ -171,14 +179,17 @@ def compute_scores(conn, age, sex, smoker, region):
                                  "total cholesterol": f"{tc[1]:.2f} mmol/L ({tc[0]})",
                                  "HDL": f"{hdl[1]:.2f} mmol/L ({hdl[0]})",
                                  "smoking": "yes" if smoker else "no", "age": str(age), "sex": sex},
-                                note=f"cholesterol is {stale:.1f} years old" if stale > 1 else None))
+                                note=f"cholesterol is {stale:.1f} years old" if stale > 1 else None,
+                                light=scores.score2_light(scores.score2_band(r, age))))
+        risk_band = scores.score2_band(r, age)
     else:
         why = "SCORE2 covers ages 40 to 69" if age and not 40 <= age <= 69 else \
             "needs systolic BP, total and HDL cholesterol and " + need
         out.append(scores.Score("SCORE2 (10-year cardiovascular risk)", None, "%", None,
                                 "SCORE2 working group, Eur Heart J 2021", note=why))
+        risk_band = None
 
-    tg = latest(marker_series(conn, "Triglycerides"))
+    tg =latest(marker_series(conn, "Triglycerides"))
     fpg = latest(series(conn, ["1558-6"]))
     if tg and fpg:
         t = scores.tyg(tg[1] * 88.57, fpg[1])
@@ -188,16 +199,36 @@ def compute_scores(conn, age, sex, smoker, region):
                                  "fasting glucose": f"{fpg[1]:.0f} mg/dL ({fpg[0]})"},
                                 note="no universal cut-off; around 8.5 to 8.8 is used in several cohorts"))
     if tc and hdl:
-        out.append(scores.Score("Non-HDL cholesterol", tc[1] - hdl[1], "mmol/L", None,
-                                "ESC/EAS 2019 dyslipidaemia guideline (secondary target)",
-                                {"total cholesterol": f"{tc[1]:.2f} ({tc[0]})", "HDL": f"{hdl[1]:.2f} ({hdl[0]})"}))
+        goal = scores.non_hdl_goal(risk_band)
+        light, band = scores.non_hdl_light(tc[1] - hdl[1], goal)
+        out.append(scores.Score("Non-HDL cholesterol", tc[1] - hdl[1], "mmol/L", band,
+                                "ESC/EAS 2019 dyslipidaemia guideline (goal by SCORE2 risk category)",
+                                {"total cholesterol": f"{tc[1]:.2f} ({tc[0]})", "HDL": f"{hdl[1]:.2f} ({hdl[0]})"},
+                                light=light))
     lpa = latest(marker_series(conn, "Lp(a)"))
     if lpa:
-        band = "above 50 mg/dL, the ESC/EAS 2022 threshold for raised risk" if lpa[1] > 50 else \
-            "below the ESC/EAS 2022 threshold of 50 mg/dL"
-        out.append(scores.Score("Lp(a)", lpa[1], "mg/dL", band, "ESC/EAS consensus, Eur Heart J 2022",
+        light, band = scores.lpa_light(lpa[1])
+        out.append(scores.Score("Lp(a)", lpa[1], "mg/dL", band, "EAS consensus statement, Eur Heart J 2022",
                                 {"Lp(a)": f"{lpa[1]:g} mg/dL ({lpa[0]})"},
-                                note="largely inherited; one measurement in life is usually enough"))
+                                note="largely inherited; one measurement in life is usually enough", light=light))
+    a1c = latest(marker_series(conn, "HbA1c"))
+    if a1c:
+        light, band = scores.hba1c_light(a1c[1])
+        out.append(scores.Score("HbA1c", a1c[1], "%", band, "ADA Standards of Care 2024",
+                                {"HbA1c": f"{a1c[1]:g} % ({a1c[0]})"}, light=light))
+    bmi = latest(series(conn, ["39156-5"]))
+    if bmi:
+        light, band = scores.bmi_light(bmi[1])
+        out.append(scores.Score("BMI", bmi[1], "kg/m²", band, "WHO classification",
+                                {"BMI": f"{bmi[1]:.1f} ({bmi[0]})"}, light=light))
+    dbp = latest(series(conn, ["8462-4"]))
+    if sbp:
+        light, band = scores.bp_light(sbp[1], dbp[1] if dbp else None)
+        out.append(scores.Score("Blood pressure", sbp[1], f"/ {dbp[1]:.0f} mmHg" if dbp else "mmHg", band,
+                                "ESC 2024 guideline on elevated blood pressure and hypertension",
+                                {"systolic": f"{sbp[1]:.0f} mmHg ({sbp[0]})",
+                                 **({"diastolic": f"{dbp[1]:.0f} mmHg ({dbp[0]})"} if dbp else {})},
+                                note="office measurement", light=light))
     return out
 
 
@@ -240,16 +271,32 @@ def line_chart(points, title, unit, width=360, height=150):
             f'<text x="{width - pad_r}" y="{height - 4}" class="tick" text-anchor="end">{esc(last)}</text>')
     marks = ""
     r = 4 if len(points) <= 40 else 2.5
-    for (d, v, src, lab), x, y in zip(points, xs, ys):
+    for (d, v, src, lab, *_), x, y in zip(points, xs, ys):
         tip = f"{d}: {fmt(v)} {unit}" + (f" · {lab}" if lab else "") + (f" · {src}" if src else "")
         marks += (f'<circle cx="{sx(x):.1f}" cy="{sy(y):.1f}" r="{r}" class="dot"/>'
                   f'<circle cx="{sx(x):.1f}" cy="{sy(y):.1f}" r="10" class="hit" data-tip="{esc(tip)}"><title>{esc(tip)}</title></circle>')
     last_v = points[-1][1]
+    low, high = (points[-1][4], points[-1][5]) if len(points[-1]) > 5 else (None, None)
+    light = scores.range_light(last_v, low, high)
+    printed = (f"{fmt(low) if low is not None else ''}–{fmt(high) if high is not None else ''} {unit}"
+               if light else "")
+    badge = (lamp(light, "within the lab's range" if light == scores.GREEN else "outside the lab's range",
+                  f"printed range {printed}") if light else "")
     return (f'<figure class="chart"><figcaption><span>{esc(title)}</span>'
-            f'<b>{esc(fmt(last_v))} <small>{esc(unit)}</small></b></figcaption>'
+            f'<b>{esc(fmt(last_v))} <small>{esc(unit)}</small></b></figcaption>{badge}'
             f'<svg viewBox="0 0 {width} {height}" role="img" aria-label="{esc(title)} over time">'
             f'{grid}{xlab}<path d="{path}" class="line"/>{marks}</svg>'
             f'<p class="meta">{len(points)} values · latest {esc(points[-1][0])}</p></figure>')
+
+
+LAMP = {scores.GREEN: ("✓", "Green"), scores.AMBER: ("!", "Amber"), scores.RED: ("✕", "Red")}
+
+
+def lamp(light: str, label: str, title: str = "") -> str:
+    """A traffic light: colour, icon and words, never colour alone."""
+    icon, word = LAMP[light]
+    return (f'<p class="lamp {light}" title="{esc(title)}"><i aria-hidden="true">{icon}</i>'
+            f'<span class="sr">{word}: </span>{esc(label)}</p>')
 
 
 def score_card(s: scores.Score) -> str:
@@ -257,9 +304,10 @@ def score_card(s: scores.Score) -> str:
         return (f'<article class="score missing"><h3>{esc(s.name)}</h3><p class="value">–</p>'
                 f'<p class="note">{esc(s.note or "")}</p><p class="src">{esc(s.source)}</p></article>')
     inputs = "".join(f"<li><span>{esc(k)}</span> {esc(v)}</li>" for k, v in s.inputs.items())
-    band = f'<p class="band">{esc(s.band)}</p>' if s.band else ""
+    band = lamp(s.light, s.band or "") if s.light else (f'<p class="band">{esc(s.band)}</p>' if s.band else "")
     note = f'<p class="note">{esc(s.note)}</p>' if s.note else ""
-    return (f'<article class="score"><h3>{esc(s.name)}</h3>'
+    edge = f" edge-{s.light}" if s.light else ""
+    return (f'<article class="score{edge}"><h3>{esc(s.name)}</h3>'
             f'<p class="value">{esc(fmt(s.value))} <small>{esc(s.unit)}</small></p>{band}{note}'
             f'<details><summary>Inputs</summary><ul>{inputs}</ul></details>'
             f'<p class="src">{esc(s.source)}</p></article>')
@@ -297,6 +345,17 @@ background:var(--card);color:var(--ink2);font-size:13px;max-width:900px}
 #tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--surface);padding:6px 9px;
 border-radius:6px;font-size:12px;display:none;z-index:9}
 footer{margin-top:40px;color:var(--muted);font-size:12px}
+:root{--good:#0ca30c;--warn:#fab219;--crit:#d03b3b}
+.lamp{display:flex;align-items:center;gap:8px;margin:6px 0 2px;font-weight:600;font-size:14px}
+.lamp i{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;font-style:normal;
+font-size:13px;font-weight:800;color:#fff;flex:none}
+.lamp.green i{background:var(--good)}.lamp.amber i{background:var(--warn);color:#1a1a19}.lamp.red i{background:var(--crit)}
+.chart .lamp{font-size:12px;font-weight:500;color:var(--ink2)}.chart .lamp i{width:18px;height:18px;font-size:11px}
+.score.edge-green{border-left:5px solid var(--good)}.score.edge-amber{border-left:5px solid var(--warn)}
+.score.edge-red{border-left:5px solid var(--crit)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.signal{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0 4px}
+.signal .lamp{background:var(--card);border:1px solid var(--border);border-radius:999px;padding:6px 12px 6px 8px;margin:0}
 """
 
 JS = """
@@ -352,6 +411,7 @@ from Cypher queries on <code>health.rl</code> in the encrypted vault. Nothing on
 {kpi(counts.get("whoop", 0), "Whoop days")}{kpi(counts.get("copy", 0), "copies counted once")}</section>
 <h2>Risk scores</h2><p>Estimates from published formulas, each with the values it used and their dates.
 {esc(f"Age {age}, {sex}" if age else "Year of birth not in the graph yet")}, smoking: {esc(args.smoker)}.</p>
+<div class="signal">{"".join(lamp(s.light, s.name.split(" (")[0]) for s in risk if s.light)}</div>
 <div class="grid">{"".join(score_card(s) for s in risk)}</div>
 <p class="disclaimer">These scores estimate risk for groups of people with similar values; they are not a diagnosis
 and say nothing certain about one person. Discuss them with your doctor. Klarbefund itself never judges a value.</p>
