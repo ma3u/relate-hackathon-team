@@ -69,6 +69,45 @@ QUERIES: dict[str, tuple[str, str]] = {
         ORDER BY date, label
         """,
     ),
+    "scores": (
+        "Risk scores stored for the person, with the values each one used (python -m health_graph scores)",
+        """
+        MATCH (:Patient)-[:HAS_SCORE]->(sr:ScoreResult)-[:OF]->(rs:RiskScore)-[:ESTIMATES]->(h:HealthRisk)
+        OPTIONAL MATCH (sr)-[:FROM]->(o:Observation)
+        RETURN rs.name AS score, h.name AS risk, sr.value AS value, sr.unit AS unit, sr.band AS band,
+               sr.light AS light, sr.demographics AS demographics, left(sr.computedAt, 10) AS computed,
+               collect(o.display + ' ' + toString(o.valueQuantity) + ' ' + coalesce(o.unit, '')
+                       + ' (' + left(o.effectiveDate, 10) + ')') AS inputs, rs.source AS source
+        ORDER BY score
+        """,
+    ),
+    "ranges": (
+        "Guideline range and optimal band for one LOINC code (param loinc), with the source",
+        """
+        MATCH (rr:ReferenceRange)-[:APPLIES_TO]->(:LoincCode {code: $loinc})
+        RETURN rr.analyteKey AS analyte, rr.ucum AS unit, rr.sex AS sex,
+               rr.guidelineLow AS guidelineLow, rr.guidelineHigh AS guidelineHigh,
+               rr.optimalLow AS optimalLow, rr.optimalHigh AS optimalHigh,
+               rr.summary AS summary, rr.sourceLabel AS source
+        ORDER BY unit, sex
+        """,
+    ),
+    "risk": (
+        "One health risk (param risk: cardiovascular, diabetes, kidney, liver, fitness): its scores and markers",
+        """
+        MATCH (h:HealthRisk {id: $risk})
+        OPTIONAL MATCH (rs:RiskScore)-[:ESTIMATES]->(h)
+        OPTIONAL MATCH (m:LoincCode)-[k:MARKER_OF]->(h)
+        OPTIONAL MATCH (:Patient)-[:HAS_OBSERVATION]->(o:Observation)-[:CODED_BY]->(m)
+        WHERE o.duplicateOf IS NULL
+        WITH h, rs, m, k, o ORDER BY o.effectiveDate DESC
+        WITH h, rs, m, k, collect(o)[0] AS last
+        RETURN h.name AS risk, collect(DISTINCT rs.name) AS scores, m.code AS loinc, m.display AS measure,
+               last.valueQuantity AS latest, last.unit AS unit, left(last.effectiveDate, 10) AS date,
+               k.source AS source
+        ORDER BY date DESC
+        """,
+    ),
     "provenance": (
         "Where one value (param resourceId) came from: line on the paper, OCR, document, agent",
         """

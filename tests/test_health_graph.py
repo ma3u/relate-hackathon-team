@@ -242,3 +242,52 @@ def test_year_of_birth_and_sex_reach_patient_and_omop(tmp_path):
 
 def test_without_the_switch_nothing_about_the_person_is_stored():
     assert fhir.parse_bundle(fhir.load_bundle(GOLDEN)).patient == {}
+
+
+# ── knowledge layer: reference ranges, risks, scores, markers ─────────────────
+
+def test_knowledge_is_seeded_once_and_links_ranges_to_loinc(db):
+    from health_graph import knowledge
+    conn, _ = db
+    counts = knowledge.seed(conn)
+    assert counts["ranges"] == len([r for r in knowledge.reference_ranges() if r["loinc"]])
+    assert counts["risks"] == 5 and counts["scores"] == 4
+    assert knowledge.seed(conn) == {}  # already current: nothing written
+    ldl = conn.execute("""MATCH (rr:ReferenceRange {analyteKey: 'cholesterol-ldl', ucum: 'mmol/L'})
+                          -[:APPLIES_TO]->(lc:LoincCode) RETURN rr.guidelineHigh AS g, rr.optimalHigh AS o,
+                          lc.code AS code, rr.sourceLabel AS src""").single()
+    assert (ldl["g"], ldl["o"], ldl["code"]) == (3.0, 1.4, "22748-8") and ldl["src"]
+    walk = conn.execute("""MATCH (h:HealthRisk {id: 'cardiovascular'})<-[:ESTIMATES]-(:RiskScore {id: 'score2'})
+                           -[:USES]->(lc:LoincCode) RETURN count(DISTINCT lc) AS n""").single()["n"]
+    assert walk == 5  # total cholesterol and HDL in two units each, systolic BP
+
+
+def test_a_stored_score_points_at_the_values_it_used(db):
+    from health_graph import knowledge
+    conn, _ = db
+    knowledge.seed(conn)
+    obs = [r["id"] for r in conn.execute(
+        "MATCH (o:Observation) RETURN o.resourceId AS id ORDER BY id LIMIT 2")]
+    patient = conn.execute("MATCH (p:Patient) RETURN p.id AS id").single()["id"]
+    assert knowledge.store_score(conn, patient, "fib4", 1.1, "below the low cut-off", "green", obs,
+                                 "age 50", None, "2026-11-12T00:00:00+00:00") == 2
+    assert knowledge.store_score(conn, patient, "fib4", 1.2, "below the low cut-off", "green", obs[:1],
+                                 "age 50", None, "2026-11-13T00:00:00+00:00") == 1  # replaces, not adds
+    n = conn.execute("MATCH (:Patient)-[:HAS_SCORE]->(sr:ScoreResult)-[:FROM]->(o) RETURN count(o) AS n, "
+                     "max(sr.value) AS v").single()
+    assert (n["n"], n["v"]) == (1, 1.2)
+
+
+def test_lights_use_the_guideline_range_and_the_optimal_band():
+    from health_graph import risk, scores
+    ranges = {"22748-8": [{"sex": "any", "ucum": "mmol/L", "guidelineLow": None, "guidelineHigh": 3.0,
+                           "optimalLow": None, "optimalHigh": 1.4, "sourceLabel": "ESC/EAS 2019"}]}
+    point = lambda v: ("2026-01-01", v, "", "", None, None, "r1", "22748-8")
+    assert risk.lab_light(ranges, point(1.2), "mmol/L", "male")[0] == scores.GREEN
+    assert risk.lab_light(ranges, point(2.5), "mmol/L", "male")[0] == scores.AMBER
+    assert risk.lab_light(ranges, point(3.0), "mmol/L", "male")[0] == scores.RED  # the target is "below 3.0"
+    # in mg/dL the value converts exactly to the range's mmol/L
+    assert risk.lab_light(ranges, point(50), "mg/dL", "male")[0] == scores.GREEN
+    # no reference range: the range the laboratory printed decides, inside or outside
+    lab = ("2026-01-01", 7.0, "", "", 1.0, 5.0, "r2", "9999-9")
+    assert risk.lab_light(ranges, lab, "mg/L", None)[0] == scores.RED

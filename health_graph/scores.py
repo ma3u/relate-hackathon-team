@@ -49,6 +49,8 @@ class Score:
     inputs: dict[str, str] = field(default_factory=dict)
     note: str | None = None
     light: str | None = None    # GREEN / AMBER / RED, from the same published categories
+    id: str | None = None       # the RiskScore node it belongs to, when there is one
+    observations: list[str] = field(default_factory=list)  # resourceIds of the values used
 
 
 # ── kidney: CKD-EPI 2021 (race-free) ─────────────────────────────────────────

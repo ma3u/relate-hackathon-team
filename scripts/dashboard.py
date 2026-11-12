@@ -25,60 +25,10 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from health_graph import scores, store  # noqa: E402
+from health_graph.risk import (MARKERS, compute_scores, lab_light, latest, load_ranges,  # noqa: E402
+                               marker_series, series)
 
 TODAY = dt.date.today()
-
-# Lab markers: title, LOINC codes (same analyte, any unit), display unit.
-CHOL = ["22748-8", "13457-7", "18262-6", "2089-1"]
-MARKERS = [
-    ("LDL cholesterol", CHOL, "mmol/L"),
-    ("HDL cholesterol", ["14646-4", "2085-9"], "mmol/L"),
-    ("Total cholesterol", ["14647-2", "2093-3"], "mmol/L"),
-    ("Triglycerides", ["14927-8", "2571-8"], "mmol/L"),
-    ("ApoB", ["1884-6"], "mg/dL"),
-    ("Lp(a)", ["10835-7"], "mg/dL"),
-    ("HbA1c", ["4548-4"], "%"),
-    ("Glucose", ["2345-7", "1558-6"], "mg/dL"),
-    ("hs-CRP", ["30522-7"], "mg/L"),
-    ("Ferritin", ["2276-4"], "µg/L"),
-    ("TSH", ["3016-3"], "mIU/L"),
-    ("Creatinine", ["2160-0"], "mg/dL"),
-    ("ALT", ["1742-6"], "U/L"),
-    ("AST", ["1920-8"], "U/L"),
-    ("NT-proBNP", ["33762-6"], "ng/L"),
-    ("Body weight", ["29463-7"], "kg"),
-    ("Waist", ["8280-0"], "cm"),
-]
-MARKER = {title: (codes, unit) for title, codes, unit in MARKERS}
-
-# mg/dL per mmol/L, by analyte (LOINC)
-MOLAR = {**{c: 38.67 for c in CHOL + ["14646-4", "2085-9", "14647-2", "2093-3"]},
-         "14927-8": 88.57, "2571-8": 88.57, "2345-7": 18.016, "1558-6": 18.016}
-# Units that are the same quantity, written differently.
-SAME = {"ug/ml": "mg/l", "ng/ml": "ug/l", "m[iu]/l": "miu/l", "u[iu]/ml": "miu/l", "uiu/ml": "miu/l",
-        "pg/ml": "ng/l", "mm[hg]": "mmhg", "iu/l": "u/l", "[iu]/l": "u/l"}
-
-
-def norm_unit(unit: str) -> str:
-    u = (unit or "").replace(" ", "").lower().replace("µ", "u").replace("μ", "u")
-    return SAME.get(u, u)
-
-
-def convert(code: str, value: float, unit: str, target: str) -> float | None:
-    """`value` in `target`, or None for a unit pair we do not know (never guessed)."""
-    u, t = norm_unit(unit), norm_unit(target)
-    if u == t:
-        return value
-    if (u, t) == ("g/l", "mg/dl"):
-        return value * 100
-    if (u, t) == ("ukat/l", "u/l"):
-        return value * 60
-    if code in MOLAR and (u, t) == ("mg/dl", "mmol/l"):
-        return value / MOLAR[code]
-    if code in MOLAR and (u, t) == ("mmol/l", "mg/dl"):
-        return value * MOLAR[code]
-    return None
-
 
 WEARABLES = [  # Apple Health weekly means: (LOINC, title, unit)
     ("40443-4", "Resting heart rate", "/min"),
@@ -98,140 +48,6 @@ WHOOP = [  # Whoop daily cycles, imported by health_graph/whoop.py
 ]
 
 
-def series(conn, codes, convert=None):
-    """[(date, value, source, lab)] for any of `codes`, copies counted once."""
-    rows = conn.execute(
-        """
-        MATCH (o:Observation)-[:CODED_BY]->(lc:LoincCode)
-        WHERE lc.code IN $codes AND o.duplicateOf IS NULL AND o.valueQuantity IS NOT NULL
-        OPTIONAL MATCH (dr:DiagnosticReport)-[:HAS_RESULT]->(o)
-        RETURN lc.code AS code, left(o.effectiveDate, 10) AS date, o.valueQuantity AS value,
-               o.unit AS unit, o.sourceKind AS source, coalesce(dr.performer, o.performer) AS lab,
-               o.referenceLow AS low, o.referenceHigh AS high
-        ORDER BY date
-        """, {"codes": codes})
-    out = []
-    for r in rows:
-        v = convert(r) if convert else r["value"]
-        if v is not None and r["date"]:
-            # The printed range, in the same unit as the converted value.
-            f = float(v) / r["value"] if r["value"] else 1.0
-            low = r["low"] * f if r["low"] is not None else None
-            high = r["high"] * f if r["high"] is not None else None
-            out.append((r["date"], float(v), r["source"] or "", r["lab"] or "", low, high))
-    return out
-
-
-def marker_series(conn, title):
-    codes, unit = MARKER[title]
-    return series(conn, codes, lambda r: convert(r["code"], r["value"], r["unit"], unit))
-
-
-def latest(points):
-    return points[-1] if points else None
-
-
-def years_between(a: str, b: dt.date) -> float:
-    d = dt.date.fromisoformat(a[:10])
-    return (b - d).days / 365.25
-
-
-# ── scores ───────────────────────────────────────────────────────────────────
-def compute_scores(conn, age, sex, smoker, region):
-    out = []
-    need = "year of birth and sex (Klarbefund: Export to my Mac, Send year of birth and sex)"
-
-    creat = latest(series(conn, ["2160-0"], lambda r: scores.creatinine_mg_dl(r["value"], r["unit"])))
-    if creat and age and sex:
-        e = scores.egfr_ckd_epi_2021(creat[1], age, sex)
-        out.append(scores.Score("eGFR (CKD-EPI 2021)", e, "mL/min/1.73 m²", scores.egfr_stage(e),
-                                "Inker et al., NEJM 2021; KDIGO 2012 categories",
-                                {"creatinine": f"{creat[1]:.2f} mg/dL ({creat[0]})", "age": str(age), "sex": sex},
-                                note="albuminuria not measured; the KDIGO light assumes A1",
-                                light=scores.egfr_light(e)))
-    else:
-        out.append(scores.Score("eGFR (CKD-EPI 2021)", None, "", None, "Inker et al., NEJM 2021",
-                                note="needs creatinine and " + need))
-
-    ast = latest(marker_series(conn, "AST"))
-    alt = latest(marker_series(conn, "ALT"))
-    plt = latest(series(conn, ["777-3", "26515-7"]))
-    if ast and alt and plt and age:
-        f = scores.fib4(age, ast[1], alt[1], plt[1])
-        out.append(scores.Score("FIB-4 (liver fibrosis)", f, "", scores.fib4_band(f, age),
-                                "Sterling et al., Hepatology 2006; EASL 2021 cut-offs",
-                                {"AST": f"{ast[1]:.0f} U/L ({ast[0]})", "ALT": f"{alt[1]:.0f} U/L ({alt[0]})",
-                                 "platelets": f"{plt[1]:.0f} ×10⁹/L ({plt[0]})", "age": str(age)},
-                                light=scores.fib4_light(scores.fib4_band(f, age))))
-    else:
-        out.append(scores.Score("FIB-4 (liver fibrosis)", None, "", None, "Sterling et al., Hepatology 2006",
-                                note="needs AST, ALT, platelets and " + need))
-
-    tc = latest(marker_series(conn, "Total cholesterol"))
-    hdl = latest(marker_series(conn, "HDL cholesterol"))
-    sbp = latest(series(conn, ["8480-6"]))
-    if tc and hdl and sbp and age and sex and 40 <= age <= 69:
-        r = scores.score2(age, sex, smoker, sbp[1], tc[1], hdl[1], region)
-        stale = max(years_between(tc[0], TODAY), years_between(hdl[0], TODAY))
-        out.append(scores.Score("SCORE2 (10-year cardiovascular risk)", r, "%", scores.score2_band(r, age),
-                                f"SCORE2 working group, Eur Heart J 2021; ESC 2021 categories; {region}-risk region (Germany)",
-                                {"systolic BP": f"{sbp[1]:.0f} mmHg ({sbp[0]})",
-                                 "total cholesterol": f"{tc[1]:.2f} mmol/L ({tc[0]})",
-                                 "HDL": f"{hdl[1]:.2f} mmol/L ({hdl[0]})",
-                                 "smoking": "yes" if smoker else "no", "age": str(age), "sex": sex},
-                                note=f"cholesterol is {stale:.1f} years old" if stale > 1 else None,
-                                light=scores.score2_light(scores.score2_band(r, age))))
-        risk_band = scores.score2_band(r, age)
-    else:
-        why = "SCORE2 covers ages 40 to 69" if age and not 40 <= age <= 69 else \
-            "needs systolic BP, total and HDL cholesterol and " + need
-        out.append(scores.Score("SCORE2 (10-year cardiovascular risk)", None, "%", None,
-                                "SCORE2 working group, Eur Heart J 2021", note=why))
-        risk_band = None
-
-    tg =latest(marker_series(conn, "Triglycerides"))
-    fpg = latest(series(conn, ["1558-6"]))
-    if tg and fpg:
-        t = scores.tyg(tg[1] * 88.57, fpg[1])
-        out.append(scores.Score("TyG index (insulin resistance)", t, "", None,
-                                "Simental-Mendía et al., Metab Syndr Relat Disord 2008",
-                                {"triglycerides": f"{tg[1]:.2f} mmol/L ({tg[0]})",
-                                 "fasting glucose": f"{fpg[1]:.0f} mg/dL ({fpg[0]})"},
-                                note="no universal cut-off; around 8.5 to 8.8 is used in several cohorts"))
-    if tc and hdl:
-        goal = scores.non_hdl_goal(risk_band)
-        light, band = scores.non_hdl_light(tc[1] - hdl[1], goal)
-        out.append(scores.Score("Non-HDL cholesterol", tc[1] - hdl[1], "mmol/L", band,
-                                "ESC/EAS 2019 dyslipidaemia guideline (goal by SCORE2 risk category)",
-                                {"total cholesterol": f"{tc[1]:.2f} ({tc[0]})", "HDL": f"{hdl[1]:.2f} ({hdl[0]})"},
-                                light=light))
-    lpa = latest(marker_series(conn, "Lp(a)"))
-    if lpa:
-        light, band = scores.lpa_light(lpa[1])
-        out.append(scores.Score("Lp(a)", lpa[1], "mg/dL", band, "EAS consensus statement, Eur Heart J 2022",
-                                {"Lp(a)": f"{lpa[1]:g} mg/dL ({lpa[0]})"},
-                                note="largely inherited; one measurement in life is usually enough", light=light))
-    a1c = latest(marker_series(conn, "HbA1c"))
-    if a1c:
-        light, band = scores.hba1c_light(a1c[1])
-        out.append(scores.Score("HbA1c", a1c[1], "%", band, "ADA Standards of Care 2024",
-                                {"HbA1c": f"{a1c[1]:g} % ({a1c[0]})"}, light=light))
-    bmi = latest(series(conn, ["39156-5"]))
-    if bmi:
-        light, band = scores.bmi_light(bmi[1])
-        out.append(scores.Score("BMI", bmi[1], "kg/m²", band, "WHO classification",
-                                {"BMI": f"{bmi[1]:.1f} ({bmi[0]})"}, light=light))
-    dbp = latest(series(conn, ["8462-4"]))
-    if sbp:
-        light, band = scores.bp_light(sbp[1], dbp[1] if dbp else None)
-        out.append(scores.Score("Blood pressure", sbp[1], f"/ {dbp[1]:.0f} mmHg" if dbp else "mmHg", band,
-                                "ESC 2024 guideline on elevated blood pressure and hypertension",
-                                {"systolic": f"{sbp[1]:.0f} mmHg ({sbp[0]})",
-                                 **({"diastolic": f"{dbp[1]:.0f} mmHg ({dbp[0]})"} if dbp else {})},
-                                note="office measurement", light=light))
-    return out
-
-
 # ── rendering ────────────────────────────────────────────────────────────────
 def esc(s) -> str:
     return html.escape(str(s))
@@ -247,7 +63,7 @@ def fmt(v: float) -> str:
     return f"{v:.2f}"
 
 
-def line_chart(points, title, unit, width=360, height=150):
+def line_chart(points, title, unit, width=360, height=150, light=None):
     """One series: a 2px line, ≥8px markers when sparse, hover tooltips via <title> and data-tip."""
     if not points:
         return f'<figure class="chart empty"><figcaption>{esc(title)}</figcaption><p>No values yet.</p></figure>'
@@ -276,12 +92,9 @@ def line_chart(points, title, unit, width=360, height=150):
         marks += (f'<circle cx="{sx(x):.1f}" cy="{sy(y):.1f}" r="{r}" class="dot"/>'
                   f'<circle cx="{sx(x):.1f}" cy="{sy(y):.1f}" r="10" class="hit" data-tip="{esc(tip)}"><title>{esc(tip)}</title></circle>')
     last_v = points[-1][1]
-    low, high = (points[-1][4], points[-1][5]) if len(points[-1]) > 5 else (None, None)
-    light = scores.range_light(last_v, low, high)
-    printed = (f"{fmt(low) if low is not None else ''}–{fmt(high) if high is not None else ''} {unit}"
-               if light else "")
-    badge = (lamp(light, "within the lab's range" if light == scores.GREEN else "outside the lab's range",
-                  f"printed range {printed}") if light else "")
+    badge = ""
+    if light:
+        badge = lamp(light[0], light[1]) + f'<p class="meta">{esc(light[2])}</p>'
     return (f'<figure class="chart"><figcaption><span>{esc(title)}</span>'
             f'<b>{esc(fmt(last_v))} <small>{esc(unit)}</small></b></figcaption>{badge}'
             f'<svg viewBox="0 0 {width} {height}" role="img" aria-label="{esc(title)} over time">'
@@ -312,6 +125,161 @@ def score_card(s: scores.Score) -> str:
             f'<details><summary>Inputs</summary><ul>{inputs}</ul></details>'
             f'<p class="src">{esc(s.source)}</p></article>')
 
+
+
+# ── the metadata model, drawn from the graph itself ─────────────────────────
+MODEL_POS = {  # label -> (x, y, layer)
+    "ScoreResult": (130, 70, "person"), "Patient": (130, 250, "person"), "OMOPPerson": (130, 450, "omop"),
+    "Provenance": (390, 40, "person"), "DiagnosticReport": (390, 150, "person"),
+    "Observation": (390, 300, "person"), "OMOPMeasurement": (390, 450, "omop"),
+    "DocumentReference": (650, 115, "person"), "Organization": (650, 200, "person"),
+    "NcbiTaxon": (650, 285, "ontology"), "LoincCode": (650, 370, "ontology"),
+    "RiskScore": (920, 90, "knowledge"), "HealthRisk": (1110, 300, "knowledge"),
+    "ReferenceRange": (920, 460, "knowledge"), "Knowledge": (1110, 470, "knowledge"),
+}
+LAYER = {"person": "#2a78d6", "omop": "#6250d6", "ontology": "#1baf7a", "knowledge": "#eb6834"}
+LAYER_NAME = {"person": "Your data (FHIR)", "omop": "OMOP research model", "ontology": "Codes (LOINC, NCBI)",
+              "knowledge": "Knowledge: risks, scores, ranges"}
+
+
+def model_svg(conn) -> str:
+    nodes = {r["l"]: r["n"] for r in conn.execute("MATCH (n) RETURN labels(n)[0] AS l, count(*) AS n")}
+    edges = [dict(r) for r in conn.execute(
+        "MATCH (a)-[r]->(b) RETURN labels(a)[0] AS a, type(r) AS t, labels(b)[0] AS b, count(*) AS n")]
+    W, H = 1240, 540
+    out = [f'<svg viewBox="0 0 {W} {H}" class="model" role="img" aria-label="Metadata model of the health graph">',
+           '<defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" '
+           'orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" class="arrow"/></marker></defs>']
+    pos = dict(MODEL_POS)
+    extra = [l for l in nodes if l not in pos]
+    for i, l in enumerate(extra):
+        pos[l] = (130 + i * 200, 520, "person")
+    for e in edges:
+        if e["a"] not in pos or e["b"] not in pos:
+            continue
+        (x1, y1, _), (x2, y2, _) = pos[e["a"]], pos[e["b"]]
+        if e["a"] == e["b"]:  # self-loop (SAME_AS)
+            out.append(f'<path d="M{x1 - 30},{y1 - 18} C{x1 - 60},{y1 - 70} {x1 + 60},{y1 - 70} {x1 + 30},{y1 - 18}" '
+                       f'class="edge" marker-end="url(#arr)"/><text x="{x1}" y="{y1 - 62}" class="elabel" '
+                       f'text-anchor="middle">{esc(e["t"])} · {e["n"]}</text>')
+            continue
+        # stop the line at the box edges
+        dx, dy = x2 - x1, y2 - y1
+        L = max((dx * dx + dy * dy) ** 0.5, 1)
+        sx_, sy_ = x1 + dx / L * 70, y1 + dy / L * 22
+        ex, ey = x2 - dx / L * 72, y2 - dy / L * 24
+        out.append(f'<line x1="{sx_:.0f}" y1="{sy_:.0f}" x2="{ex:.0f}" y2="{ey:.0f}" class="edge" marker-end="url(#arr)">'
+                   f'<title>{esc(e["a"])} -[:{esc(e["t"])}]-> {esc(e["b"])}: {e["n"]}</title></line>'
+                   f'<text x="{(sx_ + ex) / 2:.0f}" y="{(sy_ + ey) / 2 - 4:.0f}" class="elabel" text-anchor="middle">'
+                   f'{esc(e["t"])} · {e["n"]}</text>')
+    for l, n in nodes.items():
+        x, y, layer = pos[l]
+        out.append(f'<g><rect x="{x - 70}" y="{y - 22}" width="140" height="44" rx="10" class="node" '
+                   f'style="stroke:{LAYER[layer]}"/><text x="{x}" y="{y - 3}" class="nlabel" text-anchor="middle">'
+                   f'{esc(l)}</text><text x="{x}" y="{y + 13}" class="ncount" text-anchor="middle">{n:,}</text></g>'
+                   .replace(",", " "))
+    legend = "".join(f'<span><i style="background:{c}"></i>{esc(LAYER_NAME[k])}</span>' for k, c in LAYER.items())
+    return "".join(out) + f'</svg><div class="legend">{legend}</div>'
+
+
+# ── five views: a health risk, its scores, its measures, your values ────────
+RISK_VIEWS = ["cardiovascular", "diabetes", "kidney", "liver", "fitness"]
+VIEW_CYPHER = """MATCH (h:HealthRisk {id: $risk})
+OPTIONAL MATCH (rs:RiskScore)-[:ESTIMATES]->(h)
+OPTIONAL MATCH (rs)-[:USES]->(u:LoincCode)
+OPTIONAL MATCH (m:LoincCode)-[k:MARKER_OF]->(h)
+RETURN h.name AS risk, collect(DISTINCT [rs.id, rs.name, u.code]) AS uses,
+       collect(DISTINCT [m.code, k.source]) AS markers"""
+CODE_TITLE = {c: t for t, codes, _ in MARKERS for c in codes}
+CODE_TITLE.update({code: t for code, t, _ in WEARABLES})
+CODE_TITLE.update({"59261-8": "HbA1c"})
+LIGHT_HEX = {scores.GREEN: "#0ca30c", scores.AMBER: "#fab219", scores.RED: "#d03b3b"}
+ICON = {scores.GREEN: "✓", scores.AMBER: "!", scores.RED: "✕"}
+
+
+def measure_value(conn, title, codes, ranges, sex):
+    """(text, light) for the latest value of a measure, or None without data."""
+    marker = next(((t, u) for t, cs, u in MARKERS if t == title), None)
+    if marker:
+        pts = marker_series(conn, title)
+        unit = marker[1]
+    else:
+        pts = series(conn, codes)
+        unit = next((u for c, t, u in WEARABLES if t == title), "")
+    p = latest(pts)
+    if not p:
+        return None
+    light = lab_light(ranges, p, unit, sex) if marker else None
+    if light is None and title in ("Systolic BP", "Diastolic BP"):  # no range in the table: ESC 2024 categories
+        light = scores.bp_light(p[1], None) if title == "Systolic BP" else scores.bp_light(0, p[1])
+    return f"{fmt(p[1])} {unit}".strip(), (light[0] if light else None)
+
+
+def risk_view(conn, risk_id, by_score, ranges, sex) -> str:
+    rows = list(conn.execute(VIEW_CYPHER, {"risk": risk_id}))
+    if not rows:
+        return ""
+    r = rows[0]
+    scores_used: dict[str, tuple[str, set]] = {}
+    for sid, sname, code in r["uses"]:
+        if sid:
+            scores_used.setdefault(sid, (sname, set()))[1].add(code)
+    measures: dict[str, set] = {}
+    for code, _ in r["markers"]:
+        if code:
+            measures.setdefault(CODE_TITLE.get(code, code), set()).add(code)
+    for _, (_, codes) in scores_used.items():
+        for code in codes:
+            measures.setdefault(CODE_TITLE.get(code, code), set()).add(code)
+    shown, missing = [], []
+    for title, codes in sorted(measures.items()):
+        v = measure_value(conn, title, sorted(codes), ranges, sex)
+        (shown if v else missing).append((title, codes, v))
+
+    W, H, cx, cy = 620, 470, 310, 235
+    out = [f'<svg viewBox="0 0 {W} {H}" class="view" role="img" aria-label="{esc(r["risk"])}: scores and measures">']
+    import math as _m
+    spos = {}
+    for i, (sid, (sname, _)) in enumerate(scores_used.items()):
+        a = -_m.pi / 2 + (i + 0.5) * 2 * _m.pi / max(len(scores_used), 1)
+        spos[sid] = (cx + 105 * _m.cos(a), cy + 80 * _m.sin(a))
+    mpos = {}
+    for i, (title, codes, v) in enumerate(shown):
+        a = -_m.pi / 2 + i * 2 * _m.pi / max(len(shown), 1)
+        mpos[title] = (cx + 240 * _m.cos(a), cy + 185 * _m.sin(a))
+    for title, codes, v in shown:  # MARKER_OF: measure -> risk
+        x, y = mpos[title]
+        out.append(f'<line x1="{x:.0f}" y1="{y:.0f}" x2="{cx}" y2="{cy}" class="vmark"/>')
+    for sid, (sname, codes) in scores_used.items():  # USES and ESTIMATES
+        sx_, sy_ = spos[sid]
+        for title, cs, v in shown:
+            if cs & codes:
+                x, y = mpos[title]
+                out.append(f'<line x1="{sx_:.0f}" y1="{sy_:.0f}" x2="{x:.0f}" y2="{y:.0f}" class="vuse"/>')
+        out.append(f'<line x1="{sx_:.0f}" y1="{sy_:.0f}" x2="{cx}" y2="{cy}" class="vest"/>')
+    out.append(f'<circle cx="{cx}" cy="{cy}" r="46" class="vrisk"/><text x="{cx}" y="{cy + 4}" class="vrisklabel" '
+               f'text-anchor="middle">{esc(r["risk"].replace("Low cardiorespiratory fitness", "Low fitness"))}</text>')
+    for sid, (sname, _) in scores_used.items():
+        x, y = spos[sid]
+        s = by_score.get(sid)
+        fill = LIGHT_HEX.get(s.light) if s and s.light else "#5b6270"
+        val = f"{fmt(s.value)}{(' ' + s.unit) if s.unit in ('%',) else ''}" if s and s.value is not None else "–"
+        icon = ICON.get(s.light, "") if s and s.light else ""
+        out.append(f'<rect x="{x - 62:.0f}" y="{y - 20:.0f}" width="124" height="40" rx="20" style="fill:{fill}" class="vscore"/>'
+                   f'<text x="{x:.0f}" y="{y - 3:.0f}" class="vscorelabel" text-anchor="middle">{icon} {esc(sname.split(" (")[0])}</text>'
+                   f'<text x="{x:.0f}" y="{y + 12:.0f}" class="vscorelabel small" text-anchor="middle">{esc(val)}</text>')
+    for title, codes, (text, light) in shown:
+        x, y = mpos[title]
+        fill = LIGHT_HEX.get(light, "#3a3f48")
+        icon = ICON.get(light, "")
+        out.append(f'<circle cx="{x:.0f}" cy="{y:.0f}" r="9" style="fill:{fill}" class="vdot"/>'
+                   f'<text x="{x:.0f}" y="{y + 4:.0f}" class="vicon" text-anchor="middle">{icon}</text>'
+                   f'<text x="{x:.0f}" y="{y + 24:.0f}" class="vmlabel" text-anchor="middle">{esc(title)}</text>'
+                   f'<text x="{x:.0f}" y="{y + 38:.0f}" class="vmval" text-anchor="middle">{esc(text)}</text>')
+    out.append("</svg>")
+    more = f'<p class="meta">Also a marker, no value yet: {esc(", ".join(t for t, _, _ in missing))}</p>' if missing else ""
+    return (f'<figure class="chart viewfig"><figcaption><span>{esc(r["risk"])}</span></figcaption>{"".join(out)}{more}'
+            f'<details><summary>Cypher</summary><pre>{esc(VIEW_CYPHER.replace("$risk", repr(risk_id)))}</pre></details></figure>')
 
 CSS = """
 :root{--surface:#fcfcfb;--card:#ffffff;--ink:#0b0b0b;--ink2:#52514e;--muted:#8a8984;--line:#2a78d6;
@@ -345,6 +313,19 @@ background:var(--card);color:var(--ink2);font-size:13px;max-width:900px}
 #tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--surface);padding:6px 9px;
 border-radius:6px;font-size:12px;display:none;z-index:9}
 footer{margin-top:40px;color:var(--muted);font-size:12px}
+.views{display:grid;grid-template-columns:repeat(auto-fill,minmax(520px,1fr));gap:14px}
+.view,.model{width:100%;height:auto}.vmark{stroke:var(--grid);stroke-width:1.5;stroke-dasharray:4 4}
+.vuse{stroke:var(--muted);stroke-width:1.5}.vest{stroke:var(--accent);stroke-width:3}
+.vrisk{fill:var(--accent)}.vrisklabel{fill:#fff;font-size:11px;font-weight:700}
+.vscore{stroke:var(--card);stroke-width:2}.vscorelabel{fill:#fff;font-size:11px;font-weight:700}
+.vscorelabel.small{font-size:11px;font-weight:600}.vdot{stroke:var(--card);stroke-width:2}
+.vicon{fill:#fff;font-size:10px;font-weight:800}.vmlabel{fill:var(--ink);font-size:11px;font-weight:600}
+.vmval{fill:var(--ink2);font-size:10.5px}pre{white-space:pre-wrap;font-size:11.5px;color:var(--ink2)}
+.node{fill:var(--card);stroke-width:2.5}.nlabel{fill:var(--ink);font-size:13px;font-weight:650}
+.ncount{fill:var(--ink2);font-size:11.5px}.edge{stroke:var(--muted);stroke-width:1.3;fill:none}
+.arrow{fill:var(--muted)}.elabel{fill:var(--ink2);font-size:10px}
+.legend{display:flex;flex-wrap:wrap;gap:16px;font-size:12px;color:var(--ink2);margin-top:8px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
 :root{--good:#0ca30c;--warn:#fab219;--crit:#d03b3b}
 .lamp{display:flex;align-items:center;gap:8px;margin:6px 0 2px;font-weight:600;font-size:14px}
 .lamp i{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;font-style:normal;
@@ -394,7 +375,14 @@ def main():
     wear = [line_chart(series(conn, [code]), t, u) for code, t, u in WEARABLES]
     whoop_rows = [series(conn, [code]) for code, _, _ in WHOOP]
     whoop = [line_chart(rows, t, u) for rows, (_, t, u) in zip(whoop_rows, WHOOP)] if any(whoop_rows) else []
-    labs = [line_chart(marker_series(conn, t), t, u) for t, _, u in MARKERS]
+    ranges = load_ranges(conn)
+    labs = []
+    for t, _, u in MARKERS:
+        pts = marker_series(conn, t)
+        labs.append(line_chart(pts, t, u, light=lab_light(ranges, pts[-1], u, sex) if pts else None))
+    by_score = {s.id: s for s in risk if s.id}
+    model = model_svg(conn)
+    views = [risk_view(conn, rid, by_score, ranges, sex) for rid in RISK_VIEWS]
     conn.close()
 
     kpi = lambda n, label: f'<div class="kpi"><b>{esc(n)}</b><span>{esc(label)}</span></div>'
@@ -417,8 +405,17 @@ from Cypher queries on <code>health.rl</code> in the encrypted vault. Nothing on
 and say nothing certain about one person. Discuss them with your doctor. Klarbefund itself never judges a value.</p>
 <h2>Whoop</h2><p>Daily recovery, strain, HRV and sleep from the Whoop export.</p>{whoop_html}
 <h2>Apple Watch</h2><p>Weekly means from Apple Health, sent by Klarbefund.</p><div class="grid">{"".join(wear)}</div>
-<h2>Lab trends</h2><p>Every value once, from scans and the laboratories' own files; hover a point for its source.</p>
+<h2>How the measures connect</h2><p>One Cypher walk per health risk: the scores that estimate it, the measures they
+use and the measures guidelines name as its markers, each with your latest value and its light.</p>
+<div class="views">{"".join(views)}</div>
+<h2>Lab trends</h2><p>Every value once. Lights: green inside the optimal band (or inside the guideline range when no
+optimal band is published), amber inside the guideline range but not optimal, red outside it. Ranges from Klarbefund's
+sourced reference table, stored in the graph as <code>ReferenceRange</code> nodes; without one, the range the
+laboratory printed decides.</p>
 <div class="grid">{"".join(labs)}</div>
+<h2>The metadata model</h2><p>Every label and relationship in this graph, with live counts, from
+<code>MATCH (a)-[r]-&gt;(b) RETURN labels(a)[0], type(r), labels(b)[0], count(*)</code>.</p>
+<figure class="chart modelfig">{model}</figure>
 <footer>Relate (Neo4j's embedded graph database) · health_graph · scripts/dashboard.py</footer>
 </main><div id="tip"></div><script>{JS}</script></body></html>"""
     out.parent.mkdir(parents=True, exist_ok=True)

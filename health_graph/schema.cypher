@@ -25,3 +25,12 @@ CREATE CONSTRAINT ncbi_taxon_code IF NOT EXISTS FOR (n:NcbiTaxon) REQUIRE n.code
 // Find values by the words on the paper report (German labels) or the LOINC name.
 CREATE FULLTEXT INDEX observation_text IF NOT EXISTS FOR (n:Observation) ON EACH [n.display, n.sourceLine];
 CREATE FULLTEXT INDEX loinc_text IF NOT EXISTS FOR (n:LoincCode) ON EACH [n.display];
+
+// ── Knowledge layer (health_graph/knowledge.py) ─────────────────────────────
+// Health risks, the scores that estimate them, the measures they use, and the
+// guideline and optimal ranges from Klarbefund's reference-ranges.ts.
+CREATE CONSTRAINT health_risk_id IF NOT EXISTS FOR (n:HealthRisk) REQUIRE n.id IS UNIQUE;
+CREATE CONSTRAINT risk_score_id IF NOT EXISTS FOR (n:RiskScore) REQUIRE n.id IS UNIQUE;
+CREATE CONSTRAINT reference_range_id IF NOT EXISTS FOR (n:ReferenceRange) REQUIRE n.id IS UNIQUE;
+CREATE CONSTRAINT score_result_id IF NOT EXISTS FOR (n:ScoreResult) REQUIRE n.id IS UNIQUE;
+CREATE CONSTRAINT knowledge_id IF NOT EXISTS FOR (n:Knowledge) REQUIRE n.id IS UNIQUE;
