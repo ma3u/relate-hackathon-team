@@ -107,8 +107,11 @@ def env() -> dict[str, str]:
     return values
 
 
-def narrate(text: str, out_dir: Path, voice: bool) -> Path:
+def narrate(text: str, out_dir: Path, voice: bool, voice_id: str | None = None, settings: dict | None = None) -> Path:
+    # The cache key covers the voice too, so switching voices never reuses old audio.
     key = hashlib.sha256(text.encode()).hexdigest()[:16]
+    if voice_id:
+        key += "-" + hashlib.sha256((voice_id + json.dumps(settings or {}, sort_keys=True)).encode()).hexdigest()[:8]
     mp3 = out_dir / f"{key}.mp3"
     if mp3.exists():
         return mp3
@@ -120,8 +123,8 @@ def narrate(text: str, out_dir: Path, voice: bool) -> Path:
         return silent
     e = env()
     body = json.dumps({"text": text, "model_id": "eleven_multilingual_v2",
-                       "voice_settings": {"stability": 0.5, "similarity_boost": 0.8, "style": 0.2}})
-    url = f"https://api.elevenlabs.io/v1/text-to-speech/{e['ELEVENLABS_VOICE_ID']}?output_format=mp3_44100_128"
+                       "voice_settings": settings or {"stability": 0.5, "similarity_boost": 0.8, "style": 0.2}})
+    url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id or e['ELEVENLABS_VOICE_ID']}?output_format=mp3_44100_128"
     # The key goes to curl on stdin (a config file), never on the command line.
     cfg = f'header = "xi-api-key: {e["ELEVENLABS_API_KEY"]}"\nheader = "Content-Type: application/json"\n'
     res = subprocess.run(["curl", "-s", "-f", "-o", str(mp3), "-X", "POST", url, "-K", "-", "--data-binary", body],
@@ -233,7 +236,7 @@ def main() -> None:
 
     clips, voices, srt, t = [], [], [], 0.0
     for i, seg in enumerate(segments, 1):
-        mp3 = narrate(seg["text"], audio, args.voice)
+        mp3 = narrate(seg["text"], audio, args.voice, board.get("voice_id"), board.get("voice_settings"))
         fx = board.get("voice_fx")
         if fx and args.voice:  # deeper and warmer, same timing; cached beside the ElevenLabs file
             deeper = audio / f"{mp3.stem}-fx{fx['semitones']:+g}.wav"

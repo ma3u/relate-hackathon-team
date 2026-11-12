@@ -33,7 +33,7 @@ def main() -> None:
     with sync_playwright() as p:
         browser = p.chromium.launch(channel="chrome")
         page = browser.new_page(viewport={"width": W, "height": H})
-        page.goto(src.as_uri(), wait_until="load")
+        page.goto(f"{src.as_uri()}#seg={args.seconds}", wait_until="load")  # scenes may time themselves to it
         page.evaluate("document.fonts.ready")
         page.wait_for_function("[...document.images].every(i => i.complete)")
         if args.still:
