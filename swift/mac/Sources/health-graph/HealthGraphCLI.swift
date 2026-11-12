@@ -13,8 +13,9 @@ struct HealthGraphCLI: ParsableCommand {
       health-graph import --db health.rl fixtures/fhir/*.json
       health-graph query --db health.rl trend --param loinc=4548-4
       health-graph receive --db ~/RelateHealth/health.rl --require-mount
+      health-graph usb --db ~/RelateHealth/health.rl --require-mount
       """,
-    subcommands: [Import.self, Query.self, List.self, Receive.self])
+    subcommands: [Import.self, Query.self, List.self, Receive.self, Usb.self])
 }
 
 struct Import: ParsableCommand {
@@ -123,6 +124,72 @@ struct Receive: ParsableCommand {
     print("Ctrl+C stops the receiver.\n")
     fflush(stdout)
     try server.wait()
+  }
+}
+
+struct Usb: ParsableCommand {
+  static let configuration = CommandConfiguration(
+    abstract: "Fetch reports and Apple Health from Klarbefund over the USB cable (no Wi-Fi needed).",
+    discussion: """
+      Connect the iPhone by cable and open Klarbefund: Menu -> Export to my Mac (Relate) ->
+      Send over USB cable. This waits for the phone, proves it is the paired Mac with the
+      pairing token, and imports what the phone sends, as the Wi-Fi receiver would.
+      """)
+  @Option(help: "The Relate store (.rl).") var db: String
+  @Option(help: "Seconds to wait for the phone.") var wait = 300
+  @Flag(help: "Connect to Klarbefund in the iOS Simulator (its loopback is this Mac's) instead of over USB.")
+  var simulator = false
+  @Option(help: .hidden) var testToken: String?
+  @Flag(help: "Refuse to start unless the store's folder is a mounted volume (encrypted vault).")
+  var requireMount = false
+
+  func run() throws {
+    let store = URL(fileURLWithPath: (db as NSString).expandingTildeInPath).standardizedFileURL
+    if requireMount && !Network.isMountPoint(store.deletingLastPathComponent()) {
+      throw ValidationError(
+        "\(store.deletingLastPathComponent().path) is not a mounted volume; open the encrypted vault first (scripts/health_vault.sh mount)")
+    }
+    let token = try testToken ?? Identity.ensure(host: Network.lanAddress()).token
+    let deadline = Date().addingTimeInterval(TimeInterval(wait))
+    var said = ""
+    func say(_ line: String) {
+      guard line != said else { return }
+      said = line
+      print(line)
+      fflush(stdout)
+    }
+    while Date() < deadline {
+      if simulator {
+        if let fd = Network.connectLoopback(port: USB.port) {
+          say("Connected to the Simulator. Receiving...")
+          let summary = try USB.pull(FrameStream(fd: fd), token: token, store: store) { print($0) }
+          print("Done: \(summary.stored) values from \(summary.reports) reports, \(summary.weekly) Apple Health weekly values into \(store.path)")
+          return
+        }
+        say("Waiting for Klarbefund in the Simulator: Export to my Mac -> Send over USB cable")
+        Thread.sleep(forTimeInterval: 2)
+        continue
+      }
+      let phones = (try? USBMux.devices()) ?? []
+      guard !phones.isEmpty else {
+        say("Waiting for an iPhone on the USB cable...")
+        Thread.sleep(forTimeInterval: 2)
+        continue
+      }
+      for phone in phones {
+        do {
+          let fd = try USBMux.connect(device: phone.id, port: USB.port)
+          say("Connected over USB. Receiving...")
+          let summary = try USB.pull(FrameStream(fd: fd), token: token, store: store) { print($0) }
+          print("Done: \(summary.stored) values from \(summary.reports) reports, \(summary.weekly) Apple Health weekly values into \(store.path)")
+          return
+        } catch USB.Failure.refused {
+          say("iPhone found. In Klarbefund: Menu -> Export to my Mac (Relate) -> Send over USB cable")
+        }
+      }
+      Thread.sleep(forTimeInterval: 2)
+    }
+    throw ValidationError("no phone sent anything within \(wait) seconds")
   }
 }
 

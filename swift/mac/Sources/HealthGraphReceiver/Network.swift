@@ -29,6 +29,26 @@ public enum Network {
     return String(cString: buffer)
   }
 
+  /// A TCP connection to 127.0.0.1:`port`, or nil when nothing listens there.
+  public static func connectLoopback(port: UInt16) -> Int32? {
+    let fd = socket(AF_INET, SOCK_STREAM, 0)
+    guard fd >= 0 else { return nil }
+    var addr = sockaddr_in()
+    addr.sin_family = sa_family_t(AF_INET)
+    addr.sin_port = port.bigEndian
+    inet_pton(AF_INET, "127.0.0.1", &addr.sin_addr)
+    let ok = withUnsafePointer(to: &addr) {
+      $0.withMemoryRebound(to: sockaddr.self, capacity: 1) {
+        connect(fd, $0, socklen_t(MemoryLayout<sockaddr_in>.size))
+      }
+    }
+    if ok != 0 {
+      close(fd)
+      return nil
+    }
+    return fd
+  }
+
   /// This Mac's short name, as the app shows it.
   public static var hostName: String {
     ProcessInfo.processInfo.hostName.split(separator: ".").first.map(String.init) ?? "Mac"

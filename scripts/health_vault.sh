@@ -14,6 +14,7 @@
 #   scripts/health_vault.sh status
 #   scripts/health_vault.sh receive   # mount, then run the Klarbefund receiver (refuses if not mounted)
 #                                     # (Swift: swift/mac; HEALTH_GRAPH_RECEIVER=python for the Python one)
+#   scripts/health_vault.sh usb       # mount, then fetch from Klarbefund over the USB cable (no Wi-Fi)
 #   scripts/health_vault.sh mcp       # mount, then serve the graph read-only over MCP (for Claude)
 set -euo pipefail
 
@@ -95,10 +96,10 @@ case "${1:-status}" in
     echo "vault: $VAULT ($( [ -e "$VAULT" ] && echo present || echo missing ))"
     echo "mount: $MOUNT ($(mounted && echo "unlocked" || echo "locked"))"
     ;;
-  receive)
+  receive | usb)
     [ -e "$VAULT" ] || create
     do_mount
-    if [ "${HEALTH_GRAPH_RECEIVER:-swift}" = python ]; then
+    if [ "$1" = receive ] && [ "${HEALTH_GRAPH_RECEIVER:-swift}" = python ]; then
       cd "$REPO" && exec env PYTHONUNBUFFERED=1 .venv/bin/python -m health_graph receive \
         --db "$MOUNT/health.rl" --require-mount "${@:2}"
     fi
@@ -115,12 +116,19 @@ case "${1:-status}" in
     else
       log "no signing identity; macOS may ask for Local Network access after every build"
     fi
-    exec "$bin" receive \
+    exec "$bin" "$1" \
       --db "$MOUNT/health.rl" --require-mount "${@:2}"
     ;;
   mcp)
     do_mount >/dev/null 2>&1 || do_mount
-    exec "$RELATE" serve --mcp stdio --database "$MOUNT/health.rl" --read-only
+    # Claude reads a snapshot, never the live store: an open reader, even a
+    # read-only one, makes Relate refuse writers in other processes, so the
+    # receiver could not store anything while a Claude session was open
+    # (Nov 12, 2026). The copy stays inside the encrypted vault; reconnecting
+    # the MCP server (or a new session) takes a fresh one.
+    snap="$MOUNT/claude-snapshot.rl"
+    [ -f "$MOUNT/health.rl" ] && cp -f "$MOUNT/health.rl" "$snap.tmp" && mv -f "$snap.tmp" "$snap" && chmod 600 "$snap"
+    exec "$RELATE" serve --mcp stdio --database "$snap" --read-only
     ;;
   *) sed -n '2,16p' "$0"; exit 2 ;;
 esac

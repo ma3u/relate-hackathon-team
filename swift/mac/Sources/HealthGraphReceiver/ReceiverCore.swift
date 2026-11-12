@@ -111,7 +111,7 @@ public final class ReceiverCore: @unchecked Sendable {
       } catch let error as HealthGraphError {
         return Response(400, ["error": error.description])
       } catch {
-        let locked = "\(error)".lowercased().contains("lock")
+        let locked = ReceiverCore.isBusy(error)
         if locked && attempt < 5 {
           Thread.sleep(forTimeInterval: 0.5 * Double(attempt + 1))
           continue
@@ -121,6 +121,24 @@ public final class ReceiverCore: @unchecked Sendable {
       }
     }
     return Response(503, ["error": "the graph could not be written, try again"])
+  }
+
+  /// Another process has the store: "storage locked", or, while a read-only
+  /// reader such as `relate serve --mcp` has it open, sometimes a bare
+  /// "internal error" (seen Nov 12, 2026). Both pass when retried.
+  public static func isBusy(_ error: Error) -> Bool {
+    let text = "\(error)".lowercased()
+    return text.contains("lock") || text.contains("internal error")
+  }
+
+  /// Runs `body`, retrying for a few seconds while another process has the store.
+  public static func retrying<T>(_ body: () throws -> T) throws -> T {
+    for attempt in 0..<5 {
+      do { return try body() } catch where isBusy(error) {
+        Thread.sleep(forTimeInterval: 0.5 * Double(attempt + 1))
+      }
+    }
+    return try body()
   }
 
   private func importBundle(_ bundle: JSONObject, _ r: Request) throws -> Response {

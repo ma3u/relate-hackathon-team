@@ -71,6 +71,28 @@ Fictional dev dataset in the Simulator: **34 reports, 240 lab values, 106 kinds 
 
 **App size:** Relate is a static library, so only what the app calls is linked. Klarbefund Release for device grows from **8.3 MB to 30 MB** (binary 4.8 → 27 MB, uncompressed; the App Store download is compressed). The 162 MB `ios-arm64` archive in the XCFramework is not what ships.
 
+## Send over USB cable (no shared Wi-Fi)
+
+When the Mac and the iPhone are not on the same Wi-Fi, a cable is enough:
+
+```bash
+scripts/health_vault.sh usb          # Mac: opens the vault, waits for the iPhone on the cable
+```
+
+iPhone: Klarbefund → Menu → Export to my Mac (Relate) → **Send over USB cable**, and keep the screen open until it says *Sent …*.
+
+```mermaid
+flowchart LR
+  P["📱 Klarbefund<br/>listens on 127.0.0.1 / ::1 :8788<br/>(loopback only)"] -- "USB cable<br/>(macOS usbmuxd)" --- M["💻 health-graph usb<br/>sends the pairing token"]
+  M --> RL[("~/RelateHealth/health.rl")]
+```
+
+- **The Mac connects, the phone answers.** macOS's `usbmuxd` (the service Finder and Xcode use for a connected iPhone) opens a TCP connection to a port on the phone's loopback. Klarbefund listens there only while that screen is open. Nothing on any network can reach a loopback port.
+- **Only the paired Mac gets data.** The Mac sends the pairing token first; the phone compares it in constant time and otherwise sends nothing. Then come the same FHIR bundles as over Wi-Fi (every report, and the Apple Health weekly means if that switch is on), framed as length-prefixed JSON, and the Mac imports them with the same `HealthGraph` code.
+- Pairing (scanning the QR code) now also works when the Mac is not reachable over Wi-Fi: the code comes from the Mac's own screen, and the cable needs only the token.
+- Tested: `swift test --package-path swift/mac` (fake phone on a socket pair, wrong token refused); the Simulator against `health-graph usb --simulator`; and the real iPhone 17 Pro (iOS 27.2) on the cable: **26 reports, 458 values (127 of them without a LOINC code) and 843 Apple Health weekly values over 13 metrics** in one transfer.
+- Debug builds: `-MBUSBSelfTest` makes the app listen at launch with a fixed test token and no data; `health-graph usb --test-token …` checks the cable path without anyone's values.
+
 ## Using HealthGraph in an app
 
 ```swift
@@ -87,6 +109,11 @@ let trend = try store.rows(query: "trend", ["loinc": "4548-4"])   // [[String: S
 Relate keeps **one open handle per store per process**: release a writer before opening the same store read-only (it closes when the `HealthStore` is released). Klarbefund pins the package to a commit in `project.yml`, so a TestFlight build always contains the same graph code.
 
 ## Lessons learned
+
+- **A read-only reader blocks writers.** While `relate serve --mcp --read-only` (Claude's MCP server) had the store open, the receiver's writes failed with "storage locked" or a bare "internal error". `health_vault.sh mcp` now serves Claude a snapshot copy (`claude-snapshot.rl`, inside the vault; reconnect the MCP server for fresh data), and the receiver retries both errors.
+- **Demo data must never share a pairing.** A Simulator paired with the real receiver sent Klarbefund's fictional demo reports into the real graph on the next demo launch (found and removed the same day; real values verified unchanged). Demo and dev-data launches now pair, send and keep their on-device graph under their own keys and folder.
+- **Don't let one slow path disable another.** With the Mac off the phone's Wi-Fi, each report waited 20 s for its timeout, and the USB button was greyed out meanwhile. The Wi-Fi export now checks reachability once (4 s), and USB starts listening at the tap while it gathers the data (Apple Health at most 45 s).
+- **macOS Local Network permission is per signature**, and **git hooks export `GIT_DIR`**, which breaks SwiftPM checkouts inside a pre-push hook (Klarbefund's CodeQL script now unsets it).
 
 - **The first `swift build` downloads a 311 MB XCFramework** (all slices: macOS, iOS device, Simulator). In a sandbox, or when it stalls, download it once and seed SwiftPM's cache: `~/Library/Caches/org.swift.swiftpm/artifacts/https___github_com_relatedb_relate_releases_download_v1_0_0_RelateFFI_xcframework_zip` (checksum `a787caf0…0566`, as in Relate's `Package.swift`).
 - **Writer and reader in one process:** opening a read-only `Database` while a writer on the same file is open fails with `internal error`. Close the writer first.
