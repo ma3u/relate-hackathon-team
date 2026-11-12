@@ -2,6 +2,10 @@
 
 Your lab reports (scanned with Klarbefund) and your Apple Health weekly means land in a **Relate graph on your own Mac**, over your own Wi-Fi, encrypted and pinned to that one Mac. No cloud is involved in getting the data to the Mac. Claude (Desktop or Code) can then read the graph through Relate's MCP server, read-only. **Note:** whatever Claude reads to answer you (query results) is sent to Anthropic's API over TLS. Use a local model as the MCP client if nothing may leave the Mac.
 
+<img src="img/klarbefund/klarbefund-relate-claude.gif" width="720" alt="Animation: the receiver starts on the Mac with a QR code; Klarbefund pairs and sends 34 reports with 240 values; the Mac's Relate graph counts its nodes; Claude Desktop asks the local MCP server about LDL cholesterol and gets five rows back (fictional development data)">
+
+*The whole way with fictional development data: Klarbefund in the iOS Simulator, a scratch receiver and graph on the Mac, and the MCP exchange Claude Desktop uses. Made by [`scripts/flow_gifs.py`](../scripts/flow_gifs.py).*
+
 ```mermaid
 flowchart LR
   subgraph iPhone["iPhone: Klarbefund"]

@@ -81,6 +81,9 @@ struct Receive: ParsableCommand {
   @Flag(help: "New token: phones paired before must scan again.") var rotate = false
   @Option(help: "Also save the QR code as a PNG (contains the token).") var qrPng: String?
   @Flag(help: "Also print the pairing link (contains the token).") var printLink = false
+  @Option(help: "Folder for the certificate, key and token (default: ~/.config/relate-health-graph). A scratch receiver for development gets its own, so it never holds the real pairing.")
+  var config: String?
+  @Option(help: "The name the phone shows for this Mac (default: its host name).") var name: String?
   @Flag(help: "Refuse to start unless the store's folder is a mounted volume (encrypted vault).")
   var requireMount = false
 
@@ -96,8 +99,9 @@ struct Receive: ParsableCommand {
       try HealthStore(path: store.path).initSchema()
     }
     let address = host ?? Network.lanAddress()
-    let identity = try Identity.ensure(rotate: rotate, host: address)
-    let name = Network.hostName
+    let identityDir = config.map { URL(fileURLWithPath: ($0 as NSString).expandingTildeInPath) }
+    let identity = try Identity.ensure(in: identityDir ?? Identity.defaultDirectory, rotate: rotate, host: address)
+    let name = self.name ?? Network.hostName
     let url = "https://\(address):\(port)"
     let link = Pairing.link(
       url: url, token: identity.token, fingerprint: identity.fingerprint, name: name,
@@ -140,6 +144,8 @@ struct Usb: ParsableCommand {
   @Flag(help: "Connect to Klarbefund in the iOS Simulator (its loopback is this Mac's) instead of over USB.")
   var simulator = false
   @Option(help: .hidden) var testToken: String?
+  @Option(help: "Folder for the certificate, key and token (default: ~/.config/relate-health-graph), as for receive.")
+  var config: String?
   @Flag(help: "Refuse to start unless the store's folder is a mounted volume (encrypted vault).")
   var requireMount = false
 
@@ -149,7 +155,9 @@ struct Usb: ParsableCommand {
       throw ValidationError(
         "\(store.deletingLastPathComponent().path) is not a mounted volume; open the encrypted vault first (scripts/health_vault.sh mount)")
     }
-    let token = try testToken ?? Identity.ensure(host: Network.lanAddress()).token
+    let identityDir = config.map { URL(fileURLWithPath: ($0 as NSString).expandingTildeInPath) }
+    let token = try testToken
+      ?? Identity.ensure(in: identityDir ?? Identity.defaultDirectory, host: Network.lanAddress()).token
     let deadline = Date().addingTimeInterval(TimeInterval(wait))
     var said = ""
     func say(_ line: String) {

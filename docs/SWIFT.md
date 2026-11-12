@@ -50,6 +50,13 @@ swift run -c release --package-path swift/mac health-graph query --db demo.rl tr
 
 `HEALTH_GRAPH_RECEIVER=python scripts/health_vault.sh receive` still starts the Python receiver.
 
+A scratch receiver for development (a Simulator, a demo) should not hold the real pairing: `--config <folder>` gives it its own certificate, key and token (default `~/.config/relate-health-graph`), and `--name <name>` sets the name the phone shows (default: the host name). `usb` takes `--config` too.
+
+```bash
+swift run --package-path swift/mac health-graph receive --db /tmp/dev/health.rl \
+  --config /tmp/dev/identity --name Demo-Mac --host 127.0.0.1 --port 8799 --print-link
+```
+
 **Local Network permission (macOS 15+).** macOS lets an app talk to devices on the Wi-Fi only after you allow it, and it remembers that by the app's code signature. `swift build` signs ad hoc, which is a new identity on every build, so `health_vault.sh` signs the binary with your Apple Development certificate as `red.mabu.health-graph` (override with `RELATE_HEALTH_SIGN=<identity>`). The first time, macOS asks once to use the key (Keychain: *Always Allow*) and once for local network access (*Allow*). Symptom without it: the receiver answers on `127.0.0.1` but connections from the iPhone hang in the TLS handshake.
 
 ## On the iPhone: Health graph on this iPhone
@@ -74,6 +81,8 @@ Fictional dev dataset in the Simulator: **34 reports, 240 lab values, 106 kinds 
 ## Send over USB cable (no shared Wi-Fi)
 
 When the Mac and the iPhone are not on the same Wi-Fi, a cable is enough:
+
+<img src="img/klarbefund/klarbefund-usb.gif" width="640" alt="Animation: scripts/health_vault.sh usb waits for the iPhone; in Klarbefund, Send over USB cable; the Mac logs each report and ends with 240 values from 34 reports (fictional development data)">
 
 ```bash
 scripts/health_vault.sh usb          # Mac: opens the vault, waits for the iPhone on the cable
