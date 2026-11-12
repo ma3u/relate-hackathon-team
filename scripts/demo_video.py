@@ -17,7 +17,7 @@ Storyboard (JSON): {"title": ..., "segments": [{"id", "text", "visual": {...},
                                                                a presentation slide: text left, visual right
   phone  {"type": "phone", "images": [...], "caption"}         screenshots side by side
   gif    {"type": "gif", "src", "caption"}                     an animation, looped to fit
-  image  {"type": "image", "src"}                              a still, slowly pushed in
+  image  {"type": "image", "src", "still"}                     a still, slowly pushed in (still: true holds it)
   scroll {"type": "scroll", "src", "caption"}                  a tall PNG, panned top to bottom
   video  {"type": "video", "src", "start", "end", "fit"}       a recording; fit: true speeds it to the segment
 """
@@ -177,6 +177,9 @@ def clip(seg: dict, seconds: float, work: Path, title: str, base: Path) -> Path:
         render_html(f'<body class="stage"><div class="row">{imgs}</div>{caption(v.get("caption"))}{brand(title)}',
                     png, work)
         run(["ffmpeg", "-y", "-loop", "1", "-i", str(png), "-vf", fit, *enc, str(out)])
+    elif v["type"] == "image" and v.get("still"):
+        src = (base / v["src"]).resolve()
+        run(["ffmpeg", "-y", "-loop", "1", "-i", str(src), "-vf", f"{fit},fade=in:0:10", *enc, str(out)])
     elif v["type"] == "image":
         src = (base / v["src"]).resolve()
         # A still, with a slow push-in so it does not sit dead on screen.
