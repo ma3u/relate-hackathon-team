@@ -15,6 +15,7 @@ Storyboard (JSON): {"title": ..., "segments": [{"id", "text", "visual": {...},
   card   {"type": "card", "kicker", "title", "body"}           rendered HTML
   phone  {"type": "phone", "images": [...], "caption"}         screenshots side by side
   gif    {"type": "gif", "src", "caption"}                     an animation, looped to fit
+  image  {"type": "image", "src"}                              a still, slowly pushed in
   scroll {"type": "scroll", "src", "caption"}                  a tall PNG, panned top to bottom
   video  {"type": "video", "src", "start", "caption"}          a recording, cut to fit
 """
@@ -131,6 +132,12 @@ def clip(seg: dict, seconds: float, work: Path, title: str, base: Path) -> Path:
         render_html(f'<body class="stage"><div class="row">{imgs}</div>{caption(v.get("caption"))}{brand(title)}',
                     png, work)
         run(["ffmpeg", "-y", "-loop", "1", "-i", str(png), "-vf", fit, *enc, str(out)])
+    elif v["type"] == "image":
+        src = (base / v["src"]).resolve()
+        # A still, with a slow push-in so it does not sit dead on screen.
+        zoom = (f"{fit},scale=2*{W}:2*{H},zoompan=z='min(1+0.0006*on,1.06)':d={int(seconds * FPS)}:"
+                f"x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s={W}x{H}:fps={FPS}")
+        run(["ffmpeg", "-y", "-loop", "1", "-i", str(src), "-vf", zoom, *enc, str(out)])
     elif v["type"] == "gif":
         src = (base / v["src"]).resolve()
         run(["ffmpeg", "-y", "-stream_loop", "-1", "-i", str(src), "-vf", fit, *enc, str(out)])
