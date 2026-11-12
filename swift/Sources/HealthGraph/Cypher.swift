@@ -193,6 +193,52 @@ enum Cypher {
   MERGE (o)-[:CODED_BY]->(lc)
   RETURN count(o) AS stored
   """#
+
+  static let seedRisks = #"""
+  UNWIND $risks AS r
+  MERGE (h:HealthRisk {id: r.id})
+  SET h.name = r.name, h.description = r.description
+  RETURN count(h) AS risks
+  """#
+
+  static let seedScores = #"""
+  UNWIND $scores AS s
+  MERGE (rs:RiskScore {id: s.id})
+  SET rs.name = s.name, rs.unit = s.unit, rs.source = s.source, rs.demographics = s.demographics
+  WITH rs, s
+  MATCH (h:HealthRisk {id: s.estimates})
+  MERGE (rs)-[:ESTIMATES]->(h)
+  WITH rs, s
+  UNWIND s.uses AS code
+  MERGE (lc:LoincCode {code: code})
+  MERGE (rs)-[:USES]->(lc)
+  RETURN count(DISTINCT rs) AS scores
+  """#
+
+  static let seedMarkers = #"""
+  UNWIND $markers AS m
+  MATCH (h:HealthRisk {id: m.risk})
+  MERGE (lc:LoincCode {code: m.loinc})
+  MERGE (lc)-[k:MARKER_OF]->(h)
+  SET k.source = m.source
+  RETURN count(k) AS markers
+  """#
+
+  static let seedRanges = #"""
+  UNWIND $ranges AS r
+  MERGE (rr:ReferenceRange {id: r.id})
+  SET rr += r
+  WITH rr, r
+  MERGE (lc:LoincCode {code: r.loinc})
+  MERGE (rr)-[:APPLIES_TO]->(lc)
+  RETURN count(rr) AS ranges
+  """#
+
+  static let seedVersion = #"""
+  MERGE (k:Knowledge {id: 'health-graph'})
+  SET k.fingerprint = $fingerprint, k.rangesSource = $rangesSource
+  RETURN k.fingerprint AS fingerprint
+  """#
 }
 
 /// Named read-only queries (CLI, tests, the app). Same as health_graph/queries.py.

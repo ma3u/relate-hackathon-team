@@ -14,7 +14,11 @@ let repoRoot = URL(fileURLWithPath: Context.packageDirectory)
 let package = Package(
   name: "HealthGraphMac",
   platforms: [.macOS(.v13)],
-  products: [.executable(name: "health-graph", targets: ["health-graph"])],
+  products: [
+    .executable(name: "health-graph", targets: ["health-graph"]),
+    // The receiver as a library, for the Mac app (apps/mac, Klarbefund for Mac).
+    .library(name: "HealthGraphReceiver", targets: ["HealthGraphReceiver"]),
+  ],
   dependencies: [
     .package(path: repoRoot.path),
     .package(url: "https://github.com/apple/swift-nio", from: "2.65.0"),

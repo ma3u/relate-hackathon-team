@@ -36,7 +36,7 @@ public enum JSON {
   }
 
   /// Any decoded JSON value as a Cypher value.
-  static func cypher(_ any: Any?) -> CypherValue {
+  public static func cypher(_ any: Any?) -> CypherValue {
     switch any {
     case nil, is NSNull: return .null
     case let n as NSNumber:

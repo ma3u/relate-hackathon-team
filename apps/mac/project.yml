@@ -1,0 +1,74 @@
+# Klarbefund for Mac: pairs with Klarbefund on the iPhone, keeps the health graph
+# (Relate, one .rl file) sealed in the app's sandbox, and connects Claude Desktop
+# with one click. Same bundle id as the iPhone app, so both ship under one
+# App Store Connect record and one TestFlight link (universal purchase).
+#   xcodegen generate && open Klarbefund.xcodeproj
+name: Klarbefund
+options:
+  bundleIdPrefix: red.mabu
+  deploymentTarget:
+    macOS: "14.0"
+packages:
+  HealthGraph:
+    path: ../..
+  HealthGraphMac:
+    path: ../../swift/mac
+settings:
+  base:
+    DEVELOPMENT_TEAM: 38R8Z4P7S8
+    CODE_SIGN_STYLE: Automatic
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    ENABLE_HARDENED_RUNTIME: YES
+    SWIFT_VERSION: "5.0"
+targets:
+  Klarbefund:
+    type: application
+    platform: macOS
+    sources: [Klarbefund]
+    dependencies:
+      - package: HealthGraph
+        product: HealthGraph
+      - package: HealthGraphMac
+        product: HealthGraphReceiver
+      - target: klarbefund-mcp
+        embed: true
+        copy:
+          destination: wrapper
+          subpath: Contents/Helpers
+    info:
+      path: Klarbefund/Info.plist
+      properties:
+        CFBundleDisplayName: Klarbefund
+        LSApplicationCategoryType: public.app-category.medical
+        NSHumanReadableCopyright: "Your health data stays on your devices."
+        ITSAppUsesNonExemptEncryption: false
+    entitlements:
+      path: Klarbefund/Klarbefund.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+        com.apple.security.network.server: true
+        com.apple.security.network.client: true
+        com.apple.security.application-groups: ["38R8Z4P7S8.red.mabu.meinbefund"]
+    settings:
+      PRODUCT_BUNDLE_IDENTIFIER: red.mabu.meinbefund
+      PRODUCT_NAME: Klarbefund
+      ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+  klarbefund-mcp:
+    type: tool
+    platform: macOS
+    sources: [klarbefund-mcp]
+    dependencies:
+      - package: HealthGraph
+        product: HealthGraph
+    entitlements:
+      path: klarbefund-mcp/klarbefund-mcp.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+        com.apple.security.application-groups: ["38R8Z4P7S8.red.mabu.meinbefund"]
+    settings:
+      PRODUCT_BUNDLE_IDENTIFIER: red.mabu.meinbefund.mcp
+      PRODUCT_NAME: klarbefund-mcp
+      SKIP_INSTALL: YES
+      CREATE_INFOPLIST_SECTION_IN_BINARY: YES
+      INFOPLIST_FILE: klarbefund-mcp/Info.plist

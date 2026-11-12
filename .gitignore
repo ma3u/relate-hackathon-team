@@ -14,3 +14,6 @@ media/
 .build/
 .swiftpm/
 Package.resolved
+apps/mac/.build/
+apps/mac/Klarbefund.xcodeproj/
+apps/mac/build/

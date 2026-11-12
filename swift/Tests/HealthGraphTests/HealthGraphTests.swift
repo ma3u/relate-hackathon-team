@@ -439,3 +439,26 @@ struct PatientAttributeTests {
     #expect(try FHIR.parseBundle(Fixtures.bundle(Fixtures.golden)).patient.isEmpty)
   }
 }
+
+@Suite("Knowledge layer", .serialized)
+struct KnowledgeTests {
+  /// Same counts as the Python seed: 6 risks, 4 scores, 55 marker links, 173 ranges.
+  @Test func seedsTheSameKnowledgeAsPython() throws {
+    let store = try HealthStore(path: Fixtures.tempStore())
+    try store.initSchema()
+    try store.seedKnowledge()
+    #expect(try store.count("HealthRisk") == 6)
+    #expect(try store.count("RiskScore") == 4)
+    #expect(try store.count("ReferenceRange") == 173)
+    let markers = try store.rows(cypher: "MATCH (:LoincCode)-[k:MARKER_OF]->(:HealthRisk) RETURN count(k) AS n")
+    #expect(markers.first?["n"] == "55")
+  }
+
+  @Test func seedingTwiceChangesNothing() throws {
+    let store = try HealthStore(path: Fixtures.tempStore())
+    try store.initSchema()
+    #expect(try !store.seedKnowledge().isEmpty)
+    #expect(try store.seedKnowledge().isEmpty)
+    #expect(try store.count("ReferenceRange") == 173)
+  }
+}
