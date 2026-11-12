@@ -1,6 +1,10 @@
 import AppKit
 import SwiftUI
 
+/// Set while rendering the docs screenshot: ImageRenderer draws no AppKit-backed
+/// controls, so small buttons and links are drawn as plain images and text then.
+@MainActor var renderingForDocs = false
+
 /// One window, three steps: pair the iPhone, see the graph, connect Claude.
 struct ContentView: View {
   @ObservedObject var model: AppModel
@@ -109,7 +113,11 @@ struct ContentView: View {
     HStack {
       Text("Not a medical device: help to understand your data and prepare questions for your doctor.")
       Spacer()
-      Link("How it works", destination: URL(string: "https://ma3u.github.io/relate-hackathon-team/")!)
+      if renderingForDocs {
+        Text("How it works").foregroundStyle(Color.accentColor)
+      } else {
+        Link("How it works", destination: URL(string: "https://ma3u.github.io/relate-hackathon-team/")!)
+      }
     }
     .font(.caption).foregroundStyle(.secondary)
   }
@@ -165,8 +173,12 @@ private struct Ask: View {
     HStack {
       Text("“\(text)”").font(.callout)
       Spacer()
-      Button { copy(text) } label: { Image(systemName: "doc.on.doc") }
-        .buttonStyle(.borderless).help("Copy")
+      if renderingForDocs {
+        Image(systemName: "doc.on.doc").foregroundStyle(Color.accentColor)
+      } else {
+        Button { copy(text) } label: { Image(systemName: "doc.on.doc") }
+          .buttonStyle(.borderless).help("Copy")
+      }
     }
   }
 }

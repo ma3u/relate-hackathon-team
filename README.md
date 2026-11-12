@@ -10,6 +10,7 @@ Our submission to the **[Relate by Neo4j Hackathon](https://relate.devpost.com/)
 | 🖥️ **Interactive presentation** | [ma3u.github.io/relate-hackathon-team](https://ma3u.github.io/relate-hackathon-team/) |
 | 🏆 **Devpost** | [MyHealthCoach on Devpost](https://devpost.com/software/myhealthcoach-my-local-health-graph-not-the-cloud-s) |
 | 📱 **iPhone app (TestFlight)** | [testflight.apple.com/join/ssADSXX6](https://testflight.apple.com/join/ssADSXX6) |
+| 💻 **Mac app** | [Klarbefund for Mac](docs/MAC.md): pair, seal, connect Claude with one click, no scripts |
 | 🧪 **Sample graph** | [`examples/health-graph/health.rl`](examples/health-graph/health.rl), synthetic, no real person |
 
 [![The interactive presentation: MyHealthCoach, my local health graph, not the cloud's](docs/img/presentation-cover.png)](https://ma3u.github.io/relate-hackathon-team/)
