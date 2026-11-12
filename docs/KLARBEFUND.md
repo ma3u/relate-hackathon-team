@@ -153,16 +153,29 @@ claude mcp add --scope user klarbefund-health -- \
 claude mcp get klarbefund-health      # Status: ✔ Connected
 ```
 
-**Claude Desktop**: `~/Library/Application Support/Claude/claude_desktop_config.json` (backed up before editing):
+**Claude Desktop**, step by step:
 
-```json
-"klarbefund-health": {
-  "command": "/Users/<you>/projects/Neo4j-relate/scripts/health_vault.sh",
-  "args": ["mcp"]
-}
+1. Quit Claude Desktop (⌘Q). It reads its configuration only at start.
+2. Back up its configuration:
+   ```bash
+   cp ~/Library/Application\ Support/Claude/claude_desktop_config.json{,.bak}
+   ```
+3. Open `~/Library/Application Support/Claude/claude_desktop_config.json` (Claude Desktop → Settings → Developer → Edit Config opens the folder) and add the server under `mcpServers`, next to any you have:
+   ```json
+   "klarbefund-health": {
+     "command": "/Users/<you>/projects/Neo4j-relate/scripts/health_vault.sh",
+     "args": ["mcp"]
+   }
+   ```
+   Use the absolute path: Claude Desktop does not use your shell's `PATH`.
+4. Open Claude Desktop. In a new chat, the tools menu lists **klarbefund-health** with `read_cypher` and `get_schema`.
+5. Ask one of the questions below. Claude asks before the first tool call; allow it.
+
+`health_vault.sh mcp` unlocks the vault, copies `health.rl` to `claude-snapshot.rl` inside it, and serves that copy read-only, so the receiver can keep writing while Claude reads. Check the server without Claude Desktop:
+
+```bash
+scripts/health_vault.sh mcp </dev/null   # prints "MCP (stdio) serving" on stderr, then exits
 ```
-
-Use absolute paths: Claude Desktop doesn't use your shell's `PATH`. **Quit and reopen Claude Desktop** to load it.
 
 In this repo, Claude Code also sees `health-graph` (synthetic `./health.rl`) from `.mcp.json`, plus the Relate skill (`~/.claude/skills/relate`), so it writes good Cypher.
 
@@ -171,7 +184,7 @@ Example prompts:
 - *"Which of my values have no LOINC code, and why?"*
 - *"Compare my Apple Health resting heart rate weekly means with the dates of my lab reports."*
 
-> A read-only Relate connection sees the store **as it was when it opened**. After new values arrive, reconnect the server (Claude Code: `/mcp` → reconnect; Claude Desktop: restart) to see them.
+> Claude reads the snapshot taken when the server started. After new values arrive, reconnect it (Claude Code: `/mcp` → reconnect; Claude Desktop: quit and reopen) for a fresh one.
 > Like Klarbefund itself, answers are **not medical advice and give no normal/abnormal verdicts**. Ask your doctor.
 
 ## Pairing a real iPhone
