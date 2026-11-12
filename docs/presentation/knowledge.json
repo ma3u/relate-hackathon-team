@@ -1,0 +1,189 @@
+[
+ {
+  "id": "cardiovascular",
+  "name": "Cardiovascular disease",
+  "scores": [
+   {
+    "name": "SCORE2",
+    "uses": [
+     "HDL cholesterol",
+     "Systolic BP",
+     "Total cholesterol"
+    ],
+    "source": "SCORE2 working group, Eur Heart J 2021;42:2439"
+   }
+  ],
+  "markers": [
+   {
+    "name": "LDL cholesterol",
+    "source": "ESC/EAS 2019 dyslipidaemia guideline"
+   },
+   {
+    "name": "Total cholesterol",
+    "source": "ESC 2021 cardiovascular prevention guideline"
+   },
+   {
+    "name": "HDL cholesterol",
+    "source": "ESC 2021 cardiovascular prevention guideline"
+   },
+   {
+    "name": "ApoB",
+    "source": "ESC/EAS 2019 dyslipidaemia guideline"
+   },
+   {
+    "name": "Lp(a)",
+    "source": "EAS consensus statement 2022"
+   },
+   {
+    "name": "Triglycerides",
+    "source": "ESC/EAS 2019 dyslipidaemia guideline"
+   },
+   {
+    "name": "Systolic BP",
+    "source": "ESC 2024 hypertension guideline"
+   },
+   {
+    "name": "hs-CRP",
+    "source": "ESC 2021 cardiovascular prevention guideline"
+   },
+   {
+    "name": "NT-proBNP",
+    "source": "ESC 2021 heart failure guideline"
+   },
+   {
+    "name": "BMI",
+    "source": "ESC 2021 cardiovascular prevention guideline"
+   },
+   {
+    "name": "Non-HDL cholesterol",
+    "source": "ESC/EAS 2019 dyslipidaemia guideline"
+   },
+   {
+    "name": "94122-9",
+    "source": "AHA scientific statement on cardiorespiratory fitness, Circulation 2016"
+   }
+  ]
+ },
+ {
+  "id": "diabetes",
+  "name": "Type 2 diabetes",
+  "scores": [
+   {
+    "name": "TyG index",
+    "uses": [
+     "Glucose",
+     "Triglycerides"
+    ],
+    "source": "Simental-Mendía et al., Metab Syndr Relat Disord 2008;6:299"
+   }
+  ],
+  "markers": [
+   {
+    "name": "HbA1c",
+    "source": "ADA Standards of Care 2024"
+   },
+   {
+    "name": "Triglycerides",
+    "source": "IDF metabolic syndrome definition 2006"
+   },
+   {
+    "name": "BMI",
+    "source": "ADA Standards of Care 2024"
+   }
+  ]
+ },
+ {
+  "id": "kidney",
+  "name": "Chronic kidney disease",
+  "scores": [
+   {
+    "name": "eGFR (CKD-EPI 2021)",
+    "uses": [
+     "Creatinine"
+    ],
+    "source": "Inker et al., N Engl J Med 2021;385:1737"
+   }
+  ],
+  "markers": [
+   {
+    "name": "Creatinine",
+    "source": "KDIGO 2012 CKD guideline"
+   },
+   {
+    "name": "eGFR (lab)",
+    "source": "KDIGO 2012 CKD guideline"
+   },
+   {
+    "name": "Systolic BP",
+    "source": "KDIGO 2021 blood pressure guideline"
+   },
+   {
+    "name": "HbA1c",
+    "source": "KDIGO 2022 diabetes in CKD guideline"
+   }
+  ]
+ },
+ {
+  "id": "liver",
+  "name": "Liver fibrosis",
+  "scores": [
+   {
+    "name": "FIB-4",
+    "uses": [
+     "ALT",
+     "AST",
+     "Platelets"
+    ],
+    "source": "Sterling et al., Hepatology 2006;43:1317"
+   }
+  ],
+  "markers": [
+   {
+    "name": "AST",
+    "source": "EASL 2021 non-invasive tests guideline"
+   },
+   {
+    "name": "GGT",
+    "source": "EASL 2021 non-invasive tests guideline"
+   },
+   {
+    "name": "Triglycerides",
+    "source": "EASL-EASD-EASO 2024 MASLD guideline"
+   }
+  ]
+ },
+ {
+  "id": "fitness",
+  "name": "Low cardiorespiratory fitness",
+  "scores": [],
+  "markers": [
+   {
+    "name": "94122-9",
+    "source": "Kodama et al., JAMA 2009;301:2024"
+   },
+   {
+    "name": "40443-4",
+    "source": "Kodama et al., JAMA 2009;301:2024"
+   },
+   {
+    "name": "80404-7",
+    "source": "Task Force of the ESC and NASPE, Circulation 1996 (HRV standards)"
+   },
+   {
+    "name": "41950-7",
+    "source": "Paluch et al., Lancet Public Health 2022 (daily steps and mortality)"
+   }
+  ]
+ },
+ {
+  "id": "bone",
+  "name": "Osteoporosis",
+  "scores": [],
+  "markers": [
+   {
+    "name": "Vitamin D",
+    "source": "Endocrine Society clinical practice guideline on vitamin D, 2024"
+   }
+  ]
+ }
+]

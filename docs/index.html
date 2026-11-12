@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MyHealthCoach · Relate by Neo4j</title>
+<meta name="description" content="My lab reports and Apple Watch in one Neo4j Relate graph on my own iPhone and Mac. Encrypted, local, no cloud, and Claude answers through Relate's MCP server.">
+<meta property="og:title" content="MyHealthCoach: My Local Health Graph, Not the Cloud's">
+<meta property="og:description" content="Neo4j Relate on the iPhone and the Mac. NODES 2026 · Relate by Neo4j Hackathon.">
+<style>
+:root{--bg:#04060a;--panel:#0d1117;--line:#1f2630;--ink:#f2f4f7;--muted:#9aa4b2;--accent:#3d9bff;--good:#16c60c;--warn:#f7b500;--bad:#ff3b3b;
+  --sans:-apple-system,"SF Pro Display","Helvetica Neue",Arial,sans-serif;--mono:ui-monospace,Menlo,monospace}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:var(--sans);overflow:hidden}
+#stage{position:absolute;left:50%;top:50%;width:1600px;height:900px;transform-origin:center;}
+.slide{position:absolute;inset:0;padding:70px 90px 90px;opacity:0;pointer-events:none;transition:opacity .45s ease}
+.slide.on{opacity:1;pointer-events:auto}
+.kicker{color:var(--accent);font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:22px;margin:0 0 14px}
+h1{font-size:64px;line-height:1.05;margin:0 0 24px;letter-spacing:-1px}
+h2{font-size:52px;line-height:1.08;margin:0 0 22px;letter-spacing:-.5px}
+p.lead{font-size:26px;line-height:1.45;color:#c7cdd6;margin:0 0 22px;max-width:760px}
+ul.pts{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:16px}
+ul.pts li{font-size:24px;line-height:1.4;color:#c7cdd6;padding-left:30px;position:relative}
+ul.pts li::before{content:"";position:absolute;left:0;top:11px;width:12px;height:12px;border-radius:50%;background:var(--accent)}
+.cols{display:grid;grid-template-columns:640px 1fr;gap:60px;height:100%;align-items:center}
+.btn{display:inline-flex;align-items:center;gap:10px;font:600 20px var(--sans);color:var(--bg);background:var(--accent);border:0;border-radius:12px;padding:12px 20px;cursor:pointer;text-decoration:none}
+.btn.ghost{background:transparent;color:var(--ink);border:1.5px solid #2c3644}
+.btn:focus-visible,.chip:focus-visible,.nav button:focus-visible{outline:3px solid #fff;outline-offset:2px}
+.row{display:flex;gap:14px;flex-wrap:wrap}
+.pill{font-size:20px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:8px 14px;border-radius:10px}
+.p1{background:var(--accent);color:var(--bg)}.p2{border:2px solid var(--accent);color:#9ccaff}
+/* phone */
+.phone{width:400px;height:868px;border-radius:58px;background:#1d2128;padding:10px;box-shadow:0 40px 110px rgba(0,0,0,.6),0 0 0 2px #2c323c inset;position:relative;cursor:pointer;justify-self:center}
+.phone .scr{width:100%;height:100%;border-radius:48px;overflow:hidden;position:relative;background:#f2f2f7}
+.phone img{position:absolute;inset:0;width:100%;height:100%;transition:transform .5s cubic-bezier(.2,.8,.2,1),opacity .5s}
+.phone .hint{position:absolute;bottom:-46px;left:0;right:0;text-align:center;color:var(--muted);font-size:18px}
+.steps{display:flex;gap:10px;margin-top:26px}
+.steps button{font:600 17px var(--sans);color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:8px 14px;cursor:pointer}
+.steps button.on{color:var(--bg);background:var(--accent);border-color:var(--accent)}
+.cap{font-size:22px;color:#dfe5ee;min-height:66px;margin-top:20px;line-height:1.4}
+/* model */
+#model{width:100%;height:640px}
+.chip{font:600 18px var(--sans);color:#c7cdd6;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:9px 16px;cursor:pointer}
+.chip.on{background:var(--accent);color:var(--bg);border-color:var(--accent)}
+/* knowledge */
+.kgrid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:24px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px 24px}
+.card h3{margin:0 0 12px;font-size:22px;color:#9ccaff;text-transform:uppercase;letter-spacing:.06em}
+.card .item{font-size:21px;padding:8px 0;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:16px}
+.card .item:first-of-type{border-top:0}
+.card .src{color:var(--muted);font-size:16px;text-align:right}
+/* video */
+.vid{width:100%;aspect-ratio:16/9;border:0;border-radius:18px;background:#000;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.q{font-size:20px;background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:12px;padding:14px 18px;margin:0 0 12px;color:#dfe5ee;line-height:1.4}
+/* privacy */
+.tri{display:grid;grid-template-columns:repeat(3,1fr);gap:26px;margin-top:30px}
+.tri .card{min-height:330px}.tri .big{font-size:34px;font-weight:800;margin:6px 0 10px}
+.tri p{font-size:20px;color:#c7cdd6;line-height:1.45;margin:0}
+pre{font:17px/1.5 var(--mono);background:#0a0e14;border:1px solid var(--line);border-radius:14px;padding:18px 20px;color:#cfe3ff;white-space:pre-wrap;margin:0 0 18px}
+.qr{background:#fff;border-radius:22px;padding:18px;width:300px}
+.qr img{width:100%;display:block}
+/* nav */
+.nav{position:fixed;left:0;right:0;bottom:0;display:flex;align-items:center;gap:14px;padding:12px 18px;background:linear-gradient(transparent,rgba(4,6,10,.92) 40%);z-index:5}
+.nav button{font:600 16px var(--sans);color:var(--ink);background:#141a22;border:1px solid #263040;border-radius:10px;padding:8px 14px;cursor:pointer}
+.dots{display:flex;gap:8px;flex:1;justify-content:center}
+.dots i{width:9px;height:9px;border-radius:50%;background:#2a3442;cursor:pointer}.dots i.on{background:var(--accent);width:26px;border-radius:6px}
+.nav .count{color:var(--muted);font-size:15px;min-width:64px;text-align:right}
+#bg{position:absolute;inset:0;width:100%;height:100%}
+@media (prefers-reduced-motion: reduce){.slide,.phone img{transition:none}}
+</style>
+</head>
+<body>
+<div id="stage">
+
+<!-- 1 hero -->
+<section class="slide" data-title="MyHealthCoach">
+  <canvas id="bg" width="1600" height="900"></canvas>
+  <svg id="hero" viewBox="0 0 900 900" style="position:absolute;right:-20px;top:40px;width:800px;height:800px"></svg>
+  <div style="position:relative;max-width:780px;margin-top:110px">
+    <div class="row" style="margin-bottom:30px"><span class="pill p1">NODES 2026</span><span class="pill p2">Relate by Neo4j Hackathon</span></div>
+    <h1 style="font-size:104px;letter-spacing:-3px">MyHealthCoach</h1>
+    <p style="font-size:50px;font-weight:800;margin:0 0 26px;line-height:1.1">My local health graph.<br><span style="color:var(--accent)">Not the cloud's.</span></p>
+    <p class="lead">Paper lab reports and Apple Watch, in one private Relate graph on my iPhone and my Mac. Claude answers through Relate's MCP server, read-only.</p>
+    <div class="row" style="margin-top:30px">
+      <a class="btn" href="#" data-goto="6">▶ Watch the 2-minute demo</a>
+      <a class="btn ghost" href="https://github.com/ma3u/relate-hackathon-team">GitHub</a>
+      <a class="btn ghost" href="https://testflight.apple.com/join/ssADSXX6">iPhone app on TestFlight</a>
+    </div>
+    <p style="color:var(--muted);font-size:18px;margin-top:26px">Use ← → or the dots below. Everything on this page is clickable.</p>
+  </div>
+</section>
+
+<!-- 2 problem + scan -->
+<section class="slide" data-title="The problem">
+  <div class="cols">
+    <div>
+      <p class="kicker">The problem</p>
+      <h2>Health data on paper, in silos</h2>
+      <ul class="pts"><li>Lab reports on paper, wearables in their own apps</li><li>Klarbefund scans a report on the iPhone</li><li>Every value coded with LOINC, with the page and line it came from</li></ul>
+      <div class="steps" data-phone="p1"></div>
+      <div class="cap" id="cap-p1"></div>
+    </div>
+    <div class="phone" id="p1"><div class="scr"></div><div class="hint">Tap the phone</div></div>
+  </div>
+</section>
+
+<!-- 3 on device -->
+<section class="slide" data-title="Relate on the iPhone">
+  <div class="cols">
+    <div>
+      <p class="kicker">Relate on the iPhone</p>
+      <h2>A graph database inside the app</h2>
+      <ul class="pts"><li>Neo4j's embedded graph database, in Klarbefund</li><li>One <code>health.rl</code> file under iOS Data Protection (<em>complete</em>): unreadable while the phone is locked</li><li>Excluded from backups, never sent anywhere</li></ul>
+      <div class="steps" data-phone="p2"></div>
+      <div class="cap" id="cap-p2"></div>
+    </div>
+    <div class="phone" id="p2"><div class="scr"></div><div class="hint">Tap the phone</div></div>
+  </div>
+</section>
+
+<!-- 4 export -->
+<section class="slide" data-title="Export to my Mac">
+  <div class="cols">
+    <div>
+      <p class="kicker">Export to my Mac</p>
+      <h2>A copy on hardware I own</h2>
+      <ul class="pts"><li>Paired by QR code: pinned certificate and secret token</li><li>Over Wi-Fi with TLS, or over a USB cable</li><li>Into an AES-256 encrypted disk image, open only while in use</li></ul>
+      <div class="steps" data-phone="p3"></div>
+      <div class="cap" id="cap-p3"></div>
+    </div>
+    <div class="phone" id="p3"><div class="scr"></div><div class="hint">Tap the phone</div></div>
+  </div>
+</section>
+
+<!-- 5 model -->
+<section class="slide" data-title="One graph">
+  <p class="kicker">Metadata model</p>
+  <h2 style="margin-bottom:10px">One graph, grown from one root</h2>
+  <div class="row" id="mchips" style="margin-bottom:6px"></div>
+  <svg id="model" viewBox="0 0 1600 700"></svg>
+</section>
+
+<!-- 6 knowledge -->
+<section class="slide" data-title="Knowledge">
+  <p class="kicker">Knowledge graph</p>
+  <h2>Health risk → score → measure → my value</h2>
+  <p class="lead" style="max-width:1200px">The graph also holds the medical knowledge, each link with its source. Pick a risk:</p>
+  <div class="row" id="kchips"></div>
+  <div class="kgrid"><div class="card"><h3>Risk scores that estimate it</h3><div id="kscores"></div></div><div class="card"><h3>Measures the guidelines name</h3><div id="kmarks"></div></div></div>
+</section>
+
+<!-- 7 video -->
+<section class="slide" data-title="Demo video">
+  <div class="cols" style="grid-template-columns:980px 1fr;gap:44px">
+    <div><iframe class="vid" id="yt" title="MyHealthCoach demo video" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen data-src=""></iframe></div>
+    <div>
+      <p class="kicker">Ask Claude</p>
+      <h2 style="font-size:44px">Answers from my own graph</h2>
+      <div class="q">What is in my health graph? Count the kinds of data, the sources and the time span.</div>
+      <div class="q">What risk scores are stored for me? Show the lab values each was calculated from.</div>
+      <div class="q">Before my doctor's visit: write a six-minute briefing with my trends and the guideline targets.</div>
+      <p style="color:var(--muted);font-size:18px">Claude Desktop writes the Cypher; Relate's MCP server answers read-only from a snapshot.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 8 doctor -->
+<section class="slide" data-title="Doctor's visit">
+  <div class="cols" style="grid-template-columns:700px 1fr">
+    <div>
+      <p class="kicker">From graph to action</p>
+      <h2>Ready for my doctor's visit</h2>
+      <ul class="pts"><li>Claude reads the graph through Relate's MCP server</li><li>Charts the trends, computes SCORE2, compares with the guideline targets</li><li>Writes a six-minute briefing with one question per topic, and its sources</li></ul>
+    </div>
+    <div class="card" style="padding:30px">
+      <h3>The briefing, as Claude laid it out</h3>
+      <div class="item"><span>1 · Statin: which LDL target applies to me?</span><span class="src">2.5 min</span></div>
+      <div class="item"><span>2 · Hair loss: which tests, which referral?</span><span class="src">1.5 min</span></div>
+      <div class="item"><span>3 · Vaccinations: what is due today?</span><span class="src">1 min</span></div>
+      <div class="item"><span>4 · Screening at 50: what to order?</span><span class="src">1 min</span></div>
+      <p style="color:var(--muted);font-size:17px;margin:16px 0 0">Values stay out of this public page; the video shows the real briefing.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 9 privacy -->
+<section class="slide" data-title="Privacy">
+  <p class="kicker">Security</p>
+  <h2>Private by construction</h2>
+  <div class="tri">
+    <div class="card"><h3>iPhone</h3><div class="big">Data Protection</div><p>Relate's single file under <code>FileProtectionType.complete</code>, excluded from backup. Talks only to the paired Mac.</p></div>
+    <div class="card"><h3>Mac</h3><div class="big">AES-256 vault</div><p>The same graph inside an encrypted disk image, mounted only while you use it. Pinned TLS or a USB cable, no cloud on the way.</p></div>
+    <div class="card"><h3>Claude</h3><div class="big">read-only</div><p><code>relate serve --mcp --read-only</code> on a snapshot copy. Only the rows Claude asks for leave the Mac.</p></div>
+  </div>
+</section>
+
+<!-- 10 try -->
+<section class="slide" data-title="Try it">
+  <div class="cols" style="grid-template-columns:1fr 360px">
+    <div>
+      <p class="kicker">Try it</p>
+      <h2>Clone, run, see the graph</h2>
+      <pre>git clone https://github.com/ma3u/relate-hackathon-team
+cd relate-hackathon-team
+relate query --database examples/health-graph/health.rl --mode table &lt;&lt;&lt; \
+  "MATCH (h:HealthRisk)&lt;-[:MARKER_OF]-(:LoincCode)&lt;-[:CODED_BY]-(o:Observation)
+   RETURN h.name AS risk, count(o) AS values"
+relate serve --mcp stdio --database examples/health-graph/health.rl --read-only</pre>
+      <p class="lead" style="font-size:22px">The sample store is synthetic: no real person. <a href="https://github.com/ma3u/relate-hackathon-team#readme" style="color:#9ccaff">README</a> · <a href="https://devpost.com/software/myhealthcoach-my-local-health-graph-not-the-cloud-s" style="color:#9ccaff">Devpost</a> · <a href="https://www.youtube.com/watch?v=HRmlXPt0r_k" style="color:#9ccaff">3-minute version</a></p>
+    </div>
+    <div style="text-align:center"><div class="qr"><img src="presentation/qr-testflight.png" alt="QR code: Klarbefund on TestFlight"></div><p style="font-size:24px;font-weight:700;margin:16px 0 4px">Klarbefund on TestFlight</p><p style="color:#9ccaff;font-size:17px;margin:0">testflight.apple.com/join/ssADSXX6</p></div>
+  </div>
+</section>
+
+</div>
+
+<nav class="nav" aria-label="Slides"><button id="prev" aria-label="Previous slide">←</button><div class="dots" id="dots"></div><span class="count" id="count"></span><button id="next" aria-label="Next slide">→</button></nav>
+
+<script>
+const VIDEO_ID = "HRmlXPt0r_k";   // the Devpost demo video
+const slides = [...document.querySelectorAll(".slide")];
+let cur = 0;
+const stage = document.getElementById("stage");
+function fit() { const s = Math.min(innerWidth / 1600, (innerHeight - 56) / 900); stage.style.transform = `translate(-50%, calc(-50% - 22px)) scale(${s})`; }
+addEventListener("resize", fit); fit();
+const dots = document.getElementById("dots");
+slides.forEach((s, i) => { const d = document.createElement("i"); d.title = s.dataset.title; d.onclick = () => go(i); dots.appendChild(d); });
+function go(i) {
+  cur = Math.max(0, Math.min(slides.length - 1, i));
+  slides.forEach((s, j) => s.classList.toggle("on", j === cur));
+  [...dots.children].forEach((d, j) => d.classList.toggle("on", j === cur));
+  document.getElementById("count").textContent = `${cur + 1} / ${slides.length}`;
+  history.replaceState(null, "", "#" + (cur + 1));
+  const yt = document.getElementById("yt");
+  if (slides[cur].contains(yt) && !yt.src) yt.src = `https://www.youtube-nocookie.com/embed/${VIDEO_ID}?rel=0`;
+}
+document.getElementById("prev").onclick = () => go(cur - 1);
+document.getElementById("next").onclick = () => go(cur + 1);
+addEventListener("keydown", e => { if (e.key === "ArrowRight" || e.key === "PageDown" || e.key === " ") go(cur + 1); if (e.key === "ArrowLeft" || e.key === "PageUp") go(cur - 1); });
+let tx = null; addEventListener("touchstart", e => tx = e.touches[0].clientX, { passive: true });
+addEventListener("touchend", e => { if (tx === null) return; const d = e.changedTouches[0].clientX - tx; if (Math.abs(d) > 50) go(cur + (d < 0 ? 1 : -1)); tx = null; });
+document.querySelectorAll("[data-goto]").forEach(a => a.onclick = e => { e.preventDefault(); go(+a.dataset.goto); });
+
+// ── phones: tap through the real flow (fictional demo data) ──
+const FLOWS = {
+  p1: [["scan", "Scan the paper report"], ["list", "Each report: lab, date, how it was read"], ["detail", "Every value with its LOINC code, reference and page and line"]],
+  p2: [["graph-menu", "Menu → Health graph on this iPhone"], ["graph", "Reports, values, LOINC codes and OMOP rows: a Relate graph on the phone"]],
+  p3: [["relate", "Export to my Mac: keep a copy on hardware I own"], ["relatePaired", "Paired with my Mac by QR code"], ["relateUSB", "No shared Wi-Fi? Send over a USB cable"], ["relateUSBDone", "Sent: reports and Apple Watch weeks are in the Mac's graph"]],
+};
+for (const [id, flow] of Object.entries(FLOWS)) {
+  const ph = document.getElementById(id), scr = ph.querySelector(".scr"), steps = document.querySelector(`[data-phone=${id}]`), cap = document.getElementById("cap-" + id);
+  const imgs = flow.map(([f]) => { const im = new Image(); im.src = `presentation/${f}.png`; im.alt = ""; scr.appendChild(im); return im; });
+  const btns = flow.map(([, t], i) => { const b = document.createElement("button"); b.textContent = i + 1; b.setAttribute("aria-label", t); b.onclick = e => { e.stopPropagation(); show(i); }; steps.appendChild(b); return b; });
+  let at = 0;
+  function show(i) { at = (i + flow.length) % flow.length; imgs.forEach((im, j) => { im.style.transform = `translateX(${j < at ? -30 : j > at ? 100 : 0}%)`; im.style.opacity = j === at ? 1 : 0; }); btns.forEach((b, j) => b.classList.toggle("on", j === at)); cap.textContent = flow[at][1]; }
+  ph.onclick = () => show(at + 1); show(0);
+}
+
+// ── metadata model, step by step from the root (counts only) ──
+const LAYER = { person: "#2a78d6", omop: "#6250d6", ontology: "#1baf7a", knowledge: "#eb6834" };
+const N = { Patient:[150,330,"person","me",0], DiagnosticReport:[520,190,"person","28",1], Provenance:[520,50,"person","28",1], DocumentReference:[900,70,"person","28",1], Organization:[900,190,"person","10",1], Observation:[520,400,"person","1 293",1],
+  NcbiTaxon:[900,330,"ontology","44",3], LoincCode:[900,470,"ontology","194",3], OMOPPerson:[150,620,"omop","1",4], OMOPMeasurement:[520,620,"omop","714",4],
+  RiskScore:[1300,110,"knowledge","4",5], HealthRisk:[1300,330,"knowledge","6",5], Knowledge:[1300,500,"knowledge","1",5], ReferenceRange:[1300,620,"knowledge","173",5], ScoreResult:[150,110,"person","4",5] };
+const E = [["Patient","HAS_DIAGNOSTIC_REPORT","DiagnosticReport",1],["Provenance","TARGET","DiagnosticReport",1],["DiagnosticReport","DERIVED_FROM","DocumentReference",1],["DiagnosticReport","PERFORMED_BY","Organization",1],["DiagnosticReport","HAS_RESULT","Observation",1],
+  ["Patient","HAS_OBSERVATION","Observation",2],["Observation","CODED_BY","LoincCode",3],["Observation","IDENTIFIES","NcbiTaxon",3],["Patient","MAPPED_TO","OMOPPerson",4],["Observation","MAPPED_TO","OMOPMeasurement",4],["OMOPPerson","HAS_MEASUREMENT","OMOPMeasurement",4],["OMOPMeasurement","CODED_BY","LoincCode",4],
+  ["RiskScore","USES","LoincCode",5],["RiskScore","ESTIMATES","HealthRisk",5],["LoincCode","MARKER_OF","HealthRisk",5],["ReferenceRange","APPLIES_TO","LoincCode",5],["Patient","HAS_SCORE","ScoreResult",5],["ScoreResult","OF","RiskScore",5],["ScoreResult","FROM","Observation",5]];
+const STEPS = ["1 · The root: me", "2 · Lab reports and values", "3 · Apple Watch weeks", "4 · Codes", "5 · Research format (OMOP)", "6 · Medical knowledge"];
+const mchips = document.getElementById("mchips"); let mstep = 0;
+STEPS.forEach((s, i) => { const b = document.createElement("button"); b.className = "chip"; b.textContent = s; b.onclick = () => drawModel(i); mchips.appendChild(b); });
+const all = document.createElement("button"); all.className = "chip"; all.textContent = "Show all"; all.onclick = () => drawModel(5); mchips.appendChild(all);
+function drawModel(step) {
+  mstep = step; [...mchips.children].forEach((b, i) => b.classList.toggle("on", i === step));
+  const W = l => Math.max(210, l.length * 14 + 40), H = 70;
+  const ex = (x, y, tx, ty, w, pad) => { const dx = tx - x, dy = ty - y, s = Math.min(Math.abs((w / 2 + pad) / (dx || 1e-9)), Math.abs((H / 2 + pad) / (dy || 1e-9))); return [x + dx * s, y + dy * s]; };
+  let g = `<defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0L10,5L0,10z" fill="#7d8796"/></marker></defs>`, lab = "";
+  for (const [a, t, b, st] of E) { if (st > step) continue; const [x1, y1] = N[a], [x2, y2] = N[b]; const [sx, sy] = ex(x1, y1, x2, y2, W(a), 2), [qx, qy] = ex(x2, y2, x1, y1, W(b), 8);
+    const hot = st === step, aw = t === "HAS_OBSERVATION" && step === 2;
+    g += `<line x1="${sx}" y1="${sy}" x2="${qx}" y2="${qy}" stroke="${aw ? "#5aa2ff" : hot ? "#c5ccd6" : "#4b5563"}" stroke-width="${aw ? 5 : hot ? 2.6 : 2}" marker-end="url(#ar)"/>`;
+    lab += `<text x="${(sx + qx) / 2}" y="${(sy + qy) / 2 - 7}" text-anchor="middle" font-size="16" fill="${aw ? "#9ccaff" : "#9aa3af"}" paint-order="stroke" stroke="#04060a" stroke-width="6">${t}</text>`; }
+  g += lab;
+  for (const [l, [x, y, layer, n, st]] of Object.entries(N)) { if (st > step) continue; const w = W(l), hot = st === step;
+    g += `<g><rect x="${x - w / 2}" y="${y - H / 2}" width="${w}" height="${H}" rx="14" fill="#0d1117" stroke="${LAYER[layer]}" stroke-width="${hot ? 5 : 3}" opacity="${hot || step === 5 ? 1 : .85}"/><text x="${x}" y="${y - 4}" text-anchor="middle" font-size="22" font-weight="750" fill="#fff">${l}</text><text x="${x}" y="${y + 22}" text-anchor="middle" font-size="18" fill="#aab1bc">${n}</text></g>`; }
+  if (step === 2) g += `<g transform="translate(330 500)"><rect x="-150" y="-40" width="300" height="80" rx="16" fill="#0f2238" stroke="#5aa2ff" stroke-width="3"/><text y="-6" text-anchor="middle" font-size="21" font-weight="750" fill="#fff">Apple Watch weekly means</text><text y="22" text-anchor="middle" font-size="17" fill="#9ccaff">Observations on me, no report</text></g>`;
+  document.getElementById("model").innerHTML = g;
+}
+drawModel(0);
+
+// ── knowledge: risks, scores and measures with their sources ──
+fetch("presentation/knowledge.json").then(r => r.json()).then(K => {
+  const kc = document.getElementById("kchips");
+  K.forEach((r, i) => { const b = document.createElement("button"); b.className = "chip"; b.textContent = r.name; b.onclick = () => pick(i); kc.appendChild(b); });
+  const esc = s => String(s).replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+  function pick(i) {
+    [...kc.children].forEach((b, j) => b.classList.toggle("on", j === i)); const r = K[i];
+    document.getElementById("kscores").innerHTML = r.scores.length ? r.scores.map(s => `<div class="item"><span><b>${esc(s.name)}</b><br><span style="color:#9aa4b2;font-size:17px">uses ${esc(s.uses.join(", "))}</span></span><span class="src">${esc(s.source)}</span></div>`).join("") : `<div class="item"><span style="color:#9aa4b2">No published score stored; the measures carry it.</span></div>`;
+    document.getElementById("kmarks").innerHTML = r.markers.slice(0, 8).map(m => `<div class="item"><span>${esc(m.name)}</span><span class="src">${esc(m.source)}</span></div>`).join("") + (r.markers.length > 8 ? `<div class="item"><span style="color:#9aa4b2">+ ${r.markers.length - 8} more</span></div>` : "");
+  }
+  pick(0);
+});
+
+// ── hero: a living graph ──
+(() => {
+  const svg = document.getElementById("hero"), c = document.getElementById("bg").getContext("2d");
+  const C = [450, 450], R = 270, M = [["HbA1c", "#16c60c"], ["LDL", "#ff3b3b"], ["ApoB", "#ff3b3b"], ["Lp(a)", "#f7b500"], ["eGFR", "#f7b500"], ["HRV", "#f7b500"], ["Sleep", "#f7b500"], ["VO₂ max", "#16c60c"]];
+  const pts = M.map((_, i) => { const a = -Math.PI / 2 + i * 2 * Math.PI / M.length; return [C[0] + R * Math.cos(a), C[1] + R * Math.sin(a)]; });
+  const S = [["Lab report", -22.5], ["Apple Watch", 67.5], ["iPhone", 157.5], ["Mac", -112.5]].map(([n, d]) => [n, C[0] + 390 * Math.cos(d * Math.PI / 180), C[1] + 390 * Math.sin(d * Math.PI / 180)]);
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function frame(ms) {
+    const t = reduce ? 8 : ms / 1000;
+    if (slides[0].classList.contains("on") || t < 1) {
+      c.clearRect(0, 0, 1600, 900); let g = c.createRadialGradient(1150, 450, 0, 1150, 450, 650); g.addColorStop(0, "rgba(61,155,255,.20)"); g.addColorStop(1, "rgba(4,6,10,0)"); c.fillStyle = g; c.fillRect(0, 0, 1600, 900);
+      c.fillStyle = "rgba(160,190,230,.09)"; for (let x = 0; x < 1600; x += 48) for (let y = (t * 6) % 48; y < 900; y += 48) c.fillRect(x, y, 2, 2);
+      let h = "";
+      pts.forEach(p => h += `<line x1="${C[0]}" y1="${C[1]}" x2="${p[0]}" y2="${p[1]}" stroke="#3d9bff" stroke-width="4" stroke-opacity=".55"/>`);
+      pts.forEach((p, i) => { const q = pts[(i + 1) % pts.length]; h += `<line x1="${p[0]}" y1="${p[1]}" x2="${q[0]}" y2="${q[1]}" stroke="#fff" stroke-opacity=".15" stroke-width="2.5"/>`; });
+      S.forEach(([n, x, y], i) => { h += `<line x1="${x}" y1="${y}" x2="${C[0]}" y2="${C[1]}" stroke="#9ccaff" stroke-opacity=".3" stroke-width="2"/>`; for (let j = 0; j < 3; j++) { const u = (t * .45 + j / 3 + i * .17) % 1; h += `<circle cx="${x + (C[0] - x) * u}" cy="${y + (C[1] - y) * u}" r="5" fill="#9ccaff"/>`; } });
+      pts.forEach((p, i) => { const k = 1 + .05 * Math.sin(t * 2.4 + i); h += `<circle cx="${p[0]}" cy="${p[1]}" r="${38 * k}" fill="#0d1320" stroke="${M[i][1]}" stroke-width="10"/><text x="${p[0]}" y="${p[1] + (p[1] < C[1] ? -58 : 74)}" text-anchor="middle" font-size="24" font-weight="700" fill="#eef2f7">${M[i][0]}</text>`; });
+      S.forEach(([n, x, y]) => h += `<rect x="${x - 76}" y="${y - 24}" width="152" height="48" rx="24" fill="#111824" stroke="#3d9bff" stroke-width="2"/><text x="${x}" y="${y + 7}" text-anchor="middle" font-size="20" font-weight="600" fill="#9fb0c6">${n}</text>`);
+      const k = 1 + .04 * Math.sin(t * 2);
+      h += `<circle cx="${C[0]}" cy="${C[1]}" r="${115 * k}" fill="#3d9bff" opacity=".95"/><rect x="${C[0] - 42}" y="${C[1] - 6}" width="84" height="64" rx="11" fill="#04060a"/><path d="M${C[0] - 26} ${C[1] - 4} v-22 a26 26 0 0 1 52 0 v22" fill="none" stroke="#04060a" stroke-width="12" stroke-linecap="round"/><circle cx="${C[0]}" cy="${C[1] + 22}" r="8" fill="#3d9bff"/>`;
+      svg.innerHTML = h;
+    }
+    if (!reduce) requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+
+const fromHash = () => go(Math.max(0, (parseInt(location.hash.slice(1)) || 1) - 1));
+addEventListener("hashchange", fromHash); fromHash();
+</script>
+</body>
+</html>
