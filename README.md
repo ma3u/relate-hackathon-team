@@ -11,6 +11,32 @@ This repo summarizes the hackathon so we can get going quickly. It will become o
 
 ---
 
+## Our project: MyHealthCoach, my local health graph, not the cloud's
+
+Klarbefund (iPhone) scans paper lab reports and codes every value with LOINC; Relate turns them, with Apple Watch weekly means, into one health graph on the phone and on the Mac, inside an encrypted vault. The graph also holds official and optimal reference ranges, health risks and published risk scores with the values they used, and Claude Desktop asks it questions through Relate's MCP server. Story: [docs/DEVPOST.md](docs/DEVPOST.md) · how it works: [docs/KLARBEFUND.md](docs/KLARBEFUND.md), [docs/SWIFT.md](docs/SWIFT.md), [docs/SCHEMA.md](docs/SCHEMA.md).
+
+![The whole way, with fictional data: Klarbefund pairs with the Mac, sends its reports, the Relate graph holds them, Claude reads them over MCP](docs/img/klarbefund/klarbefund-relate-claude.gif)
+
+### How it uses Relate
+
+**Single-file mode.** Each person's graph is one `.rl` file: Klarbefund keeps one in the app's sandbox on the iPhone (`Application Support/HealthGraph`), and the Mac keeps `health.rl` inside an AES-256 encrypted disk image (`~/RelateHealth`). One file can be locked, backed up encrypted or deleted as a whole; the same Swift library (`HealthGraph`, on `RelateFFI.xcframework`) writes it on both devices, and Claude reads a read-only snapshot copy through `relate serve --mcp --read-only`.
+
+### Try it with the sample graph
+
+[`examples/health-graph/health.rl`](examples/health-graph/health.rl) is a single-file Relate store built from the synthetic fixtures in this repo (no real person): 3 lab reports, 16 Apple Health weekly means, and the knowledge layer (173 reference ranges, 6 health risks, 4 risk scores, 55 marker links).
+
+```bash
+relate query --database examples/health-graph/health.rl --mode table <<< \
+  "MATCH (h:HealthRisk)<-[:MARKER_OF]-(:LoincCode)<-[:CODED_BY]-(o:Observation) RETURN h.name AS risk, count(o) AS values"
+python -m health_graph query --db examples/health-graph/health.rl trend --param loinc=4548-4
+python -m health_graph query --db examples/health-graph/health.rl ranges --param loinc=22748-8
+relate serve --mcp stdio --database examples/health-graph/health.rl --read-only   # for Claude Desktop or Claude Code
+```
+
+Rebuild it: `python -m health_graph import --db health.rl fixtures/fhir/*.json`, then `python -m health_graph knowledge --db health.rl`. Setup: [docs/INSTALL.md](docs/INSTALL.md).
+
+---
+
 ## Looking for teammates
 
 ### About me
