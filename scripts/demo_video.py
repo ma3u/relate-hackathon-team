@@ -234,6 +234,13 @@ def main() -> None:
     clips, voices, srt, t = [], [], [], 0.0
     for i, seg in enumerate(segments, 1):
         mp3 = narrate(seg["text"], audio, args.voice)
+        fx = board.get("voice_fx")
+        if fx and args.voice:  # deeper and warmer, same timing; cached beside the ElevenLabs file
+            deeper = audio / f"{mp3.stem}-fx{fx['semitones']:+g}.wav"
+            if not deeper.exists():
+                run(["uv", "run", "-q", "--python", "3.12", "--with", "pedalboard", "python",
+                     str(ROOT / "scripts" / "voice_fx.py"), str(mp3), str(deeper), str(fx["semitones"])])
+            mp3 = deeper
         spoken = duration(mp3)
         seconds = max(spoken + 0.7, seg.get("min", 0))
         clips.append(clip(seg, seconds, work, board.get("title", ""), base))
