@@ -147,7 +147,7 @@ What the graph holds afterwards. **Counts only**: real health values never go in
 
 ## 3. Ask Claude about your graph
 
-`relate serve --mcp stdio --read-only` exposes two tools, `read_cypher` and `get_schema`. Both are registered for you as **`klarbefund-health`** on `~/RelateHealth/health.rl`:
+`relate serve --mcp stdio --read-only` exposes two tools, `read_cypher` and `get_schema`. Both are registered as **`klarbefund-health`**, on a snapshot of `~/RelateHealth/health.rl` taken inside the vault when the server starts:
 
 **Claude Code** (user scope, every project):
 
@@ -157,29 +157,51 @@ claude mcp add --scope user klarbefund-health -- \
 claude mcp get klarbefund-health      # Status: ✔ Connected
 ```
 
-**Claude Desktop**, step by step:
+### Claude Desktop, step by step
 
-1. Quit Claude Desktop (⌘Q). It reads its configuration only at start.
-2. Back up its configuration:
+Claude Desktop starts the MCP server itself, from its configuration file
+`~/Library/Application Support/Claude/claude_desktop_config.json`, and reads that
+file only when it starts. It also keeps the configuration in memory and writes it
+back, so **an edit made while Claude Desktop runs can be lost** (it happened on
+Nov 12, 2026: the entry was gone an hour later). Edit it only while the app is closed.
+[`scripts/claude_desktop.sh`](../scripts/claude_desktop.sh) does that for you.
+
+1. **Check the server works**, without Claude:
    ```bash
-   cp ~/Library/Application\ Support/Claude/claude_desktop_config.json{,.bak}
+   scripts/health_vault.sh mcp </dev/null   # unlocks the vault; "MCP (stdio) serving", then exits
    ```
-3. Open `~/Library/Application Support/Claude/claude_desktop_config.json` (Claude Desktop → Settings → Developer → Edit Config opens the folder) and add the server under `mcpServers`, next to any you have:
-   ```json
-   "klarbefund-health": {
-     "command": "/Users/<you>/projects/Neo4j-relate/scripts/health_vault.sh",
-     "args": ["mcp"]
-   }
-   ```
-   Use the absolute path: Claude Desktop does not use your shell's `PATH`.
-4. Open Claude Desktop. In a new chat, the tools menu lists **klarbefund-health** with `read_cypher` and `get_schema`.
-5. Ask one of the questions below. Claude asks before the first tool call; allow it.
+2. **Register it**, either way:
+   - With the app open: run
+     ```bash
+     scripts/claude_desktop.sh --wait
+     ```
+     then quit Claude Desktop (⌘Q). The script waits for it to close, backs up the
+     configuration, adds `klarbefund-health`, and opens Claude Desktop again.
+   - With the app already closed: `scripts/claude_desktop.sh`, then open Claude Desktop.
+   - By hand: quit Claude Desktop (⌘Q), back up the file, and add under `mcpServers`,
+     next to any servers you have, with the absolute path (Claude Desktop does not use
+     your shell's `PATH`):
+     ```json
+     "klarbefund-health": {
+       "command": "/Users/<you>/projects/Neo4j-relate/scripts/health_vault.sh",
+       "args": ["mcp"]
+     }
+     ```
+3. **Allow the vault once.** On the first start macOS may ask whether `security` may
+   use the Keychain item `relate-health-vault`: **Always Allow**. That is the vault's
+   password, read to unlock the encrypted image; it is never printed.
+4. **Check it is there.** In a new chat, open the tools menu below the message
+   field: **klarbefund-health** with `read_cypher` and `get_schema`.
+   `scripts/claude_desktop.sh --status` shows the configuration from the Mac side.
+5. **Ask.** For example *"Using klarbefund-health: how many reports and lab values
+   are in my graph?"* Claude asks before its first tool call; allow it.
 
-`health_vault.sh mcp` unlocks the vault, copies `health.rl` to `claude-snapshot.rl` inside it, and serves that copy read-only, so the receiver can keep writing while Claude reads. Check the server without Claude Desktop:
-
-```bash
-scripts/health_vault.sh mcp </dev/null   # prints "MCP (stdio) serving" on stderr, then exits
-```
+| Symptom | What to do |
+|---|---|
+| klarbefund-health is not in the tools menu | `scripts/claude_desktop.sh --status`; if it says "not configured", the app overwrote it: run step 2 again |
+| It is listed but fails | read `~/Library/Logs/Claude/mcp-server-klarbefund-health.log`; run step 1 |
+| Values sent from the phone are missing | Claude reads the snapshot taken at start: quit and reopen Claude Desktop |
+| Stop using it | quit Claude Desktop (⌘Q), then `scripts/claude_desktop.sh --remove` |
 
 In this repo, Claude Code also sees `health-graph` (synthetic `./health.rl`) from `.mcp.json`, plus the Relate skill (`~/.claude/skills/relate`), so it writes good Cypher.
 
