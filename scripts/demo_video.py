@@ -13,11 +13,13 @@ Without --voice, silent placeholders as long as the text would take are used.
 Storyboard (JSON): {"title": ..., "segments": [{"id", "text", "visual": {...},
 "min": seconds}]}; visual types:
   card   {"type": "card", "kicker", "title", "body"}           rendered HTML
+  slide  {"type": "slide", "kicker", "title", "bullets", "images" | "stats" | "video", "phones"}
+                                                               a presentation slide: text left, visual right
   phone  {"type": "phone", "images": [...], "caption"}         screenshots side by side
   gif    {"type": "gif", "src", "caption"}                     an animation, looped to fit
   image  {"type": "image", "src"}                              a still, slowly pushed in
   scroll {"type": "scroll", "src", "caption"}                  a tall PNG, panned top to bottom
-  video  {"type": "video", "src", "start", "caption"}          a recording, cut to fit
+  video  {"type": "video", "src", "start", "end", "fit"}       a recording; fit: true speeds it to the segment
 """
 from __future__ import annotations
 
@@ -47,6 +49,22 @@ h1{font-size:92px;line-height:1.05;margin:0 0 30px;font-weight:750;max-width:150
 .row img{height:820px;border-radius:44px;box-shadow:0 30px 80px rgba(0,0,0,.55);border:8px solid #1d2128}
 .cap{position:absolute;left:0;right:0;bottom:46px;text-align:center;font-size:36px;color:#dfe3ea;font-weight:500}
 .brand{position:absolute;right:56px;top:40px;font-size:24px;color:#7d8590}
+.slide{display:block;padding:0}.slide .left{position:absolute;left:110px;top:150px;width:700px;bottom:150px;
+display:flex;flex-direction:column;justify-content:center}
+.slide h1{font-size:64px;line-height:1.08;margin:0 0 34px;max-width:700px;text-wrap:balance}
+.slide ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:22px}
+.slide li{font-size:31px;line-height:1.35;color:#c7cbd3;padding-left:34px;position:relative}
+.slide li::before{content:"";position:absolute;left:0;top:15px;width:14px;height:14px;border-radius:50%;background:#5aa2ff}
+.slide .right{position:absolute;left:880px;right:90px;top:110px;bottom:130px;display:flex;gap:28px;
+align-items:center;justify-content:center}
+.slide .right img{max-width:100%;max-height:100%;object-fit:contain;border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.5)}
+.slide .right.phones img{border-radius:34px;border:6px solid #1d2128;max-width:calc((100% - 28px * 3) / 4)}
+.slide .right.two img{max-width:calc((100% - 28px) / 2)}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:26px;width:100%}
+.stat{background:#151a21;border:1px solid #232a33;border-radius:20px;padding:30px 34px}
+.stat b{display:block;font-size:78px;line-height:1;font-weight:800;color:#fff}.stat span{font-size:26px;color:#aab1bc}
+.foot{position:absolute;left:110px;right:90px;bottom:48px;display:flex;justify-content:space-between;font-size:22px;color:#6b7280}
+.bar{position:absolute;left:0;bottom:0;height:6px;background:#5aa2ff}
 """
 
 
@@ -121,7 +139,34 @@ def clip(seg: dict, seconds: float, work: Path, title: str, base: Path) -> Path:
     enc = ["-c:v", "libx264", "-pix_fmt", "yuv420p", "-r", str(FPS), "-t", f"{seconds:.3f}", "-an"]
     fit = (f"scale={W}:{H}:force_original_aspect_ratio=decrease,"
            f"pad={W}:{H}:(ow-iw)/2:(oh-ih)/2:color=0x0e1116,setsar=1")
-    if v["type"] == "card":
+    if v["type"] == "slide":
+        png = work / f"{seg['id']}.png"
+        right = ""
+        imgs = v.get("images", [])
+        if v.get("stats"):
+            right = '<div class="right"><div class="stats">' + "".join(
+                f'<div class="stat"><b>{esc(n)}</b><span>{esc(l)}</span></div>' for n, l in v["stats"]) + "</div></div>"
+        elif imgs:
+            cls = "phones" if v.get("phones") else ("two" if len(imgs) == 2 else "")
+            right = f'<div class="right {cls}">' + "".join(
+                f'<img src="file://{(base / i).resolve()}">' for i in imgs) + "</div>"
+        bullets = "".join(f"<li>{esc(x)}</li>" for x in v.get("bullets", []))
+        n, total = seg.get("_n", 1), seg.get("_total", 1)
+        render_html(f'<body class="slide"><div class="left"><p class="kicker">{esc(v.get("kicker"))}</p>'
+                    f'<h1>{esc(v["title"])}</h1><ul>{bullets}</ul></div>{right}'
+                    f'<div class="foot"><span>{esc(title)}</span><span>{n} / {total}</span></div>'
+                    f'<div class="bar" style="width:{100 * n / total:.1f}%"></div>', png, work)
+        if v.get("video"):  # a recording inside the slide's right-hand box
+            src = (base / v["video"]).resolve()
+            speed = duration(src) / seconds
+            box_w, box_h, x, y = W - 880 - 90, H - 110 - 130, 880, 110
+            run(["ffmpeg", "-y", "-loop", "1", "-i", str(png), "-i", str(src), "-filter_complex",
+                 f"[1:v]setpts=PTS/{speed:.4f},scale={box_w}:{box_h}:force_original_aspect_ratio=decrease[r];"
+                 f"[0:v][r]overlay=x={x}+({box_w}-overlay_w)/2:y={y}+({box_h}-overlay_h)/2:shortest=0",
+                 *enc, str(out)])
+        else:
+            run(["ffmpeg", "-y", "-loop", "1", "-i", str(png), "-vf", f"{fit},fade=in:0:10", *enc, str(out)])
+    elif v["type"] == "card":
         png = work / f"{seg['id']}.png"
         render_html(f'<p class="kicker">{esc(v.get("kicker"))}</p><h1>{esc(v["title"])}</h1>'
                     f'<div class="body">{esc(v.get("body"))}</div>{brand(title)}', png, work)
@@ -149,7 +194,12 @@ def clip(seg: dict, seconds: float, work: Path, title: str, base: Path) -> Path:
         run(["ffmpeg", "-y", "-loop", "1", "-i", str(src), "-vf", pan, *enc, str(out)])
     elif v["type"] == "video":
         src = (base / v["src"]).resolve()
-        run(["ffmpeg", "-y", "-ss", str(v.get("start", 0)), "-i", str(src), "-vf", fit, *enc, str(out)])
+        start = float(v.get("start", 0))
+        end = float(v["end"]) if v.get("end") else duration(src)
+        # "fit": speed the whole recording up (or down) to the segment's length.
+        speed = (end - start) / seconds if v.get("fit") else 1.0
+        run(["ffmpeg", "-y", "-ss", f"{start}", "-to", f"{end}", "-i", str(src),
+             "-vf", f"setpts=PTS/{speed:.4f},{fit}", *enc, str(out)])
     else:
         sys.exit(f"unknown visual type {v['type']}")
     return out
@@ -173,6 +223,8 @@ def main() -> None:
     audio.mkdir(exist_ok=True)
 
     segments = [s for s in board["segments"] if not args.only or s["id"] == args.only]
+    for i, s in enumerate(board["segments"], 1):
+        s["_n"], s["_total"] = i, len(board["segments"])
     chars = sum(len(s["text"]) for s in segments)
     print(f"{len(segments)} segments, {chars} characters of narration" + (" (ElevenLabs)" if args.voice else " (silent)"))
 

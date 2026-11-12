@@ -19,7 +19,7 @@ Klarbefund (iPhone) scans paper lab reports and codes every value with LOINC; Re
 
 ### How it uses Relate
 
-**Single-file mode.** Each person's graph is one `.rl` file: Klarbefund keeps one in the app's sandbox on the iPhone (`Application Support/HealthGraph`), and the Mac keeps `health.rl` inside an AES-256 encrypted disk image (`~/RelateHealth`). One file can be locked, backed up encrypted or deleted as a whole; the same Swift library (`HealthGraph`, on `RelateFFI.xcframework`) writes it on both devices, and Claude reads a read-only snapshot copy through `relate serve --mcp --read-only`.
+**Single-file mode.** Each person's whole health graph is one `.rl` file, so it can be encrypted as one unit to protect the personal data: on the iPhone, Klarbefund keeps it in the app's sandbox (`Application Support/HealthGraph`) under iOS Data Protection (`FileProtectionType.complete`, excluded from backup); on the Mac, `health.rl` lives inside an AES-256 encrypted disk image (`~/RelateHealth`) that is open only while in use. Relate itself does not encrypt the file; where it lives does. One file is also easy to back up encrypted, to delete for good, and to copy as a snapshot; the same Swift library (`HealthGraph`, on `RelateFFI.xcframework`) writes it on both devices, and Claude reads a read-only snapshot copy through `relate serve --mcp --read-only`.
 
 ### Try it with the sample graph
 
