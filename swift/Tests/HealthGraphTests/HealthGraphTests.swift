@@ -410,3 +410,32 @@ struct DuplicateTests {
     #expect(try store.run("duplicates").isEmpty)
   }
 }
+
+/// Port of the year-of-birth tests in tests/test_health_graph.py.
+@Suite("Year of birth and sex", .serialized)
+struct PatientAttributeTests {
+  @Test func yearOfBirthAndSexReachPatientAndOmop() throws {
+    var bundle = try Fixtures.bundle(Fixtures.golden)
+    bundle["entry"] = ((bundle["entry"] as? [JSONObject]) ?? []).map { entry in
+      guard var resource = entry["resource"] as? JSONObject, resource["resourceType"] as? String == "Patient"
+      else { return entry }
+      resource["birthDate"] = "1971-05-03"  // a full date is cut to the year
+      resource["gender"] = "male"
+      return ["resource": resource]
+    }
+    let parsed = try FHIR.parseBundle(bundle)
+    #expect(parsed.patient == ["birthYear": .int(1971), "gender": .string("male")])
+    let store = try HealthStore(path: Fixtures.tempStore())
+    try store.initSchema()
+    try store.importReport(parsed)
+    try store.omopTransform()
+    let p = try store.rows(cypher: "MATCH (p:Patient) RETURN p.birthYear AS y, p.gender AS g, p.birthDate AS d")
+    #expect(p.first?["y"] == "1971" && p.first?["g"] == "male" && p.first?["d"] == "")
+    let op = try store.rows(cypher: "MATCH (op:OMOPPerson) RETURN op.yearOfBirth AS y, op.genderConceptId AS g")
+    #expect(op.first?["y"] == "1971" && op.first?["g"] == "8507")
+  }
+
+  @Test func withoutTheSwitchNothingAboutThePersonIsStored() throws {
+    #expect(try FHIR.parseBundle(Fixtures.bundle(Fixtures.golden)).patient.isEmpty)
+  }
+}

@@ -41,6 +41,7 @@ public final class HealthStore {
         Cypher.upsertReport,
         [
           "patientId": .string(parsed.patientId),
+          "patient": .map(parsed.patient),
           "report": .map(parsed.report),
           "document": parsed.document.map(CypherValue.map) ?? .null,
           "provenance": parsed.provenance.map(CypherValue.map) ?? .null,

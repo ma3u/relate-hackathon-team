@@ -28,6 +28,9 @@ class ParsedReport:
     document: dict[str, Any] | None
     provenance: dict[str, Any] | None
     observations: list[dict[str, Any]] = field(default_factory=list)
+    # What the person chose to send about themselves: `birthYear` (year only,
+    # never the day) and `gender`. Empty unless Klarbefund's opt-in switch is on.
+    patient: dict[str, Any] = field(default_factory=dict)
 
 
 def load_bundle(path: str | Path) -> dict[str, Any]:
@@ -85,6 +88,7 @@ def parse_bundle(bundle: dict, report_id: str | None = None) -> ParsedReport:
     if len(patients) != 1:
         raise ValueError("expected exactly one Patient in the bundle")
     patient_id = patients[0]["id"]
+    patient = patient_attributes(patients[0])
 
     dr = (by_type.get("DiagnosticReport") or [{}])[0]
     rid = report_id or _report_id(bundle, dr)
@@ -171,7 +175,21 @@ def parse_bundle(bundle: dict, report_id: str | None = None) -> ParsedReport:
         )
         observations.append(row)
 
-    return ParsedReport(patient_id, rid, report, document, provenance, collapse_repeats(observations))
+    return ParsedReport(patient_id, rid, report, document, provenance, collapse_repeats(observations),
+                        patient)
+
+
+def patient_attributes(patient: dict) -> dict[str, Any]:
+    """Year of birth and sex, when the bundle carries them (Klarbefund sends them
+    only to the person's own Mac, and only when they switch it on). A full date
+    is cut to its year here: the day is not needed and is not stored."""
+    attrs: dict[str, Any] = {}
+    year = str(patient.get("birthDate") or "")[:4]
+    if year.isdigit() and 1900 <= int(year) <= 2100:
+        attrs["birthYear"] = int(year)
+    if patient.get("gender") in ("male", "female", "other", "unknown"):
+        attrs["gender"] = patient["gender"]
+    return attrs
 
 
 def collapse_repeats(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:

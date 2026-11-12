@@ -36,7 +36,7 @@ flowchart LR
 
 | Layer | Label | Key (unique) | Notable properties |
 |---|---|---|---|
-| L3 FHIR | `Patient` | `id` | (no names, ever) |
+| L3 FHIR | `Patient` | `id` | no names, ever; `birthYear` (year only) and `gender` only when the person switches on *Send year of birth and sex* in Klarbefund (for OMOP and risk scores) |
 | | `DiagnosticReport` | `resourceId` = `<patient>-<reportId>` | `reportId`, `status`, `effectiveDate`, `performer` |
 | | `Observation` | `resourceId` = `<patient>-<reportId>-<n>` | **Hub contract:** `code, display, valueQuantity, unit, referenceLow/High/Text, effectiveDate, category, status, sourceKind, performer, sourceReport, contributedBy`. **Local extras:** `comparator, sourceLine, ocrConfidence, verifiedByPatientAt, originalReading, unmappedReason, hubEligible, repeatedOnReport, duplicateOf` |
 | | `DocumentReference`, `Provenance` | `resourceId` | title/created · activity/agent |

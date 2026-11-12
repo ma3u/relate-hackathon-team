@@ -72,6 +72,7 @@ public enum FHIR {
     let dr = byType["DiagnosticReport"]?.first ?? [:]
     let rid = nonEmpty(given) ?? reportId(bundle, dr)
     let prefix = "\(patientId)-\(rid)"
+    let patient = patientAttributes(patients[0])
     let performer = dr.objects("performer").lazy.compactMap { $0.text("display") }.first
 
     let report: Row = [
@@ -158,7 +159,22 @@ public enum FHIR {
     }
     return ParsedReport(
       patientId: patientId, reportId: rid, report: report, document: document,
-      provenance: provenance, observations: collapseRepeats(observations))
+      provenance: provenance, observations: collapseRepeats(observations), patient: patient)
+  }
+
+  /// Year of birth and sex, when the bundle carries them (Klarbefund sends them
+  /// only to the person's own Mac, and only when they switch it on). A full date
+  /// is cut to its year here: the day is not needed and is not stored.
+  /// Same rule as `patient_attributes` in health_graph/fhir.py.
+  public static func patientAttributes(_ patient: JSONObject) -> Row {
+    var attrs: Row = [:]
+    if let date = patient.string("birthDate"), let year = Int(date.prefix(4)), (1900...2100).contains(year) {
+      attrs["birthYear"] = .int(Int64(year))
+    }
+    if let gender = patient.string("gender"), ["male", "female", "other", "unknown"].contains(gender) {
+      attrs["gender"] = .string(gender)
+    }
+    return attrs
   }
 
   /// One value printed twice on the same report is one measurement.
@@ -285,6 +301,9 @@ public struct ParsedReport: Sendable {
   public let document: Row?
   public let provenance: Row?
   public let observations: [Row]
+  /// What the person chose to send about themselves: `birthYear` (year only,
+  /// never the day) and `gender`. Empty unless Klarbefund's opt-in switch is on.
+  public var patient: Row = [:]
 
   /// Values the graph keeps without a LOINC code, and why.
   public var unmapped: [Skipped] {

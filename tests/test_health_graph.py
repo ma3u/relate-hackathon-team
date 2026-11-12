@@ -217,3 +217,28 @@ def test_removing_the_copy_restores_the_first(db):
     store.omop_transform(conn)
     assert q(conn, "duplicates") == []
     assert {r["label"]: r["n"] for r in q(conn, "stats")}["OMOPMeasurement"] == 18
+
+
+# ── year of birth and sex (Klarbefund's opt-in "Send year of birth and sex") ──
+
+def test_year_of_birth_and_sex_reach_patient_and_omop(tmp_path):
+    bundle = fhir.load_bundle(GOLDEN)
+    patient = next(e["resource"] for e in bundle["entry"] if e["resource"]["resourceType"] == "Patient")
+    patient["birthDate"] = "1971-05-03"  # a full date is cut to the year
+    patient["gender"] = "male"
+    parsed = fhir.parse_bundle(bundle)
+    assert parsed.patient == {"birthYear": 1971, "gender": "male"}
+    conn = store.connect(tmp_path / "h.rl")
+    store.init_schema(conn)
+    store.import_report(conn, parsed)
+    store.omop_transform(conn)
+    p = conn.execute("MATCH (p:Patient) RETURN p.birthYear AS y, p.gender AS g, keys(p) AS k").single()
+    assert (p["y"], p["g"]) == (1971, "male")
+    assert "birthDate" not in p["k"]
+    op = conn.execute("MATCH (op:OMOPPerson) RETURN op.yearOfBirth AS y, op.genderConceptId AS g").single()
+    assert (op["y"], op["g"]) == (1971, 8507)
+    conn.close()
+
+
+def test_without_the_switch_nothing_about_the_person_is_stored():
+    assert fhir.parse_bundle(fhir.load_bundle(GOLDEN)).patient == {}

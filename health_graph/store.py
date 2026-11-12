@@ -36,6 +36,7 @@ DETACH DELETE om, o
 
 UPSERT_REPORT = """
 MERGE (p:Patient {id: $patientId})
+SET p += $patient
 MERGE (dr:DiagnosticReport {resourceId: $report.resourceId})
 SET dr += $report
 MERGE (p)-[:HAS_DIAGNOSTIC_REPORT]->(dr)
@@ -130,6 +131,7 @@ def import_report(conn, parsed: ParsedReport) -> int:
         conn.execute(DELETE_REPORT, {"reportId": parsed.report_id})
         conn.execute(UPSERT_REPORT, {
             "patientId": parsed.patient_id,
+            "patient": parsed.patient,
             "report": parsed.report,
             "document": parsed.document,
             "provenance": parsed.provenance,

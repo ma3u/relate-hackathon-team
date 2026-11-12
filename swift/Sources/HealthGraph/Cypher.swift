@@ -91,6 +91,7 @@ enum Cypher {
 
   static let upsertReport = #"""
   MERGE (p:Patient {id: $patientId})
+  SET p += $patient
   MERGE (dr:DiagnosticReport {resourceId: $report.resourceId})
   SET dr += $report
   MERGE (p)-[:HAS_DIAGNOSTIC_REPORT]->(dr)
