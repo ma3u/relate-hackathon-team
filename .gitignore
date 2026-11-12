@@ -9,3 +9,8 @@ media/
 *.rl
 *.rl-wal
 .DS_Store
+
+# Swift build output
+.build/
+.swiftpm/
+Package.resolved

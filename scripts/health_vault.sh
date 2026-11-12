@@ -13,6 +13,7 @@
 #   scripts/health_vault.sh unmount   # lock it again
 #   scripts/health_vault.sh status
 #   scripts/health_vault.sh receive   # mount, then run the Klarbefund receiver (refuses if not mounted)
+#                                     # (Swift: swift/mac; HEALTH_GRAPH_RECEIVER=python for the Python one)
 #   scripts/health_vault.sh mcp       # mount, then serve the graph read-only over MCP (for Claude)
 set -euo pipefail
 
@@ -96,7 +97,24 @@ case "${1:-status}" in
     ;;
   receive)
     do_mount
-    cd "$REPO" && exec env PYTHONUNBUFFERED=1 .venv/bin/python -m health_graph receive \
+    if [ "${HEALTH_GRAPH_RECEIVER:-swift}" = python ]; then
+      cd "$REPO" && exec env PYTHONUNBUFFERED=1 .venv/bin/python -m health_graph receive \
+        --db "$MOUNT/health.rl" --require-mount "${@:2}"
+    fi
+    log "building the Swift receiver (swift/mac)"
+    swift build -c release --package-path "$REPO/swift/mac" --product health-graph >&2
+    bin="$REPO/swift/mac/.build/release/health-graph"
+    # macOS keys Local Network permission to the code signature. swift build signs
+    # ad hoc (a new identity per build), so sign with a stable developer identity:
+    # "Allow" is asked once and then sticks. RELATE_HEALTH_SIGN overrides it.
+    id="${RELATE_HEALTH_SIGN:-$(security find-identity -v -p codesigning | awk '/Apple Development/ {print $2; exit}')}"
+    if [ -n "$id" ]; then
+      codesign --force --sign "$id" --identifier red.mabu.health-graph "$bin" 2>/dev/null ||
+        log "could not sign $bin; macOS may block it from the local network"
+    else
+      log "no signing identity; macOS may ask for Local Network access after every build"
+    fi
+    exec "$bin" receive \
       --db "$MOUNT/health.rl" --require-mount "${@:2}"
     ;;
   mcp)

@@ -24,3 +24,12 @@ jobs:
         run: |
           .venv/bin/python -m health_graph import --db health.rl fixtures/fhir/*.json
           .venv/bin/python -m health_graph query --db health.rl reports
+
+  swift:
+    # The same graph in Swift: the HealthGraph library (iPhone + Mac) and the
+    # Mac receiver/CLI, checked against the same fixtures as the Python tests.
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - run: swift test
+      - run: swift test --package-path swift/mac

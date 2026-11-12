@@ -1,0 +1,247 @@
+// Generated from health_graph/{schema,omop}.cypher, store.py and queries.py.
+// The parity test (CypherParityTests) fails if the two drift apart.
+// swiftlint:disable line_length
+
+enum Cypher {
+  static let schema = #"""
+  // Local Sovereign Health Graph: schema (Relate / openCypher)
+  // Keys follow the EHDS Hub's *code* (ui/src/lib/patient/app-observations.ts,
+  // scripts/load_fhir_neo4j.py), not the design spec, so `relate push` merges cleanly.
+  // Run once per store; every statement is idempotent.
+  
+  // ── L3 FHIR ──────────────────────────────────────────────────────────────────
+  CREATE CONSTRAINT patient_id IF NOT EXISTS FOR (n:Patient) REQUIRE n.id IS UNIQUE;
+  CREATE CONSTRAINT observation_resource_id IF NOT EXISTS FOR (n:Observation) REQUIRE n.resourceId IS UNIQUE;
+  CREATE CONSTRAINT diagnostic_report_resource_id IF NOT EXISTS FOR (n:DiagnosticReport) REQUIRE n.resourceId IS UNIQUE;
+  CREATE CONSTRAINT document_reference_resource_id IF NOT EXISTS FOR (n:DocumentReference) REQUIRE n.resourceId IS UNIQUE;
+  CREATE CONSTRAINT provenance_resource_id IF NOT EXISTS FOR (n:Provenance) REQUIRE n.resourceId IS UNIQUE;
+  CREATE CONSTRAINT organization_name IF NOT EXISTS FOR (n:Organization) REQUIRE n.name IS UNIQUE;
+  CREATE INDEX observation_source_report IF NOT EXISTS FOR (n:Observation) ON (n.sourceReport);
+  CREATE INDEX observation_effective_date IF NOT EXISTS FOR (n:Observation) ON (n.effectiveDate);
+  
+  // ── L4 OMOP ──────────────────────────────────────────────────────────────────
+  CREATE CONSTRAINT omop_person_id IF NOT EXISTS FOR (n:OMOPPerson) REQUIRE n.id IS UNIQUE;
+  CREATE CONSTRAINT omop_measurement_id IF NOT EXISTS FOR (n:OMOPMeasurement) REQUIRE n.id IS UNIQUE;
+  
+  // ── L5 Ontology ──────────────────────────────────────────────────────────────
+  CREATE CONSTRAINT loinc_code IF NOT EXISTS FOR (n:LoincCode) REQUIRE n.code IS UNIQUE;
+  CREATE CONSTRAINT ncbi_taxon_code IF NOT EXISTS FOR (n:NcbiTaxon) REQUIRE n.code IS UNIQUE;
+  
+  // ── Search ───────────────────────────────────────────────────────────────────
+  // Find values by the words on the paper report (German labels) or the LOINC name.
+  CREATE FULLTEXT INDEX observation_text IF NOT EXISTS FOR (n:Observation) ON EACH [n.display, n.sourceLine];
+  CREATE FULLTEXT INDEX loinc_text IF NOT EXISTS FOR (n:LoincCode) ON EACH [n.display];
+  """#
+
+  static let omop = #"""
+  // Local FHIR -> OMOP CDM v5.4 transform, ported from the EHDS Hub's
+  // neo4j/fhir-to-omop-transform.cypher (plain MERGE/SET, no APOC).
+  // Difference: reads the app's property names (valueQuantity, effectiveDate),
+  // which the Hub transform currently misses (it reads value / dateTime).
+  // Concept ids stay 0: Athena is not on the device; LOINC goes into measurementSourceValue.
+  
+  // 1. OMOPPerson: year of birth only, never names (Hub #475)
+  MATCH (p:Patient)
+  MERGE (op:OMOPPerson {id: 'omop-person-' + p.id})
+  SET op.personSourceValue = p.id,
+      op.yearOfBirth = p.birthYear,
+      op.genderConceptId = CASE p.gender WHEN 'male' THEN 8507 WHEN 'female' THEN 8532 ELSE 0 END
+  MERGE (p)-[:MAPPED_TO]->(op)
+  RETURN count(op) AS omop_persons;
+  
+  // 2. OMOPMeasurement from numeric laboratory / vital-sign Observations
+  MATCH (p:Patient)-[:HAS_OBSERVATION]->(o:Observation)
+  WHERE o.category IN ['laboratory', 'vital-signs'] AND o.valueQuantity IS NOT NULL AND o.code IS NOT NULL
+  MATCH (p)-[:MAPPED_TO]->(op:OMOPPerson)
+  MERGE (om:OMOPMeasurement {id: 'omop-meas-' + o.resourceId})
+  SET om.measurementDate = left(o.effectiveDate, 10),
+      om.measurementSourceValue = o.code,
+      om.measurementConceptId = 0,
+      om.valueAsNumber = o.valueQuantity,
+      om.operatorSourceValue = o.comparator,
+      om.unitSourceValue = o.unit,
+      om.rangeLow = o.referenceLow,
+      om.rangeHigh = o.referenceHigh,
+      om.measurementTypeSourceValue = o.sourceKind
+  MERGE (o)-[:MAPPED_TO]->(om)
+  MERGE (op)-[:HAS_MEASUREMENT]->(om)
+  RETURN count(om) AS omop_measurements;
+  
+  // 3. Vocabulary bridge OMOPMeasurement -> LoincCode
+  MATCH (o:Observation)-[:CODED_BY]->(lc:LoincCode)
+  MATCH (o)-[:MAPPED_TO]->(om:OMOPMeasurement)
+  MERGE (om)-[:CODED_BY]->(lc)
+  RETURN count(*) AS omop_coded;
+  """#
+
+  static let deleteReport = #"""
+  MATCH (o:Observation {sourceReport: $reportId})
+  OPTIONAL MATCH (o)-[:MAPPED_TO]->(om:OMOPMeasurement)
+  DETACH DELETE om, o
+  """#
+
+  static let upsertReport = #"""
+  MERGE (p:Patient {id: $patientId})
+  MERGE (dr:DiagnosticReport {resourceId: $report.resourceId})
+  SET dr += $report
+  MERGE (p)-[:HAS_DIAGNOSTIC_REPORT]->(dr)
+  WITH p, dr
+  CALL (dr) {
+    WITH dr WHERE $report.performer IS NOT NULL
+    MERGE (org:Organization {name: $report.performer})
+    MERGE (dr)-[:PERFORMED_BY]->(org)
+  }
+  CALL (dr) {
+    WITH dr WHERE $document IS NOT NULL
+    MERGE (doc:DocumentReference {resourceId: $document.resourceId})
+    SET doc += $document
+    MERGE (dr)-[:DERIVED_FROM]->(doc)
+  }
+  CALL (dr) {
+    WITH dr WHERE $provenance IS NOT NULL
+    MERGE (pv:Provenance {resourceId: $provenance.resourceId})
+    SET pv += $provenance
+    MERGE (pv)-[:TARGET]->(dr)
+  }
+  RETURN dr.resourceId AS report
+  """#
+
+  static let upsertObservations = #"""
+  MATCH (p:Patient {id: $patientId})
+  MATCH (dr:DiagnosticReport {resourceId: $reportResourceId})
+  UNWIND $rows AS r
+  MERGE (o:Observation {resourceId: r.resourceId})
+  SET o += r, o.sourceReport = $reportId, o.contributedBy = 'klarbefund-app'
+  MERGE (p)-[:HAS_OBSERVATION]->(o)
+  MERGE (dr)-[:HAS_RESULT]->(o)
+  WITH o, r
+  CALL (o, r) {
+    WITH o, r WHERE r.code IS NOT NULL
+    MERGE (lc:LoincCode {code: r.code})
+    ON CREATE SET lc.display = r.loincDisplay
+    MERGE (o)-[:CODED_BY]->(lc)
+  }
+  CALL (o, r) {
+    WITH o, r WHERE r.taxonCode IS NOT NULL
+    MERGE (t:NcbiTaxon {code: r.taxonCode})
+    ON CREATE SET t.display = r.taxonDisplay
+    MERGE (o)-[:IDENTIFIES]->(t)
+  }
+  RETURN count(o) AS stored
+  """#
+
+  static let replaceWearables = #"""
+  MERGE (p:Patient {id: $patientId})
+  WITH p
+  OPTIONAL MATCH (p)-[:HAS_OBSERVATION]->(old:Observation {sourceReport: $source})
+  OPTIONAL MATCH (old)-[:MAPPED_TO]->(om:OMOPMeasurement)
+  DETACH DELETE om, old
+  """#
+
+  static let upsertWearables = #"""
+  MATCH (p:Patient {id: $patientId})
+  UNWIND $rows AS r
+  MERGE (o:Observation {resourceId: r.resourceId})
+  SET o += r, o.sourceReport = $source, o.contributedBy = 'klarbefund-app'
+  MERGE (p)-[:HAS_OBSERVATION]->(o)
+  MERGE (lc:LoincCode {code: r.code})
+  ON CREATE SET lc.display = r.loincDisplay
+  MERGE (o)-[:CODED_BY]->(lc)
+  RETURN count(o) AS stored
+  """#
+}
+
+/// Named read-only queries (CLI, tests, the app). Same as health_graph/queries.py.
+public enum Queries {
+  public static let all: [String: (description: String, cypher: String)] = [
+    "reports": (
+      "All imported reports with lab, source and how many values the Hub would accept",
+      #"""
+      MATCH (p:Patient)-[:HAS_DIAGNOSTIC_REPORT]->(dr:DiagnosticReport)-[:HAS_RESULT]->(o:Observation)
+      OPTIONAL MATCH (dr)-[:DERIVED_FROM]->(doc:DocumentReference)
+      RETURN dr.effectiveDate AS date, dr.performer AS lab, doc.title AS document,
+             collect(DISTINCT o.sourceKind)[0] AS source, count(o) AS values,
+             sum(CASE WHEN o.hubEligible THEN 1 ELSE 0 END) AS hubReady
+      ORDER BY date
+      """#),
+    "trend": (
+      "Trend of one analyte (param loinc) across all reports, with provenance",
+      #"""
+      MATCH (:Patient)-[:HAS_OBSERVATION]->(o:Observation)-[:CODED_BY]->(lc:LoincCode {code: $loinc})
+      OPTIONAL MATCH (dr:DiagnosticReport)-[:HAS_RESULT]->(o)
+      RETURN left(o.effectiveDate, 10) AS date, o.display AS label,
+             coalesce(o.comparator, '') + toString(o.valueQuantity) AS value, o.unit AS unit,
+             o.referenceText AS printedRange, o.sourceKind AS source,
+             o.verifiedByPatientAt IS NOT NULL AS verified,
+             coalesce(dr.performer, o.performer) AS lab
+      ORDER BY date
+      """#),
+    "wearables": (
+      "Apple Health weekly means (resting HR, HRV, steps, weight) sent by Klarbefund",
+      #"""
+      MATCH (:Patient)-[:HAS_OBSERVATION]->(o:Observation {sourceReport: 'apple-health-weekly'})
+      RETURN o.display AS metric, o.effectiveStart AS weekStart, o.valueQuantity AS mean,
+             o.unit AS unit, o.performer AS devices
+      ORDER BY metric, weekStart
+      """#),
+    "analytes": (
+      "Every coded analyte with how often and when it was measured",
+      #"""
+      MATCH (o:Observation)-[:CODED_BY]->(lc:LoincCode)
+      RETURN lc.code AS loinc, lc.display AS name, count(o) AS n,
+             min(o.effectiveDate) AS first, max(o.effectiveDate) AS last
+      ORDER BY n DESC, loinc
+      """#),
+    "unmapped": (
+      "Values without a LOINC code, and the reason (honesty about data quality)",
+      #"""
+      MATCH (o:Observation) WHERE o.code IS NULL
+      OPTIONAL MATCH (o)-[:IDENTIFIES]->(t:NcbiTaxon)
+      RETURN o.display AS label, o.effectiveDate AS date, t.code AS ncbiTaxon,
+             o.unmappedReason AS reason
+      ORDER BY date
+      """#),
+    "provenance": (
+      "Where one value (param resourceId) came from: line on the paper, OCR, document, agent",
+      #"""
+      MATCH (o:Observation {resourceId: $resourceId})<-[:HAS_RESULT]-(dr:DiagnosticReport)
+      OPTIONAL MATCH (dr)-[:DERIVED_FROM]->(doc:DocumentReference)
+      OPTIONAL MATCH (pv:Provenance)-[:TARGET]->(dr)
+      RETURN o.display AS label, o.valueQuantity AS value, o.unit AS unit,
+             o.sourceKind AS source, o.sourceLine AS line, o.ocrConfidence AS ocr,
+             o.originalReading AS correctedFrom, o.verifiedByPatientAt AS verifiedAt,
+             doc.title AS document, pv.activity AS activity, pv.agent AS agent
+      """#),
+    "search": (
+      "Full-text search (param q) over printed labels, source lines and LOINC names",
+      #"""
+      CALL () {
+        MATCH (o:Observation)
+        SEARCH o IN (FULLTEXT INDEX observation_text FOR $q LIMIT 20) SCORE AS score
+        RETURN o, score
+        UNION
+        MATCH (lc:LoincCode)
+        SEARCH lc IN (FULLTEXT INDEX loinc_text FOR $q LIMIT 20) SCORE AS score
+        MATCH (o:Observation)-[:CODED_BY]->(lc)
+        RETURN o, score
+      }
+      RETURN o.display AS label, o.code AS loinc, o.effectiveDate AS date,
+             o.valueQuantity AS value, o.unit AS unit, max(score) AS score
+      ORDER BY score DESC, date
+      """#),
+    "omop": (
+      "OMOP CDM measurements (concept id 0, LOINC as source value)",
+      #"""
+      MATCH (op:OMOPPerson)-[:HAS_MEASUREMENT]->(om:OMOPMeasurement)
+      RETURN om.measurementDate AS date, om.measurementSourceValue AS loinc,
+             om.valueAsNumber AS value, om.unitSourceValue AS unit,
+             om.measurementConceptId AS conceptId
+      ORDER BY date, loinc
+      """#),
+    "stats": (
+      "Node counts per label",
+      #"""
+      MATCH (n) RETURN labels(n)[0] AS label, count(*) AS n ORDER BY label
+      """#),
+  ]
+}
