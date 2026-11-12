@@ -20,6 +20,7 @@ And most apps that *could* answer them want you to upload everything to their cl
 1. **Klarbefund** (an iPhone app) reads your paper lab reports with the camera and turns them into clean, labelled values.
 2. With one tap it sends those values, plus weekly summaries from Apple Health, **to your own computer at home**, not to the internet.
 3. On your computer they land in a **connected "map" of your health data**. You can ask it questions, or let an AI assistant ask them for you.
+4. **No computer? The same map can live on the phone itself.** Switch on *Health graph on this iPhone* and Klarbefund builds it right there, locked whenever the phone is locked, and never backed up or sent anywhere.
 
 ```mermaid
 flowchart LR

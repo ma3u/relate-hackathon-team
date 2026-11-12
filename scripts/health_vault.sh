@@ -96,6 +96,7 @@ case "${1:-status}" in
     echo "mount: $MOUNT ($(mounted && echo "unlocked" || echo "locked"))"
     ;;
   receive)
+    [ -e "$VAULT" ] || create
     do_mount
     if [ "${HEALTH_GRAPH_RECEIVER:-swift}" = python ]; then
       cd "$REPO" && exec env PYTHONUNBUFFERED=1 .venv/bin/python -m health_graph receive \

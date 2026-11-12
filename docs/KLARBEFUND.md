@@ -11,14 +11,16 @@ flowchart LR
   FHIR -- "HTTPS, pinned cert<br/>POST /v1/record" --> R
   Weekly -- "POST /v1/wearables" --> R
   subgraph Mac["Your Mac"]
-    R["health_graph receive<br/>(QR pairing)"] --> RL[("~/RelateHealth/health.rl<br/>Relate graph")]
+    R["health-graph receive (Swift)<br/>(QR pairing)"] --> RL[("~/RelateHealth/health.rl<br/>Relate graph")]
     RL --> MCP["relate serve --mcp<br/>--read-only"]
     MCP --> CD["Claude Desktop"]
     MCP --> CC["Claude Code"]
-    RL --> CLI["python -m health_graph query …"]
+    RL --> CLI["health-graph query …"]
   end
 ```
 
+> **Nov 12, 2026:** the Mac side is now Swift, and Klarbefund can keep the **same graph on the iPhone** (Menu → Privacy and sharing → Health graph on this iPhone): see [SWIFT.md](SWIFT.md).
+>
 > **Status (Nov 11, 2026):** working end to end **on a real iPhone 17 Pro over Wi-Fi** ([results](#real-iphone-run-nov-11-2026)) and in the iOS Simulator (the app screenshots below are from the Simulator, with Klarbefund's fictional demo data). Klarbefund code: branch `feat/klarbefund-local-relate-main` of [MinimumViableHealthDataspacev2](https://github.com/ma3u/MinimumViableHealthDataspacev2). In the current app the entry is under **Menu → Privacy and sharing → Export to my Mac (Relate)**.
 
 ---
@@ -33,7 +35,7 @@ scripts/health_vault.sh create     # once: AES-256 encrypted disk image, passwor
 scripts/health_vault.sh receive    # unlock it, then start the receiver
 ```
 
-`receive` runs `python -m health_graph receive --db ~/RelateHealth/health.rl --require-mount`: the receiver refuses to start unless the encrypted image is open, so no unencrypted store can ever be created. `scripts/health_vault.sh unmount` locks it again; `status` shows whether it's open. (Already have a plaintext `~/RelateHealth/health.rl`? `scripts/health_vault.sh migrate` moves it into a new vault, checks the copy byte for byte, then deletes the plaintext file.)
+`receive` builds and runs the **Swift** receiver ([SWIFT.md](SWIFT.md)) as `health-graph receive --db ~/RelateHealth/health.rl --require-mount` (`HEALTH_GRAPH_RECEIVER=python` runs the Python one, same contract and same pairing): the receiver refuses to start unless the encrypted image is open, so no unencrypted store can ever be created. `scripts/health_vault.sh unmount` locks it again; `status` shows whether it's open. (Already have a plaintext `~/RelateHealth/health.rl`? `scripts/health_vault.sh migrate` moves it into a new vault, checks the copy byte for byte, then deletes the plaintext file.)
 
 It prints a QR code in the terminal:
 
@@ -194,7 +196,7 @@ Example prompts:
 
 The phone sends only after an explicit switch (or button) in this screen. The export itself sends nothing to the EHDS Hub or any other server.
 
-## Lessons learned (worth knowing for the Swift port)
+## Lessons learned (from the Python receiver; the Swift one keeps every fix)
 
 - **Apple's TLS stack rejects certificates whose EC key uses explicit curve parameters.** macOS's LibreSSL writes them unless you pass `-pkeyopt ec_param_enc:named_curve`. The symptom is `TLSV1_ALERT_DECODE_ERROR` on the server and `-1200 / -9859` on the client, *before* any pinning delegate runs. The receiver now generates v3, named-curve, serverAuth certificates, replaces bad ones automatically, and a test guards it.
 - **Klarbefund exported report dates as the UTC day.** `ISO8601DateFormatter` defaults to GMT, so a report dated at local midnight in Berlin became the day before, in the EHDS Hub sync and the FHIR file too. Fixed in the same branch (`ReportExport.swift`, `timeZone = .current`).
@@ -204,7 +206,8 @@ The phone sends only after an explicit switch (or button) in this screen. The ex
 
 | Where | What |
 |---|---|
-| [`health_graph/receiver.py`](../health_graph/receiver.py) | HTTPS receiver, QR pairing, certificate and token |
+| [`swift/mac`](../swift/mac) | Swift receiver + CLI (default): HTTPS, QR pairing, certificate and token ([SWIFT.md](SWIFT.md)) |
+| [`health_graph/receiver.py`](../health_graph/receiver.py) | Python reference receiver, same contract |
 | [`health_graph/fhir.py`](../health_graph/fhir.py) | `parse_bundle` (reports), `parse_wearables` (Apple Health) |
 | [`tests/test_receiver.py`](../tests/test_receiver.py) | pinning, token, concurrency, v3 named-curve certificate |
 | Klarbefund `Sources/Shared/LocalRelateLink.swift` | link parsing and checks, certificate pin (unit-tested) |
