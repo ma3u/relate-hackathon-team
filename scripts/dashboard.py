@@ -435,7 +435,7 @@ background:var(--card);color:var(--ink2);font-size:13px;max-width:900px}
 #tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--surface);padding:6px 9px;
 border-radius:6px;font-size:12px;display:none;z-index:9}
 footer{margin-top:40px;color:var(--muted);font-size:12px}
-.hero h2{margin-top:30px}.rings{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px}
+.hero h2{margin-top:30px}.rings{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:12px}
 .ring{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:16px 10px 14px;
 display:flex;flex-direction:column;align-items:center;text-align:center}
 .ring svg{display:block;margin:0}.ring .track{fill:none;stroke:#23272e}
