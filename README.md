@@ -6,7 +6,7 @@ Our submission to the **[Relate by Neo4j Hackathon](https://relate.devpost.com/)
 
 | | |
 |---|---|
-| 🎬 **Demo video** | [youtu.be/HRmlXPt0r_k](https://www.youtube.com/watch?v=HRmlXPt0r_k) |
+| 🎬 **Demo video (2 min)** | [youtu.be/nu4nKFkpwJw](https://www.youtube.com/watch?v=nu4nKFkpwJw) · full 3-minute version: [youtu.be/HRmlXPt0r_k](https://www.youtube.com/watch?v=HRmlXPt0r_k) |
 | 🖥️ **Interactive presentation** | [ma3u.github.io/relate-hackathon-team](https://ma3u.github.io/relate-hackathon-team/) |
 | 🏆 **Devpost** | [MyHealthCoach on Devpost](https://devpost.com/software/myhealthcoach-my-local-health-graph-not-the-cloud-s) |
 | 📱 **iPhone app (TestFlight)** | [testflight.apple.com/join/ssADSXX6](https://testflight.apple.com/join/ssADSXX6) |
