@@ -20,6 +20,8 @@ jobs:
           uv venv --python 3.12 .venv
           uv pip install --python .venv/bin/python -e ".[dev]"
       - run: .venv/bin/python -m pytest -q
+      - name: Swift Cypher is generated from the Python
+        run: .venv/bin/python scripts/gen_swift_cypher.py --check
       - name: Import fixtures with the CLI
         run: |
           .venv/bin/python -m health_graph import --db health.rl fixtures/fhir/*.json

@@ -171,7 +171,33 @@ def parse_bundle(bundle: dict, report_id: str | None = None) -> ParsedReport:
         )
         observations.append(row)
 
-    return ParsedReport(patient_id, rid, report, document, provenance, observations)
+    return ParsedReport(patient_id, rid, report, document, provenance, collapse_repeats(observations))
+
+
+def collapse_repeats(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """One value printed twice on the same report is one measurement.
+
+    Microbiome reports list a species in an overview table and again in a
+    detail section; read line by line, each copy became its own value and was
+    counted twice (Nov 12, 2026: 13 extra rows in one report). The first copy
+    stays, with `repeatedOnReport` saying how often it was printed. Only numeric
+    values are folded: two text results with one label may well differ.
+    """
+    kept: list[dict[str, Any]] = []
+    seen: dict[tuple, dict[str, Any]] = {}
+    for row in rows:
+        if not isinstance(row["valueQuantity"], (int, float)):
+            kept.append(row)
+            continue
+        key = (row["display"], row["code"], row["taxonCode"], row["valueQuantity"],
+               row["comparator"], row["unit"], row["effectiveDate"])
+        if key in seen:
+            first = seen[key]
+            first["repeatedOnReport"] = first.get("repeatedOnReport", 1) + 1
+            continue
+        seen[key] = row
+        kept.append(row)
+    return kept
 
 
 # ── Apple Health weekly means (Klarbefund WearableFHIR.swift) ────────────────

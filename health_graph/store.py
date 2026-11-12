@@ -85,6 +85,45 @@ RETURN count(o) AS stored
 """
 
 
+# The same measurement in two reports (one sheet scanned twice, or one result
+# printed on two documents of the same visit) is one measurement: the same test
+# (LOINC code, or the printed label when there is none), day, value, comparator
+# and unit. One copy is kept, preferring the laboratory's own digital file over
+# a scan; every other copy gets `duplicateOf` and a SAME_AS link to it. Nothing
+# is deleted, so where each copy came from stays visible. Recomputed for the
+# whole graph after every report, because a new report can change which copy
+# is kept. Apple Health weekly means are a different series and never match.
+UNLINK_SAME_MEASUREMENTS = """
+MATCH (o:Observation) WHERE o.duplicateOf IS NOT NULL
+OPTIONAL MATCH (o)-[s:SAME_AS]->()
+DELETE s
+REMOVE o.duplicateOf
+RETURN count(DISTINCT o) AS cleared
+"""
+
+LINK_SAME_MEASUREMENTS = """
+MATCH (o:Observation)
+WHERE coalesce(o.sourceKind, '') <> 'device-weekly-mean'
+  AND o.valueQuantity IS NOT NULL AND o.effectiveDate IS NOT NULL
+WITH o, coalesce(o.code, 'label:' + toLower(trim(o.display))) AS measure,
+     CASE o.sourceKind WHEN 'lab-issued-digital' THEN 0 WHEN 'ocr-transcribed' THEN 1 ELSE 2 END AS rank
+ORDER BY rank, o.resourceId
+WITH measure, left(o.effectiveDate, 10) AS day, o.valueQuantity AS value,
+     coalesce(o.comparator, '') AS comparator, coalesce(o.unit, '') AS unit, collect(o) AS same
+WHERE size(same) > 1
+WITH head(same) AS kept, tail(same) AS copies
+UNWIND copies AS copy
+SET copy.duplicateOf = kept.resourceId
+MERGE (copy)-[:SAME_AS]->(kept)
+RETURN count(copy) AS duplicates
+"""
+
+
+def link_same_measurements(conn) -> int:
+    conn.execute(UNLINK_SAME_MEASUREMENTS)
+    return conn.execute(LINK_SAME_MEASUREMENTS).single()["duplicates"]
+
+
 def import_report(conn, parsed: ParsedReport) -> int:
     conn.autocommit = False
     try:
@@ -101,6 +140,7 @@ def import_report(conn, parsed: ParsedReport) -> int:
             "reportResourceId": parsed.report["resourceId"],
             "rows": parsed.observations,
         }).single()["stored"]
+        link_same_measurements(conn)
         conn.commit()
         return stored
     except Exception:

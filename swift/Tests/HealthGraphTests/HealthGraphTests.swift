@@ -329,8 +329,8 @@ struct CypherParityTests {
     }
     let store = squash(try python("store.py"))
     for statement in [
-      Cypher.deleteReport, Cypher.upsertReport, Cypher.upsertObservations, Cypher.replaceWearables,
-      Cypher.upsertWearables,
+      Cypher.deleteReport, Cypher.upsertReport, Cypher.upsertObservations, Cypher.unlinkSameMeasurements,
+      Cypher.linkSameMeasurements, Cypher.replaceWearables, Cypher.upsertWearables,
     ] {
       #expect(store.contains(squash(statement)))
     }
@@ -338,5 +338,75 @@ struct CypherParityTests {
     for (name, query) in Queries.all {
       #expect(queries.contains(squash(query.cypher)), "query \(name) drifted")
     }
+  }
+}
+
+/// Port of the duplicate tests in tests/test_health_graph.py (Nov 12, 2026:
+/// one sheet scanned twice, a value repeated on one report).
+@Suite("Duplicates", .serialized)
+struct DuplicateTests {
+  static func observations(_ bundle: JSONObject) -> [JSONObject] {
+    ((bundle["entry"] as? [JSONObject]) ?? []).compactMap { $0["resource"] as? JSONObject }
+      .filter { $0["resourceType"] as? String == "Observation" }
+  }
+
+  /// The golden bundle as if the laboratory had sent its own digital file.
+  static func asDigital(_ bundle: JSONObject) -> JSONObject {
+    var bundle = bundle
+    bundle["entry"] = ((bundle["entry"] as? [JSONObject]) ?? []).map { entry in
+      var entry = entry
+      guard var resource = entry["resource"] as? JSONObject,
+        resource["resourceType"] as? String == "Observation"
+      else { return entry }
+      resource["extension"] = ((resource["extension"] as? [JSONObject]) ?? []).map { x in
+        var x = x
+        if (x["url"] as? String)?.hasSuffix("source-kind") == true { x["valueCode"] = "lab-issued-digital" }
+        return x
+      }
+      entry["resource"] = resource
+      return entry
+    }
+    return bundle
+  }
+
+  @Test func aValuePrintedTwiceOnOneReportIsOneValue() throws {
+    var bundle = try Fixtures.bundle(Fixtures.golden)
+    var again = Self.observations(bundle)[5]  // Akkermansia: overview table and detail section
+    let firstId = again["id"] as? String
+    again["id"] = "obs-6-again"
+    bundle["entry"] = ((bundle["entry"] as? [JSONObject]) ?? []) + [["resource": again]]
+    let parsed = try FHIR.parseBundle(bundle)
+    #expect(parsed.observations.count == 7)
+    let folded = parsed.observations.first { $0["fhirId"]?.stringValue == firstId }
+    #expect(folded?["repeatedOnReport"]?.intValue == 2)
+  }
+
+  @Test func theSameReportTwiceCountsEachMeasurementOnce() throws {
+    let (store, _) = try Fixtures.loadedStore()
+    try store.importReport(FHIR.parseBundle(Self.asDigital(Fixtures.bundle(Fixtures.golden)), reportId: "rescan"))
+    try store.omopTransform()
+    let stats = Dictionary(
+      uniqueKeysWithValues: try store.run("stats").map {
+        ($0["label"]?.stringValue ?? "", Int($0["n"]?.intValue ?? 0))
+      })
+    #expect(stats["Observation"] == 28)  // nothing deleted
+    #expect(stats["OMOPMeasurement"] == 18)  // but measured once
+    let dups = try store.run("duplicates")
+    #expect(dups.count == 7)
+    #expect(Set(dups.compactMap { $0["keptSource"]?.stringValue }) == ["lab-issued-digital"])
+    let trend = try store.run("trend", ["loinc": "4548-4"])
+    #expect(trend.map { $0["date"]?.plain } == ["2026-03-12", "2026-06-10", "2026-09-04"])
+    #expect(trend.last?["alsoInOtherReports"]?.intValue == 1)
+    let hba1c = try store.run("analytes").first { $0["loinc"]?.stringValue == "4548-4" }
+    #expect(hba1c?["n"]?.intValue == 3)
+  }
+
+  @Test func removingTheCopyRestoresTheFirst() throws {
+    let (store, _) = try Fixtures.loadedStore()
+    try store.importReport(FHIR.parseBundle(Self.asDigital(Fixtures.bundle(Fixtures.golden)), reportId: "rescan"))
+    _ = try store.connection.query(Cypher.deleteReport, ["reportId": .string("rescan")])
+    #expect(try store.linkSameMeasurements() == 0)
+    try store.omopTransform()
+    #expect(try store.run("duplicates").isEmpty)
   }
 }

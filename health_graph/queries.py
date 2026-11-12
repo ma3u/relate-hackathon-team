@@ -8,20 +8,23 @@ QUERIES: dict[str, tuple[str, str]] = {
         OPTIONAL MATCH (dr)-[:DERIVED_FROM]->(doc:DocumentReference)
         RETURN dr.effectiveDate AS date, dr.performer AS lab, doc.title AS document,
                collect(DISTINCT o.sourceKind)[0] AS source, count(o) AS values,
-               sum(CASE WHEN o.hubEligible THEN 1 ELSE 0 END) AS hubReady
+               sum(CASE WHEN o.hubEligible THEN 1 ELSE 0 END) AS hubReady,
+               sum(CASE WHEN o.duplicateOf IS NOT NULL THEN 1 ELSE 0 END) AS alsoInAnotherReport
         ORDER BY date
         """,
     ),
     "trend": (
-        "Trend of one analyte (param loinc) across all reports, with provenance",
+        "Trend of one analyte (param loinc) across all reports, with provenance; each measurement once",
         """
         MATCH (:Patient)-[:HAS_OBSERVATION]->(o:Observation)-[:CODED_BY]->(lc:LoincCode {code: $loinc})
+        WHERE o.duplicateOf IS NULL
         OPTIONAL MATCH (dr:DiagnosticReport)-[:HAS_RESULT]->(o)
+        OPTIONAL MATCH (copy:Observation)-[:SAME_AS]->(o)
         RETURN left(o.effectiveDate, 10) AS date, o.display AS label,
                coalesce(o.comparator, '') + toString(o.valueQuantity) AS value, o.unit AS unit,
                o.referenceText AS printedRange, o.sourceKind AS source,
                o.verifiedByPatientAt IS NOT NULL AS verified,
-               coalesce(dr.performer, o.performer) AS lab
+               coalesce(dr.performer, o.performer) AS lab, count(copy) AS alsoInOtherReports
         ORDER BY date
         """,
     ),
@@ -35,9 +38,10 @@ QUERIES: dict[str, tuple[str, str]] = {
         """,
     ),
     "analytes": (
-        "Every coded analyte with how often and when it was measured",
+        "Every coded analyte with how often and when it was measured (copies counted once)",
         """
         MATCH (o:Observation)-[:CODED_BY]->(lc:LoincCode)
+        WHERE o.duplicateOf IS NULL
         RETURN lc.code AS loinc, lc.display AS name, count(o) AS n,
                min(o.effectiveDate) AS first, max(o.effectiveDate) AS last
         ORDER BY n DESC, loinc
@@ -51,6 +55,18 @@ QUERIES: dict[str, tuple[str, str]] = {
         RETURN o.display AS label, o.effectiveDate AS date, t.code AS ncbiTaxon,
                o.unmappedReason AS reason
         ORDER BY date
+        """,
+    ),
+    "duplicates": (
+        "Values that appear in more than one report: the copy kept, and where else it was found",
+        """
+        MATCH (copy:Observation)-[:SAME_AS]->(kept:Observation)
+        OPTIONAL MATCH (kr:DiagnosticReport)-[:HAS_RESULT]->(kept)
+        OPTIONAL MATCH (cr:DiagnosticReport)-[:HAS_RESULT]->(copy)
+        RETURN left(kept.effectiveDate, 10) AS date, kept.display AS label,
+               coalesce(kr.title, kr.performer) AS keptIn, kept.sourceKind AS keptSource,
+               coalesce(cr.title, cr.performer) AS copyIn, copy.sourceKind AS copySource
+        ORDER BY date, label
         """,
     ),
     "provenance": (

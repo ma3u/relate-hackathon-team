@@ -16,6 +16,7 @@ RETURN count(op) AS omop_persons;
 // 2. OMOPMeasurement from numeric laboratory / vital-sign Observations
 MATCH (p:Patient)-[:HAS_OBSERVATION]->(o:Observation)
 WHERE o.category IN ['laboratory', 'vital-signs'] AND o.valueQuantity IS NOT NULL AND o.code IS NOT NULL
+  AND o.duplicateOf IS NULL
 MATCH (p)-[:MAPPED_TO]->(op:OMOPPerson)
 MERGE (om:OMOPMeasurement {id: 'omop-meas-' + o.resourceId})
 SET om.measurementDate = left(o.effectiveDate, 10),
@@ -30,6 +31,13 @@ SET om.measurementDate = left(o.effectiveDate, 10),
 MERGE (o)-[:MAPPED_TO]->(om)
 MERGE (op)-[:HAS_MEASUREMENT]->(om)
 RETURN count(om) AS omop_measurements;
+
+// 2b. A copy of a value another report already carries (Observation.duplicateOf,
+// see store.py) is not a second measurement
+MATCH (o:Observation)-[:MAPPED_TO]->(om:OMOPMeasurement)
+WHERE o.duplicateOf IS NOT NULL
+DETACH DELETE om
+RETURN count(*) AS omop_duplicates_removed;
 
 // 3. Vocabulary bridge OMOPMeasurement -> LoincCode
 MATCH (o:Observation)-[:CODED_BY]->(lc:LoincCode)

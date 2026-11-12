@@ -158,7 +158,39 @@ public enum FHIR {
     }
     return ParsedReport(
       patientId: patientId, reportId: rid, report: report, document: document,
-      provenance: provenance, observations: observations)
+      provenance: provenance, observations: collapseRepeats(observations))
+  }
+
+  /// One value printed twice on the same report is one measurement.
+  ///
+  /// Microbiome reports list a species in an overview table and again in a
+  /// detail section; read line by line, each copy became its own value and was
+  /// counted twice (Nov 12, 2026: 13 extra rows in one report). The first copy
+  /// stays, with `repeatedOnReport` saying how often it was printed. Only
+  /// numeric values are folded: two text results with one label may well differ.
+  /// Same rule as `collapse_repeats` in health_graph/fhir.py.
+  public static func collapseRepeats(_ rows: [Row]) -> [Row] {
+    var kept: [Row] = []
+    var seen: [String: Int] = [:]  // key -> index in kept
+    for row in rows {
+      switch row["valueQuantity"] {
+      case .int?, .float?: fold(row, into: &kept, seen: &seen)
+      default: kept.append(row)
+      }
+    }
+    return kept
+  }
+
+  private static func fold(_ row: Row, into kept: inout [Row], seen: inout [String: Int]) {
+    let key = ["display", "code", "taxonCode", "valueQuantity", "comparator", "unit", "effectiveDate"]
+      .map { String(describing: row[$0] ?? .null) }.joined(separator: "\u{1F}")
+    if let index = seen[key] {
+      let times = kept[index]["repeatedOnReport"]?.intValue ?? 1
+      kept[index]["repeatedOnReport"] = .int(times + 1)
+    } else {
+      seen[key] = kept.count
+      kept.append(row)
+    }
   }
 
   // MARK: Apple Health weekly means (Klarbefund WearableFHIR.swift)

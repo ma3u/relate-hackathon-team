@@ -31,13 +31,14 @@ flowchart LR
   O -- MAPPED_TO --> OM((OMOPMeasurement))
   OP -- HAS_MEASUREMENT --> OM
   OM -- CODED_BY --> LC
+  O -- SAME_AS --> O
 ```
 
 | Layer | Label | Key (unique) | Notable properties |
 |---|---|---|---|
 | L3 FHIR | `Patient` | `id` | (no names, ever) |
 | | `DiagnosticReport` | `resourceId` = `<patient>-<reportId>` | `reportId`, `status`, `effectiveDate`, `performer` |
-| | `Observation` | `resourceId` = `<patient>-<reportId>-<n>` | **Hub contract:** `code, display, valueQuantity, unit, referenceLow/High/Text, effectiveDate, category, status, sourceKind, performer, sourceReport, contributedBy`. **Local extras:** `comparator, sourceLine, ocrConfidence, verifiedByPatientAt, originalReading, unmappedReason, hubEligible` |
+| | `Observation` | `resourceId` = `<patient>-<reportId>-<n>` | **Hub contract:** `code, display, valueQuantity, unit, referenceLow/High/Text, effectiveDate, category, status, sourceKind, performer, sourceReport, contributedBy`. **Local extras:** `comparator, sourceLine, ocrConfidence, verifiedByPatientAt, originalReading, unmappedReason, hubEligible, repeatedOnReport, duplicateOf` |
 | | `DocumentReference`, `Provenance` | `resourceId` | title/created · activity/agent |
 | | `Organization` | `name` | the lab or practice |
 | L4 OMOP | `OMOPPerson` | `id` = `omop-person-<patient>` | `yearOfBirth`, `genderConceptId` |
@@ -51,6 +52,7 @@ Files: [`health_graph/schema.cypher`](../health_graph/schema.cypher) (constraint
 
 - **Observation keys and properties copy the Hub's `storeReportRows`** (`ui/src/lib/patient/app-observations.ts` in MinimumViableHealthDataspacev2), *not* the design spec. A later `relate push` of a report's subgraph lands exactly where the app's `POST /api/patient/app/record` would put it.
 - **Re-importing a report replaces it** (delete by `sourceReport`, then MERGE), the same rule the Hub uses. Imports are idempotent, and the tests check this.
+- **Duplicates are counted once, never deleted.** A value printed twice on one report (microbiome reports list a species in an overview and again in detail) becomes one `Observation` with `repeatedOnReport`. The same measurement in two reports (one sheet scanned twice, or one result printed on two documents of a visit: same LOINC code or printed label, day, value, comparator and unit) stays in both, but one copy is kept and the others get `duplicateOf` and `SAME_AS` to it, preferring the laboratory's digital file over a scan. `trend`, `analytes` and the OMOP transform count the kept copy only; `duplicates` lists the rest. Found in a real graph on Nov 12, 2026: one report scanned twice, two documents of one test day sharing 6 values, a body measurement entered twice, 13 repeated rows on one report.
 - **`hubEligible`** applies the Hub's acceptance rules locally (status `preliminary`, LOINC code, number, UCUM unit, date). A `lab-issued-digital` report is `final`, so the Hub's sandbox would refuse it: `0 Hub-ready` above is correct.
 - **New in this project** (proposals, not in the Hub yet): `HAS_DIAGNOSTIC_REPORT`, `HAS_RESULT`, `DERIVED_FROM`, `PERFORMED_BY`, `TARGET`, `IDENTIFIES`, `Organization`, `NcbiTaxon`.
 - **OMOP transform** is ported from the Hub's `fhir-to-omop-transform.cypher` (plain MERGE/SET, no APOC), but reads `valueQuantity`/`effectiveDate`. The Hub's version reads `value`/`dateTime`, so it currently maps app values to 0 with no date (worth a Hub fix).
@@ -59,9 +61,10 @@ Files: [`health_graph/schema.cypher`](../health_graph/schema.cypher) (constraint
 
 | Name | Shows |
 |---|---|
-| `reports` | each report: date, lab, document, source kind, values, Hub-ready count |
-| `trend --param loinc=…` | one analyte over time, with the printed range, source, patient verification and lab. **No normal/abnormal verdicts** (not a medical device) |
+| `reports` | each report: date, lab, document, source kind, values, Hub-ready count, values also in another report |
+| `trend --param loinc=…` | one analyte over time, each measurement once (`alsoInOtherReports` counts the copies), with the printed range, source, patient verification and lab. **No normal/abnormal verdicts** (not a medical device) |
 | `analytes` | every coded analyte, how often it was measured, first and last date |
+| `duplicates` | values found in more than one report: where the kept copy is and where the copy was found |
 | `unmapped` | values without LOINC, with the reason and the NCBI taxon |
 | `provenance --param resourceId=…` | the line on the paper, OCR confidence, correction ("30 kg" → 80 kg), document, agent |
 | `search --param q=…` | full-text over German labels, source lines **and** LOINC names: `weight` finds *Körpergewicht*, `cholesterol` finds *LDL-Cholesterin* |

@@ -53,8 +53,20 @@ public final class HealthStore {
           "reportResourceId": parsed.report["resourceId"] ?? .null,
           "rows": .list(parsed.observations.map(CypherValue.map)),
         ])
+      _ = try c.query(Cypher.unlinkSameMeasurements)
+      _ = try c.query(Cypher.linkSameMeasurements)
       return Int(stored.records.first?["stored"]?.intValue ?? 0)
     }
+  }
+
+  /// Marks a value found in more than one report as one measurement (see
+  /// LINK_SAME_MEASUREMENTS in health_graph/store.py). `importReport` runs it;
+  /// call it after deleting a report directly. Returns how many copies there are.
+  @discardableResult
+  public func linkSameMeasurements() throws -> Int {
+    _ = try connection.query(Cypher.unlinkSameMeasurements)
+    let linked = try connection.query(Cypher.linkSameMeasurements)
+    return Int(linked.records.first?["duplicates"]?.intValue ?? 0)
   }
 
   /// Replaces the patient's Apple Health weekly means (same rule as the Hub).

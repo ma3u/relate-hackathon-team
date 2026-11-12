@@ -160,3 +160,60 @@ def test_unmapped_value_from_klarbefund_local_export():
     assert z["hubEligible"] is False
     # coded values keep their Hub-compatible ids; the new one comes after them
     assert p.observations[0]["resourceId"].endswith("-1") and z["resourceId"].endswith("-8")
+
+
+# ── duplicates (Nov 12, 2026: one sheet scanned twice, repeats on one report) ──
+
+def _observations(bundle):
+    return [e["resource"] for e in bundle["entry"] if e["resource"]["resourceType"] == "Observation"]
+
+
+def _as_digital(bundle):
+    for o in _observations(bundle):
+        for x in o.get("extension", []):
+            if x["url"].endswith("source-kind"):
+                x["valueCode"] = "lab-issued-digital"
+    return bundle
+
+
+def test_a_value_printed_twice_on_one_report_is_one_value():
+    import copy
+    bundle = fhir.load_bundle(GOLDEN)
+    first = _observations(bundle)[5]  # Akkermansia: overview table and detail section
+    again = copy.deepcopy(first)
+    again["id"] = "obs-6-again"
+    bundle["entry"].append({"resource": again})
+    parsed = fhir.parse_bundle(bundle)
+    assert len(parsed.observations) == 7
+    folded = [o for o in parsed.observations if o["fhirId"] == first["id"]][0]
+    assert folded["repeatedOnReport"] == 2
+
+
+def test_the_same_report_twice_counts_each_measurement_once(db):
+    conn, _ = db
+    store.import_report(conn, fhir.parse_bundle(_as_digital(fhir.load_bundle(GOLDEN)), report_id="rescan"))
+    store.omop_transform(conn)
+    stats = {r["label"]: r["n"] for r in q(conn, "stats")}
+    assert stats["Observation"] == 28  # nothing deleted
+    assert stats["OMOPMeasurement"] == 18  # but measured once
+    dups = q(conn, "duplicates")
+    assert len(dups) == 7
+    assert {d["keptSource"] for d in dups} == {"lab-issued-digital"}  # the lab's own file wins
+    trend = q(conn, "trend", loinc="4548-4")
+    assert [r["date"] for r in trend] == ["2026-03-12", "2026-06-10", "2026-09-04"]
+    assert trend[-1]["alsoInOtherReports"] == 1
+    hba1c = [r for r in q(conn, "analytes") if r["loinc"] == "4548-4"][0]
+    assert hba1c["n"] == 3
+    per_report = {r["date"][:10] + str(r["alsoInAnotherReport"]) for r in q(conn, "reports")}
+    assert "2026-09-047" in per_report
+
+
+def test_removing_the_copy_restores_the_first(db):
+    conn, _ = db
+    rescan = fhir.parse_bundle(_as_digital(fhir.load_bundle(GOLDEN)), report_id="rescan")
+    store.import_report(conn, rescan)
+    conn.execute(store.DELETE_REPORT, {"reportId": "rescan"})
+    store.link_same_measurements(conn)
+    store.omop_transform(conn)
+    assert q(conn, "duplicates") == []
+    assert {r["label"]: r["n"] for r in q(conn, "stats")}["OMOPMeasurement"] == 18
