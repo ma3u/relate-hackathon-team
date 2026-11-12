@@ -215,10 +215,11 @@ def measure_value(conn, title, codes, ranges, sex):
     return f"{fmt(p[1])} {unit}".strip(), (light[0] if light else None)
 
 
-def risk_view(conn, risk_id, by_score, ranges, sex) -> str:
+def risk_measures(conn, risk_id, ranges, sex):
+    """(risk name, {score id: (name, codes)}, measures with a value, measures without)."""
     rows = list(conn.execute(VIEW_CYPHER, {"risk": risk_id}))
     if not rows:
-        return ""
+        return None
     r = rows[0]
     scores_used: dict[str, tuple[str, set]] = {}
     for sid, sname, code in r["uses"]:
@@ -235,6 +236,15 @@ def risk_view(conn, risk_id, by_score, ranges, sex) -> str:
     for title, codes in sorted(measures.items()):
         v = measure_value(conn, title, sorted(codes), ranges, sex)
         (shown if v else missing).append((title, codes, v))
+    return r["risk"], scores_used, shown, missing
+
+
+def risk_view(conn, risk_id, by_score, ranges, sex) -> str:
+    found = risk_measures(conn, risk_id, ranges, sex)
+    if not found:
+        return ""
+    name, scores_used, shown, missing = found
+    r = {"risk": name}
 
     W, H, cx, cy = 620, 470, 310, 235
     out = [f'<svg viewBox="0 0 {W} {H}" class="view" role="img" aria-label="{esc(r["risk"])}: scores and measures">']
@@ -281,13 +291,125 @@ def risk_view(conn, risk_id, by_score, ranges, sex) -> str:
     return (f'<figure class="chart viewfig"><figcaption><span>{esc(r["risk"])}</span></figcaption>{"".join(out)}{more}'
             f'<details><summary>Cypher</summary><pre>{esc(VIEW_CYPHER.replace("$risk", repr(risk_id)))}</pre></details></figure>')
 
+
+# ── rings: the state of each health risk and each wearable signal ────────────
+RING_HEX = {scores.GREEN: "#16c60c", scores.AMBER: "#f7b500", scores.RED: "#ff3b3b", None: "#5b6270"}
+DOMAIN_SHORT = {"cardiovascular": "Heart", "diabetes": "Metabolism", "kidney": "Kidney", "liver": "Liver",
+                "fitness": "Fitness"}
+
+
+def pct_light(pct: float) -> str:
+    """Thirds: 67 % and up green, 34 % and up amber, below red."""
+    return scores.GREEN if pct >= 67 else scores.AMBER if pct >= 34 else scores.RED
+
+
+def ring(pct: float | None, light: str | None, big: str, label: str, sub: str, size: int = 150) -> str:
+    r, w = 58, 11
+    c = 2 * math.pi * r
+    filled = c * max(0.0, min(1.0, (pct or 0) / 100))
+    col = RING_HEX.get(light, RING_HEX[None])
+    icon = {scores.GREEN: "✓", scores.AMBER: "!", scores.RED: "✕"}.get(light, "")
+    return (f'<div class="ring"><svg viewBox="0 0 150 150" width="{size}" height="{size}" role="img" '
+            f'aria-label="{esc(label)} {esc(big)}">'
+            f'<circle cx="75" cy="75" r="{r}" class="track" stroke-width="{w}"/>'
+            f'<circle cx="75" cy="75" r="{r}" fill="none" stroke="{col}" stroke-width="{w}" stroke-linecap="round" '
+            f'stroke-dasharray="{filled:.1f} {c:.1f}" transform="rotate(-90 75 75)"/>'
+            f'<text x="75" y="80" text-anchor="middle" class="ringbig">{esc(big)}</text>'
+            f'<text x="75" y="102" text-anchor="middle" class="ringicon" fill="{col}">{icon}</text></svg>'
+            f'<b>{esc(label)}</b><span>{esc(sub)}</span></div>')
+
+
+def own_percentile(values: list[float], latest_value: float, higher_is_better: bool) -> float:
+    """Where the latest week sits among the person's own weeks (0-100)."""
+    if not values:
+        return 50.0
+    below = sum(1 for v in values if v < latest_value) + 0.5 * sum(1 for v in values if v == latest_value)
+    p = 100 * below / len(values)
+    return p if higher_is_better else 100 - p
+
+
+def weekly_light(code: str, value: float, history: list[float]) -> tuple[float, str]:
+    """(ring %, light) for one week of a wearable signal."""
+    if code == "93832-4":  # sleep, h/d: adults need 7 to 9 h (AASM/SRS consensus 2015)
+        return min(100, value / 8 * 100), (scores.GREEN if value >= 7 else scores.AMBER if value >= 6 else scores.RED)
+    if code == "41950-7":  # steps/d: risk falls to about 8,000-10,000 (Paluch 2022); <5,000 sedentary (Tudor-Locke 2013)
+        return min(100, value / 10000 * 100), (scores.GREEN if value >= 8000 else scores.AMBER if value >= 5000 else scores.RED)
+    higher = code != "40443-4"  # resting heart rate: lower is better
+    p = own_percentile(history, value, higher)
+    return p, pct_light(p)
+
+
+WEAR_RINGS = [  # code, label, unit, how it is judged
+    ("93832-4", "Sleep", "h", "7–9 h recommended (AASM/SRS)"),
+    ("41950-7", "Steps", "/d", "8–10k/d (Paluch 2022)"),
+    ("80404-7", "HRV", "ms", "vs your last 52 weeks"),
+    ("40443-4", "Resting HR", "/min", "vs your last 52 weeks"),
+    ("94122-9", "VO₂ max", "", "vs your last 52 weeks"),
+]
+
+
+def strip(code: str, points, weeks: int = 26) -> str:
+    """The last `weeks` weeks as small bars, each coloured by that week's own state."""
+    pts = points[-weeks:]
+    if not pts:
+        return ""
+    vals = [p[1] for p in points]
+    hi = max(p[1] for p in pts) or 1
+    bars = []
+    for i, p in enumerate(pts):
+        history = [v for v in vals[max(0, len(vals) - len(pts) + i - 52): len(vals) - len(pts) + i]] or vals
+        _, light = weekly_light(code, p[1], history)
+        h = 6 + 30 * p[1] / hi
+        bars.append(f'<rect x="{i * 7}" y="{38 - h:.1f}" width="5" height="{h:.1f}" rx="2" fill="{RING_HEX[light]}">'
+                    f'<title>{esc(p[0])}: {esc(fmt(p[1]))}</title></rect>')
+    return f'<svg viewBox="0 0 {len(pts) * 7} 40" class="strip" role="img" aria-label="last {len(pts)} weeks">{"".join(bars)}</svg>'
+
+
+def hero(conn, ranges, sex, by_score) -> str:
+    body = []
+    for rid in RISK_VIEWS:
+        found = risk_measures(conn, rid, ranges, sex)
+        if not found:
+            continue
+        _, _, shown, _ = found
+        lights = [v[1] for _, _, v in shown if v and v[1]]
+        if rid == "fitness" or not lights:  # wearables only: their own-history rings
+            parts = []
+            for code in ("94122-9", "40443-4"):
+                pts = series(conn, [code])
+                if pts:
+                    parts.append(weekly_light(code, pts[-1][1], [p[1] for p in pts[-53:-1]])[0])
+            pct = sum(parts) / len(parts) if parts else None
+            sub = "VO₂ max and resting HR vs your year"
+        else:
+            g, a, rd = (lights.count(x) for x in (scores.GREEN, scores.AMBER, scores.RED))
+            pct = 100 * (g + 0.5 * a) / len(lights)
+            sub = f"{g} ✓  {a} !  {rd} ✕"
+        score = next((s for s in by_score.values() if s.id and s.value is not None and
+                      {"score2": "cardiovascular", "egfr": "kidney", "fib4": "liver", "tyg": "diabetes"}.get(s.id) == rid), None)
+        if score:
+            sub += f" · {score.name.split(' (')[0]} {fmt(score.value)}{' %' if score.unit == '%' else ''}"
+        body.append(ring(pct, pct_light(pct) if pct is not None else None,
+                         f"{pct:.0f}%" if pct is not None else "–", DOMAIN_SHORT[rid], sub))
+    wear = []
+    for code, label, unit, how in WEAR_RINGS:
+        pts = series(conn, [code])
+        if not pts:
+            continue
+        pct, light = weekly_light(code, pts[-1][1], [p[1] for p in pts[-53:-1]])
+        big = f"{fmt(pts[-1][1])}"
+        wear.append(f'<div class="wear">{ring(pct, light, big, f"{label} {unit}".strip(), how)}{strip(code, pts)}'
+                    f'<span class="when">week of {esc(pts[-1][0])}</span></div>')
+    return (f'<section class="hero"><h2>Health domains</h2><p>Share of each risk\'s measures in range: green counts '
+            f'fully, amber half, red not at all. Fitness: VO₂ max and resting heart rate against your own last year.</p>'
+            f'<div class="rings">{"".join(body)}</div>'
+            f'<h2>This week</h2><p>Latest weekly means from Apple Watch, each against a published recommendation or your '
+            f'own last 52 weeks; the bars are the last 26 weeks, coloured the same way.</p>'
+            f'<div class="rings wearables">{"".join(wear)}</div></section>')
+
 CSS = """
-:root{--surface:#fcfcfb;--card:#ffffff;--ink:#0b0b0b;--ink2:#52514e;--muted:#8a8984;--line:#2a78d6;
---grid:#e7e6e2;--border:#e3e2de;--accent:#2a78d6}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--surface:#1a1a19;--card:#232322;--ink:#f0efec;
---ink2:#c3c2b7;--muted:#8f8e86;--line:#3987e5;--grid:#34332f;--border:#3a3935;--accent:#3987e5}}
-:root[data-theme="dark"]{--surface:#1a1a19;--card:#232322;--ink:#f0efec;--ink2:#c3c2b7;--muted:#8f8e86;
---line:#3987e5;--grid:#34332f;--border:#3a3935;--accent:#3987e5}
+:root{--surface:#050607;--card:#111317;--ink:#ffffff;--ink2:#b9bfc9;--muted:#7d8590;--line:#3d9bff;
+--grid:#22262d;--border:#1d2127;--accent:#3d9bff;color-scheme:dark}
 *{box-sizing:border-box}body{margin:0;background:var(--surface);color:var(--ink);
 font:15px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif}
 main{max-width:1180px;margin:0 auto;padding:28px 16px 60px}
@@ -313,6 +435,16 @@ background:var(--card);color:var(--ink2);font-size:13px;max-width:900px}
 #tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--surface);padding:6px 9px;
 border-radius:6px;font-size:12px;display:none;z-index:9}
 footer{margin-top:40px;color:var(--muted);font-size:12px}
+.hero h2{margin-top:30px}.rings{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px}
+.ring{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:16px 10px 14px;
+display:flex;flex-direction:column;align-items:center;text-align:center}
+.ring svg{display:block;margin:0}.ring .track{fill:none;stroke:#23272e}
+.ringbig{fill:#fff;font-size:30px;font-weight:800;letter-spacing:-.5px}.ringicon{font-size:15px;font-weight:800}
+.ring b{font-size:15px;margin-top:6px;letter-spacing:.06em;text-transform:uppercase}
+.ring span{color:var(--ink2);font-size:12px;margin-top:3px}
+.wear{display:flex;flex-direction:column;align-items:stretch;gap:6px}.wear .ring{border-radius:18px 18px 6px 6px}
+.strip{width:100%;height:40px;background:var(--card);border:1px solid var(--border);border-radius:6px 6px 14px 14px;padding:4px}
+.when{color:var(--muted);font-size:11px;text-align:center}
 .views{display:grid;grid-template-columns:repeat(auto-fill,minmax(520px,1fr));gap:14px}
 .view,.model{width:100%;height:auto}.vmark{stroke:var(--grid);stroke-width:1.5;stroke-dasharray:4 4}
 .vuse{stroke:var(--muted);stroke-width:1.5}.vest{stroke:var(--accent);stroke-width:3}
@@ -383,6 +515,7 @@ def main():
     by_score = {s.id: s for s in risk if s.id}
     model = model_svg(conn)
     views = [risk_view(conn, rid, by_score, ranges, sex) for rid in RISK_VIEWS]
+    rings = hero(conn, ranges, sex, by_score)
     conn.close()
 
     kpi = lambda n, label: f'<div class="kpi"><b>{esc(n)}</b><span>{esc(label)}</span></div>'
@@ -397,6 +530,7 @@ from Cypher queries on <code>health.rl</code> in the encrypted vault. Nothing on
 <section class="kpis">{kpi(reports, "lab reports")}{kpi(counts.get("lab", 0), "lab values")}
 {kpi(loinc, "kinds of test (LOINC)")}{kpi(counts.get("weekly", 0), "Apple Health weekly means")}
 {kpi(counts.get("whoop", 0), "Whoop days")}{kpi(counts.get("copy", 0), "copies counted once")}</section>
+{rings}
 <h2>Risk scores</h2><p>Estimates from published formulas, each with the values it used and their dates.
 {esc(f"Age {age}, {sex}" if age else "Year of birth not in the graph yet")}, smoking: {esc(args.smoker)}.</p>
 <div class="signal">{"".join(lamp(s.light, s.name.split(" (")[0]) for s in risk if s.light)}</div>
