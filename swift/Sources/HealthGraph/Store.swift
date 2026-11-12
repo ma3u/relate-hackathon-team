@@ -102,6 +102,19 @@ public final class HealthStore {
     return try connection.query(query.cypher, parameters).records
   }
 
+  /// Rows as plain text (strings unquoted, null empty), for app screens and
+  /// tables: a named query (`Queries.all`) or, with `cypher:`, any read query.
+  public func rows(query name: String, _ parameters: [String: String] = [:]) throws
+    -> [[String: String]]
+  {
+    try run(name, parameters.mapValues(CypherValue.string)).map { $0.mapValues(\.plain) }
+  }
+
+  public func rows(cypher: String, _ parameters: [String: String] = [:]) throws -> [[String: String]] {
+    try connection.query(cypher, parameters.mapValues(CypherValue.string)).records
+      .map { $0.mapValues(\.plain) }
+  }
+
   /// Node count for one label (labels are fixed identifiers, never user input).
   public func count(_ label: String) throws -> Int {
     Int(try connection.query("MATCH (n:\(label)) RETURN count(n) AS n").scalar().intValue ?? 0)

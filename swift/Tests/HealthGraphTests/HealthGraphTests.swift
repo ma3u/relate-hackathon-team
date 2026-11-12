@@ -296,6 +296,14 @@ struct GraphTests {
     #expect(try reader.count("Observation") == 21 + 16)
   }
 
+  @Test func plainRowsForAppScreens() throws {
+    let (store, _) = try Fixtures.loadedStore()
+    let trend = try store.rows(query: "trend", ["loinc": "4548-4"])
+    #expect(trend.map { $0["value"] } == ["5.9", "5.6", "5.4"])
+    let n = try store.rows(cypher: "MATCH (o:Observation) WHERE o.code IS NULL RETURN count(o) AS n")
+    #expect(n == [["n": "3"]])
+  }
+
   @Test func readOnlyNeverCreatesAStore() throws {
     let path = try Fixtures.tempStore()
     #expect(throws: (any Error).self) { try HealthStore(path: path, readOnly: true) }
