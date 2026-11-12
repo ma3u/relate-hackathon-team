@@ -30,6 +30,9 @@ MARKERS = [
     ("ALT", ["1742-6"], "U/L"),
     ("AST", ["1920-8"], "U/L"),
     ("NT-proBNP", ["33762-6"], "ng/L"),
+    ("Non-HDL cholesterol", ["70204-3", "43396-1"], "mmol/L"),
+    ("eGFR (lab)", ["62238-1", "98979-8", "33914-3", "48642-3"], "mL/min/{1.73_m2}"),
+    ("Vitamin D", ["62292-8", "68438-1", "1989-3"], "ng/mL"),
     ("GGT", ["2324-2"], "U/L"),
     ("Platelets", ["777-3", "26515-7"], "10*9/L"),
     ("Systolic BP", ["8480-6"], "mmHg"),
@@ -41,7 +44,7 @@ MARKERS = [
 MARKER = {title: (codes, unit) for title, codes, unit in MARKERS}
 
 # mg/dL per mmol/L, by analyte (LOINC)
-MOLAR = {**{c: 38.67 for c in CHOL + ["14646-4", "2085-9", "14647-2", "2093-3"]},
+MOLAR = {**{c: 38.67 for c in CHOL + ["14646-4", "2085-9", "14647-2", "2093-3", "70204-3", "43396-1"]},
          "14927-8": 88.57, "2571-8": 88.57, "2345-7": 18.016, "1558-6": 18.016}
 # Units that are the same quantity, written differently.
 SAME = {"ug/ml": "mg/l", "ng/ml": "ug/l", "m[iu]/l": "miu/l", "u[iu]/ml": "miu/l", "uiu/ml": "miu/l",
@@ -62,6 +65,10 @@ def convert(code: str, value: float, unit: str, target: str) -> float | None:
         return value * 100
     if (u, t) == ("ukat/l", "u/l"):
         return value * 60
+    if code in ("62292-8", "68438-1", "1989-3") and (u, t) == ("nmol/l", "ng/ml"):  # 25-OH vitamin D
+        return value / 2.496
+    if code in ("62292-8", "68438-1", "1989-3") and (u, t) == ("ng/ml", "nmol/l"):
+        return value * 2.496
     if code in MOLAR and (u, t) == ("mg/dl", "mmol/l"):
         return value / MOLAR[code]
     if code in MOLAR and (u, t) == ("mmol/l", "mg/dl"):

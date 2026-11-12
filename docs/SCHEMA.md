@@ -52,7 +52,7 @@ flowchart LR
 | | `OMOPMeasurement` | `id` = `omop-meas-<obs resourceId>` | `measurementConceptId = 0`, `measurementSourceValue` = LOINC, `valueAsNumber`, `unitSourceValue`, `rangeLow/High` |
 | L5 Ontology | `LoincCode` | `code` | `display` |
 | | `NcbiTaxon` | `code` | `display` (microbiome organisms; LOINC has no term for them) |
-| Knowledge | `HealthRisk` | `id` | cardiovascular, diabetes, kidney, liver, fitness |
+| Knowledge | `HealthRisk` | `id` | cardiovascular, diabetes, kidney, liver, bone (osteoporosis), fitness |
 | | `RiskScore` | `id` | SCORE2, eGFR (CKD-EPI 2021), FIB-4, TyG; `source`, `demographics`; `USES` the LOINC codes of its inputs |
 | | `ReferenceRange` | `analyteKey\|ucum\|sex` | `guidelineLow/High` (official), `optimalLow/High` (lowest-risk band), `basis`, `summary`, `sourceLabel/Url`; from Klarbefund's `reference-ranges.ts`, quoted unchanged |
 | | `ScoreResult` | `<patient>-<score>` | `value`, `band`, `light`, `computedAt`, `demographics`; `FROM` the exact Observations it used |

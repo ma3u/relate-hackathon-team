@@ -29,6 +29,9 @@ HDL = ["14646-4", "2085-9"]
 TG = ["14927-8", "2571-8"]
 GLUCOSE = ["2345-7", "1558-6"]
 HBA1C = ["4548-4", "59261-8"]
+NON_HDL = ["70204-3", "43396-1"]
+EGFR_MEASURED = ["62238-1", "98979-8", "33914-3", "48642-3"]
+VITAMIN_D = ["62292-8", "68438-1", "1989-3"]
 
 HEALTH_RISKS = [
     {"id": "cardiovascular", "name": "Cardiovascular disease",
@@ -41,6 +44,8 @@ HEALTH_RISKS = [
      "description": "Scarring of the liver, most often from fatty liver disease or alcohol."},
     {"id": "fitness", "name": "Low cardiorespiratory fitness",
      "description": "Low aerobic capacity, one of the strongest predictors of mortality."},
+    {"id": "bone", "name": "Osteoporosis",
+     "description": "Thin, fragile bones that break easily; vitamin D and calcium keep bone mineralised."},
 ]
 
 RISK_SCORES = [
@@ -67,7 +72,9 @@ MARKERS = [  # (LOINC codes, risk id, source)
     (HBA1C + GLUCOSE, "diabetes", "ADA Standards of Care 2024"), (TG + HDL, "diabetes", "IDF metabolic syndrome definition 2006"),
     (["39156-5", "8280-0", "29463-7"], "diabetes", "ADA Standards of Care 2024"),
     (["39156-5", "8280-0"], "cardiovascular", ESC_PREV),
-    (["2160-0"], "kidney", "KDIGO 2012 CKD guideline"), (["8480-6"], "kidney", "KDIGO 2021 blood pressure guideline"),
+    (["2160-0"], "kidney", "KDIGO 2012 CKD guideline"), (EGFR_MEASURED, "kidney", "KDIGO 2012 CKD guideline"),
+    (NON_HDL, "cardiovascular", ESC_LIPIDS),
+    (VITAMIN_D, "bone", "Endocrine Society clinical practice guideline on vitamin D, 2024"), (["8480-6"], "kidney", "KDIGO 2021 blood pressure guideline"),
     (HBA1C, "kidney", "KDIGO 2022 diabetes in CKD guideline"),
     (["1920-8", "1742-6", "777-3"], "liver", "EASL 2021 non-invasive tests guideline"),
     (["2324-2"], "liver", "EASL 2021 non-invasive tests guideline"), (TG + ["39156-5"], "liver", "EASL-EASD-EASO 2024 MASLD guideline"),

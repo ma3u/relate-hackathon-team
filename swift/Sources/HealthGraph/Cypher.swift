@@ -282,7 +282,7 @@ public enum Queries {
       ORDER BY unit, sex
       """#),
     "risk": (
-      "One health risk (param risk: cardiovascular, diabetes, kidney, liver, fitness): its scores and markers",
+      "One health risk (param risk: cardiovascular, diabetes, kidney, liver, bone, fitness): its scores and markers",
       #"""
       MATCH (h:HealthRisk {id: $risk})
       OPTIONAL MATCH (rs:RiskScore)-[:ESTIMATES]->(h)

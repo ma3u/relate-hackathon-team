@@ -251,7 +251,7 @@ def test_knowledge_is_seeded_once_and_links_ranges_to_loinc(db):
     conn, _ = db
     counts = knowledge.seed(conn)
     assert counts["ranges"] == len([r for r in knowledge.reference_ranges() if r["loinc"]])
-    assert counts["risks"] == 5 and counts["scores"] == 4
+    assert counts["risks"] == 6 and counts["scores"] == 4
     assert knowledge.seed(conn) == {}  # already current: nothing written
     ldl = conn.execute("""MATCH (rr:ReferenceRange {analyteKey: 'cholesterol-ldl', ucum: 'mmol/L'})
                           -[:APPLIES_TO]->(lc:LoincCode) RETURN rr.guidelineHigh AS g, rr.optimalHigh AS o,

@@ -183,7 +183,7 @@ def model_svg(conn) -> str:
 
 
 # ── five views: a health risk, its scores, its measures, your values ────────
-RISK_VIEWS = ["cardiovascular", "diabetes", "kidney", "liver", "fitness"]
+RISK_VIEWS = ["cardiovascular", "diabetes", "kidney", "liver", "bone", "fitness"]
 VIEW_CYPHER = """MATCH (h:HealthRisk {id: $risk})
 OPTIONAL MATCH (rs:RiskScore)-[:ESTIMATES]->(h)
 OPTIONAL MATCH (rs)-[:USES]->(u:LoincCode)
@@ -295,7 +295,7 @@ def risk_view(conn, risk_id, by_score, ranges, sex) -> str:
 # ── rings: the state of each health risk and each wearable signal ────────────
 RING_HEX = {scores.GREEN: "#16c60c", scores.AMBER: "#f7b500", scores.RED: "#ff3b3b", None: "#5b6270"}
 DOMAIN_SHORT = {"cardiovascular": "Heart", "diabetes": "Metabolism", "kidney": "Kidney", "liver": "Liver",
-                "fitness": "Fitness"}
+                "fitness": "Fitness", "bone": "Bone"}
 
 
 def pct_light(pct: float) -> str:
