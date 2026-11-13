@@ -2,7 +2,7 @@
 
 Klarbefund for Mac is the no-scripts way to keep your health graph on your Mac and ask Claude about it. It pairs with Klarbefund on the iPhone, keeps the Neo4j Relate graph sealed in its own sandbox, and connects Claude Desktop with one click. It ships under the same TestFlight link as the iPhone app.
 
-> **Status, Nov 13, 2026:** Mac build 4 is in TestFlight: its knowledge layer adds how the health risks raise each other, from 13 studies (each with its DOI and PubMed link, the markers it examines and the scores it informs), so Claude can follow a value to its evidence. Mac build 3 and iPhone build 15 are in App Store review. The public TestFlight link offers the Mac build once Apple's Beta App Review passes (iPhone build 15 is already live there). Claude Desktop answers through the "Klarbefund Health Graph" extension while the app is open.
+> **Status, Nov 13, 2026:** Mac build 4 is in TestFlight: its knowledge layer adds how the health risks raise each other, from 13 studies (each with its DOI and PubMed link, the markers it examines and the scores it informs), so Claude can follow a value to its evidence. Both apps stay in TestFlight while in development and testing; neither is submitted to the App Store. The public TestFlight link offers the Mac build once Apple's Beta App Review passes (iPhone build 15 is already live there). Claude Desktop answers through the "Klarbefund Health Graph" extension while the app is open.
 
 ![Klarbefund for Mac: pair your iPhone, your health graph, ask Claude](img/mac/klarbefund-mac.png)
 
