@@ -8,6 +8,7 @@ the ranges those values sit in.
     (:HealthRisk)<-[:ESTIMATES]-(:RiskScore)-[:USES]->(:LoincCode)
     (:LoincCode)-[:MARKER_OF {source}]->(:HealthRisk)
     (:ReferenceRange)-[:APPLIES_TO]->(:LoincCode)        guideline range + optimal band
+    (:ReferenceRange {validFrom, validUntil, supersededBy})-[:SOURCED_FROM]->(:Study)   edition and evidence
     (:HealthRisk)-[:RAISES_RISK_OF {summary, measure, estimate, ciLow, ciHigh, studies}]->(:HealthRisk)
     (:Study {citation, title, year, design, url, pmid, pubmedUrl})-[:ABOUT]->(:HealthRisk)   the evidence for a link
     (:Study)-[:EXAMINES]->(:LoincCode), (:Study)-[:INFORMS]->(:RiskScore)   the markers and scores it is about
@@ -226,14 +227,36 @@ def _range_rows() -> list[dict]:
         if not r.get("loinc"):
             continue
         rows.append({
-            "id": f"{r['analyteKey']}|{r['ucum']}|{r['sex']}", "loinc": r["loinc"],
+            # The edition is part of the key: a superseded range stays next to its successor.
+            "id": f"{r['analyteKey']}|{r['ucum']}|{r['sex']}|{r.get('validFrom') or ''}", "loinc": r["loinc"],
             "analyteKey": r["analyteKey"], "ucum": r["ucum"], "sex": r["sex"], "group": r["group"],
             "guidelineLow": r.get("guidelineLow"), "guidelineHigh": r.get("guidelineHigh"),
             "optimalLow": r.get("optimalLow"), "optimalHigh": r.get("optimalHigh"),
             "basis": r["basis"], "summary": r["summary"],
             "sourceLabel": r["source"]["label"], "sourceUrl": r["source"]["url"],
+            "sourceYear": r["source"].get("year"), "sourcePmid": r["source"].get("pmid"),
+            "sourceDoi": r["source"].get("doi"),
+            "validFrom": r.get("validFrom"), "validUntil": r.get("validUntil"),
+            "supersededBy": r.get("supersededBy"),
         })
     return rows
+
+
+def _range_source_rows() -> list[dict]:
+    """The source of every range as a Study node: the same kind of evidence node as the risk links use."""
+    sources: dict[str, dict] = {}
+    for r in _range_rows():
+        sid = f"pmid-{r['sourcePmid']}" if r["sourcePmid"] else "src-" + hashlib.sha1(
+            r["sourceLabel"].encode()).hexdigest()[:10]
+        st = sources.setdefault(sid, {
+            "id": sid, "citation": r["sourceLabel"], "title": r["sourceLabel"], "year": r["sourceYear"],
+            "design": set(), "url": f"https://doi.org/{r['sourceDoi']}" if r["sourceDoi"] else r["sourceUrl"],
+            "pmid": r["sourcePmid"],
+            "pubmedUrl": f"https://pubmed.ncbi.nlm.nih.gov/{r['sourcePmid']}/" if r["sourcePmid"] else None,
+            "ranges": []})
+        st["design"].add(r["basis"])
+        st["ranges"].append(r["id"])
+    return [st | {"design": "reference range source: " + ", ".join(sorted(st["design"]))} for st in sources.values()]
 
 
 def _study_rows() -> list[dict]:
@@ -341,6 +364,26 @@ MERGE (st)-[:ABOUT]->(b)
 RETURN count(DISTINCT k) AS riskLinks
 """
 
+# A range id the table no longer has (an older key, a removed range) goes, with its links.
+SEED_PRUNE_RANGES = """
+MATCH (rr:ReferenceRange)
+WHERE NOT rr.id IN $rangeIds
+DETACH DELETE rr
+RETURN count(*) AS prunedRanges
+"""
+
+SEED_RANGE_SOURCES = """
+UNWIND $rangeSources AS s
+MERGE (st:Study {id: s.id})
+SET st.citation = s.citation, st.title = s.title, st.year = s.year, st.design = s.design, st.url = s.url,
+    st.pmid = s.pmid, st.pubmedUrl = s.pubmedUrl
+WITH st, s
+UNWIND s.ranges AS rid
+MATCH (rr:ReferenceRange {id: rid})
+MERGE (rr)-[:SOURCED_FROM]->(st)
+RETURN count(DISTINCT st) AS rangeSources
+"""
+
 SEED_VERSION = """
 MERGE (k:Knowledge {id: 'health-graph'})
 SET k.fingerprint = $fingerprint, k.rangesSource = $rangesSource
@@ -360,7 +403,9 @@ def seed(conn, force: bool = False) -> dict[str, int]:
         counts.update(dict(conn.execute(SEED_RISKS, {"risks": HEALTH_RISKS}).single()))
         counts.update(dict(conn.execute(SEED_SCORES, {"scores": RISK_SCORES}).single()))
         counts.update(dict(conn.execute(SEED_MARKERS, {"markers": _marker_rows()}).single()))
+        counts.update(dict(conn.execute(SEED_PRUNE_RANGES, {"rangeIds": [r["id"] for r in _range_rows()]}).single()))
         counts.update(dict(conn.execute(SEED_RANGES, {"ranges": _range_rows()}).single()))
+        counts.update(dict(conn.execute(SEED_RANGE_SOURCES, {"rangeSources": _range_source_rows()}).single()))
         counts.update(dict(conn.execute(SEED_STUDIES, {"studies": _study_rows()}).single()))
         counts.update(dict(conn.execute(SEED_STUDY_MARKERS, {"examines": _examines_rows()}).single()))
         counts.update(dict(conn.execute(SEED_STUDY_SCORES, {"informs": _informs_rows()}).single()))

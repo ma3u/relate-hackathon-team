@@ -40,7 +40,10 @@ let instructions = """
 
   How to work:
   - Call get_schema first, then read_cypher. Count a value seen in two reports once: filter `o.duplicateOf IS NULL`.
-  - Compare values with ReferenceRange in the same unit (r.ucum = o.unit); say which range and source you used.
+  - Compare values with ReferenceRange in the same unit (r.ucum = o.unit) that applied on the value's date \
+  (r.validFrom <= o.effectiveDate and (r.validUntil IS NULL or o.effectiveDate < r.validUntil)); say which range and \
+  source you used: (r)-[:SOURCED_FROM]->(:Study {citation, url, pubmedUrl}). If r.validUntil is set, say the range was \
+  superseded and quote r.supersededBy.
   - When a value raises one risk, follow RAISES_RISK_OF to the risks that one raises in turn, and cite the Study.
   - Name dates and sources (report title, lab) for every number you quote, so the user can check it on the paper.
   - If the graph is empty or unavailable, explain the setup: open Klarbefund for Mac, then on the iPhone open \

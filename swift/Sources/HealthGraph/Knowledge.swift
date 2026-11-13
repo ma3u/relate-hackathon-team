@@ -17,7 +17,8 @@ extension HealthStore {
     var counts: [String: Int] = [:]
     let steps: [(String, String)] = [
       (Cypher.seedRisks, "risks"), (Cypher.seedScores, "scores"),
-      (Cypher.seedMarkers, "markers"), (Cypher.seedRanges, "ranges"),
+      (Cypher.seedMarkers, "markers"), (Cypher.seedPruneRanges, "rangeIds"), (Cypher.seedRanges, "ranges"),
+      (Cypher.seedRangeSources, "rangeSources"),
       (Cypher.seedStudies, "studies"), (Cypher.seedStudyMarkers, "examines"),
       (Cypher.seedStudyScores, "informs"), (Cypher.seedRiskLinks, "links"),
     ]

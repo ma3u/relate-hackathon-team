@@ -225,6 +225,13 @@ enum Cypher {
   RETURN count(k) AS markers
   """#
 
+  static let seedPruneRanges = #"""
+  MATCH (rr:ReferenceRange)
+  WHERE NOT rr.id IN $rangeIds
+  DETACH DELETE rr
+  RETURN count(*) AS prunedRanges
+  """#
+
   static let seedRanges = #"""
   UNWIND $ranges AS r
   MERGE (rr:ReferenceRange {id: r.id})
@@ -233,6 +240,18 @@ enum Cypher {
   MERGE (lc:LoincCode {code: r.loinc})
   MERGE (rr)-[:APPLIES_TO]->(lc)
   RETURN count(rr) AS ranges
+  """#
+
+  static let seedRangeSources = #"""
+  UNWIND $rangeSources AS s
+  MERGE (st:Study {id: s.id})
+  SET st.citation = s.citation, st.title = s.title, st.year = s.year, st.design = s.design, st.url = s.url,
+      st.pmid = s.pmid, st.pubmedUrl = s.pubmedUrl
+  WITH st, s
+  UNWIND s.ranges AS rid
+  MATCH (rr:ReferenceRange {id: rid})
+  MERGE (rr)-[:SOURCED_FROM]->(st)
+  RETURN count(DISTINCT st) AS rangeSources
   """#
 
   static let seedStudies = #"""

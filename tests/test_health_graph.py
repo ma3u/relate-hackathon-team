@@ -262,6 +262,29 @@ def test_knowledge_is_seeded_once_and_links_ranges_to_loinc(db):
     assert walk == 5  # total cholesterol and HDL in two units each, systolic BP
 
 
+def test_ranges_are_versioned_and_sourced(db):
+    from health_graph import knowledge
+    conn, _ = db
+    conn.execute("CREATE (:ReferenceRange {id: 'cholesterol-ldl|mmol/L|any'})")  # a key from before editions
+    counts = knowledge.seed(conn)
+    assert counts["prunedRanges"] == 1
+    unsourced = conn.execute("MATCH (rr:ReferenceRange) WHERE NOT (rr)-[:SOURCED_FROM]->(:Study) "
+                             "RETURN count(rr) AS n").single()["n"]
+    assert unsourced == 0
+    vit = conn.execute("""MATCH (rr:ReferenceRange {analyteKey: 'vitamin-d', ucum: 'ng/mL'})-[:SOURCED_FROM]->(st)
+                          RETURN rr.validUntil AS until, rr.supersededBy AS by, st.pmid AS pmid, st.url AS doi""").single()
+    assert vit["until"] == "2024-06-03" and "38828931" in vit["by"]
+    assert vit["pmid"] == "21646368" and vit["doi"] == "https://doi.org/10.1210/jc.2011-0385"
+    # every range with a PubMed source reaches PubMed and a DOI
+    missing = conn.execute("""MATCH (rr:ReferenceRange)-[:SOURCED_FROM]->(st:Study)
+                              WHERE rr.sourcePmid IS NOT NULL AND (st.pubmedUrl IS NULL OR st.url IS NULL)
+                              RETURN count(rr) AS n""").single()["n"]
+    assert missing == 0
+    # one paper, one Study node: no DOI under two ids
+    dois = [s["url"] for s in knowledge.STUDIES] + [s["url"] for s in knowledge._range_source_rows()]
+    assert len(dois) == len(set(dois))
+
+
 def test_risk_links_name_their_studies(db):
     from health_graph import knowledge
     from health_graph.queries import QUERIES

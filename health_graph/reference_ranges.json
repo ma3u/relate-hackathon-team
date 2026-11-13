@@ -13,9 +13,14 @@
       "summary": "Targets: below 116 at low risk, 100 at moderate, 70 at high and 55 at very high risk. ESC/EAS states targets by cardiovascular risk, not one number for everyone. Which tier applies to you is a clinical decision.",
       "source": {
         "label": "ESC/EAS 2019 dyslipidaemia guidelines (Mach et al., Eur Heart J 2020;41:111-188)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/31504418/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/31504418/",
+        "year": 2019,
+        "pmid": "31504418",
+        "doi": "10.1093/eurheartj/ehz455"
       },
-      "loinc": "2089-1"
+      "loinc": "2089-1",
+      "validFrom": "2019-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "cholesterol-ldl",
@@ -28,9 +33,14 @@
       "summary": "Targets: below 3.0 at low risk, 2.6 at moderate, 1.8 at high and 1.4 at very high risk. ESC/EAS states targets by cardiovascular risk, not one number for everyone. Which tier applies to you is a clinical decision.",
       "source": {
         "label": "ESC/EAS 2019 dyslipidaemia guidelines (Mach et al., Eur Heart J 2020;41:111-188)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/31504418/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/31504418/",
+        "year": 2019,
+        "pmid": "31504418",
+        "doi": "10.1093/eurheartj/ehz455"
       },
-      "loinc": "22748-8"
+      "loinc": "22748-8",
+      "validFrom": "2019-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "cholesterol-non-hdl",
@@ -43,9 +53,14 @@
       "summary": "Secondary target, 30 mg/dL above the LDL target of the same risk tier. ESC/EAS states targets by cardiovascular risk, not one number for everyone. Which tier applies to you is a clinical decision.",
       "source": {
         "label": "ESC/EAS 2019 dyslipidaemia guidelines (Mach et al., Eur Heart J 2020;41:111-188)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/31504418/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/31504418/",
+        "year": 2019,
+        "pmid": "31504418",
+        "doi": "10.1093/eurheartj/ehz455"
       },
-      "loinc": "43396-1"
+      "loinc": "43396-1",
+      "validFrom": "2019-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "cholesterol-non-hdl",
@@ -58,9 +73,14 @@
       "summary": "Secondary target, 0.8 mmol/L above the LDL target of the same risk tier. ESC/EAS states targets by cardiovascular risk, not one number for everyone. Which tier applies to you is a clinical decision.",
       "source": {
         "label": "ESC/EAS 2019 dyslipidaemia guidelines (Mach et al., Eur Heart J 2020;41:111-188)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/31504418/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/31504418/",
+        "year": 2019,
+        "pmid": "31504418",
+        "doi": "10.1093/eurheartj/ehz455"
       },
-      "loinc": "70204-3"
+      "loinc": "70204-3",
+      "validFrom": "2019-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "apolipoprotein-b",
@@ -73,9 +93,14 @@
       "summary": "Targets: below 100 at low or moderate risk, 80 at high and 65 at very high risk. ESC/EAS states targets by cardiovascular risk, not one number for everyone. Which tier applies to you is a clinical decision.",
       "source": {
         "label": "ESC/EAS 2019 dyslipidaemia guidelines (Mach et al., Eur Heart J 2020;41:111-188)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/31504418/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/31504418/",
+        "year": 2019,
+        "pmid": "31504418",
+        "doi": "10.1093/eurheartj/ehz455"
       },
-      "loinc": "1884-6"
+      "loinc": "1884-6",
+      "validFrom": "2019-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "apolipoprotein-b",
@@ -88,9 +113,14 @@
       "summary": "Targets: below 1.0 at low or moderate risk, 0.8 at high and 0.65 at very high risk. ESC/EAS states targets by cardiovascular risk, not one number for everyone. Which tier applies to you is a clinical decision.",
       "source": {
         "label": "ESC/EAS 2019 dyslipidaemia guidelines (Mach et al., Eur Heart J 2020;41:111-188)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/31504418/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/31504418/",
+        "year": 2019,
+        "pmid": "31504418",
+        "doi": "10.1093/eurheartj/ehz455"
       },
-      "loinc": "1884-6"
+      "loinc": "1884-6",
+      "validFrom": "2019-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "cholesterol-hdl",
@@ -103,9 +133,14 @@
       "summary": "Below 40 mg/dL (1.0 mmol/L) in men marks increased risk. HDL is a risk marker, not a treatment target.",
       "source": {
         "label": "ESC/EAS 2019 dyslipidaemia guidelines (Mach et al., Eur Heart J 2020;41:111-188)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/31504418/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/31504418/",
+        "year": 2019,
+        "pmid": "31504418",
+        "doi": "10.1093/eurheartj/ehz455"
       },
-      "loinc": "2085-9"
+      "loinc": "2085-9",
+      "validFrom": "2019-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "cholesterol-hdl",
@@ -118,9 +153,14 @@
       "summary": "Below 48 mg/dL (1.2 mmol/L) in women marks increased risk. HDL is a risk marker, not a treatment target.",
       "source": {
         "label": "ESC/EAS 2019 dyslipidaemia guidelines (Mach et al., Eur Heart J 2020;41:111-188)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/31504418/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/31504418/",
+        "year": 2019,
+        "pmid": "31504418",
+        "doi": "10.1093/eurheartj/ehz455"
       },
-      "loinc": "2085-9"
+      "loinc": "2085-9",
+      "validFrom": "2019-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "cholesterol-hdl",
@@ -133,9 +173,14 @@
       "summary": "Below 1.0 mmol/L in men marks increased risk. HDL is a risk marker, not a treatment target.",
       "source": {
         "label": "ESC/EAS 2019 dyslipidaemia guidelines (Mach et al., Eur Heart J 2020;41:111-188)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/31504418/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/31504418/",
+        "year": 2019,
+        "pmid": "31504418",
+        "doi": "10.1093/eurheartj/ehz455"
       },
-      "loinc": "14646-4"
+      "loinc": "14646-4",
+      "validFrom": "2019-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "cholesterol-hdl",
@@ -148,9 +193,14 @@
       "summary": "Below 1.2 mmol/L in women marks increased risk. HDL is a risk marker, not a treatment target.",
       "source": {
         "label": "ESC/EAS 2019 dyslipidaemia guidelines (Mach et al., Eur Heart J 2020;41:111-188)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/31504418/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/31504418/",
+        "year": 2019,
+        "pmid": "31504418",
+        "doi": "10.1093/eurheartj/ehz455"
       },
-      "loinc": "14646-4"
+      "loinc": "14646-4",
+      "validFrom": "2019-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "triglycerides",
@@ -163,9 +213,14 @@
       "summary": "Fasting triglycerides below 150 mg/dL (1.7 mmol/L) indicate lower cardiovascular risk.",
       "source": {
         "label": "ESC/EAS 2019 dyslipidaemia guidelines (Mach et al., Eur Heart J 2020;41:111-188)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/31504418/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/31504418/",
+        "year": 2019,
+        "pmid": "31504418",
+        "doi": "10.1093/eurheartj/ehz455"
       },
-      "loinc": "2571-8"
+      "loinc": "2571-8",
+      "validFrom": "2019-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "triglycerides",
@@ -178,9 +233,14 @@
       "summary": "Fasting triglycerides below 1.7 mmol/L indicate lower cardiovascular risk.",
       "source": {
         "label": "ESC/EAS 2019 dyslipidaemia guidelines (Mach et al., Eur Heart J 2020;41:111-188)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/31504418/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/31504418/",
+        "year": 2019,
+        "pmid": "31504418",
+        "doi": "10.1093/eurheartj/ehz455"
       },
-      "loinc": "14927-8"
+      "loinc": "14927-8",
+      "validFrom": "2019-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "cholesterol-total",
@@ -193,9 +253,14 @@
       "summary": "Below 190 mg/dL (5.0 mmol/L). Total cholesterol is a screening figure; LDL and apoB carry the risk information.",
       "source": {
         "label": "ESC/EAS 2019 dyslipidaemia guidelines (Mach et al., Eur Heart J 2020;41:111-188)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/31504418/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/31504418/",
+        "year": 2019,
+        "pmid": "31504418",
+        "doi": "10.1093/eurheartj/ehz455"
       },
-      "loinc": "2093-3"
+      "loinc": "2093-3",
+      "validFrom": "2019-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "cholesterol-total",
@@ -208,9 +273,14 @@
       "summary": "Below 5.0 mmol/L. Total cholesterol is a screening figure; LDL and apoB carry the risk information.",
       "source": {
         "label": "ESC/EAS 2019 dyslipidaemia guidelines (Mach et al., Eur Heart J 2020;41:111-188)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/31504418/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/31504418/",
+        "year": 2019,
+        "pmid": "31504418",
+        "doi": "10.1093/eurheartj/ehz455"
       },
-      "loinc": "14647-2"
+      "loinc": "14647-2",
+      "validFrom": "2019-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "lipoprotein-a",
@@ -223,9 +293,14 @@
       "summary": "Below 30 mg/dL carries little excess risk, 30 to 50 is intermediate, above 50 is raised. Largely genetic and measured once in a lifetime for most people.",
       "source": {
         "label": "EAS consensus on lipoprotein(a) (Kronenberg et al., Eur Heart J 2022;43:3925-3946)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/36036785/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/36036785/",
+        "year": 2022,
+        "pmid": "36036785",
+        "doi": "10.1093/eurheartj/ehac361"
       },
-      "loinc": "10835-7"
+      "loinc": "10835-7",
+      "validFrom": "2022-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "lipoprotein-a",
@@ -238,9 +313,14 @@
       "summary": "Below 75 nmol/L carries little excess risk, 75 to 125 is intermediate, above 125 is raised. Molar and mass units are different measurements and are not interconvertible.",
       "source": {
         "label": "EAS consensus on lipoprotein(a) (Kronenberg et al., Eur Heart J 2022;43:3925-3946)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/36036785/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/36036785/",
+        "year": 2022,
+        "pmid": "36036785",
+        "doi": "10.1093/eurheartj/ehac361"
       },
-      "loinc": "43583-4"
+      "loinc": "43583-4",
+      "validFrom": "2022-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "lipoprotein-a",
@@ -253,9 +333,14 @@
       "summary": "The same thresholds German laboratories print in grams per litre: below 0.30 little excess risk, above 0.50 raised.",
       "source": {
         "label": "EAS consensus on lipoprotein(a) (Kronenberg et al., Eur Heart J 2022;43:3925-3946)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/36036785/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/36036785/",
+        "year": 2022,
+        "pmid": "36036785",
+        "doi": "10.1093/eurheartj/ehac361"
       },
-      "loinc": "10835-7"
+      "loinc": "10835-7",
+      "validFrom": "2022-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "crp-hs",
@@ -268,9 +353,14 @@
       "summary": "Cardiovascular risk groups: below 1 low, 1 to 3 average, above 3 high. A value above 10 suggests infection or inflammation and should be repeated rather than interpreted.",
       "source": {
         "label": "AHA/CDC statement on inflammation markers (Pearson et al., Circulation 2003;107:499-511)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/12551878/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/12551878/",
+        "year": 2003,
+        "pmid": "12551878",
+        "doi": "10.1161/01.cir.0000052939.59093.45"
       },
-      "loinc": "30522-7"
+      "loinc": "30522-7",
+      "validFrom": "2003-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "homocysteine",
@@ -283,9 +373,14 @@
       "summary": "Above 15 µmol/L is generally called hyperhomocysteinaemia; below 10 is the range the expert opinion describes as unremarkable in folate-replete populations.",
       "source": {
         "label": "Total homocysteine, expert opinion (Refsum et al., Clin Chem 2004;50:3-32)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/14709635/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/14709635/",
+        "year": 2004,
+        "pmid": "14709635",
+        "doi": "10.1373/clinchem.2003.021634"
       },
-      "loinc": "13965-9"
+      "loinc": "13965-9",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "hba1c",
@@ -298,9 +393,14 @@
       "summary": "Below 5.7% is normal, 5.7 to 6.4% is prediabetes and 6.5% or above meets the diabetes criterion. Risk already rises within the normal range (Selvin 2010).",
       "source": {
         "label": "ADA Standards of Care 2025, diagnosis and classification (Diabetes Care 2025;48:S27-S49)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/39651986/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/39651986/",
+        "year": 2025,
+        "pmid": "39651986",
+        "doi": "10.2337/dc25-S002"
       },
-      "loinc": "4548-4"
+      "loinc": "4548-4",
+      "validFrom": "2025-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "hba1c",
@@ -313,9 +413,14 @@
       "summary": "Below 39 mmol/mol is normal, 39 to 46 is prediabetes and 48 or above meets the diabetes criterion, on the IFCC scale.",
       "source": {
         "label": "ADA Standards of Care 2025, diagnosis and classification (Diabetes Care 2025;48:S27-S49)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/39651986/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/39651986/",
+        "year": 2025,
+        "pmid": "39651986",
+        "doi": "10.2337/dc25-S002"
       },
-      "loinc": "59261-8"
+      "loinc": "59261-8",
+      "validFrom": "2025-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "glucose",
@@ -330,9 +435,14 @@
       "summary": "Fasting: 70 to 99 mg/dL normal, 100 to 125 impaired fasting glucose, 126 or above meets the diabetes criterion. Only meaningful fasting.",
       "source": {
         "label": "ADA Standards of Care 2025, diagnosis and classification (Diabetes Care 2025;48:S27-S49)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/39651986/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/39651986/",
+        "year": 2025,
+        "pmid": "39651986",
+        "doi": "10.2337/dc25-S002"
       },
-      "loinc": "2345-7"
+      "loinc": "2345-7",
+      "validFrom": "2025-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "glucose",
@@ -347,9 +457,14 @@
       "summary": "Fasting: 3.9 to 5.5 mmol/L normal, 5.6 to 6.9 impaired fasting glucose, 7.0 or above meets the diabetes criterion. Only meaningful fasting.",
       "source": {
         "label": "ADA Standards of Care 2025, diagnosis and classification (Diabetes Care 2025;48:S27-S49)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/39651986/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/39651986/",
+        "year": 2025,
+        "pmid": "39651986",
+        "doi": "10.2337/dc25-S002"
       },
-      "loinc": "14749-6"
+      "loinc": "14749-6",
+      "validFrom": "2025-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "egfr",
@@ -362,9 +477,14 @@
       "summary": "G1 is 90 or above, G2 is 60 to 89 and counts as chronic kidney disease only with other evidence of kidney damage. Below 60 for three months defines CKD.",
       "source": {
         "label": "KDIGO 2024 CKD guideline, executive summary (Levin et al., Kidney Int 2024;105:684-701)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/38519239/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/38519239/",
+        "year": 2024,
+        "pmid": "38519239",
+        "doi": "10.1016/j.kint.2023.10.016"
       },
-      "loinc": "62238-1"
+      "loinc": "62238-1",
+      "validFrom": "2024-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "alt",
@@ -377,9 +497,14 @@
       "summary": "Derived in blood donors with no risk factor for liver disease: 30 U/L in men, against laboratory upper limits that are often far higher.",
       "source": {
         "label": "Updated definitions of healthy ranges for serum ALT (Prati et al., Ann Intern Med 2002;137:1-10)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/12093239/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/12093239/",
+        "year": 2002,
+        "pmid": "12093239",
+        "doi": "10.7326/0003-4819-137-1-200207020-00006"
       },
-      "loinc": "1742-6"
+      "loinc": "1742-6",
+      "validFrom": "2002-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "alt",
@@ -392,9 +517,14 @@
       "summary": "Derived in blood donors with no risk factor for liver disease: 19 U/L in women, against laboratory upper limits that are often far higher.",
       "source": {
         "label": "Updated definitions of healthy ranges for serum ALT (Prati et al., Ann Intern Med 2002;137:1-10)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/12093239/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/12093239/",
+        "year": 2002,
+        "pmid": "12093239",
+        "doi": "10.7326/0003-4819-137-1-200207020-00006"
       },
-      "loinc": "1742-6"
+      "loinc": "1742-6",
+      "validFrom": "2002-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "haemoglobin",
@@ -407,9 +537,12 @@
       "summary": "Anaemia in men is below 13.0 g/dL (130 g/L) at sea level.",
       "source": {
         "label": "WHO guideline on haemoglobin cutoffs to define anaemia (2024)",
-        "url": "https://www.who.int/publications/i/item/9789240088542"
+        "url": "https://www.who.int/publications/i/item/9789240088542",
+        "year": 2024
       },
-      "loinc": "718-7"
+      "loinc": "718-7",
+      "validFrom": "2024-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "haemoglobin",
@@ -422,9 +555,12 @@
       "summary": "Anaemia in non-pregnant women is below 12.0 g/dL (120 g/L) at sea level.",
       "source": {
         "label": "WHO guideline on haemoglobin cutoffs to define anaemia (2024)",
-        "url": "https://www.who.int/publications/i/item/9789240088542"
+        "url": "https://www.who.int/publications/i/item/9789240088542",
+        "year": 2024
       },
-      "loinc": "718-7"
+      "loinc": "718-7",
+      "validFrom": "2024-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "ferritin",
@@ -437,9 +573,12 @@
       "summary": "Below 15 µg/L indicates depleted iron stores in adults. Ferritin rises with inflammation, so a threshold of 70 µg/L applies when infection is present.",
       "source": {
         "label": "WHO guideline on ferritin concentrations to assess iron status (2020)",
-        "url": "https://www.who.int/publications/i/item/9789240000124"
+        "url": "https://www.who.int/publications/i/item/9789240000124",
+        "year": 2020
       },
-      "loinc": "2276-4"
+      "loinc": "2276-4",
+      "validFrom": "2020-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "ferritin",
@@ -452,9 +591,12 @@
       "summary": "Numerically the same as µg/L. Below 15 indicates depleted iron stores; ferritin rises with inflammation.",
       "source": {
         "label": "WHO guideline on ferritin concentrations to assess iron status (2020)",
-        "url": "https://www.who.int/publications/i/item/9789240000124"
+        "url": "https://www.who.int/publications/i/item/9789240000124",
+        "year": 2020
       },
-      "loinc": "2276-4"
+      "loinc": "2276-4",
+      "validFrom": "2020-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "waist-circumference",
@@ -467,9 +609,12 @@
       "summary": "In men, 94 cm marks increased risk and 102 cm substantially increased risk. The thresholds are population-specific; these are the ones for people of European descent.",
       "source": {
         "label": "Waist circumference and waist-hip ratio: report of a WHO expert consultation (2011)",
-        "url": "https://www.who.int/publications/i/item/9789241501491"
+        "url": "https://www.who.int/publications/i/item/9789241501491",
+        "year": 2011
       },
-      "loinc": "8280-0"
+      "loinc": "8280-0",
+      "validFrom": "2011-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "waist-circumference",
@@ -482,9 +627,12 @@
       "summary": "In women, 80 cm marks increased risk and 88 cm substantially increased risk. The thresholds are population-specific; these are the ones for people of European descent.",
       "source": {
         "label": "Waist circumference and waist-hip ratio: report of a WHO expert consultation (2011)",
-        "url": "https://www.who.int/publications/i/item/9789241501491"
+        "url": "https://www.who.int/publications/i/item/9789241501491",
+        "year": 2011
       },
-      "loinc": "8280-0"
+      "loinc": "8280-0",
+      "validFrom": "2011-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "vitamin-d",
@@ -498,9 +646,15 @@
       "summary": "Deficiency below 20 ng/mL, insufficiency 21 to 29, sufficiency 30 or above. The guideline does not recommend exceeding 50.",
       "source": {
         "label": "Endocrine Society vitamin D guideline (Holick et al., J Clin Endocrinol Metab 2011;96:1911-1930)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/21646368/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/21646368/",
+        "year": 2011,
+        "pmid": "21646368",
+        "doi": "10.1210/jc.2011-0385"
       },
-      "loinc": "62292-8"
+      "validUntil": "2024-06-03",
+      "supersededBy": "Endocrine Society 2024 guideline (Demay et al., J Clin Endocrinol Metab 2024;109:1907-1947, PMID 38828931): no 25(OH)D threshold for the general population, and no routine testing advised.",
+      "loinc": "62292-8",
+      "validFrom": "2011-01-01"
     },
     {
       "analyteKey": "vitamin-d",
@@ -514,9 +668,15 @@
       "summary": "Deficiency below 50 nmol/L, insufficiency 52 to 72, sufficiency 75 or above. The guideline does not recommend exceeding 125.",
       "source": {
         "label": "Endocrine Society vitamin D guideline (Holick et al., J Clin Endocrinol Metab 2011;96:1911-1930)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/21646368/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/21646368/",
+        "year": 2011,
+        "pmid": "21646368",
+        "doi": "10.1210/jc.2011-0385"
       },
-      "loinc": "68438-1"
+      "validUntil": "2024-06-03",
+      "supersededBy": "Endocrine Society 2024 guideline (Demay et al., J Clin Endocrinol Metab 2024;109:1907-1947, PMID 38828931): no 25(OH)D threshold for the general population, and no routine testing advised.",
+      "loinc": "68438-1",
+      "validFrom": "2011-01-01"
     },
     {
       "analyteKey": "apolipoprotein-a1",
@@ -528,9 +688,14 @@
       "summary": "Flagged as abnormal at or below 1.25 g/L (125 mg/dL). ApoA1 is the protein of HDL, so higher is the protective direction and the statement names no upper bound.",
       "source": {
         "label": "EAS/EFLM joint consensus on non-fasting lipid profiles and flagging cut-points (Nordestgaard et al., Eur Heart J 2016;37:1944-1958)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/27122601/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/27122601/",
+        "year": 2016,
+        "pmid": "27122601",
+        "doi": "10.1093/eurheartj/ehw152"
       },
-      "loinc": "1869-7"
+      "loinc": "1869-7",
+      "validFrom": "2016-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "apolipoprotein-a1",
@@ -542,9 +707,14 @@
       "summary": "Flagged as abnormal at or below 125 mg/dL (1.25 g/L). ApoA1 is the protein of HDL, so higher is the protective direction and the statement names no upper bound.",
       "source": {
         "label": "EAS/EFLM joint consensus on non-fasting lipid profiles and flagging cut-points (Nordestgaard et al., Eur Heart J 2016;37:1944-1958)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/27122601/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/27122601/",
+        "year": 2016,
+        "pmid": "27122601",
+        "doi": "10.1093/eurheartj/ehw152"
       },
-      "loinc": "1869-7"
+      "loinc": "1869-7",
+      "validFrom": "2016-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "cholesterol-remnant",
@@ -556,9 +726,14 @@
       "summary": "Calculated remnant cholesterol, total minus HDL minus LDL, is flagged at or above 0.9 mmol/L (35 mg/dL) in a non-fasting sample. It is the cholesterol carried in triglyceride-rich particles.",
       "source": {
         "label": "EAS/EFLM joint consensus on non-fasting lipid profiles and flagging cut-points (Nordestgaard et al., Eur Heart J 2016;37:1944-1958)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/27122601/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/27122601/",
+        "year": 2016,
+        "pmid": "27122601",
+        "doi": "10.1093/eurheartj/ehw152"
       },
-      "loinc": null
+      "loinc": null,
+      "validFrom": "2016-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "cholesterol-remnant",
@@ -570,9 +745,14 @@
       "summary": "Calculated remnant cholesterol, total minus HDL minus LDL, is flagged at or above 35 mg/dL (0.9 mmol/L) in a non-fasting sample. It is the cholesterol carried in triglyceride-rich particles.",
       "source": {
         "label": "EAS/EFLM joint consensus on non-fasting lipid profiles and flagging cut-points (Nordestgaard et al., Eur Heart J 2016;37:1944-1958)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/27122601/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/27122601/",
+        "year": 2016,
+        "pmid": "27122601",
+        "doi": "10.1093/eurheartj/ehw152"
       },
-      "loinc": null
+      "loinc": null,
+      "validFrom": "2016-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "ratio-tg-hdl",
@@ -584,9 +764,14 @@
       "summary": "In 258 overweight adults without diabetes, a triglyceride to HDL ratio above 3.0, both in mg/dL, picked out insulin resistance with 64% sensitivity and 68% specificity. The ratio here is always computed on a mg/dL basis, so a panel printed in mmol/L is converted before dividing.",
       "source": {
         "label": "Triglyceride to HDL ratio as a marker of insulin resistance in 258 overweight adults (McLaughlin et al., Ann Intern Med 2003;139:802-809)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/14623617/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/14623617/",
+        "year": 2003,
+        "pmid": "14623617",
+        "doi": "10.7326/0003-4819-139-10-200311180-00007"
       },
-      "loinc": null
+      "loinc": null,
+      "validFrom": "2003-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "nt-probnp",
@@ -598,9 +783,14 @@
       "summary": "Below 125 pg/mL in a person who is not acutely unwell makes heart failure unlikely; above it the guideline asks for an echocardiogram. The value rises with age and with reduced kidney function.",
       "source": {
         "label": "ESC 2021 guidelines for acute and chronic heart failure (McDonagh et al., Eur Heart J 2021;42:3599-3726)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/34447992/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/34447992/",
+        "year": 2021,
+        "pmid": "34447992",
+        "doi": "10.1093/eurheartj/ehab368"
       },
-      "loinc": "33762-6"
+      "loinc": "33762-6",
+      "validFrom": "2021-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "nt-probnp",
@@ -612,9 +802,14 @@
       "summary": "Below 125 ng/L in a person who is not acutely unwell makes heart failure unlikely; above it the guideline asks for an echocardiogram. The value rises with age and with reduced kidney function.",
       "source": {
         "label": "ESC 2021 guidelines for acute and chronic heart failure (McDonagh et al., Eur Heart J 2021;42:3599-3726)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/34447992/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/34447992/",
+        "year": 2021,
+        "pmid": "34447992",
+        "doi": "10.1093/eurheartj/ehab368"
       },
-      "loinc": "33762-6"
+      "loinc": "33762-6",
+      "validFrom": "2021-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "tsh",
@@ -627,9 +822,14 @@
       "summary": "The guideline puts the laboratory's own third-generation assay range first and, where none is available in an iodine-sufficient area, 0.45 to 4.12 mIU/L from the NHANES III survey. The upper limit rises with age.",
       "source": {
         "label": "AACE/ATA clinical practice guidelines for hypothyroidism in adults (Garber et al., Thyroid 2012;22:1200-1235)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/22954017/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/22954017/",
+        "year": 2012,
+        "pmid": "22954017",
+        "doi": "10.1089/thy.2012.0205"
       },
-      "loinc": "3016-3"
+      "loinc": "3016-3",
+      "validFrom": "2012-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "tsh",
@@ -642,9 +842,14 @@
       "summary": "The guideline puts the laboratory's own third-generation assay range first and, where none is available in an iodine-sufficient area, 0.45 to 4.12 µIU/mL from the NHANES III survey. The upper limit rises with age.",
       "source": {
         "label": "AACE/ATA clinical practice guidelines for hypothyroidism in adults (Garber et al., Thyroid 2012;22:1200-1235)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/22954017/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/22954017/",
+        "year": 2012,
+        "pmid": "22954017",
+        "doi": "10.1089/thy.2012.0205"
       },
-      "loinc": "3016-3"
+      "loinc": "3016-3",
+      "validFrom": "2012-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "creatinine",
@@ -657,9 +862,14 @@
       "summary": "50 to 90 µmol/L (0.57 to 1.02 mg/dL) in women, traceable to the isotope-dilution reference method. Creatinine follows muscle mass; the kidney figure is eGFR.",
       "source": {
         "label": "Nordic Reference Interval Project 2000, 25 biochemical properties in about 3000 healthy adults (Rustad et al., Scand J Clin Lab Invest 2004;64:271-284)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/",
+        "year": 2004,
+        "pmid": "15223694",
+        "doi": "10.1080/00365510410006324"
       },
-      "loinc": "14682-9"
+      "loinc": "14682-9",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "creatinine",
@@ -672,9 +882,14 @@
       "summary": "60 to 100 µmol/L (0.68 to 1.13 mg/dL) in men, traceable to the isotope-dilution reference method. Creatinine follows muscle mass; the kidney figure is eGFR.",
       "source": {
         "label": "Nordic Reference Interval Project 2000, 25 biochemical properties in about 3000 healthy adults (Rustad et al., Scand J Clin Lab Invest 2004;64:271-284)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/",
+        "year": 2004,
+        "pmid": "15223694",
+        "doi": "10.1080/00365510410006324"
       },
-      "loinc": "14682-9"
+      "loinc": "14682-9",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "creatinine",
@@ -687,9 +902,14 @@
       "summary": "50 to 90 µmol/L (0.57 to 1.02 mg/dL) in women, traceable to the isotope-dilution reference method. Creatinine follows muscle mass; the kidney figure is eGFR.",
       "source": {
         "label": "Nordic Reference Interval Project 2000, 25 biochemical properties in about 3000 healthy adults (Rustad et al., Scand J Clin Lab Invest 2004;64:271-284)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/",
+        "year": 2004,
+        "pmid": "15223694",
+        "doi": "10.1080/00365510410006324"
       },
-      "loinc": "2160-0"
+      "loinc": "2160-0",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "creatinine",
@@ -702,9 +922,14 @@
       "summary": "60 to 100 µmol/L (0.68 to 1.13 mg/dL) in men, traceable to the isotope-dilution reference method. Creatinine follows muscle mass; the kidney figure is eGFR.",
       "source": {
         "label": "Nordic Reference Interval Project 2000, 25 biochemical properties in about 3000 healthy adults (Rustad et al., Scand J Clin Lab Invest 2004;64:271-284)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/",
+        "year": 2004,
+        "pmid": "15223694",
+        "doi": "10.1080/00365510410006324"
       },
-      "loinc": "2160-0"
+      "loinc": "2160-0",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "urea",
@@ -717,9 +942,14 @@
       "summary": "Women: 2.6 to 6.4 mmol/L to age 49 and 3.1 to 7.9 from 50 (16 to 47 mg/dL urea). The band shown spans both age tiers.",
       "source": {
         "label": "Nordic Reference Interval Project 2000, 25 biochemical properties in about 3000 healthy adults (Rustad et al., Scand J Clin Lab Invest 2004;64:271-284)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/",
+        "year": 2004,
+        "pmid": "15223694",
+        "doi": "10.1080/00365510410006324"
       },
-      "loinc": "22664-7"
+      "loinc": "22664-7",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "urea",
@@ -732,9 +962,14 @@
       "summary": "Men: 3.2 to 8.1 mmol/L to age 49 and 3.5 to 8.1 from 50 (19 to 49 mg/dL urea). The band shown spans both age tiers.",
       "source": {
         "label": "Nordic Reference Interval Project 2000, 25 biochemical properties in about 3000 healthy adults (Rustad et al., Scand J Clin Lab Invest 2004;64:271-284)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/",
+        "year": 2004,
+        "pmid": "15223694",
+        "doi": "10.1080/00365510410006324"
       },
-      "loinc": "22664-7"
+      "loinc": "22664-7",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "urea",
@@ -747,9 +982,14 @@
       "summary": "Women: 2.6 to 6.4 mmol/L to age 49 and 3.1 to 7.9 from 50 (16 to 47 mg/dL urea). The band shown spans both age tiers.",
       "source": {
         "label": "Nordic Reference Interval Project 2000, 25 biochemical properties in about 3000 healthy adults (Rustad et al., Scand J Clin Lab Invest 2004;64:271-284)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/",
+        "year": 2004,
+        "pmid": "15223694",
+        "doi": "10.1080/00365510410006324"
       },
-      "loinc": "3091-6"
+      "loinc": "3091-6",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "urea",
@@ -762,9 +1002,14 @@
       "summary": "Men: 3.2 to 8.1 mmol/L to age 49 and 3.5 to 8.1 from 50 (19 to 49 mg/dL urea). The band shown spans both age tiers.",
       "source": {
         "label": "Nordic Reference Interval Project 2000, 25 biochemical properties in about 3000 healthy adults (Rustad et al., Scand J Clin Lab Invest 2004;64:271-284)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/",
+        "year": 2004,
+        "pmid": "15223694",
+        "doi": "10.1080/00365510410006324"
       },
-      "loinc": "3091-6"
+      "loinc": "3091-6",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "urate",
@@ -776,9 +1021,14 @@
       "summary": "A serum urate of 6.8 mg/dL (405 µmol/L) or more is hyperuricaemia, the concentration at which urate can crystallise. The target of under 6 mg/dL is stated for people with gout on treatment, not for everyone.",
       "source": {
         "label": "ACR 2020 guideline for the management of gout (FitzGerald et al., Arthritis Rheumatol 2020;72:879-895)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/32390306/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/32390306/",
+        "year": 2020,
+        "pmid": "32390306",
+        "doi": "10.1002/art.41247"
       },
-      "loinc": "3084-1"
+      "loinc": "3084-1",
+      "validFrom": "2020-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "urate",
@@ -790,9 +1040,14 @@
       "summary": "A serum urate of 405 µmol/L (6.8 mg/dL) or more is hyperuricaemia, the concentration at which urate can crystallise. The target of under 357 µmol/L is stated for people with gout on treatment, not for everyone.",
       "source": {
         "label": "ACR 2020 guideline for the management of gout (FitzGerald et al., Arthritis Rheumatol 2020;72:879-895)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/32390306/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/32390306/",
+        "year": 2020,
+        "pmid": "32390306",
+        "doi": "10.1002/art.41247"
       },
-      "loinc": "14933-6"
+      "loinc": "14933-6",
+      "validFrom": "2020-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "ast",
@@ -805,9 +1060,14 @@
       "summary": "15 to 35 U/L (0.25 to 0.58 µkat/L) in women, measured by the IFCC reference method at 37 °C. Rises with liver damage and also with muscle injury or hard exercise.",
       "source": {
         "label": "Nordic Reference Interval Project 2000, 25 biochemical properties in about 3000 healthy adults (Rustad et al., Scand J Clin Lab Invest 2004;64:271-284)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/",
+        "year": 2004,
+        "pmid": "15223694",
+        "doi": "10.1080/00365510410006324"
       },
-      "loinc": "1920-8"
+      "loinc": "1920-8",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "ast",
@@ -820,9 +1080,14 @@
       "summary": "15 to 35 U/L (0.25 to 0.58 µkat/L) in women, measured by the IFCC reference method at 37 °C. Rises with liver damage and also with muscle injury or hard exercise.",
       "source": {
         "label": "Nordic Reference Interval Project 2000, 25 biochemical properties in about 3000 healthy adults (Rustad et al., Scand J Clin Lab Invest 2004;64:271-284)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/",
+        "year": 2004,
+        "pmid": "15223694",
+        "doi": "10.1080/00365510410006324"
       },
-      "loinc": "1920-8"
+      "loinc": "1920-8",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "ast",
@@ -835,9 +1100,14 @@
       "summary": "15 to 45 U/L (0.25 to 0.75 µkat/L) in men, measured by the IFCC reference method at 37 °C. Rises with liver damage and also with muscle injury or hard exercise.",
       "source": {
         "label": "Nordic Reference Interval Project 2000, 25 biochemical properties in about 3000 healthy adults (Rustad et al., Scand J Clin Lab Invest 2004;64:271-284)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/",
+        "year": 2004,
+        "pmid": "15223694",
+        "doi": "10.1080/00365510410006324"
       },
-      "loinc": "1920-8"
+      "loinc": "1920-8",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "ast",
@@ -850,9 +1120,14 @@
       "summary": "15 to 45 U/L (0.25 to 0.75 µkat/L) in men, measured by the IFCC reference method at 37 °C. Rises with liver damage and also with muscle injury or hard exercise.",
       "source": {
         "label": "Nordic Reference Interval Project 2000, 25 biochemical properties in about 3000 healthy adults (Rustad et al., Scand J Clin Lab Invest 2004;64:271-284)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/",
+        "year": 2004,
+        "pmid": "15223694",
+        "doi": "10.1080/00365510410006324"
       },
-      "loinc": "1920-8"
+      "loinc": "1920-8",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "ggt",
@@ -865,9 +1140,14 @@
       "summary": "Women: 10 to 45 U/L to age 39 and 10 to 75 from 40 (0.17 to 1.25 µkat/L). The band shown spans both age tiers.",
       "source": {
         "label": "Nordic Reference Interval Project 2000, 25 biochemical properties in about 3000 healthy adults (Rustad et al., Scand J Clin Lab Invest 2004;64:271-284)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/",
+        "year": 2004,
+        "pmid": "15223694",
+        "doi": "10.1080/00365510410006324"
       },
-      "loinc": "2324-2"
+      "loinc": "2324-2",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "ggt",
@@ -880,9 +1160,14 @@
       "summary": "Women: 10 to 45 U/L to age 39 and 10 to 75 from 40 (0.17 to 1.25 µkat/L). The band shown spans both age tiers.",
       "source": {
         "label": "Nordic Reference Interval Project 2000, 25 biochemical properties in about 3000 healthy adults (Rustad et al., Scand J Clin Lab Invest 2004;64:271-284)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/",
+        "year": 2004,
+        "pmid": "15223694",
+        "doi": "10.1080/00365510410006324"
       },
-      "loinc": "2324-2"
+      "loinc": "2324-2",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "ggt",
@@ -895,9 +1180,14 @@
       "summary": "Men: 10 to 80 U/L to age 39 and 15 to 115 from 40 (0.17 to 1.92 µkat/L). The band shown spans both age tiers.",
       "source": {
         "label": "Nordic Reference Interval Project 2000, 25 biochemical properties in about 3000 healthy adults (Rustad et al., Scand J Clin Lab Invest 2004;64:271-284)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/",
+        "year": 2004,
+        "pmid": "15223694",
+        "doi": "10.1080/00365510410006324"
       },
-      "loinc": "2324-2"
+      "loinc": "2324-2",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "ggt",
@@ -910,9 +1200,14 @@
       "summary": "Men: 10 to 80 U/L to age 39 and 15 to 115 from 40 (0.17 to 1.92 µkat/L). The band shown spans both age tiers.",
       "source": {
         "label": "Nordic Reference Interval Project 2000, 25 biochemical properties in about 3000 healthy adults (Rustad et al., Scand J Clin Lab Invest 2004;64:271-284)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/",
+        "year": 2004,
+        "pmid": "15223694",
+        "doi": "10.1080/00365510410006324"
       },
-      "loinc": "2324-2"
+      "loinc": "2324-2",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "alkaline-phosphatase",
@@ -925,9 +1220,14 @@
       "summary": "35 to 105 U/L (0.58 to 1.75 µkat/L) in adults, by the IFCC reference method. A raised value asks whether it comes from bile ducts or from bone.",
       "source": {
         "label": "Nordic Reference Interval Project 2000, 25 biochemical properties in about 3000 healthy adults (Rustad et al., Scand J Clin Lab Invest 2004;64:271-284)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/",
+        "year": 2004,
+        "pmid": "15223694",
+        "doi": "10.1080/00365510410006324"
       },
-      "loinc": "6768-6"
+      "loinc": "6768-6",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "alkaline-phosphatase",
@@ -940,9 +1240,14 @@
       "summary": "35 to 105 U/L (0.58 to 1.75 µkat/L) in adults, by the IFCC reference method. A raised value asks whether it comes from bile ducts or from bone.",
       "source": {
         "label": "Nordic Reference Interval Project 2000, 25 biochemical properties in about 3000 healthy adults (Rustad et al., Scand J Clin Lab Invest 2004;64:271-284)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/",
+        "year": 2004,
+        "pmid": "15223694",
+        "doi": "10.1080/00365510410006324"
       },
-      "loinc": "6768-6"
+      "loinc": "6768-6",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "ldh",
@@ -955,9 +1260,14 @@
       "summary": "105 to 205 U/L to age 69 and 115 to 255 from 70 (1.75 to 4.25 µkat/L); the band shown spans both. A sample that sat too long or haemolysed reads high.",
       "source": {
         "label": "Nordic Reference Interval Project 2000, 25 biochemical properties in about 3000 healthy adults (Rustad et al., Scand J Clin Lab Invest 2004;64:271-284)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/",
+        "year": 2004,
+        "pmid": "15223694",
+        "doi": "10.1080/00365510410006324"
       },
-      "loinc": "2532-0"
+      "loinc": "2532-0",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "ldh",
@@ -970,9 +1280,14 @@
       "summary": "105 to 205 U/L to age 69 and 115 to 255 from 70 (1.75 to 4.25 µkat/L); the band shown spans both. A sample that sat too long or haemolysed reads high.",
       "source": {
         "label": "Nordic Reference Interval Project 2000, 25 biochemical properties in about 3000 healthy adults (Rustad et al., Scand J Clin Lab Invest 2004;64:271-284)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/",
+        "year": 2004,
+        "pmid": "15223694",
+        "doi": "10.1080/00365510410006324"
       },
-      "loinc": "2532-0"
+      "loinc": "2532-0",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "amylase",
@@ -985,9 +1300,14 @@
       "summary": "Total amylase 25 to 120 U/L (0.42 to 2.0 µkat/L); the pancreatic fraction alone is 10 to 65 U/L. Salivary glands contribute the rest.",
       "source": {
         "label": "Nordic Reference Interval Project 2000, 25 biochemical properties in about 3000 healthy adults (Rustad et al., Scand J Clin Lab Invest 2004;64:271-284)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/",
+        "year": 2004,
+        "pmid": "15223694",
+        "doi": "10.1080/00365510410006324"
       },
-      "loinc": "1798-8"
+      "loinc": "1798-8",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "amylase",
@@ -1000,9 +1320,14 @@
       "summary": "Total amylase 25 to 120 U/L (0.42 to 2.0 µkat/L); the pancreatic fraction alone is 10 to 65 U/L. Salivary glands contribute the rest.",
       "source": {
         "label": "Nordic Reference Interval Project 2000, 25 biochemical properties in about 3000 healthy adults (Rustad et al., Scand J Clin Lab Invest 2004;64:271-284)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/",
+        "year": 2004,
+        "pmid": "15223694",
+        "doi": "10.1080/00365510410006324"
       },
-      "loinc": "1798-8"
+      "loinc": "1798-8",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "bilirubin-total",
@@ -1015,9 +1340,14 @@
       "summary": "5 to 25 µmol/L (0.3 to 1.5 mg/dL) in adults. A mildly raised value with everything else normal is often Gilbert's syndrome, which is harmless.",
       "source": {
         "label": "Nordic Reference Interval Project 2000, 25 biochemical properties in about 3000 healthy adults (Rustad et al., Scand J Clin Lab Invest 2004;64:271-284)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/",
+        "year": 2004,
+        "pmid": "15223694",
+        "doi": "10.1080/00365510410006324"
       },
-      "loinc": "14631-6"
+      "loinc": "14631-6",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "bilirubin-total",
@@ -1030,9 +1360,14 @@
       "summary": "5 to 25 µmol/L (0.3 to 1.5 mg/dL) in adults. A mildly raised value with everything else normal is often Gilbert's syndrome, which is harmless.",
       "source": {
         "label": "Nordic Reference Interval Project 2000, 25 biochemical properties in about 3000 healthy adults (Rustad et al., Scand J Clin Lab Invest 2004;64:271-284)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/",
+        "year": 2004,
+        "pmid": "15223694",
+        "doi": "10.1080/00365510410006324"
       },
-      "loinc": "1975-2"
+      "loinc": "1975-2",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "sodium",
@@ -1045,9 +1380,14 @@
       "summary": "137 to 145 mmol/L in serum. Sodium tracks water balance more than salt intake; a low value usually means too much water rather than too little sodium.",
       "source": {
         "label": "Nordic Reference Interval Project 2000, 25 biochemical properties in about 3000 healthy adults (Rustad et al., Scand J Clin Lab Invest 2004;64:271-284)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/",
+        "year": 2004,
+        "pmid": "15223694",
+        "doi": "10.1080/00365510410006324"
       },
-      "loinc": "2951-2"
+      "loinc": "2951-2",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "potassium",
@@ -1060,9 +1400,14 @@
       "summary": "3.6 to 4.6 mmol/L in serum; plasma runs about 0.2 lower. A sample that was squeezed, shaken or left standing reads high, so an unexpected result is repeated before it is believed.",
       "source": {
         "label": "Nordic Reference Interval Project 2000, 25 biochemical properties in about 3000 healthy adults (Rustad et al., Scand J Clin Lab Invest 2004;64:271-284)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/",
+        "year": 2004,
+        "pmid": "15223694",
+        "doi": "10.1080/00365510410006324"
       },
-      "loinc": "2823-3"
+      "loinc": "2823-3",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "calcium",
@@ -1075,9 +1420,14 @@
       "summary": "2.15 to 2.51 mmol/L (8.6 to 10.1 mg/dL) total calcium in serum. About half is bound to albumin, so a low albumin lowers the total without changing the free calcium.",
       "source": {
         "label": "Nordic Reference Interval Project 2000, 25 biochemical properties in about 3000 healthy adults (Rustad et al., Scand J Clin Lab Invest 2004;64:271-284)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/",
+        "year": 2004,
+        "pmid": "15223694",
+        "doi": "10.1080/00365510410006324"
       },
-      "loinc": "2000-8"
+      "loinc": "2000-8",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "calcium",
@@ -1090,9 +1440,14 @@
       "summary": "2.15 to 2.51 mmol/L (8.6 to 10.1 mg/dL) total calcium in serum. About half is bound to albumin, so a low albumin lowers the total without changing the free calcium.",
       "source": {
         "label": "Nordic Reference Interval Project 2000, 25 biochemical properties in about 3000 healthy adults (Rustad et al., Scand J Clin Lab Invest 2004;64:271-284)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/",
+        "year": 2004,
+        "pmid": "15223694",
+        "doi": "10.1080/00365510410006324"
       },
-      "loinc": "17861-6"
+      "loinc": "17861-6",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "calcium-albumin-corrected",
@@ -1105,9 +1460,14 @@
       "summary": "2.17 to 2.47 mmol/L to age 49 and 2.17 to 2.53 from 50 (8.7 to 10.1 mg/dL), corrected as calcium + 0.020 × (41.3 − albumin in g/L). The band shown spans both tiers.",
       "source": {
         "label": "Nordic Reference Interval Project 2000, 25 biochemical properties in about 3000 healthy adults (Rustad et al., Scand J Clin Lab Invest 2004;64:271-284)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/",
+        "year": 2004,
+        "pmid": "15223694",
+        "doi": "10.1080/00365510410006324"
       },
-      "loinc": "29265-6"
+      "loinc": "29265-6",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "calcium-albumin-corrected",
@@ -1120,9 +1480,14 @@
       "summary": "2.17 to 2.47 mmol/L to age 49 and 2.17 to 2.53 from 50 (8.7 to 10.1 mg/dL), corrected as calcium + 0.020 × (41.3 − albumin in g/L). The band shown spans both tiers.",
       "source": {
         "label": "Nordic Reference Interval Project 2000, 25 biochemical properties in about 3000 healthy adults (Rustad et al., Scand J Clin Lab Invest 2004;64:271-284)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/",
+        "year": 2004,
+        "pmid": "15223694",
+        "doi": "10.1080/00365510410006324"
       },
-      "loinc": "46099-8"
+      "loinc": "46099-8",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "magnesium",
@@ -1135,9 +1500,14 @@
       "summary": "0.71 to 0.94 mmol/L (1.73 to 2.29 mg/dL) in serum. Most magnesium is inside cells and bone, so serum can be normal while stores are low.",
       "source": {
         "label": "Nordic Reference Interval Project 2000, 25 biochemical properties in about 3000 healthy adults (Rustad et al., Scand J Clin Lab Invest 2004;64:271-284)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/",
+        "year": 2004,
+        "pmid": "15223694",
+        "doi": "10.1080/00365510410006324"
       },
-      "loinc": "2601-3"
+      "loinc": "2601-3",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "magnesium",
@@ -1150,9 +1520,14 @@
       "summary": "0.71 to 0.94 mmol/L (1.73 to 2.29 mg/dL) in serum. Most magnesium is inside cells and bone, so serum can be normal while stores are low.",
       "source": {
         "label": "Nordic Reference Interval Project 2000, 25 biochemical properties in about 3000 healthy adults (Rustad et al., Scand J Clin Lab Invest 2004;64:271-284)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/",
+        "year": 2004,
+        "pmid": "15223694",
+        "doi": "10.1080/00365510410006324"
       },
-      "loinc": "19123-9"
+      "loinc": "19123-9",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "haemoglobin",
@@ -1165,9 +1540,12 @@
       "summary": "Anaemia in men is below 130 g/L (13.0 g/dL, 8.07 mmol/L) at sea level.",
       "source": {
         "label": "WHO guideline on haemoglobin cutoffs to define anaemia (2024)",
-        "url": "https://www.who.int/publications/i/item/9789240088542"
+        "url": "https://www.who.int/publications/i/item/9789240088542",
+        "year": 2024
       },
-      "loinc": "718-7"
+      "loinc": "718-7",
+      "validFrom": "2024-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "haemoglobin",
@@ -1180,9 +1558,12 @@
       "summary": "Anaemia in non-pregnant women is below 120 g/L (12.0 g/dL, 7.45 mmol/L) at sea level.",
       "source": {
         "label": "WHO guideline on haemoglobin cutoffs to define anaemia (2024)",
-        "url": "https://www.who.int/publications/i/item/9789240088542"
+        "url": "https://www.who.int/publications/i/item/9789240088542",
+        "year": 2024
       },
-      "loinc": "718-7"
+      "loinc": "718-7",
+      "validFrom": "2024-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "haemoglobin",
@@ -1195,9 +1576,12 @@
       "summary": "Anaemia in men is below 130 g/L at sea level, which is 8.07 mmol/L when haemoglobin is counted per haem group as German laboratories do.",
       "source": {
         "label": "WHO guideline on haemoglobin cutoffs to define anaemia (2024)",
-        "url": "https://www.who.int/publications/i/item/9789240088542"
+        "url": "https://www.who.int/publications/i/item/9789240088542",
+        "year": 2024
       },
-      "loinc": "59260-0"
+      "loinc": "59260-0",
+      "validFrom": "2024-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "haemoglobin",
@@ -1210,9 +1594,12 @@
       "summary": "Anaemia in non-pregnant women is below 120 g/L at sea level, which is 7.45 mmol/L when haemoglobin is counted per haem group as German laboratories do.",
       "source": {
         "label": "WHO guideline on haemoglobin cutoffs to define anaemia (2024)",
-        "url": "https://www.who.int/publications/i/item/9789240088542"
+        "url": "https://www.who.int/publications/i/item/9789240088542",
+        "year": 2024
       },
-      "loinc": "59260-0"
+      "loinc": "59260-0",
+      "validFrom": "2024-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "erythrocytes",
@@ -1225,9 +1612,14 @@
       "summary": "3.94 to 5.16 × 10¹²/L in women, from 1826 healthy Nordic adults on twelve instrument types.",
       "source": {
         "label": "Nordic reference intervals for the blood count in 1826 healthy adults (Nordin et al., Scand J Clin Lab Invest 2004;64:385-398)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223702/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223702/",
+        "year": 2004,
+        "pmid": "15223702",
+        "doi": "10.1080/00365510410002797"
       },
-      "loinc": "789-8"
+      "loinc": "789-8",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "erythrocytes",
@@ -1240,9 +1632,14 @@
       "summary": "4.25 to 5.71 × 10¹²/L in men, from 1826 healthy Nordic adults on twelve instrument types.",
       "source": {
         "label": "Nordic reference intervals for the blood count in 1826 healthy adults (Nordin et al., Scand J Clin Lab Invest 2004;64:385-398)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223702/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223702/",
+        "year": 2004,
+        "pmid": "15223702",
+        "doi": "10.1080/00365510410002797"
       },
-      "loinc": "789-8"
+      "loinc": "789-8",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "erythrocytes",
@@ -1255,9 +1652,14 @@
       "summary": "3.94 to 5.16 × 10¹²/L in women, from 1826 healthy Nordic adults on twelve instrument types.",
       "source": {
         "label": "Nordic reference intervals for the blood count in 1826 healthy adults (Nordin et al., Scand J Clin Lab Invest 2004;64:385-398)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223702/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223702/",
+        "year": 2004,
+        "pmid": "15223702",
+        "doi": "10.1080/00365510410002797"
       },
-      "loinc": "789-8"
+      "loinc": "789-8",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "erythrocytes",
@@ -1270,9 +1672,14 @@
       "summary": "4.25 to 5.71 × 10¹²/L in men, from 1826 healthy Nordic adults on twelve instrument types.",
       "source": {
         "label": "Nordic reference intervals for the blood count in 1826 healthy adults (Nordin et al., Scand J Clin Lab Invest 2004;64:385-398)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223702/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223702/",
+        "year": 2004,
+        "pmid": "15223702",
+        "doi": "10.1080/00365510410002797"
       },
-      "loinc": "789-8"
+      "loinc": "789-8",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "haematocrit",
@@ -1285,9 +1692,14 @@
       "summary": "0.348 to 0.459 (34.8 to 45.9 %) in women: the share of blood volume that is red cells.",
       "source": {
         "label": "Nordic reference intervals for the blood count in 1826 healthy adults (Nordin et al., Scand J Clin Lab Invest 2004;64:385-398)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223702/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223702/",
+        "year": 2004,
+        "pmid": "15223702",
+        "doi": "10.1080/00365510410002797"
       },
-      "loinc": "4544-3"
+      "loinc": "4544-3",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "haematocrit",
@@ -1300,9 +1712,14 @@
       "summary": "0.395 to 0.500 (39.5 to 50.0 %) in men: the share of blood volume that is red cells.",
       "source": {
         "label": "Nordic reference intervals for the blood count in 1826 healthy adults (Nordin et al., Scand J Clin Lab Invest 2004;64:385-398)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223702/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223702/",
+        "year": 2004,
+        "pmid": "15223702",
+        "doi": "10.1080/00365510410002797"
       },
-      "loinc": "4544-3"
+      "loinc": "4544-3",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "haematocrit",
@@ -1315,9 +1732,14 @@
       "summary": "0.348 to 0.459 (34.8 to 45.9 %) in women: the share of blood volume that is red cells.",
       "source": {
         "label": "Nordic reference intervals for the blood count in 1826 healthy adults (Nordin et al., Scand J Clin Lab Invest 2004;64:385-398)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223702/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223702/",
+        "year": 2004,
+        "pmid": "15223702",
+        "doi": "10.1080/00365510410002797"
       },
-      "loinc": "4544-3"
+      "loinc": "4544-3",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "haematocrit",
@@ -1330,9 +1752,14 @@
       "summary": "0.395 to 0.500 (39.5 to 50.0 %) in men: the share of blood volume that is red cells.",
       "source": {
         "label": "Nordic reference intervals for the blood count in 1826 healthy adults (Nordin et al., Scand J Clin Lab Invest 2004;64:385-398)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223702/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223702/",
+        "year": 2004,
+        "pmid": "15223702",
+        "doi": "10.1080/00365510410002797"
       },
-      "loinc": "4544-3"
+      "loinc": "4544-3",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "mcv",
@@ -1345,9 +1772,14 @@
       "summary": "82 to 98 fL. Small cells point towards iron deficiency or thalassaemia, large ones towards B12 or folate deficiency, alcohol or liver disease.",
       "source": {
         "label": "Nordic reference intervals for the blood count in 1826 healthy adults (Nordin et al., Scand J Clin Lab Invest 2004;64:385-398)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223702/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223702/",
+        "year": 2004,
+        "pmid": "15223702",
+        "doi": "10.1080/00365510410002797"
       },
-      "loinc": "787-2"
+      "loinc": "787-2",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "mch",
@@ -1360,9 +1792,14 @@
       "summary": "27.1 to 33.3 pg (1.68 to 2.07 fmol) of haemoglobin per red cell. Read together with MCV.",
       "source": {
         "label": "Nordic reference intervals for the blood count in 1826 healthy adults (Nordin et al., Scand J Clin Lab Invest 2004;64:385-398)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223702/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223702/",
+        "year": 2004,
+        "pmid": "15223702",
+        "doi": "10.1080/00365510410002797"
       },
-      "loinc": "785-6"
+      "loinc": "785-6",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "mch",
@@ -1375,9 +1812,14 @@
       "summary": "27.1 to 33.3 pg (1.68 to 2.07 fmol) of haemoglobin per red cell. Read together with MCV.",
       "source": {
         "label": "Nordic reference intervals for the blood count in 1826 healthy adults (Nordin et al., Scand J Clin Lab Invest 2004;64:385-398)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223702/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223702/",
+        "year": 2004,
+        "pmid": "15223702",
+        "doi": "10.1080/00365510410002797"
       },
-      "loinc": "59468-9"
+      "loinc": "59468-9",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "mchc",
@@ -1390,9 +1832,14 @@
       "summary": "317 to 357 g/L (31.7 to 35.7 g/dL, 19.7 to 22.2 mmol/L): the haemoglobin concentration inside the red cells themselves.",
       "source": {
         "label": "Nordic reference intervals for the blood count in 1826 healthy adults (Nordin et al., Scand J Clin Lab Invest 2004;64:385-398)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223702/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223702/",
+        "year": 2004,
+        "pmid": "15223702",
+        "doi": "10.1080/00365510410002797"
       },
-      "loinc": "786-4"
+      "loinc": "786-4",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "mchc",
@@ -1405,9 +1852,14 @@
       "summary": "317 to 357 g/L (31.7 to 35.7 g/dL, 19.7 to 22.2 mmol/L): the haemoglobin concentration inside the red cells themselves.",
       "source": {
         "label": "Nordic reference intervals for the blood count in 1826 healthy adults (Nordin et al., Scand J Clin Lab Invest 2004;64:385-398)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223702/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223702/",
+        "year": 2004,
+        "pmid": "15223702",
+        "doi": "10.1080/00365510410002797"
       },
-      "loinc": "786-4"
+      "loinc": "786-4",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "mchc",
@@ -1420,9 +1872,14 @@
       "summary": "317 to 357 g/L (31.7 to 35.7 g/dL, 19.7 to 22.2 mmol/L): the haemoglobin concentration inside the red cells themselves.",
       "source": {
         "label": "Nordic reference intervals for the blood count in 1826 healthy adults (Nordin et al., Scand J Clin Lab Invest 2004;64:385-398)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223702/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223702/",
+        "year": 2004,
+        "pmid": "15223702",
+        "doi": "10.1080/00365510410002797"
       },
-      "loinc": "59467-1"
+      "loinc": "59467-1",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "platelets",
@@ -1435,9 +1892,14 @@
       "summary": "165 to 387 × 10⁹/L in women, from 1826 healthy Nordic adults.",
       "source": {
         "label": "Nordic reference intervals for the blood count in 1826 healthy adults (Nordin et al., Scand J Clin Lab Invest 2004;64:385-398)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223702/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223702/",
+        "year": 2004,
+        "pmid": "15223702",
+        "doi": "10.1080/00365510410002797"
       },
-      "loinc": "777-3"
+      "loinc": "777-3",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "platelets",
@@ -1450,9 +1912,14 @@
       "summary": "145 to 348 × 10⁹/L in men, from 1826 healthy Nordic adults.",
       "source": {
         "label": "Nordic reference intervals for the blood count in 1826 healthy adults (Nordin et al., Scand J Clin Lab Invest 2004;64:385-398)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223702/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223702/",
+        "year": 2004,
+        "pmid": "15223702",
+        "doi": "10.1080/00365510410002797"
       },
-      "loinc": "777-3"
+      "loinc": "777-3",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "platelets",
@@ -1465,9 +1932,14 @@
       "summary": "165 to 387 × 10⁹/L in women, from 1826 healthy Nordic adults.",
       "source": {
         "label": "Nordic reference intervals for the blood count in 1826 healthy adults (Nordin et al., Scand J Clin Lab Invest 2004;64:385-398)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223702/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223702/",
+        "year": 2004,
+        "pmid": "15223702",
+        "doi": "10.1080/00365510410002797"
       },
-      "loinc": "777-3"
+      "loinc": "777-3",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "platelets",
@@ -1480,9 +1952,14 @@
       "summary": "145 to 348 × 10⁹/L in men, from 1826 healthy Nordic adults.",
       "source": {
         "label": "Nordic reference intervals for the blood count in 1826 healthy adults (Nordin et al., Scand J Clin Lab Invest 2004;64:385-398)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223702/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223702/",
+        "year": 2004,
+        "pmid": "15223702",
+        "doi": "10.1080/00365510410002797"
       },
-      "loinc": "777-3"
+      "loinc": "777-3",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "leukocytes",
@@ -1495,9 +1972,14 @@
       "summary": "3.5 to 8.8 × 10⁹/L, from 1826 healthy Nordic adults. Smoking raised the mean by 1.1 × 10⁹/L in that cohort.",
       "source": {
         "label": "Nordic reference intervals for the blood count in 1826 healthy adults (Nordin et al., Scand J Clin Lab Invest 2004;64:385-398)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223702/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223702/",
+        "year": 2004,
+        "pmid": "15223702",
+        "doi": "10.1080/00365510410002797"
       },
-      "loinc": "6690-2"
+      "loinc": "6690-2",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "leukocytes",
@@ -1510,9 +1992,14 @@
       "summary": "3.5 to 8.8 × 10⁹/L, from 1826 healthy Nordic adults. Smoking raised the mean by 1.1 × 10⁹/L in that cohort.",
       "source": {
         "label": "Nordic reference intervals for the blood count in 1826 healthy adults (Nordin et al., Scand J Clin Lab Invest 2004;64:385-398)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223702/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223702/",
+        "year": 2004,
+        "pmid": "15223702",
+        "doi": "10.1080/00365510410002797"
       },
-      "loinc": "6690-2"
+      "loinc": "6690-2",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "neutrophils",
@@ -1525,9 +2012,14 @@
       "summary": "1.78 to 6.04 × 10⁹/L in 280 healthy Korean adults. People of African descent commonly run lower without any illness.",
       "source": {
         "label": "Reference ranges in 280 healthy Korean adults on the Sysmex XN-2000 (Park et al., Ann Lab Med 2016;36:244-249)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/",
+        "year": 2016,
+        "pmid": "26915613",
+        "doi": "10.3343/alm.2016.36.3.244"
       },
-      "loinc": "753-4"
+      "loinc": "753-4",
+      "validFrom": "2016-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "neutrophils",
@@ -1540,9 +2032,14 @@
       "summary": "1.78 to 6.04 × 10⁹/L in 280 healthy Korean adults. People of African descent commonly run lower without any illness.",
       "source": {
         "label": "Reference ranges in 280 healthy Korean adults on the Sysmex XN-2000 (Park et al., Ann Lab Med 2016;36:244-249)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/",
+        "year": 2016,
+        "pmid": "26915613",
+        "doi": "10.3343/alm.2016.36.3.244"
       },
-      "loinc": "753-4"
+      "loinc": "753-4",
+      "validFrom": "2016-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "neutrophils",
@@ -1555,9 +2052,14 @@
       "summary": "1.78 to 6.04 × 10⁹/L in 280 healthy Korean adults. People of African descent commonly run lower without any illness.",
       "source": {
         "label": "Reference ranges in 280 healthy Korean adults on the Sysmex XN-2000 (Park et al., Ann Lab Med 2016;36:244-249)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/",
+        "year": 2016,
+        "pmid": "26915613",
+        "doi": "10.3343/alm.2016.36.3.244"
       },
-      "loinc": "753-4"
+      "loinc": "753-4",
+      "validFrom": "2016-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "neutrophils",
@@ -1570,9 +2072,14 @@
       "summary": "40.8 to 70.4 % of white cells in 280 healthy Korean adults. The absolute count says more than the share.",
       "source": {
         "label": "Reference ranges in 280 healthy Korean adults on the Sysmex XN-2000 (Park et al., Ann Lab Med 2016;36:244-249)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/",
+        "year": 2016,
+        "pmid": "26915613",
+        "doi": "10.3343/alm.2016.36.3.244"
       },
-      "loinc": "23761-0"
+      "loinc": "23761-0",
+      "validFrom": "2016-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "lymphocytes",
@@ -1585,9 +2092,14 @@
       "summary": "1.39 to 3.15 × 10⁹/L at 20 to 40, 1.24 to 3.05 at 41 to 60 and 1.01 to 2.75 over 60, in 280 healthy Korean adults. The band shown spans the age tiers.",
       "source": {
         "label": "Reference ranges in 280 healthy Korean adults on the Sysmex XN-2000 (Park et al., Ann Lab Med 2016;36:244-249)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/",
+        "year": 2016,
+        "pmid": "26915613",
+        "doi": "10.3343/alm.2016.36.3.244"
       },
-      "loinc": "732-8"
+      "loinc": "732-8",
+      "validFrom": "2016-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "lymphocytes",
@@ -1600,9 +2112,14 @@
       "summary": "1.39 to 3.15 × 10⁹/L at 20 to 40, 1.24 to 3.05 at 41 to 60 and 1.01 to 2.75 over 60, in 280 healthy Korean adults. The band shown spans the age tiers.",
       "source": {
         "label": "Reference ranges in 280 healthy Korean adults on the Sysmex XN-2000 (Park et al., Ann Lab Med 2016;36:244-249)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/",
+        "year": 2016,
+        "pmid": "26915613",
+        "doi": "10.3343/alm.2016.36.3.244"
       },
-      "loinc": "732-8"
+      "loinc": "732-8",
+      "validFrom": "2016-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "lymphocytes",
@@ -1615,9 +2132,14 @@
       "summary": "1.39 to 3.15 × 10⁹/L at 20 to 40, 1.24 to 3.05 at 41 to 60 and 1.01 to 2.75 over 60, in 280 healthy Korean adults. The band shown spans the age tiers.",
       "source": {
         "label": "Reference ranges in 280 healthy Korean adults on the Sysmex XN-2000 (Park et al., Ann Lab Med 2016;36:244-249)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/",
+        "year": 2016,
+        "pmid": "26915613",
+        "doi": "10.3343/alm.2016.36.3.244"
       },
-      "loinc": "732-8"
+      "loinc": "732-8",
+      "validFrom": "2016-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "lymphocytes",
@@ -1630,9 +2152,14 @@
       "summary": "20.1 to 46.8 % of white cells in 280 healthy Korean adults. The absolute count says more than the share.",
       "source": {
         "label": "Reference ranges in 280 healthy Korean adults on the Sysmex XN-2000 (Park et al., Ann Lab Med 2016;36:244-249)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/",
+        "year": 2016,
+        "pmid": "26915613",
+        "doi": "10.3343/alm.2016.36.3.244"
       },
-      "loinc": "737-7"
+      "loinc": "737-7",
+      "validFrom": "2016-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "monocytes",
@@ -1645,9 +2172,14 @@
       "summary": "0.29 to 0.72 × 10⁹/L in men, from 280 healthy Korean adults.",
       "source": {
         "label": "Reference ranges in 280 healthy Korean adults on the Sysmex XN-2000 (Park et al., Ann Lab Med 2016;36:244-249)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/",
+        "year": 2016,
+        "pmid": "26915613",
+        "doi": "10.3343/alm.2016.36.3.244"
       },
-      "loinc": "743-5"
+      "loinc": "743-5",
+      "validFrom": "2016-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "monocytes",
@@ -1660,9 +2192,14 @@
       "summary": "0.29 to 0.72 × 10⁹/L in men, from 280 healthy Korean adults.",
       "source": {
         "label": "Reference ranges in 280 healthy Korean adults on the Sysmex XN-2000 (Park et al., Ann Lab Med 2016;36:244-249)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/",
+        "year": 2016,
+        "pmid": "26915613",
+        "doi": "10.3343/alm.2016.36.3.244"
       },
-      "loinc": "743-5"
+      "loinc": "743-5",
+      "validFrom": "2016-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "monocytes",
@@ -1675,9 +2212,14 @@
       "summary": "0.29 to 0.72 × 10⁹/L in men, from 280 healthy Korean adults.",
       "source": {
         "label": "Reference ranges in 280 healthy Korean adults on the Sysmex XN-2000 (Park et al., Ann Lab Med 2016;36:244-249)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/",
+        "year": 2016,
+        "pmid": "26915613",
+        "doi": "10.3343/alm.2016.36.3.244"
       },
-      "loinc": "743-5"
+      "loinc": "743-5",
+      "validFrom": "2016-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "monocytes",
@@ -1690,9 +2232,14 @@
       "summary": "0.24 to 0.72 × 10⁹/L in women, from 280 healthy Korean adults.",
       "source": {
         "label": "Reference ranges in 280 healthy Korean adults on the Sysmex XN-2000 (Park et al., Ann Lab Med 2016;36:244-249)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/",
+        "year": 2016,
+        "pmid": "26915613",
+        "doi": "10.3343/alm.2016.36.3.244"
       },
-      "loinc": "743-5"
+      "loinc": "743-5",
+      "validFrom": "2016-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "monocytes",
@@ -1705,9 +2252,14 @@
       "summary": "0.24 to 0.72 × 10⁹/L in women, from 280 healthy Korean adults.",
       "source": {
         "label": "Reference ranges in 280 healthy Korean adults on the Sysmex XN-2000 (Park et al., Ann Lab Med 2016;36:244-249)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/",
+        "year": 2016,
+        "pmid": "26915613",
+        "doi": "10.3343/alm.2016.36.3.244"
       },
-      "loinc": "743-5"
+      "loinc": "743-5",
+      "validFrom": "2016-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "monocytes",
@@ -1720,9 +2272,14 @@
       "summary": "0.24 to 0.72 × 10⁹/L in women, from 280 healthy Korean adults.",
       "source": {
         "label": "Reference ranges in 280 healthy Korean adults on the Sysmex XN-2000 (Park et al., Ann Lab Med 2016;36:244-249)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/",
+        "year": 2016,
+        "pmid": "26915613",
+        "doi": "10.3343/alm.2016.36.3.244"
       },
-      "loinc": "743-5"
+      "loinc": "743-5",
+      "validFrom": "2016-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "monocytes",
@@ -1735,9 +2292,14 @@
       "summary": "4.0 to 11.4 % of white cells across the sex and age tiers of 280 healthy Korean adults. The absolute count says more than the share.",
       "source": {
         "label": "Reference ranges in 280 healthy Korean adults on the Sysmex XN-2000 (Park et al., Ann Lab Med 2016;36:244-249)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/",
+        "year": 2016,
+        "pmid": "26915613",
+        "doi": "10.3343/alm.2016.36.3.244"
       },
-      "loinc": "744-3"
+      "loinc": "744-3",
+      "validFrom": "2016-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "eosinophils",
@@ -1750,9 +2312,14 @@
       "summary": "0.04 to 0.58 × 10⁹/L in men, from 280 healthy Korean adults. Allergy and parasites raise it.",
       "source": {
         "label": "Reference ranges in 280 healthy Korean adults on the Sysmex XN-2000 (Park et al., Ann Lab Med 2016;36:244-249)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/",
+        "year": 2016,
+        "pmid": "26915613",
+        "doi": "10.3343/alm.2016.36.3.244"
       },
-      "loinc": "712-0"
+      "loinc": "712-0",
+      "validFrom": "2016-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "eosinophils",
@@ -1765,9 +2332,14 @@
       "summary": "0.04 to 0.58 × 10⁹/L in men, from 280 healthy Korean adults. Allergy and parasites raise it.",
       "source": {
         "label": "Reference ranges in 280 healthy Korean adults on the Sysmex XN-2000 (Park et al., Ann Lab Med 2016;36:244-249)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/",
+        "year": 2016,
+        "pmid": "26915613",
+        "doi": "10.3343/alm.2016.36.3.244"
       },
-      "loinc": "712-0"
+      "loinc": "712-0",
+      "validFrom": "2016-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "eosinophils",
@@ -1780,9 +2352,14 @@
       "summary": "0.04 to 0.58 × 10⁹/L in men, from 280 healthy Korean adults. Allergy and parasites raise it.",
       "source": {
         "label": "Reference ranges in 280 healthy Korean adults on the Sysmex XN-2000 (Park et al., Ann Lab Med 2016;36:244-249)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/",
+        "year": 2016,
+        "pmid": "26915613",
+        "doi": "10.3343/alm.2016.36.3.244"
       },
-      "loinc": "712-0"
+      "loinc": "712-0",
+      "validFrom": "2016-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "eosinophils",
@@ -1795,9 +2372,14 @@
       "summary": "0.01 to 0.59 × 10⁹/L in women, from 280 healthy Korean adults. Allergy and parasites raise it.",
       "source": {
         "label": "Reference ranges in 280 healthy Korean adults on the Sysmex XN-2000 (Park et al., Ann Lab Med 2016;36:244-249)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/",
+        "year": 2016,
+        "pmid": "26915613",
+        "doi": "10.3343/alm.2016.36.3.244"
       },
-      "loinc": "712-0"
+      "loinc": "712-0",
+      "validFrom": "2016-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "eosinophils",
@@ -1810,9 +2392,14 @@
       "summary": "0.01 to 0.59 × 10⁹/L in women, from 280 healthy Korean adults. Allergy and parasites raise it.",
       "source": {
         "label": "Reference ranges in 280 healthy Korean adults on the Sysmex XN-2000 (Park et al., Ann Lab Med 2016;36:244-249)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/",
+        "year": 2016,
+        "pmid": "26915613",
+        "doi": "10.3343/alm.2016.36.3.244"
       },
-      "loinc": "712-0"
+      "loinc": "712-0",
+      "validFrom": "2016-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "eosinophils",
@@ -1825,9 +2412,14 @@
       "summary": "0.01 to 0.59 × 10⁹/L in women, from 280 healthy Korean adults. Allergy and parasites raise it.",
       "source": {
         "label": "Reference ranges in 280 healthy Korean adults on the Sysmex XN-2000 (Park et al., Ann Lab Med 2016;36:244-249)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/",
+        "year": 2016,
+        "pmid": "26915613",
+        "doi": "10.3343/alm.2016.36.3.244"
       },
-      "loinc": "712-0"
+      "loinc": "712-0",
+      "validFrom": "2016-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "eosinophils",
@@ -1840,9 +2432,14 @@
       "summary": "0.7 to 8.9 % of white cells in men, from 280 healthy Korean adults.",
       "source": {
         "label": "Reference ranges in 280 healthy Korean adults on the Sysmex XN-2000 (Park et al., Ann Lab Med 2016;36:244-249)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/",
+        "year": 2016,
+        "pmid": "26915613",
+        "doi": "10.3343/alm.2016.36.3.244"
       },
-      "loinc": "714-6"
+      "loinc": "714-6",
+      "validFrom": "2016-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "eosinophils",
@@ -1855,9 +2452,14 @@
       "summary": "0.2 to 10.2 % of white cells in women, from 280 healthy Korean adults.",
       "source": {
         "label": "Reference ranges in 280 healthy Korean adults on the Sysmex XN-2000 (Park et al., Ann Lab Med 2016;36:244-249)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/",
+        "year": 2016,
+        "pmid": "26915613",
+        "doi": "10.3343/alm.2016.36.3.244"
       },
-      "loinc": "714-6"
+      "loinc": "714-6",
+      "validFrom": "2016-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "basophils",
@@ -1870,9 +2472,14 @@
       "summary": "0.01 to 0.09 × 10⁹/L in 280 healthy Korean adults, the rarest white cell.",
       "source": {
         "label": "Reference ranges in 280 healthy Korean adults on the Sysmex XN-2000 (Park et al., Ann Lab Med 2016;36:244-249)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/",
+        "year": 2016,
+        "pmid": "26915613",
+        "doi": "10.3343/alm.2016.36.3.244"
       },
-      "loinc": "705-4"
+      "loinc": "705-4",
+      "validFrom": "2016-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "basophils",
@@ -1885,9 +2492,14 @@
       "summary": "0.01 to 0.09 × 10⁹/L in 280 healthy Korean adults, the rarest white cell.",
       "source": {
         "label": "Reference ranges in 280 healthy Korean adults on the Sysmex XN-2000 (Park et al., Ann Lab Med 2016;36:244-249)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/",
+        "year": 2016,
+        "pmid": "26915613",
+        "doi": "10.3343/alm.2016.36.3.244"
       },
-      "loinc": "705-4"
+      "loinc": "705-4",
+      "validFrom": "2016-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "basophils",
@@ -1900,9 +2512,14 @@
       "summary": "0.01 to 0.09 × 10⁹/L in 280 healthy Korean adults, the rarest white cell.",
       "source": {
         "label": "Reference ranges in 280 healthy Korean adults on the Sysmex XN-2000 (Park et al., Ann Lab Med 2016;36:244-249)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/",
+        "year": 2016,
+        "pmid": "26915613",
+        "doi": "10.3343/alm.2016.36.3.244"
       },
-      "loinc": "705-4"
+      "loinc": "705-4",
+      "validFrom": "2016-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "basophils",
@@ -1915,9 +2532,14 @@
       "summary": "0.2 to 1.5 % of white cells in 280 healthy Korean adults.",
       "source": {
         "label": "Reference ranges in 280 healthy Korean adults on the Sysmex XN-2000 (Park et al., Ann Lab Med 2016;36:244-249)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/",
+        "year": 2016,
+        "pmid": "26915613",
+        "doi": "10.3343/alm.2016.36.3.244"
       },
-      "loinc": "707-0"
+      "loinc": "707-0",
+      "validFrom": "2016-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "immature-granulocytes",
@@ -1930,9 +2552,14 @@
       "summary": "0 to 0.04 × 10⁹/L in 280 healthy Korean adults. The marrow releases young granulocytes early when it is under pressure, as in infection.",
       "source": {
         "label": "Reference ranges in 280 healthy Korean adults on the Sysmex XN-2000 (Park et al., Ann Lab Med 2016;36:244-249)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/",
+        "year": 2016,
+        "pmid": "26915613",
+        "doi": "10.3343/alm.2016.36.3.244"
       },
-      "loinc": "53115-2"
+      "loinc": "53115-2",
+      "validFrom": "2016-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "immature-granulocytes",
@@ -1945,9 +2572,14 @@
       "summary": "0 to 0.04 × 10⁹/L in 280 healthy Korean adults. The marrow releases young granulocytes early when it is under pressure, as in infection.",
       "source": {
         "label": "Reference ranges in 280 healthy Korean adults on the Sysmex XN-2000 (Park et al., Ann Lab Med 2016;36:244-249)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/",
+        "year": 2016,
+        "pmid": "26915613",
+        "doi": "10.3343/alm.2016.36.3.244"
       },
-      "loinc": "53115-2"
+      "loinc": "53115-2",
+      "validFrom": "2016-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "immature-granulocytes",
@@ -1960,9 +2592,14 @@
       "summary": "0 to 0.04 × 10⁹/L in 280 healthy Korean adults. The marrow releases young granulocytes early when it is under pressure, as in infection.",
       "source": {
         "label": "Reference ranges in 280 healthy Korean adults on the Sysmex XN-2000 (Park et al., Ann Lab Med 2016;36:244-249)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/",
+        "year": 2016,
+        "pmid": "26915613",
+        "doi": "10.3343/alm.2016.36.3.244"
       },
-      "loinc": "53115-2"
+      "loinc": "53115-2",
+      "validFrom": "2016-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "immature-granulocytes",
@@ -1975,9 +2612,14 @@
       "summary": "0 to 0.5 % of white cells in 280 healthy Korean adults.",
       "source": {
         "label": "Reference ranges in 280 healthy Korean adults on the Sysmex XN-2000 (Park et al., Ann Lab Med 2016;36:244-249)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/",
+        "year": 2016,
+        "pmid": "26915613",
+        "doi": "10.3343/alm.2016.36.3.244"
       },
-      "loinc": "71695-1"
+      "loinc": "71695-1",
+      "validFrom": "2016-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "rdw",
@@ -1990,9 +2632,14 @@
       "summary": "11.2 to 15.6 % across the age tiers of 280 healthy Korean adults. A rise means red cells of uneven size, which often precedes a change in MCV.",
       "source": {
         "label": "Reference ranges in 280 healthy Korean adults on the Sysmex XN-2000 (Park et al., Ann Lab Med 2016;36:244-249)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/",
+        "year": 2016,
+        "pmid": "26915613",
+        "doi": "10.3343/alm.2016.36.3.244"
       },
-      "loinc": "788-0"
+      "loinc": "788-0",
+      "validFrom": "2016-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "mpv",
@@ -2005,9 +2652,14 @@
       "summary": "9.1 to 12.6 fL in 280 healthy Korean adults on one instrument. MPV depends on the analyser and on how long the tube stood, so instruments differ.",
       "source": {
         "label": "Reference ranges in 280 healthy Korean adults on the Sysmex XN-2000 (Park et al., Ann Lab Med 2016;36:244-249)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/26915613/",
+        "year": 2016,
+        "pmid": "26915613",
+        "doi": "10.3343/alm.2016.36.3.244"
       },
-      "loinc": "32623-1"
+      "loinc": "32623-1",
+      "validFrom": "2016-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "reticulocyte-haemoglobin",
@@ -2019,9 +2671,12 @@
       "summary": "Below 29 pg (1.8 fmol) the newest red cells are being built short of iron. Stated for people with chronic kidney disease, as the test to use when hypochromic red cells cannot be measured.",
       "source": {
         "label": "NICE guideline NG8, chronic kidney disease: managing anaemia (2015, updated 2021)",
-        "url": "https://www.nice.org.uk/guidance/ng8"
+        "url": "https://www.nice.org.uk/guidance/ng8",
+        "year": 2021
       },
-      "loinc": "71694-4"
+      "loinc": "71694-4",
+      "validFrom": "2021-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "reticulocyte-haemoglobin",
@@ -2033,9 +2688,12 @@
       "summary": "Below 29 pg (1.8 fmol) the newest red cells are being built short of iron. Stated for people with chronic kidney disease, as the test to use when hypochromic red cells cannot be measured.",
       "source": {
         "label": "NICE guideline NG8, chronic kidney disease: managing anaemia (2015, updated 2021)",
-        "url": "https://www.nice.org.uk/guidance/ng8"
+        "url": "https://www.nice.org.uk/guidance/ng8",
+        "year": 2021
       },
-      "loinc": "71694-4"
+      "loinc": "71694-4",
+      "validFrom": "2021-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "transferrin-saturation",
@@ -2047,9 +2705,14 @@
       "summary": "Below 20 % points to iron deficiency. The guideline uses it where ferritin cannot be trusted, with ferritin of 100 to 300 µg/L in the presence of inflammation.",
       "source": {
         "label": "BSG guideline on iron deficiency anaemia in adults (Snook et al., Gut 2021;70:2030-2051)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/34497146/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/34497146/",
+        "year": 2021,
+        "pmid": "34497146",
+        "doi": "10.1136/gutjnl-2021-325210"
       },
-      "loinc": "2502-3"
+      "loinc": "2502-3",
+      "validFrom": "2021-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "iron",
@@ -2062,9 +2725,14 @@
       "summary": "9 to 34 µmol/L (50 to 190 µg/dL). Serum iron swings through the day and with the last meal; ferritin and transferrin saturation say more about stores.",
       "source": {
         "label": "Nordic Reference Interval Project 2000, 25 biochemical properties in about 3000 healthy adults (Rustad et al., Scand J Clin Lab Invest 2004;64:271-284)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/",
+        "year": 2004,
+        "pmid": "15223694",
+        "doi": "10.1080/00365510410006324"
       },
-      "loinc": "14798-3"
+      "loinc": "14798-3",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "iron",
@@ -2077,9 +2745,14 @@
       "summary": "9 to 34 µmol/L (50 to 190 µg/dL). Serum iron swings through the day and with the last meal; ferritin and transferrin saturation say more about stores.",
       "source": {
         "label": "Nordic Reference Interval Project 2000, 25 biochemical properties in about 3000 healthy adults (Rustad et al., Scand J Clin Lab Invest 2004;64:271-284)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/",
+        "year": 2004,
+        "pmid": "15223694",
+        "doi": "10.1080/00365510410006324"
       },
-      "loinc": "2498-4"
+      "loinc": "2498-4",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "albumin",
@@ -2092,9 +2765,14 @@
       "summary": "36 to 48 g/L to age 39, 36 to 45 from 40 to 69 and 34 to 45 from 70 (3.4 to 4.8 g/dL); the band shown spans the tiers. Falls with inflammation, liver disease and protein loss.",
       "source": {
         "label": "Nordic Reference Interval Project 2000, 25 biochemical properties in about 3000 healthy adults (Rustad et al., Scand J Clin Lab Invest 2004;64:271-284)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/",
+        "year": 2004,
+        "pmid": "15223694",
+        "doi": "10.1080/00365510410006324"
       },
-      "loinc": "1751-7"
+      "loinc": "1751-7",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "albumin",
@@ -2107,9 +2785,14 @@
       "summary": "36 to 48 g/L to age 39, 36 to 45 from 40 to 69 and 34 to 45 from 70 (3.4 to 4.8 g/dL); the band shown spans the tiers. Falls with inflammation, liver disease and protein loss.",
       "source": {
         "label": "Nordic Reference Interval Project 2000, 25 biochemical properties in about 3000 healthy adults (Rustad et al., Scand J Clin Lab Invest 2004;64:271-284)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/",
+        "year": 2004,
+        "pmid": "15223694",
+        "doi": "10.1080/00365510410006324"
       },
-      "loinc": "1751-7"
+      "loinc": "1751-7",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "protein-total",
@@ -2122,9 +2805,14 @@
       "summary": "62 to 78 g/L (6.2 to 7.8 g/dL) in serum: albumin plus the immunoglobulins, mostly. Standing up for a while before the draw raises it a little.",
       "source": {
         "label": "Nordic Reference Interval Project 2000, 25 biochemical properties in about 3000 healthy adults (Rustad et al., Scand J Clin Lab Invest 2004;64:271-284)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/",
+        "year": 2004,
+        "pmid": "15223694",
+        "doi": "10.1080/00365510410006324"
       },
-      "loinc": "2885-2"
+      "loinc": "2885-2",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "protein-total",
@@ -2137,9 +2825,14 @@
       "summary": "62 to 78 g/L (6.2 to 7.8 g/dL) in serum: albumin plus the immunoglobulins, mostly. Standing up for a while before the draw raises it a little.",
       "source": {
         "label": "Nordic Reference Interval Project 2000, 25 biochemical properties in about 3000 healthy adults (Rustad et al., Scand J Clin Lab Invest 2004;64:271-284)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/15223694/",
+        "year": 2004,
+        "pmid": "15223694",
+        "doi": "10.1080/00365510410006324"
       },
-      "loinc": "2885-2"
+      "loinc": "2885-2",
+      "validFrom": "2004-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "immunoglobulin-g",
@@ -2152,9 +2845,14 @@
       "summary": "6.2 to 15.1 g/L (620 to 1510 mg/dL) in 8768 Dutch adults of the Rotterdam Study, median age 62. Nearly the same in men and women.",
       "source": {
         "label": "Serum immunoglobulins in 8768 adults of the Rotterdam Study (Khan et al., J Clin Immunol 2021;41:1902-1914)",
-        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8604889/"
+        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8604889/",
+        "year": 2021,
+        "pmid": "34505230",
+        "doi": "10.1007/s10875-021-01120-5"
       },
-      "loinc": "2465-3"
+      "loinc": "2465-3",
+      "validFrom": "2021-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "immunoglobulin-g",
@@ -2167,9 +2865,14 @@
       "summary": "6.2 to 15.1 g/L (620 to 1510 mg/dL) in 8768 Dutch adults of the Rotterdam Study, median age 62. Nearly the same in men and women.",
       "source": {
         "label": "Serum immunoglobulins in 8768 adults of the Rotterdam Study (Khan et al., J Clin Immunol 2021;41:1902-1914)",
-        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8604889/"
+        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8604889/",
+        "year": 2021,
+        "pmid": "34505230",
+        "doi": "10.1007/s10875-021-01120-5"
       },
-      "loinc": "2465-3"
+      "loinc": "2465-3",
+      "validFrom": "2021-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "vitamin-b12",
@@ -2182,9 +2885,12 @@
       "summary": "Total B12 below 180 ng/L (133 pmol/L) confirms deficiency, 180 to 350 ng/L is indeterminate and calls for methylmalonic acid or homocysteine, above 350 (258 pmol/L) makes deficiency unlikely.",
       "source": {
         "label": "NICE guideline NG239, vitamin B12 deficiency in over 16s (2024)",
-        "url": "https://www.nice.org.uk/guidance/ng239"
+        "url": "https://www.nice.org.uk/guidance/ng239",
+        "year": 2024
       },
-      "loinc": "2132-9"
+      "loinc": "2132-9",
+      "validFrom": "2024-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "vitamin-b12",
@@ -2197,9 +2903,12 @@
       "summary": "Total B12 below 180 pg/mL (133 pmol/L) confirms deficiency, 180 to 350 pg/mL is indeterminate and calls for methylmalonic acid or homocysteine, above 350 (258 pmol/L) makes deficiency unlikely.",
       "source": {
         "label": "NICE guideline NG239, vitamin B12 deficiency in over 16s (2024)",
-        "url": "https://www.nice.org.uk/guidance/ng239"
+        "url": "https://www.nice.org.uk/guidance/ng239",
+        "year": 2024
       },
-      "loinc": "2132-9"
+      "loinc": "2132-9",
+      "validFrom": "2024-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "vitamin-b12",
@@ -2212,9 +2921,12 @@
       "summary": "Total B12 below 133 pmol/L (180 ng/L) confirms deficiency, 133 to 258 pmol/L is indeterminate and calls for methylmalonic acid or homocysteine, above 258 (350 ng/L) makes deficiency unlikely.",
       "source": {
         "label": "NICE guideline NG239, vitamin B12 deficiency in over 16s (2024)",
-        "url": "https://www.nice.org.uk/guidance/ng239"
+        "url": "https://www.nice.org.uk/guidance/ng239",
+        "year": 2024
       },
-      "loinc": "14685-2"
+      "loinc": "14685-2",
+      "validFrom": "2024-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "folate",
@@ -2226,9 +2938,14 @@
       "summary": "A serum folate below 3 µg/L (7 nmol/L) indicates deficiency. Serum folate is the first-line test and as good as red cell folate; the result reflects recent intake as well as stores.",
       "source": {
         "label": "BCSH guideline on cobalamin and folate disorders (Devalia et al., Br J Haematol 2014;166:496-513)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/24942828/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/24942828/",
+        "year": 2014,
+        "pmid": "24942828",
+        "doi": "10.1111/bjh.12959"
       },
-      "loinc": "2284-8"
+      "loinc": "2284-8",
+      "validFrom": "2014-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "folate",
@@ -2240,9 +2957,14 @@
       "summary": "A serum folate below 3 µg/L (7 nmol/L) indicates deficiency. Serum folate is the first-line test and as good as red cell folate; the result reflects recent intake as well as stores.",
       "source": {
         "label": "BCSH guideline on cobalamin and folate disorders (Devalia et al., Br J Haematol 2014;166:496-513)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/24942828/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/24942828/",
+        "year": 2014,
+        "pmid": "24942828",
+        "doi": "10.1111/bjh.12959"
       },
-      "loinc": "2284-8"
+      "loinc": "2284-8",
+      "validFrom": "2014-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "isoleucine",
@@ -2257,7 +2979,9 @@
         "label": "Labcorp plasma amino acid reference intervals, fasting, over 15 years",
         "url": "https://www.labcorp.com/resource/plasma-amino-acid-reference-intervals"
       },
-      "loinc": "20648-2"
+      "loinc": "20648-2",
+      "validFrom": null,
+      "validUntil": null
     },
     {
       "analyteKey": "leucine",
@@ -2272,7 +2996,9 @@
         "label": "Labcorp plasma amino acid reference intervals, fasting, over 15 years",
         "url": "https://www.labcorp.com/resource/plasma-amino-acid-reference-intervals"
       },
-      "loinc": "20649-0"
+      "loinc": "20649-0",
+      "validFrom": null,
+      "validUntil": null
     },
     {
       "analyteKey": "valine",
@@ -2287,7 +3013,9 @@
         "label": "Labcorp plasma amino acid reference intervals, fasting, over 15 years",
         "url": "https://www.labcorp.com/resource/plasma-amino-acid-reference-intervals"
       },
-      "loinc": "20661-5"
+      "loinc": "20661-5",
+      "validFrom": null,
+      "validUntil": null
     },
     {
       "analyteKey": "lysine",
@@ -2302,7 +3030,9 @@
         "label": "Labcorp plasma amino acid reference intervals, fasting, over 15 years",
         "url": "https://www.labcorp.com/resource/plasma-amino-acid-reference-intervals"
       },
-      "loinc": "20650-8"
+      "loinc": "20650-8",
+      "validFrom": null,
+      "validUntil": null
     },
     {
       "analyteKey": "methionine",
@@ -2317,7 +3047,9 @@
         "label": "Labcorp plasma amino acid reference intervals, fasting, over 15 years",
         "url": "https://www.labcorp.com/resource/plasma-amino-acid-reference-intervals"
       },
-      "loinc": "20651-6"
+      "loinc": "20651-6",
+      "validFrom": null,
+      "validUntil": null
     },
     {
       "analyteKey": "phenylalanine",
@@ -2332,7 +3064,9 @@
         "label": "Labcorp plasma amino acid reference intervals, fasting, over 15 years",
         "url": "https://www.labcorp.com/resource/plasma-amino-acid-reference-intervals"
       },
-      "loinc": "14875-9"
+      "loinc": "14875-9",
+      "validFrom": null,
+      "validUntil": null
     },
     {
       "analyteKey": "threonine",
@@ -2347,7 +3081,9 @@
         "label": "Labcorp plasma amino acid reference intervals, fasting, over 15 years",
         "url": "https://www.labcorp.com/resource/plasma-amino-acid-reference-intervals"
       },
-      "loinc": "20658-1"
+      "loinc": "20658-1",
+      "validFrom": null,
+      "validUntil": null
     },
     {
       "analyteKey": "tryptophan",
@@ -2362,7 +3098,9 @@
         "label": "Labcorp plasma amino acid reference intervals, fasting, over 15 years",
         "url": "https://www.labcorp.com/resource/plasma-amino-acid-reference-intervals"
       },
-      "loinc": "20659-9"
+      "loinc": "20659-9",
+      "validFrom": null,
+      "validUntil": null
     },
     {
       "analyteKey": "histidine",
@@ -2377,7 +3115,9 @@
         "label": "Labcorp plasma amino acid reference intervals, fasting, over 15 years",
         "url": "https://www.labcorp.com/resource/plasma-amino-acid-reference-intervals"
       },
-      "loinc": "20645-8"
+      "loinc": "20645-8",
+      "validFrom": null,
+      "validUntil": null
     },
     {
       "analyteKey": "alanine",
@@ -2392,7 +3132,9 @@
         "label": "Labcorp plasma amino acid reference intervals, fasting, over 15 years",
         "url": "https://www.labcorp.com/resource/plasma-amino-acid-reference-intervals"
       },
-      "loinc": "20636-7"
+      "loinc": "20636-7",
+      "validFrom": null,
+      "validUntil": null
     },
     {
       "analyteKey": "arginine",
@@ -2407,7 +3149,9 @@
         "label": "Labcorp plasma amino acid reference intervals, fasting, over 15 years",
         "url": "https://www.labcorp.com/resource/plasma-amino-acid-reference-intervals"
       },
-      "loinc": "20637-5"
+      "loinc": "20637-5",
+      "validFrom": null,
+      "validUntil": null
     },
     {
       "analyteKey": "asparagine",
@@ -2422,7 +3166,9 @@
         "label": "Labcorp plasma amino acid reference intervals, fasting, over 15 years",
         "url": "https://www.labcorp.com/resource/plasma-amino-acid-reference-intervals"
       },
-      "loinc": "20638-3"
+      "loinc": "20638-3",
+      "validFrom": null,
+      "validUntil": null
     },
     {
       "analyteKey": "aspartate",
@@ -2437,7 +3183,9 @@
         "label": "Labcorp plasma amino acid reference intervals, fasting, over 15 years",
         "url": "https://www.labcorp.com/resource/plasma-amino-acid-reference-intervals"
       },
-      "loinc": "20639-1"
+      "loinc": "20639-1",
+      "validFrom": null,
+      "validUntil": null
     },
     {
       "analyteKey": "citrulline",
@@ -2452,7 +3200,9 @@
         "label": "Labcorp plasma amino acid reference intervals, fasting, over 15 years",
         "url": "https://www.labcorp.com/resource/plasma-amino-acid-reference-intervals"
       },
-      "loinc": "20640-9"
+      "loinc": "20640-9",
+      "validFrom": null,
+      "validUntil": null
     },
     {
       "analyteKey": "glutamate",
@@ -2467,7 +3217,9 @@
         "label": "Labcorp plasma amino acid reference intervals, fasting, over 15 years",
         "url": "https://www.labcorp.com/resource/plasma-amino-acid-reference-intervals"
       },
-      "loinc": "20642-5"
+      "loinc": "20642-5",
+      "validFrom": null,
+      "validUntil": null
     },
     {
       "analyteKey": "glutamine",
@@ -2482,7 +3234,9 @@
         "label": "Labcorp plasma amino acid reference intervals, fasting, over 15 years",
         "url": "https://www.labcorp.com/resource/plasma-amino-acid-reference-intervals"
       },
-      "loinc": "20643-3"
+      "loinc": "20643-3",
+      "validFrom": null,
+      "validUntil": null
     },
     {
       "analyteKey": "glycine",
@@ -2497,7 +3251,9 @@
         "label": "Labcorp plasma amino acid reference intervals, fasting, over 15 years",
         "url": "https://www.labcorp.com/resource/plasma-amino-acid-reference-intervals"
       },
-      "loinc": "20644-1"
+      "loinc": "20644-1",
+      "validFrom": null,
+      "validUntil": null
     },
     {
       "analyteKey": "ornithine",
@@ -2512,7 +3268,9 @@
         "label": "Labcorp plasma amino acid reference intervals, fasting, over 15 years",
         "url": "https://www.labcorp.com/resource/plasma-amino-acid-reference-intervals"
       },
-      "loinc": "20652-4"
+      "loinc": "20652-4",
+      "validFrom": null,
+      "validUntil": null
     },
     {
       "analyteKey": "proline",
@@ -2527,7 +3285,9 @@
         "label": "Labcorp plasma amino acid reference intervals, fasting, over 15 years",
         "url": "https://www.labcorp.com/resource/plasma-amino-acid-reference-intervals"
       },
-      "loinc": "20655-7"
+      "loinc": "20655-7",
+      "validFrom": null,
+      "validUntil": null
     },
     {
       "analyteKey": "serine",
@@ -2542,7 +3302,9 @@
         "label": "Labcorp plasma amino acid reference intervals, fasting, over 15 years",
         "url": "https://www.labcorp.com/resource/plasma-amino-acid-reference-intervals"
       },
-      "loinc": "20656-5"
+      "loinc": "20656-5",
+      "validFrom": null,
+      "validUntil": null
     },
     {
       "analyteKey": "taurine",
@@ -2557,7 +3319,9 @@
         "label": "Labcorp plasma amino acid reference intervals, fasting, over 15 years",
         "url": "https://www.labcorp.com/resource/plasma-amino-acid-reference-intervals"
       },
-      "loinc": "20657-3"
+      "loinc": "20657-3",
+      "validFrom": null,
+      "validUntil": null
     },
     {
       "analyteKey": "tyrosine",
@@ -2572,7 +3336,9 @@
         "label": "Labcorp plasma amino acid reference intervals, fasting, over 15 years",
         "url": "https://www.labcorp.com/resource/plasma-amino-acid-reference-intervals"
       },
-      "loinc": "20660-7"
+      "loinc": "20660-7",
+      "validFrom": null,
+      "validUntil": null
     },
     {
       "analyteKey": "bmi",
@@ -2587,7 +3353,9 @@
         "label": "WHO Global Health Observatory, body mass index indicators for adults",
         "url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/body-mass-index"
       },
-      "loinc": "39156-5"
+      "loinc": "39156-5",
+      "validFrom": null,
+      "validUntil": null
     },
     {
       "analyteKey": "body-fat",
@@ -2600,9 +3368,14 @@
       "summary": "Healthy ranges for men, matched to a BMI of 18.5 to 25: 8 to 19 % at 20 to 39, 11 to 21 % at 40 to 59, 13 to 24 % at 60 to 79. Obesity begins at 25, 28 and 30 %. The band shown spans the age tiers. Measured by DXA; a bioimpedance scale estimates and usually reads differently.",
       "source": {
         "label": "Healthy percentage body fat ranges linked to BMI, 1626 adults measured by DXA and four-compartment model (Gallagher et al., Am J Clin Nutr 2000;72:694-701)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/10966886/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/10966886/",
+        "year": 2000,
+        "pmid": "10966886",
+        "doi": "10.1093/ajcn/72.3.694"
       },
-      "loinc": "41982-0"
+      "loinc": "41982-0",
+      "validFrom": "2000-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "body-fat",
@@ -2615,9 +3388,14 @@
       "summary": "Healthy ranges for women, matched to a BMI of 18.5 to 25: 21 to 32 % at 20 to 39, 23 to 33 % at 40 to 59, 24 to 35 % at 60 to 79. Obesity begins at 39, 40 and 42 %. The band shown spans the age tiers. Measured by DXA; a bioimpedance scale estimates and usually reads differently.",
       "source": {
         "label": "Healthy percentage body fat ranges linked to BMI, 1626 adults measured by DXA and four-compartment model (Gallagher et al., Am J Clin Nutr 2000;72:694-701)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/10966886/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/10966886/",
+        "year": 2000,
+        "pmid": "10966886",
+        "doi": "10.1093/ajcn/72.3.694"
       },
-      "loinc": "41982-0"
+      "loinc": "41982-0",
+      "validFrom": "2000-01-01",
+      "validUntil": null
     },
     {
       "analyteKey": "visceral-fat",
@@ -2629,9 +3407,14 @@
       "summary": "A visceral fat area of 100 cm² or more at the navel, measured by CT, marks visceral obesity in the Japanese criteria; at that point people carried more than one metabolic risk factor on average. A scale estimates the area by bioimpedance rather than measuring it.",
       "source": {
         "label": "New criteria for obesity disease in Japan, 1193 adults with CT (Examination Committee, Circ J 2002;66:987-992)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/12419927/"
+        "url": "https://pubmed.ncbi.nlm.nih.gov/12419927/",
+        "year": 2002,
+        "pmid": "12419927",
+        "doi": "10.1253/circj.66.987"
       },
-      "loinc": "73707-2"
+      "loinc": "73707-2",
+      "validFrom": "2002-01-01",
+      "validUntil": null
     }
   ]
 }

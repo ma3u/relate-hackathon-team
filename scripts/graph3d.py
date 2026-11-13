@@ -76,7 +76,10 @@ def describe(label, p):
     if label == "ReferenceRange":
         g = f"{num(p.get('guidelineLow'))} – {num(p.get('guidelineHigh'))} {p.get('ucum') or ''}"
         o = f"{num(p.get('optimalLow'))} – {num(p.get('optimalHigh'))}"
-        lines = [f"Guideline {g}".strip(), f"Optimal {o}", p.get("sex") or "", p.get("sourceLabel") or ""]
+        lines = [f"Guideline {g}".strip(), f"Optimal {o}", p.get("sex") or "", p.get("sourceLabel") or "",
+                 f"Valid from {p['validFrom']}" if p.get("validFrom") else ""]
+        if p.get("validUntil"):
+            lines.insert(0, f"Superseded on {p['validUntil']}: {p.get('supersededBy') or ''}".strip())
         return label, f"Range: {p.get('analyteKey') or p.get('loinc')}", lines
     if label == "HealthRisk":
         return label, p.get("name"), [p.get("description") or ""]
@@ -85,8 +88,12 @@ def describe(label, p):
     if label == "Knowledge":
         return label, "Knowledge layer", [p.get("rangesSource") or ""]
     if label == "Study":
-        first = (p.get("citation") or "").split(",")[0].replace(" et al.", "")
-        return label, f"{first} {p.get('year') or ''}".strip(), [p.get("title") or "", p.get("citation") or "",
+        cit = p.get("citation") or ""
+        # "ESC/EAS 2019 dyslipidaemia guidelines (Mach et al., ...)" -> the part before the brackets;
+        # "Mantovani et al., Gut 2021;70:962" -> "Mantovani 2021"
+        name = cit.split(" (")[0] if " (" in cit else \
+            f"{cit.split(',')[0].replace(' et al.', '')} {p.get('year') or ''}".strip()
+        return label, name, [p.get("title") or "", p.get("citation") or "",
                                                                p.get("design") or "",
                                                                f"PubMed {p['pmid']}" if p.get("pmid") else ""]
     if label == "OMOPPerson":
@@ -161,7 +168,8 @@ def build(nodes_in, links_in):
             node["pubmed"] = p.get("pubmedUrl")
         if r["label"] == "ReferenceRange":
             node["r"] = {k: p.get(f) for k, f in (("gl", "guidelineLow"), ("gh", "guidelineHigh"), ("ol", "optimalLow"),
-                                                   ("oh", "optimalHigh"), ("u", "ucum"), ("sex", "sex"), ("src", "sourceLabel"))
+                                                   ("oh", "optimalHigh"), ("u", "ucum"), ("sex", "sex"), ("src", "sourceLabel"),
+                                                   ("from", "validFrom"), ("until", "validUntil"))
                          if p.get(f) is not None}
         if r["id"] in markers:
             node["mk"] = 1

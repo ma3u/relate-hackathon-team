@@ -136,7 +136,7 @@ DATA.links.forEach(l => {
 });
 const FRIENDLY = {
   "← EXAMINES": "Studies about this marker", "INFORMS →": "Risk scores it informs", "← INFORMS": "Studies behind this score",
-  "ABOUT →": "Risks it is about", "← ABOUT": "Studies about this risk", "MARKER_OF →": "Marker of", "← MARKER_OF": "Its markers",
+  "ABOUT →": "Risks it is about", "SOURCED_FROM →": "Source (guideline or study)", "← SOURCED_FROM": "Reference ranges it sets", "← ABOUT": "Studies about this risk", "MARKER_OF →": "Marker of", "← MARKER_OF": "Its markers",
 };
 const studyById = new Map(DATA.nodes.filter(n => n.sid).map(n => [n.sid, n]));
 const effect = p => p.estimate == null ? "" :
@@ -474,8 +474,11 @@ function series(code, device) {
 // otherwise the range the lab printed on its latest report.
 function bandFor(code, s) {
   const rs = nb(code, ["APPLIES_TO"]).map(r => r.r).filter(r => r && r.u === s.unit && (r.gl != null || r.gh != null));
-  const g = rs.find(r => DATA.sex && r.sex === DATA.sex) || rs.find(r => r.sex === "any");
-  if (g) return { lo: g.gl, hi: g.gh, olo: g.ol, ohi: g.oh, label: "Guideline range" + (g.src ? ` (${g.src})` : ""), fill: BAND };
+  // Today's edition first; a superseded range only when nothing replaced it, and then labelled so.
+  const current = rs.filter(r => !r.until), pool = current.length ? current : rs;
+  const g = pool.find(r => DATA.sex && r.sex === DATA.sex) || pool.find(r => r.sex === "any");
+  if (g) return { lo: g.gl, hi: g.gh, olo: g.ol, ohi: g.oh, fill: BAND,
+    label: (g.until ? `Former guideline range, superseded on ${g.until}` : "Guideline range") + (g.src ? ` (${g.src})` : "") };
   const last = [...s.pts].reverse().find(p => p.o.rl != null || p.o.rh != null);
   if (last) return { lo: last.o.rl, hi: last.o.rh, label: "Range printed by the lab", fill: LABBAND };
   return null;
