@@ -18,7 +18,8 @@ extension HealthStore {
     let steps: [(String, String)] = [
       (Cypher.seedRisks, "risks"), (Cypher.seedScores, "scores"),
       (Cypher.seedMarkers, "markers"), (Cypher.seedRanges, "ranges"),
-      (Cypher.seedStudies, "studies"), (Cypher.seedRiskLinks, "links"),
+      (Cypher.seedStudies, "studies"), (Cypher.seedStudyMarkers, "examines"),
+      (Cypher.seedStudyScores, "informs"), (Cypher.seedRiskLinks, "links"),
     ]
     for (cypher, key) in steps {
       let rows = try connection.query(cypher, [key: JSON.cypher(data[key])]).records

@@ -456,6 +456,8 @@ struct KnowledgeTests {
     #expect(try store.count("Study") == 13)
     let links = try store.rows(cypher: "MATCH (:HealthRisk)-[k:RAISES_RISK_OF]->(:HealthRisk) RETURN count(k) AS n")
     #expect(links.first?["n"] == "10")
+    let examines = try store.rows(cypher: "MATCH (:Study)-[k:EXAMINES]->(:LoincCode) RETURN count(k) AS n")
+    #expect(examines.first?["n"] == "69")
   }
 
   @Test func seedingTwiceChangesNothing() throws {

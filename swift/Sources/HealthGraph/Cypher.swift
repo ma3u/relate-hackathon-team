@@ -238,8 +238,26 @@ enum Cypher {
   static let seedStudies = #"""
   UNWIND $studies AS s
   MERGE (st:Study {id: s.id})
-  SET st.citation = s.citation, st.title = s.title, st.year = s.year, st.design = s.design, st.url = s.url
+  SET st.citation = s.citation, st.title = s.title, st.year = s.year, st.design = s.design, st.url = s.url,
+      st.pmid = s.pmid, st.pubmedUrl = s.pubmedUrl
   RETURN count(st) AS studies
+  """#
+
+  static let seedStudyMarkers = #"""
+  UNWIND $examines AS e
+  MATCH (st:Study {id: e.study})
+  MERGE (lc:LoincCode {code: e.code})
+  SET lc.display = coalesce(lc.display, e.name)
+  MERGE (st)-[k:EXAMINES]->(lc)
+  RETURN count(k) AS studyMarkers
+  """#
+
+  static let seedStudyScores = #"""
+  UNWIND $informs AS i
+  MATCH (st:Study {id: i.study})
+  MATCH (rs:RiskScore {id: i.score})
+  MERGE (st)-[k:INFORMS]->(rs)
+  RETURN count(k) AS studyScores
   """#
 
   static let seedRiskLinks = #"""
@@ -375,6 +393,19 @@ public enum Queries {
              k.ciLow AS ciLow, k.ciHigh AS ciHigh, k.summary AS summary,
              collect(st.citation) AS studies
       ORDER BY risk, raisesRiskOf
+      """#),
+    "evidence": (
+      "The studies about one marker (param loinc): what they found, with DOI and PubMed links",
+      #"""
+      MATCH (st:Study)-[:EXAMINES]->(:LoincCode {code: $loinc})
+      OPTIONAL MATCH (st)-[:INFORMS]->(rs:RiskScore)
+      OPTIONAL MATCH (a:HealthRisk)-[k:RAISES_RISK_OF]->(b:HealthRisk)
+      WHERE st.id IN k.studies
+      RETURN st.citation AS study, st.year AS year, st.design AS design,
+             collect(DISTINCT rs.name) AS scores,
+             collect(DISTINCT a.name + ' -> ' + b.name) AS riskLinks,
+             st.url AS doi, st.pubmedUrl AS pubmed
+      ORDER BY year DESC
       """#),
     "provenance": (
       "Where one value (param resourceId) came from: line on the paper, OCR, document, agent",

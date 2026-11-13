@@ -87,7 +87,8 @@ def describe(label, p):
     if label == "Study":
         first = (p.get("citation") or "").split(",")[0].replace(" et al.", "")
         return label, f"{first} {p.get('year') or ''}".strip(), [p.get("title") or "", p.get("citation") or "",
-                                                               p.get("design") or "", p.get("url") or ""]
+                                                               p.get("design") or "",
+                                                               f"PubMed {p['pmid']}" if p.get("pmid") else ""]
     if label == "OMOPPerson":
         return label, "OMOP person", []
     if label == "OMOPMeasurement":
@@ -157,6 +158,7 @@ def build(nodes_in, links_in):
         if r["label"] == "Study":
             node["sid"] = p.get("id")
             node["url"] = p.get("url")
+            node["pubmed"] = p.get("pubmedUrl")
         if r["label"] == "ReferenceRange":
             node["r"] = {k: p.get(f) for k, f in (("gl", "guidelineLow"), ("gh", "guidelineHigh"), ("ol", "optimalLow"),
                                                    ("oh", "optimalHigh"), ("u", "ucum"), ("sex", "sex"), ("src", "sourceLabel"))

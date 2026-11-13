@@ -33,7 +33,9 @@ let instructions = """
   (:ReferenceRange {guidelineLow, guidelineHigh, optimalLow, optimalHigh, ucum, sex, summary, sourceLabel, sourceUrl})-[:APPLIES_TO]->(:LoincCode).
   - How risks raise each other: (:HealthRisk)-[:RAISES_RISK_OF {summary, measure, estimate, ciLow, ciHigh, studies}]->(:HealthRisk), \
   from meta-analyses and guidelines; (:Study {citation, title, year, design, url})-[:ABOUT]->(:HealthRisk) for the evidence \
-  (k.studies holds the Study ids). Observational: an association, not proof of cause.
+  (k.studies holds the Study ids). Observational: an association, not proof of cause. \
+  (:Study {pmid, pubmedUrl})-[:EXAMINES]->(:LoincCode) and -[:INFORMS]->(:RiskScore): the markers and scores a study is about, \
+  so a value leads to its evidence: (o:Observation)-[:CODED_BY]->(:LoincCode)<-[:EXAMINES]-(st:Study).
   - OMOP research copies: (:OMOPPerson), (:OMOPMeasurement).
 
   How to work:

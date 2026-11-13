@@ -27,6 +27,8 @@ KNOWLEDGE = [
     ("seedMarkers", "SEED_MARKERS"),
     ("seedRanges", "SEED_RANGES"),
     ("seedStudies", "SEED_STUDIES"),
+    ("seedStudyMarkers", "SEED_STUDY_MARKERS"),
+    ("seedStudyScores", "SEED_STUDY_SCORES"),
     ("seedRiskLinks", "SEED_RISK_LINKS"),
     ("seedVersion", "SEED_VERSION"),
 ]
@@ -97,7 +99,9 @@ def render_knowledge() -> str:
         "scores": knowledge.RISK_SCORES,
         "markers": knowledge._marker_rows(),
         "ranges": knowledge._range_rows(),
-        "studies": knowledge.STUDIES,
+        "studies": knowledge._study_rows(),
+        "examines": knowledge._examines_rows(),
+        "informs": knowledge._informs_rows(),
         "links": knowledge.RISK_LINKS,
     }
     source = json.loads((ROOT / "health_graph/reference_ranges.json").read_text())["source"]

@@ -134,6 +134,10 @@ DATA.links.forEach(l => {
     (b.rlinks = b.rlinks || []).push({ dir: "in", other: a, p: l.p || {} });
   }
 });
+const FRIENDLY = {
+  "← EXAMINES": "Studies about this marker", "INFORMS →": "Risk scores it informs", "← INFORMS": "Studies behind this score",
+  "ABOUT →": "Risks it is about", "← ABOUT": "Studies about this risk", "MARKER_OF →": "Marker of", "← MARKER_OF": "Its markers",
+};
 const studyById = new Map(DATA.nodes.filter(n => n.sid).map(n => [n.sid, n]));
 const effect = p => p.estimate == null ? "" :
   ` · ${(p.measure || "").split(",")[0]} ${p.estimate}${p.ciLow != null ? ` (${p.ciLow}–${p.ciHigh})` : ""}`;
@@ -201,6 +205,8 @@ function drillSet(n) {
       add(nb(c, ["APPLIES_TO"]));
     });
     if (n.g === "LoincCode") [...S].filter(o => o.g === "Lab value").forEach(o => add(nb(o, ["HAS_RESULT"])));
+    if (n.g === "LoincCode") add(nb(n, ["EXAMINES"]));
+    if (n.g === "RiskScore") add(nb(n, ["INFORMS"]));
   } else {
     const first = nb(n);
     add(first);
@@ -379,7 +385,20 @@ function showDetail(n) {
     });
   });
   if (n.g === "Study") {
-    if (n.url) html += `<p><a href="${esc(n.url)}" target="_blank" rel="noopener" style="color:var(--accent)">Open the study (DOI) ↗</a></p>`;
+    const ext = (u, t) => u ? `<a href="${esc(u)}" target="_blank" rel="noopener" style="color:var(--accent)">${t} ↗</a>` : "";
+    html += `<p>${[ext(n.url, "Paper (DOI)"), ext(n.pubmed, "PubMed")].filter(Boolean).join(" · ")}</p>`;
+    // The markers it examines, with your latest value on each.
+    const ex = nb(n, ["EXAMINES"]);
+    if (ex.length) {
+      html += `<div class="rel">Markers it examines, your latest value</div>`;
+      ex.map(c => ({ c, v: nb(c, ["CODED_BY"]).filter(o => o.g === "Lab value" && !o.dup).sort((a, b) => (b.dt || "").localeCompare(a.dt || ""))[0] }))
+        .sort((a, b) => (b.v ? 1 : 0) - (a.v ? 1 : 0) || (b.v?.out ? 1 : 0) - (a.v?.out ? 1 : 0))
+        .forEach(({ c, v }) => {
+          html += btn(c, c.n, "code");
+          html += v ? btn(v, `${v.dt || "?"} · ${v.val || v.n}`, "inset").replace("</button>", v.out ? ` <span class="flag">outside range</span></button>` : "</button>")
+                    : `<div class="hint inset" style="margin-top:0">No value of yours yet</div>`;
+        });
+    }
     const ev = DATA.links.filter(l => l.p && (l.p.studies || []).includes(n.sid));
     if (ev.length) {
       html += `<div class="rel">Evidence for</div>`;
@@ -413,7 +432,8 @@ function showDetail(n) {
   Object.entries(groups).sort((a, b) => a[1].length - b[1].length).forEach(([k, ms]) => {
     if (codes.length && /CODED_BY/.test(k)) return;  // listed above, by date
     if (n.rlinks && /RAISES_RISK_OF/.test(k)) return;  // listed above, with the studies
-    html += `<div class="rel">${esc(k)} (${ms.length})</div>`;
+    if (n.g === "Study" && /EXAMINES/.test(k)) return;    // listed above, with your values
+    html += `<div class="rel">${esc(FRIENDLY[k] || k)} (${ms.length})</div>`;
     ms.slice(0, 40).forEach(m => html += btn(m));
     if (ms.length > 40) html += `<div class="hint">… and ${ms.length - 40} more</div>`;
   });

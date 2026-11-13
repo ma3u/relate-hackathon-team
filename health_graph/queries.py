@@ -120,6 +120,20 @@ QUERIES: dict[str, tuple[str, str]] = {
         ORDER BY risk, raisesRiskOf
         """,
     ),
+    "evidence": (
+        "The studies about one marker (param loinc): what they found, with DOI and PubMed links",
+        """
+        MATCH (st:Study)-[:EXAMINES]->(:LoincCode {code: $loinc})
+        OPTIONAL MATCH (st)-[:INFORMS]->(rs:RiskScore)
+        OPTIONAL MATCH (a:HealthRisk)-[k:RAISES_RISK_OF]->(b:HealthRisk)
+        WHERE st.id IN k.studies
+        RETURN st.citation AS study, st.year AS year, st.design AS design,
+               collect(DISTINCT rs.name) AS scores,
+               collect(DISTINCT a.name + ' -> ' + b.name) AS riskLinks,
+               st.url AS doi, st.pubmedUrl AS pubmed
+        ORDER BY year DESC
+        """,
+    ),
     "provenance": (
         "Where one value (param resourceId) came from: line on the paper, OCR, document, agent",
         """

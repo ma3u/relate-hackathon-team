@@ -9,7 +9,8 @@ the ranges those values sit in.
     (:LoincCode)-[:MARKER_OF {source}]->(:HealthRisk)
     (:ReferenceRange)-[:APPLIES_TO]->(:LoincCode)        guideline range + optimal band
     (:HealthRisk)-[:RAISES_RISK_OF {summary, measure, estimate, ciLow, ciHigh, studies}]->(:HealthRisk)
-    (:Study {citation, title, year, design, url})-[:ABOUT]->(:HealthRisk)   the evidence for a link
+    (:Study {citation, title, year, design, url, pmid, pubmedUrl})-[:ABOUT]->(:HealthRisk)   the evidence for a link
+    (:Study)-[:EXAMINES]->(:LoincCode), (:Study)-[:INFORMS]->(:RiskScore)   the markers and scores it is about
     (:Patient)-[:HAS_SCORE]->(:ScoreResult)-[:OF]->(:RiskScore)
     (:ScoreResult)-[:FROM]->(:Observation)              the exact values a score used
 
@@ -34,6 +35,9 @@ HBA1C = ["4548-4", "59261-8"]
 NON_HDL = ["70204-3", "43396-1"]
 EGFR_MEASURED = ["62238-1", "98979-8", "33914-3", "48642-3"]
 VITAMIN_D = ["62292-8", "68438-1", "1989-3"]
+UACR = ["9318-7", "14959-1"]
+FIB4_INPUTS = ["1920-8", "1742-6", "777-3"]  # AST, ALT, platelets
+BONE_MINERAL = ["17861-6", "2777-1", "2731-8", "6768-6"]  # calcium, phosphate, PTH, alkaline phosphatase
 
 HEALTH_RISKS = [
     {"id": "cardiovascular", "name": "Cardiovascular disease",
@@ -94,58 +98,81 @@ STUDIES = [
     {"id": "mantovani-2021-cvd", "year": 2021, "design": "meta-analysis, 36 cohorts, 5.8 million adults",
      "citation": "Mantovani et al., Lancet Gastroenterol Hepatol 2021;6:903",
      "title": "Non-alcoholic fatty liver disease and risk of fatal and non-fatal cardiovascular events",
-     "url": "https://doi.org/10.1016/S2468-1253(21)00308-3"},
+     "url": "https://doi.org/10.1016/S2468-1253(21)00308-3",
+     "pmid": "34555346", "examines": FIB4_INPUTS, "informs": ["fib4"]},
     {"id": "mantovani-2021-t2d", "year": 2021, "design": "meta-analysis, 33 studies, 501,022 adults",
      "citation": "Mantovani et al., Gut 2021;70:962",
      "title": "Non-alcoholic fatty liver disease and risk of incident diabetes mellitus",
-     "url": "https://doi.org/10.1136/gutjnl-2020-322572"},
+     "url": "https://doi.org/10.1136/gutjnl-2020-322572",
+     "pmid": "32938692", "examines": HBA1C + GLUCOSE, "informs": ["fib4"]},
     {"id": "mantovani-2022-ckd", "year": 2022, "design": "meta-analysis of cohort studies",
      "citation": "Mantovani et al., Gut 2022;71:156",
      "title": "Non-alcoholic fatty liver disease and risk of incident chronic kidney disease",
-     "url": "https://doi.org/10.1136/gutjnl-2020-323082"},
+     "url": "https://doi.org/10.1136/gutjnl-2020-323082",
+     "pmid": "33303564", "examines": ["2160-0"] + UACR, "informs": ["egfr"]},
     {"id": "erfc-2010", "year": 2010, "design": "pooled analysis, 102 prospective studies, 698,782 people",
      "citation": "Emerging Risk Factors Collaboration, Lancet 2010;375:2215",
      "title": "Diabetes mellitus, fasting blood glucose concentration, and risk of vascular disease",
-     "url": "https://doi.org/10.1016/S0140-6736(10)60484-9"},
+     "url": "https://doi.org/10.1016/S0140-6736(10)60484-9",
+     "pmid": "20609967", "examines": GLUCOSE, "informs": []},
     {"id": "score2-diabetes-2023", "year": 2023, "design": "risk model, 229,460 people with type 2 diabetes",
      "citation": "SCORE2-Diabetes Working Group, Eur Heart J 2023;44:2544",
      "title": "SCORE2-Diabetes: 10-year cardiovascular risk estimation in type 2 diabetes in Europe",
-     "url": "https://doi.org/10.1093/eurheartj/ehad260"},
+     "url": "https://doi.org/10.1093/eurheartj/ehad260",
+     "pmid": "37247330", "examines": TC + HDL + ["8480-6", "2160-0"] + HBA1C, "informs": ["score2", "egfr"]},
     {"id": "ckm-2023", "year": 2023, "design": "AHA presidential advisory",
      "citation": "Ndumele et al., Circulation 2023;148:1606",
      "title": "Cardiovascular-Kidney-Metabolic Health: A Presidential Advisory From the American Heart Association",
-     "url": "https://doi.org/10.1161/CIR.0000000000001184"},
+     "url": "https://doi.org/10.1161/CIR.0000000000001184",
+     "pmid": "37807924", "examines": HBA1C + ["2160-0"] + UACR + TG + HDL + ["39156-5", "8280-0"], "informs": ["egfr"]},
     {"id": "kdigo-2022-diabetes", "year": 2022, "design": "clinical practice guideline",
      "citation": "KDIGO 2022 Clinical Practice Guideline for Diabetes Management in CKD, Kidney Int 2022;102:S1",
      "title": "KDIGO 2022 Clinical Practice Guideline for Diabetes Management in Chronic Kidney Disease",
-     "url": "https://doi.org/10.1016/j.kint.2022.06.008"},
+     "url": "https://doi.org/10.1016/j.kint.2022.06.008",
+     "pmid": "36272764", "examines": HBA1C + ["2160-0"] + UACR, "informs": ["egfr"]},
     {"id": "easl-2024-masld", "year": 2024, "design": "clinical practice guideline",
      "citation": "EASL-EASD-EASO, J Hepatol 2024;81:492",
      "title": "EASL-EASD-EASO Clinical Practice Guidelines on the management of MASLD",
-     "url": "https://doi.org/10.1016/j.jhep.2024.04.031"},
+     "url": "https://doi.org/10.1016/j.jhep.2024.04.031",
+     "pmid": "38851997", "examines": FIB4_INPUTS + TG + ["39156-5", "8280-0"] + HBA1C, "informs": ["fib4"]},
     {"id": "ckdpc-2010", "year": 2010, "design": "collaborative meta-analysis of general population cohorts",
      "citation": "Chronic Kidney Disease Prognosis Consortium (Matsushita et al.), Lancet 2010;375:2073",
      "title": "Association of estimated glomerular filtration rate and albuminuria with all-cause and "
               "cardiovascular mortality in general population cohorts",
-     "url": "https://doi.org/10.1016/S0140-6736(10)60674-5"},
+     "url": "https://doi.org/10.1016/S0140-6736(10)60674-5",
+     "pmid": "20483451", "examines": ["2160-0"] + UACR, "informs": ["egfr"]},
     {"id": "prevent-2024", "year": 2024, "design": "risk model (AHA PREVENT), US adults 30-79",
      "citation": "Khan et al., Circulation 2024;149:430",
      "title": "Development and Validation of the American Heart Association's PREVENT Equations",
-     "url": "https://doi.org/10.1161/CIRCULATIONAHA.123.067626"},
+     "url": "https://doi.org/10.1161/CIRCULATIONAHA.123.067626",
+     "pmid": "37947085", "examines": TC + HDL + ["8480-6", "2160-0"] + HBA1C + UACR, "informs": ["egfr"]},
     {"id": "kdigo-2017-mbd", "year": 2017, "design": "clinical practice guideline",
      "citation": "KDIGO 2017 CKD-MBD Guideline Update, Kidney Int Suppl 2017;7:1",
      "title": "KDIGO 2017 Clinical Practice Guideline Update for CKD-Mineral and Bone Disorder",
-     "url": "https://doi.org/10.1016/j.kisu.2017.04.001"},
+     "url": "https://doi.org/10.1016/j.kisu.2017.04.001",
+     "pmid": "30675420", "examines": BONE_MINERAL + VITAMIN_D, "informs": ["egfr"]},
     {"id": "vestergaard-2007", "year": 2007, "design": "meta-analysis",
      "citation": "Vestergaard, Osteoporos Int 2007;18:427",
      "title": "Discrepancies in bone mineral density and fracture risk in patients with type 1 and type 2 diabetes",
-     "url": "https://doi.org/10.1007/s00198-006-0253-4"},
+     "url": "https://doi.org/10.1007/s00198-006-0253-4",
+     "pmid": "17068657", "examines": HBA1C + ["39156-5"], "informs": []},
     {"id": "kodama-2009", "year": 2009, "design": "meta-analysis, 33 studies, 102,980 people",
      "citation": "Kodama et al., JAMA 2009;301:2024",
      "title": "Cardiorespiratory fitness as a quantitative predictor of all-cause mortality and cardiovascular "
               "events in healthy men and women",
-     "url": "https://doi.org/10.1001/jama.2009.681"},
+     "url": "https://doi.org/10.1001/jama.2009.681",
+     "pmid": "19454641", "examines": ["94122-9"], "informs": []},
 ]
+
+# Names for codes only the studies bring in (the others are named by the lab values).
+CODE_NAMES = {
+    "9318-7": "Albumin/Creatinine [Mass Ratio] in Urine",
+    "14959-1": "Microalbumin/Creatinine [Mass Ratio] in Urine",
+    "17861-6": "Calcium [Mass/volume] in Serum or Plasma",
+    "2777-1": "Phosphate [Mass/volume] in Serum or Plasma",
+    "2731-8": "Parathyrin.intact [Mass/volume] in Serum or Plasma",
+    "6768-6": "Alkaline phosphatase [Enzymatic activity/volume] in Serum or Plasma",
+}
 
 RISK_LINKS = [  # from risk raises the risk of to risk
     {"from": "liver", "to": "cardiovascular", "studies": ["mantovani-2021-cvd"],
@@ -209,13 +236,27 @@ def _range_rows() -> list[dict]:
     return rows
 
 
+def _study_rows() -> list[dict]:
+    return [{k: v for k, v in st.items() if k not in ("examines", "informs")} |
+            {"pubmedUrl": f"https://pubmed.ncbi.nlm.nih.gov/{st['pmid']}/"} for st in STUDIES]
+
+
+def _examines_rows() -> list[dict]:
+    return [{"study": st["id"], "code": code, "name": CODE_NAMES.get(code)}
+            for st in STUDIES for code in dict.fromkeys(st["examines"])]
+
+
+def _informs_rows() -> list[dict]:
+    return [{"study": st["id"], "score": score} for st in STUDIES for score in st["informs"]]
+
+
 def _marker_rows() -> list[dict]:
     return [{"loinc": code, "risk": risk, "source": source} for codes, risk, source in MARKERS for code in codes]
 
 
 def fingerprint() -> str:
     """Changes whenever any seeded fact changes, so seeding runs only then."""
-    blob = json.dumps([HEALTH_RISKS, RISK_SCORES, _marker_rows(), _range_rows(), STUDIES, RISK_LINKS],
+    blob = json.dumps([HEALTH_RISKS, RISK_SCORES, _marker_rows(), _range_rows(), STUDIES, RISK_LINKS, CODE_NAMES],
                       sort_keys=True)
     return hashlib.sha256(blob.encode()).hexdigest()[:16]
 
@@ -263,8 +304,26 @@ RETURN count(rr) AS ranges
 SEED_STUDIES = """
 UNWIND $studies AS s
 MERGE (st:Study {id: s.id})
-SET st.citation = s.citation, st.title = s.title, st.year = s.year, st.design = s.design, st.url = s.url
+SET st.citation = s.citation, st.title = s.title, st.year = s.year, st.design = s.design, st.url = s.url,
+    st.pmid = s.pmid, st.pubmedUrl = s.pubmedUrl
 RETURN count(st) AS studies
+"""
+
+SEED_STUDY_MARKERS = """
+UNWIND $examines AS e
+MATCH (st:Study {id: e.study})
+MERGE (lc:LoincCode {code: e.code})
+SET lc.display = coalesce(lc.display, e.name)
+MERGE (st)-[k:EXAMINES]->(lc)
+RETURN count(k) AS studyMarkers
+"""
+
+SEED_STUDY_SCORES = """
+UNWIND $informs AS i
+MATCH (st:Study {id: i.study})
+MATCH (rs:RiskScore {id: i.score})
+MERGE (st)-[k:INFORMS]->(rs)
+RETURN count(k) AS studyScores
 """
 
 SEED_RISK_LINKS = """
@@ -302,7 +361,9 @@ def seed(conn, force: bool = False) -> dict[str, int]:
         counts.update(dict(conn.execute(SEED_SCORES, {"scores": RISK_SCORES}).single()))
         counts.update(dict(conn.execute(SEED_MARKERS, {"markers": _marker_rows()}).single()))
         counts.update(dict(conn.execute(SEED_RANGES, {"ranges": _range_rows()}).single()))
-        counts.update(dict(conn.execute(SEED_STUDIES, {"studies": STUDIES}).single()))
+        counts.update(dict(conn.execute(SEED_STUDIES, {"studies": _study_rows()}).single()))
+        counts.update(dict(conn.execute(SEED_STUDY_MARKERS, {"examines": _examines_rows()}).single()))
+        counts.update(dict(conn.execute(SEED_STUDY_SCORES, {"informs": _informs_rows()}).single()))
         counts.update(dict(conn.execute(SEED_RISK_LINKS, {"links": RISK_LINKS}).single()))
         source = json.loads((HERE / "reference_ranges.json").read_text())["source"]
         conn.execute(SEED_VERSION, {"fingerprint": fp, "rangesSource": source})

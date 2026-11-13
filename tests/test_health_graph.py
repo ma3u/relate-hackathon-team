@@ -275,6 +275,10 @@ def test_risk_links_name_their_studies(db):
     liver = next(r for r in rows if r["risk"] == "Liver fibrosis" and r["raisesRiskOf"] == "Type 2 diabetes")
     assert liver["estimate"] == 2.19 and liver["studies"] and all(liver["studies"])
     assert all(r["studies"] for r in rows)  # every link reaches at least one Study
+    assert counts["studyMarkers"] == len(knowledge._examines_rows()) and counts["studyScores"] == 11
+    hba1c = list(conn.execute(QUERIES["evidence"][1], {"loinc": "4548-4"}))
+    assert any(r["study"].startswith("SCORE2-Diabetes") and r["pubmed"].endswith("/37247330/") for r in hba1c)
+    assert all(r["doi"].startswith("https://doi.org/") for r in hba1c)
 
 
 def test_a_stored_score_points_at_the_values_it_used(db):

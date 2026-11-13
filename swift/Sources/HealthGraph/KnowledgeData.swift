@@ -3,10 +3,403 @@
 // swiftlint:disable line_length
 
 enum KnowledgeData {
-  static let fingerprint = "438aba158fc80163"
+  static let fingerprint = "b8d1a614e8777837"
   static let rangesSource = "services/epa-ingest/src/reference-ranges.ts (MinimumViableHealthDataspacev2)"
   static let json = #"""
   {
+   "examines": [
+    {
+     "code": "1920-8",
+     "name": null,
+     "study": "mantovani-2021-cvd"
+    },
+    {
+     "code": "1742-6",
+     "name": null,
+     "study": "mantovani-2021-cvd"
+    },
+    {
+     "code": "777-3",
+     "name": null,
+     "study": "mantovani-2021-cvd"
+    },
+    {
+     "code": "4548-4",
+     "name": null,
+     "study": "mantovani-2021-t2d"
+    },
+    {
+     "code": "59261-8",
+     "name": null,
+     "study": "mantovani-2021-t2d"
+    },
+    {
+     "code": "2345-7",
+     "name": null,
+     "study": "mantovani-2021-t2d"
+    },
+    {
+     "code": "1558-6",
+     "name": null,
+     "study": "mantovani-2021-t2d"
+    },
+    {
+     "code": "2160-0",
+     "name": null,
+     "study": "mantovani-2022-ckd"
+    },
+    {
+     "code": "9318-7",
+     "name": "Albumin/Creatinine [Mass Ratio] in Urine",
+     "study": "mantovani-2022-ckd"
+    },
+    {
+     "code": "14959-1",
+     "name": "Microalbumin/Creatinine [Mass Ratio] in Urine",
+     "study": "mantovani-2022-ckd"
+    },
+    {
+     "code": "2345-7",
+     "name": null,
+     "study": "erfc-2010"
+    },
+    {
+     "code": "1558-6",
+     "name": null,
+     "study": "erfc-2010"
+    },
+    {
+     "code": "14647-2",
+     "name": null,
+     "study": "score2-diabetes-2023"
+    },
+    {
+     "code": "2093-3",
+     "name": null,
+     "study": "score2-diabetes-2023"
+    },
+    {
+     "code": "14646-4",
+     "name": null,
+     "study": "score2-diabetes-2023"
+    },
+    {
+     "code": "2085-9",
+     "name": null,
+     "study": "score2-diabetes-2023"
+    },
+    {
+     "code": "8480-6",
+     "name": null,
+     "study": "score2-diabetes-2023"
+    },
+    {
+     "code": "2160-0",
+     "name": null,
+     "study": "score2-diabetes-2023"
+    },
+    {
+     "code": "4548-4",
+     "name": null,
+     "study": "score2-diabetes-2023"
+    },
+    {
+     "code": "59261-8",
+     "name": null,
+     "study": "score2-diabetes-2023"
+    },
+    {
+     "code": "4548-4",
+     "name": null,
+     "study": "ckm-2023"
+    },
+    {
+     "code": "59261-8",
+     "name": null,
+     "study": "ckm-2023"
+    },
+    {
+     "code": "2160-0",
+     "name": null,
+     "study": "ckm-2023"
+    },
+    {
+     "code": "9318-7",
+     "name": "Albumin/Creatinine [Mass Ratio] in Urine",
+     "study": "ckm-2023"
+    },
+    {
+     "code": "14959-1",
+     "name": "Microalbumin/Creatinine [Mass Ratio] in Urine",
+     "study": "ckm-2023"
+    },
+    {
+     "code": "14927-8",
+     "name": null,
+     "study": "ckm-2023"
+    },
+    {
+     "code": "2571-8",
+     "name": null,
+     "study": "ckm-2023"
+    },
+    {
+     "code": "14646-4",
+     "name": null,
+     "study": "ckm-2023"
+    },
+    {
+     "code": "2085-9",
+     "name": null,
+     "study": "ckm-2023"
+    },
+    {
+     "code": "39156-5",
+     "name": null,
+     "study": "ckm-2023"
+    },
+    {
+     "code": "8280-0",
+     "name": null,
+     "study": "ckm-2023"
+    },
+    {
+     "code": "4548-4",
+     "name": null,
+     "study": "kdigo-2022-diabetes"
+    },
+    {
+     "code": "59261-8",
+     "name": null,
+     "study": "kdigo-2022-diabetes"
+    },
+    {
+     "code": "2160-0",
+     "name": null,
+     "study": "kdigo-2022-diabetes"
+    },
+    {
+     "code": "9318-7",
+     "name": "Albumin/Creatinine [Mass Ratio] in Urine",
+     "study": "kdigo-2022-diabetes"
+    },
+    {
+     "code": "14959-1",
+     "name": "Microalbumin/Creatinine [Mass Ratio] in Urine",
+     "study": "kdigo-2022-diabetes"
+    },
+    {
+     "code": "1920-8",
+     "name": null,
+     "study": "easl-2024-masld"
+    },
+    {
+     "code": "1742-6",
+     "name": null,
+     "study": "easl-2024-masld"
+    },
+    {
+     "code": "777-3",
+     "name": null,
+     "study": "easl-2024-masld"
+    },
+    {
+     "code": "14927-8",
+     "name": null,
+     "study": "easl-2024-masld"
+    },
+    {
+     "code": "2571-8",
+     "name": null,
+     "study": "easl-2024-masld"
+    },
+    {
+     "code": "39156-5",
+     "name": null,
+     "study": "easl-2024-masld"
+    },
+    {
+     "code": "8280-0",
+     "name": null,
+     "study": "easl-2024-masld"
+    },
+    {
+     "code": "4548-4",
+     "name": null,
+     "study": "easl-2024-masld"
+    },
+    {
+     "code": "59261-8",
+     "name": null,
+     "study": "easl-2024-masld"
+    },
+    {
+     "code": "2160-0",
+     "name": null,
+     "study": "ckdpc-2010"
+    },
+    {
+     "code": "9318-7",
+     "name": "Albumin/Creatinine [Mass Ratio] in Urine",
+     "study": "ckdpc-2010"
+    },
+    {
+     "code": "14959-1",
+     "name": "Microalbumin/Creatinine [Mass Ratio] in Urine",
+     "study": "ckdpc-2010"
+    },
+    {
+     "code": "14647-2",
+     "name": null,
+     "study": "prevent-2024"
+    },
+    {
+     "code": "2093-3",
+     "name": null,
+     "study": "prevent-2024"
+    },
+    {
+     "code": "14646-4",
+     "name": null,
+     "study": "prevent-2024"
+    },
+    {
+     "code": "2085-9",
+     "name": null,
+     "study": "prevent-2024"
+    },
+    {
+     "code": "8480-6",
+     "name": null,
+     "study": "prevent-2024"
+    },
+    {
+     "code": "2160-0",
+     "name": null,
+     "study": "prevent-2024"
+    },
+    {
+     "code": "4548-4",
+     "name": null,
+     "study": "prevent-2024"
+    },
+    {
+     "code": "59261-8",
+     "name": null,
+     "study": "prevent-2024"
+    },
+    {
+     "code": "9318-7",
+     "name": "Albumin/Creatinine [Mass Ratio] in Urine",
+     "study": "prevent-2024"
+    },
+    {
+     "code": "14959-1",
+     "name": "Microalbumin/Creatinine [Mass Ratio] in Urine",
+     "study": "prevent-2024"
+    },
+    {
+     "code": "17861-6",
+     "name": "Calcium [Mass/volume] in Serum or Plasma",
+     "study": "kdigo-2017-mbd"
+    },
+    {
+     "code": "2777-1",
+     "name": "Phosphate [Mass/volume] in Serum or Plasma",
+     "study": "kdigo-2017-mbd"
+    },
+    {
+     "code": "2731-8",
+     "name": "Parathyrin.intact [Mass/volume] in Serum or Plasma",
+     "study": "kdigo-2017-mbd"
+    },
+    {
+     "code": "6768-6",
+     "name": "Alkaline phosphatase [Enzymatic activity/volume] in Serum or Plasma",
+     "study": "kdigo-2017-mbd"
+    },
+    {
+     "code": "62292-8",
+     "name": null,
+     "study": "kdigo-2017-mbd"
+    },
+    {
+     "code": "68438-1",
+     "name": null,
+     "study": "kdigo-2017-mbd"
+    },
+    {
+     "code": "1989-3",
+     "name": null,
+     "study": "kdigo-2017-mbd"
+    },
+    {
+     "code": "4548-4",
+     "name": null,
+     "study": "vestergaard-2007"
+    },
+    {
+     "code": "59261-8",
+     "name": null,
+     "study": "vestergaard-2007"
+    },
+    {
+     "code": "39156-5",
+     "name": null,
+     "study": "vestergaard-2007"
+    },
+    {
+     "code": "94122-9",
+     "name": null,
+     "study": "kodama-2009"
+    }
+   ],
+   "informs": [
+    {
+     "score": "fib4",
+     "study": "mantovani-2021-cvd"
+    },
+    {
+     "score": "fib4",
+     "study": "mantovani-2021-t2d"
+    },
+    {
+     "score": "egfr",
+     "study": "mantovani-2022-ckd"
+    },
+    {
+     "score": "score2",
+     "study": "score2-diabetes-2023"
+    },
+    {
+     "score": "egfr",
+     "study": "score2-diabetes-2023"
+    },
+    {
+     "score": "egfr",
+     "study": "ckm-2023"
+    },
+    {
+     "score": "egfr",
+     "study": "kdigo-2022-diabetes"
+    },
+    {
+     "score": "fib4",
+     "study": "easl-2024-masld"
+    },
+    {
+     "score": "egfr",
+     "study": "ckdpc-2010"
+    },
+    {
+     "score": "egfr",
+     "study": "prevent-2024"
+    },
+    {
+     "score": "egfr",
+     "study": "kdigo-2017-mbd"
+    }
+   ],
    "links": [
     {
      "ciHigh": 1.61,
@@ -3273,6 +3666,8 @@ enum KnowledgeData {
      "citation": "Mantovani et al., Lancet Gastroenterol Hepatol 2021;6:903",
      "design": "meta-analysis, 36 cohorts, 5.8 million adults",
      "id": "mantovani-2021-cvd",
+     "pmid": "34555346",
+     "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/34555346/",
      "title": "Non-alcoholic fatty liver disease and risk of fatal and non-fatal cardiovascular events",
      "url": "https://doi.org/10.1016/S2468-1253(21)00308-3",
      "year": 2021
@@ -3281,6 +3676,8 @@ enum KnowledgeData {
      "citation": "Mantovani et al., Gut 2021;70:962",
      "design": "meta-analysis, 33 studies, 501,022 adults",
      "id": "mantovani-2021-t2d",
+     "pmid": "32938692",
+     "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/32938692/",
      "title": "Non-alcoholic fatty liver disease and risk of incident diabetes mellitus",
      "url": "https://doi.org/10.1136/gutjnl-2020-322572",
      "year": 2021
@@ -3289,6 +3686,8 @@ enum KnowledgeData {
      "citation": "Mantovani et al., Gut 2022;71:156",
      "design": "meta-analysis of cohort studies",
      "id": "mantovani-2022-ckd",
+     "pmid": "33303564",
+     "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/33303564/",
      "title": "Non-alcoholic fatty liver disease and risk of incident chronic kidney disease",
      "url": "https://doi.org/10.1136/gutjnl-2020-323082",
      "year": 2022
@@ -3297,6 +3696,8 @@ enum KnowledgeData {
      "citation": "Emerging Risk Factors Collaboration, Lancet 2010;375:2215",
      "design": "pooled analysis, 102 prospective studies, 698,782 people",
      "id": "erfc-2010",
+     "pmid": "20609967",
+     "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/20609967/",
      "title": "Diabetes mellitus, fasting blood glucose concentration, and risk of vascular disease",
      "url": "https://doi.org/10.1016/S0140-6736(10)60484-9",
      "year": 2010
@@ -3305,6 +3706,8 @@ enum KnowledgeData {
      "citation": "SCORE2-Diabetes Working Group, Eur Heart J 2023;44:2544",
      "design": "risk model, 229,460 people with type 2 diabetes",
      "id": "score2-diabetes-2023",
+     "pmid": "37247330",
+     "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/37247330/",
      "title": "SCORE2-Diabetes: 10-year cardiovascular risk estimation in type 2 diabetes in Europe",
      "url": "https://doi.org/10.1093/eurheartj/ehad260",
      "year": 2023
@@ -3313,6 +3716,8 @@ enum KnowledgeData {
      "citation": "Ndumele et al., Circulation 2023;148:1606",
      "design": "AHA presidential advisory",
      "id": "ckm-2023",
+     "pmid": "37807924",
+     "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/37807924/",
      "title": "Cardiovascular-Kidney-Metabolic Health: A Presidential Advisory From the American Heart Association",
      "url": "https://doi.org/10.1161/CIR.0000000000001184",
      "year": 2023
@@ -3321,6 +3726,8 @@ enum KnowledgeData {
      "citation": "KDIGO 2022 Clinical Practice Guideline for Diabetes Management in CKD, Kidney Int 2022;102:S1",
      "design": "clinical practice guideline",
      "id": "kdigo-2022-diabetes",
+     "pmid": "36272764",
+     "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/36272764/",
      "title": "KDIGO 2022 Clinical Practice Guideline for Diabetes Management in Chronic Kidney Disease",
      "url": "https://doi.org/10.1016/j.kint.2022.06.008",
      "year": 2022
@@ -3329,6 +3736,8 @@ enum KnowledgeData {
      "citation": "EASL-EASD-EASO, J Hepatol 2024;81:492",
      "design": "clinical practice guideline",
      "id": "easl-2024-masld",
+     "pmid": "38851997",
+     "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/38851997/",
      "title": "EASL-EASD-EASO Clinical Practice Guidelines on the management of MASLD",
      "url": "https://doi.org/10.1016/j.jhep.2024.04.031",
      "year": 2024
@@ -3337,6 +3746,8 @@ enum KnowledgeData {
      "citation": "Chronic Kidney Disease Prognosis Consortium (Matsushita et al.), Lancet 2010;375:2073",
      "design": "collaborative meta-analysis of general population cohorts",
      "id": "ckdpc-2010",
+     "pmid": "20483451",
+     "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/20483451/",
      "title": "Association of estimated glomerular filtration rate and albuminuria with all-cause and cardiovascular mortality in general population cohorts",
      "url": "https://doi.org/10.1016/S0140-6736(10)60674-5",
      "year": 2010
@@ -3345,6 +3756,8 @@ enum KnowledgeData {
      "citation": "Khan et al., Circulation 2024;149:430",
      "design": "risk model (AHA PREVENT), US adults 30-79",
      "id": "prevent-2024",
+     "pmid": "37947085",
+     "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/37947085/",
      "title": "Development and Validation of the American Heart Association's PREVENT Equations",
      "url": "https://doi.org/10.1161/CIRCULATIONAHA.123.067626",
      "year": 2024
@@ -3353,6 +3766,8 @@ enum KnowledgeData {
      "citation": "KDIGO 2017 CKD-MBD Guideline Update, Kidney Int Suppl 2017;7:1",
      "design": "clinical practice guideline",
      "id": "kdigo-2017-mbd",
+     "pmid": "30675420",
+     "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/30675420/",
      "title": "KDIGO 2017 Clinical Practice Guideline Update for CKD-Mineral and Bone Disorder",
      "url": "https://doi.org/10.1016/j.kisu.2017.04.001",
      "year": 2017
@@ -3361,6 +3776,8 @@ enum KnowledgeData {
      "citation": "Vestergaard, Osteoporos Int 2007;18:427",
      "design": "meta-analysis",
      "id": "vestergaard-2007",
+     "pmid": "17068657",
+     "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/17068657/",
      "title": "Discrepancies in bone mineral density and fracture risk in patients with type 1 and type 2 diabetes",
      "url": "https://doi.org/10.1007/s00198-006-0253-4",
      "year": 2007
@@ -3369,6 +3786,8 @@ enum KnowledgeData {
      "citation": "Kodama et al., JAMA 2009;301:2024",
      "design": "meta-analysis, 33 studies, 102,980 people",
      "id": "kodama-2009",
+     "pmid": "19454641",
+     "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/19454641/",
      "title": "Cardiorespiratory fitness as a quantitative predictor of all-cause mortality and cardiovascular events in healthy men and women",
      "url": "https://doi.org/10.1001/jama.2009.681",
      "year": 2009
