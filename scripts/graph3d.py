@@ -93,9 +93,11 @@ def describe(label, p):
         # "Mantovani et al., Gut 2021;70:962" -> "Mantovani 2021"
         name = cit.split(" (")[0] if " (" in cit else \
             f"{cit.split(',')[0].replace(' et al.', '')} {p.get('year') or ''}".strip()
-        return label, name, [p.get("title") or "", p.get("citation") or "",
-                                                               p.get("design") or "",
-                                                               f"PubMed {p['pmid']}" if p.get("pmid") else ""]
+        # Two kinds of evidence: a study measured something, a guideline (or consensus) says what to do.
+        return ("Guideline" if p.get("kind") == "guideline" else "Study"), name, [
+            p.get("title") or "", p.get("citation") or "", p.get("design") or "",
+            "Topics: " + ", ".join(p["topics"]) if p.get("topics") else "",
+            f"PubMed {p['pmid']}" if p.get("pmid") else ""]
     if label == "OMOPPerson":
         return label, "OMOP person", []
     if label == "OMOPMeasurement":
@@ -143,6 +145,8 @@ def build(nodes_in, links_in):
 
     # The lab behind each value, for the charts: its own performer, or its report's.
     report_lab = {r["t"]: by_id[r["s"]]["p"].get("performer") for r in links_in if r["type"] == "HAS_RESULT"}
+    omop_code = {r["s"]: by_id[r["t"]]["p"] for r in links_in
+                 if r["type"] == "CODED_BY" and by_id[r["s"]]["label"] == "OMOPMeasurement"}
     sex = None
     for r in nodes_in:
         if r["label"] == "OMOPPerson":
@@ -153,6 +157,13 @@ def build(nodes_in, links_in):
         group, name, lines = describe(r["label"], r["p"])
         node = {"id": r["id"], "g": group, "n": str(name), "d": [str(x) for x in lines if x]}
         p = r["p"]
+        if r["label"] == "OMOPMeasurement":
+            # Named like the value it mirrors (its LOINC code's name), dated for the time spiral.
+            node["dt"] = p.get("measurementDate") or ""
+            node["val"] = lines[0] if lines else ""
+            code = omop_code.get(r["id"])
+            if code and code.get("display") and code["display"] != code.get("code"):
+                node["n"] = code["display"]
         if r["label"] == "Observation" and isinstance(p.get("valueQuantity"), (int, float)):
             node["v"] = p["valueQuantity"]
             node["u"] = p.get("unit") or ""
@@ -164,6 +175,7 @@ def build(nodes_in, links_in):
                     node["rh"] = p["referenceHigh"]
         if r["label"] == "Study":
             node["sid"] = p.get("id")
+            node["topics"] = p.get("topics") or []
             node["url"] = p.get("url")
             node["pubmed"] = p.get("pubmedUrl")
         if r["label"] == "ReferenceRange":

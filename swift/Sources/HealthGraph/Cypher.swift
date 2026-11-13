@@ -246,7 +246,7 @@ enum Cypher {
   UNWIND $rangeSources AS s
   MERGE (st:Study {id: s.id})
   SET st.citation = s.citation, st.title = s.title, st.year = s.year, st.design = s.design, st.url = s.url,
-      st.pmid = s.pmid, st.pubmedUrl = s.pubmedUrl
+      st.pmid = s.pmid, st.pubmedUrl = s.pubmedUrl, st.kind = s.kind, st.topics = s.topics
   WITH st, s
   UNWIND s.ranges AS rid
   MATCH (rr:ReferenceRange {id: rid})
@@ -258,8 +258,17 @@ enum Cypher {
   UNWIND $studies AS s
   MERGE (st:Study {id: s.id})
   SET st.citation = s.citation, st.title = s.title, st.year = s.year, st.design = s.design, st.url = s.url,
-      st.pmid = s.pmid, st.pubmedUrl = s.pubmedUrl
+      st.pmid = s.pmid, st.pubmedUrl = s.pubmedUrl, st.kind = s.kind, st.topics = s.topics
   RETURN count(st) AS studies
+  """#
+
+  static let seedStudyCitations = #"""
+  UNWIND $citations AS c
+  MATCH (a:Study {id: c.from})
+  MATCH (b:Study {id: c.to})
+  MERGE (a)-[k:CITES]->(b)
+  SET k.source = 'OpenAlex referenced_works'
+  RETURN count(k) AS citations
   """#
 
   static let seedStudyMarkers = #"""

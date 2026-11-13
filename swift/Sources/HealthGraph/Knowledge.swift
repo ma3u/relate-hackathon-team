@@ -19,7 +19,7 @@ extension HealthStore {
       (Cypher.seedRisks, "risks"), (Cypher.seedScores, "scores"),
       (Cypher.seedMarkers, "markers"), (Cypher.seedPruneRanges, "rangeIds"), (Cypher.seedRanges, "ranges"),
       (Cypher.seedRangeSources, "rangeSources"),
-      (Cypher.seedStudies, "studies"), (Cypher.seedStudyMarkers, "examines"),
+      (Cypher.seedStudies, "studies"), (Cypher.seedStudyCitations, "citations"), (Cypher.seedStudyMarkers, "examines"),
       (Cypher.seedStudyScores, "informs"), (Cypher.seedRiskLinks, "links"),
     ]
     for (cypher, key) in steps {

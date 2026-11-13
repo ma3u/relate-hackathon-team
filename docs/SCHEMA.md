@@ -41,6 +41,7 @@ flowchart LR
   ST((Study)) -- ABOUT --> HR
   ST -- EXAMINES --> LC
   ST -- INFORMS --> RS
+  ST -- CITES --> ST
   P -- HAS_SCORE --> SR((ScoreResult))
   SR -- OF --> RS
   SR -- FROM --> O
@@ -60,7 +61,7 @@ flowchart LR
 | Knowledge | `HealthRisk` | `id` | cardiovascular, diabetes, kidney, liver, bone (osteoporosis), fitness |
 | | `RiskScore` | `id` | SCORE2, eGFR (CKD-EPI 2021), FIB-4, TyG; `source`, `demographics`; `USES` the LOINC codes of its inputs |
 | | `ReferenceRange` | `analyteKey\|ucum\|sex\|validFrom` | `guidelineLow/High` (official), `optimalLow/High` (lowest-risk band), `basis` (guideline, consensus, cohort), `summary`, `sourceLabel/Url/Year/Pmid/Doi`, `validFrom`, `validUntil`, `supersededBy`; `SOURCED_FROM` its `Study`; from Klarbefund's `reference-ranges.ts`, quoted unchanged |
-| | `Study` | `id` | `citation`, `title`, `year`, `design`, `url` (DOI), `pmid`, `pubmedUrl`; the evidence behind a `RAISES_RISK_OF` link, `ABOUT` both risks it connects, `EXAMINES` the markers it measured or recommends, `INFORMS` the risk scores it bears on |
+| | `Study` | `id` | `citation`, `title`, `year`, `design`, `url` (DOI), `pmid`, `pubmedUrl`; the evidence behind a `RAISES_RISK_OF` link, `ABOUT` both risks it connects, `EXAMINES` the markers it measured or recommends, `INFORMS` the risk scores it bears on; `kind` (study or guideline), `topics` (Liver, Kidney, Heart and vessels …); `CITES` the other sources it cites (OpenAlex) |
 | | `ScoreResult` | `<patient>-<score>` | `value`, `band`, `light`, `computedAt`, `demographics`; `FROM` the exact Observations it used |
 | | `Knowledge` | `id` | `fingerprint` of the seeded facts, so seeding runs only when they change |
 

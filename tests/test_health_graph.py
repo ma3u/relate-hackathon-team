@@ -299,6 +299,10 @@ def test_risk_links_name_their_studies(db):
     assert liver["estimate"] == 2.19 and liver["studies"] and all(liver["studies"])
     assert all(r["studies"] for r in rows)  # every link reaches at least one Study
     assert counts["studyMarkers"] == len(knowledge._examines_rows()) and counts["studyScores"] == 11
+    assert counts["citations"] == len(knowledge.STUDY_CITATIONS)  # every cited id is a Study we seed
+    kinds = {r["k"]: r["n"] for r in conn.execute("MATCH (s:Study) RETURN s.kind AS k, count(s) AS n")}
+    assert set(kinds) == {"study", "guideline"} and sum(kinds.values()) == 40
+    assert conn.execute("MATCH (s:Study) WHERE size(s.topics) = 0 RETURN count(s) AS n").single()["n"] == 0
     hba1c = list(conn.execute(QUERIES["evidence"][1], {"loinc": "4548-4"}))
     assert any(r["study"].startswith("SCORE2-Diabetes") and r["pubmed"].endswith("/37247330/") for r in hba1c)
     assert all(r["doi"].startswith("https://doi.org/") for r in hba1c)

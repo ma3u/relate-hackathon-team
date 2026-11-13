@@ -58,6 +58,14 @@
   #history .card.now .k { color: var(--accent); }
   #history .card .t { display: block; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   #history .sep { color: var(--muted); flex: none; }
+  #caption { top: 16px; left: 50%; transform: translateX(-50%); width: min(560px, calc(100% - 720px)); min-width: 260px; padding: 10px 14px; }
+  #caption .k { font-size: 10px; color: var(--accent); text-transform: uppercase; letter-spacing: .06em; }
+  #caption .t { font-size: 13px; line-height: 1.45; margin-top: 2px; }
+  #topics details { margin: 2px 0; }
+  #topics summary { cursor: pointer; font-size: 13px; padding: 2px 0; display: flex; gap: 6px; align-items: center; }
+  #topics summary .count { margin-left: auto; }
+  #topics .nb { font-size: 12px; padding-left: 14px; }
+  #labels div.year { color: #EF9F27; font-weight: 600; font-size: 12px; }
   .chart { display: block; margin: 4px 0 2px; overflow: visible; }
   .chart text { font: 10px -apple-system, system-ui, sans-serif; fill: var(--muted); }
   .chart .last { fill: var(--ink); font-size: 11px; font-weight: 600; }
@@ -80,6 +88,7 @@
   <div id="steps" class="steps" role="tablist"></div>
   <p class="hint" id="stepHint"></p>
   <div id="legend"></div>
+  <div id="topics"></div>
   <div class="btns">
     <button id="next">Next step →</button>
     <button id="fit">Fit view</button>
@@ -88,6 +97,7 @@
 </div>
 
 <div id="detail" class="panel"></div>
+<div id="caption" class="panel" aria-live="polite"></div>
 <nav id="history" class="panel" aria-label="Perspectives"></nav>
 
 <script src="https://cdn.jsdelivr.net/npm/3d-force-graph@1.80.1/dist/3d-force-graph.min.js"></script>
@@ -95,7 +105,8 @@
 const DATA = /*DATA*/null;
 
 const FAMILIES = [
-  ["Risks", [["HealthRisk", "#F09595"], ["RiskScore", "#ED93B1"], ["Study", "#F5C4B3"]]],
+  ["Risks", [["HealthRisk", "#F09595"], ["RiskScore", "#ED93B1"]]],
+  ["Evidence", [["Study", "#F5C4B3"], ["Guideline", "#FAEEDA"], ["Topic", "#EEEDFE"]]],
   ["Measures", [
     ["Lab value", "#5DCAA5"], ["Apple Watch week", "#85B7EB"], ["LoincCode", "#D3D1C7"],
     ["ReferenceRange", "#AFA9EC"], ["NcbiTaxon", "#888780"]]],
@@ -106,25 +117,38 @@ const FAMILIES = [
 ];
 const OUT_COLOR = "#E24B4A";
 const RISK_LINK = "#EF9F27";  // (:HealthRisk)-[:RAISES_RISK_OF]->(:HealthRisk), from studies
+const CITE_LINK = "#F5C4B3";  // (:Study)-[:CITES]->(:Study)
 const COLOR = {}, VISIBLE = {};
 FAMILIES.forEach(([, gs]) => gs.forEach(([g, c]) => { COLOR[g] = c; VISIBLE[g] = true; }));
-const famGroups = i => FAMILIES.slice(0, i + 1).flatMap(([, gs]) => gs.map(([g]) => g));
+const groupsOf = (...fams) => FAMILIES.filter(([f]) => fams.includes(f)).flatMap(([, gs]) => gs.map(([g]) => g));
+const isEvidence = n => n.g === "Study" || n.g === "Guideline";
+const MEASURES = groupsOf("Measures"), DOCS = groupsOf("Documents"), RESEARCH = groupsOf("Research copy");
 
-// Start with the current risks, then add the measures, then the documents.
+// Risks first, then the evidence behind them, then the measures, then the documents.
 const STAGES = [
-  { name: "Current risks", groups: [...famGroups(0), "LoincCode", "Lab value"],
-    only: n => n.g === "LoincCode" ? n.mk : n.g === "Lab value" ? n.cur : true,
-    hint: "Health risks and risk scores, their marker codes, and your latest value on each. Red: outside the lab's range. Orange arrows: how one risk raises another, from studies." },
-  { name: "Measures", groups: famGroups(1), only: () => true,
-    hint: "Every lab value and Apple Watch week, with LOINC codes and guideline ranges." },
-  { name: "Documents", groups: famGroups(2), only: () => true,
-    hint: "The scanned reports, their source documents, provenance and labs." },
-  { name: "Everything", groups: famGroups(3), only: () => true,
-    hint: "Plus the OMOP research copy." },
+  { name: "Current risks", groups: ["HealthRisk", "RiskScore", "Study", "Guideline", "LoincCode", "Lab value"],
+    only: n => n.g === "LoincCode" ? n.mk : n.g === "Lab value" ? n.cur : isEvidence(n) ? n.nbs.some(([t]) => t === "ABOUT") : true,
+    hint: "Your six health risks (red) and four risk scores (pink), the lab markers they rest on (grey), and your latest value on each marker (green; red when outside the lab's range). Orange arrows: one risk raises another, as studies show; the coral and amber dots are those studies and guidelines. Click a risk to drill down." },
+  { name: "Evidence", groups: ["HealthRisk", "RiskScore", "Study", "Guideline", "Topic"], only: () => true,
+    hint: "All 40 sources behind the graph: studies (coral) and guidelines (amber), clustered around their topics (white). A thin arrow from one source to another means it cites it. Orange arrows: how the risks raise each other. Click a topic or a source." },
+  { name: "Measures", groups: ["HealthRisk", "RiskScore", ...MEASURES], only: () => true, spiral: true,
+    hint: "Every lab value (green) and Apple Watch week (blue) on a time spiral: one turn per year, the oldest at the bottom, the newest at the top; a small cluster is one day (one report, one week). Grey LOINC codes tie together the values of one marker; purple: guideline ranges." },
+  { name: "Documents", groups: ["HealthRisk", "RiskScore", ...MEASURES, ...DOCS], only: () => true, spiral: true,
+    hint: "Adds you (white), the scanned reports (dark green), their documents, how they were scanned (provenance) and the labs, around the same time spiral of your values." },
+  { name: "Everything", groups: ["HealthRisk", "RiskScore", "Study", "Guideline", ...MEASURES, ...DOCS, ...RESEARCH], only: () => true, spiral: true,
+    hint: "Adds the evidence and the OMOP research copy (orange): each of your values in the format a research study would receive." },
 ];
 let stage = 0;
 
+// Topic hubs exist only in this view: they cluster the evidence (Study.topics in the graph).
+const topicNodes = new Map();
+DATA.nodes.filter(n => n.topics && n.topics.length).forEach(n => n.topics.forEach(t => {
+  if (!topicNodes.has(t)) topicNodes.set(t, { id: "topic:" + t, g: "Topic", n: t, d: ["A topic: the studies and guidelines about it"] });
+  DATA.links.push({ source: n.id, target: "topic:" + t, t: "IN_TOPIC" });
+}));
+DATA.nodes.push(...topicNodes.values());
 const byId = new Map(DATA.nodes.map(n => [n.id, n]));
+const nodeById = v => byId.get(v) ?? byId.get(+v);
 DATA.nodes.forEach(n => { n.deg = 0; n.nbs = []; });
 DATA.links.forEach(l => {
   const a = byId.get(l.source), b = byId.get(l.target);
@@ -136,6 +160,7 @@ DATA.links.forEach(l => {
 });
 const FRIENDLY = {
   "← EXAMINES": "Studies about this marker", "INFORMS →": "Risk scores it informs", "← INFORMS": "Studies behind this score",
+  "CITES →": "Cites", "← CITES": "Cited by (in this graph)", "IN_TOPIC →": "Topic", "← IN_TOPIC": "Studies and guidelines",
   "ABOUT →": "Risks it is about", "SOURCED_FROM →": "Source (guideline or study)", "← SOURCED_FROM": "Reference ranges it sets", "← ABOUT": "Studies about this risk", "MARKER_OF →": "Marker of", "← MARKER_OF": "Its markers",
 };
 const studyById = new Map(DATA.nodes.filter(n => n.sid).map(n => [n.sid, n]));
@@ -154,20 +179,21 @@ let selected = null, hl = new Set(), hlLinks = new Set();
 const Graph = new ForceGraph3D(document.getElementById("graph"))
   .backgroundColor("#0e1116")
   .nodeId("id")
-  .nodeVal(n => n.g === "Patient" ? 30 : 1 + Math.pow(n.deg, 0.55) + (n.cur ? 3 : 0) + (n.out ? 4 : 0) + (n === selected ? 12 : 0))
+  .nodeVal(n => n.g === "Patient" ? 30 : n.g === "Topic" ? 14 : 1 + Math.pow(n.deg, 0.55) + (n.cur ? 3 : 0) + (n.out ? 4 : 0) + (n === selected ? 12 : 0))
   .nodeRelSize(3)
   .nodeOpacity(0.92)
   .nodeResolution(12)
   .nodeColor(n => n.out ? OUT_COLOR : COLOR[n.g])
   .nodeLabel(n => `<b>${esc(n.n)}</b><br><span style="color:${COLOR[n.g]}">${esc(n.g)}</span>` +
     (n.d.length ? "<br>" + n.d.slice(0, 3).map(esc).join("<br>") : ""))
-  .linkColor(l => hlLinks.has(l) ? "#ffffff" : l.t === "RAISES_RISK_OF" ? RISK_LINK : (COLOR[l.source.g || byId.get(l.source).g] || "#555"))
+  .linkColor(l => hlLinks.has(l) ? "#ffffff" : l.t === "RAISES_RISK_OF" ? RISK_LINK : l.t === "CITES" ? CITE_LINK
+    : l.t === "IN_TOPIC" ? "#EEEDFE" : (COLOR[l.source.g || nodeById(l.source).g] || "#555"))
   .linkOpacity(0.22)
-  .linkWidth(l => hlLinks.has(l) ? 1.4 : l.t === "RAISES_RISK_OF" ? 1.2 : 0)
-  .linkCurvature(l => l.t === "RAISES_RISK_OF" ? 0.2 : 0)
-  .linkDirectionalArrowLength(l => l.t === "RAISES_RISK_OF" ? 7 : 0)
+  .linkWidth(l => hlLinks.has(l) ? 1.4 : l.t === "RAISES_RISK_OF" ? 1.2 : l.t === "CITES" ? 0.7 : 0)
+  .linkCurvature(l => l.t === "RAISES_RISK_OF" ? 0.2 : l.t === "CITES" ? 0.1 : 0)
+  .linkDirectionalArrowLength(l => l.t === "RAISES_RISK_OF" ? 7 : l.t === "CITES" ? 4 : 0)
   .linkDirectionalArrowRelPos(0.92)
-  .linkDirectionalArrowColor(() => RISK_LINK)
+  .linkDirectionalArrowColor(l => l.t === "CITES" ? CITE_LINK : RISK_LINK)
   .linkLabel(l => l.t === "RAISES_RISK_OF" && l.p ? `<b>${esc(l.source.n)} → ${esc(l.target.n)}</b>${esc(effect(l.p))}<br>${esc(l.p.summary || "")}` : "")
   .linkDirectionalParticles(l => hlLinks.has(l) ? 3 : 0)
   .linkDirectionalParticleWidth(1.6)
@@ -176,8 +202,12 @@ const Graph = new ForceGraph3D(document.getElementById("graph"))
     .cooldownTicks(220)
   .warmupTicks(40);
 
-Graph.d3Force("charge").strength(-28);
-Graph.d3Force("link").distance(l => (l.t === "HAS_OBSERVATION" ? 60 : 26));
+// No centring force: it moves every free node to keep the average in the middle, and with
+// hundreds of values pinned on a spiral it would push a lone hub (you) off screen. zoomToFit frames.
+Graph.d3Force("center", null);
+// Values pinned on the time spiral push nothing away (712 of them would fling a hub off screen).
+Graph.d3Force("charge").strength(m => m.fx !== undefined && DATED.has(m.g) ? 0 : -28);
+Graph.d3Force("link").distance(l => (l.t === "HAS_OBSERVATION" ? 60 : l.t === "IN_TOPIC" ? 18 : 26));
 
 const shown = n => VISIBLE[n.g] && STAGES[stage].groups.includes(n.g) && STAGES[stage].only(n);
 const short = t => (t = String(t)).length > 26 ? t.slice(0, 25) + "…" : t;
@@ -207,6 +237,11 @@ function drillSet(n) {
     if (n.g === "LoincCode") [...S].filter(o => o.g === "Lab value").forEach(o => add(nb(o, ["HAS_RESULT"])));
     if (n.g === "LoincCode") add(nb(n, ["EXAMINES"]));
     if (n.g === "RiskScore") add(nb(n, ["INFORMS"]));
+  } else if (n.g === "Topic") {
+    // A topic: its sources, the risks they are about, and the citations among them.
+    const members = nb(n, ["IN_TOPIC"]);
+    add(members);
+    members.forEach(m => add(nb(m, ["ABOUT", "INFORMS"])));
   } else {
     const first = nb(n);
     add(first);
@@ -216,9 +251,47 @@ function drillSet(n) {
 }
 
 function setData(keep) {
-  const links = DATA.links.filter(l => keep.has(byId.get(endId(l.source))) && keep.has(byId.get(endId(l.target))));
+  const links = DATA.links.filter(l => keep.has(nodeById(endId(l.source))) && keep.has(nodeById(endId(l.target))));
+  // Many dated values: on a time spiral around the node in focus (or the middle).
+  const top = drill[drill.length - 1];
+  if (top ? true : STAGES[stage].spiral) layoutSpiral([...keep], top ? { x: top.x || 0, y: top.y || 0, z: top.z || 0 } : { x: 0, y: 0, z: 0 });
+  else clearSpiral();
   Graph.graphData({ nodes: [...keep], links });
   buildLabels([...keep]);
+}
+
+// ── Time spiral ───────────────────────────────────────────────────────────
+// Values sorted by date on a helix: one turn per year (the same month lines up
+// vertically), the oldest at the bottom, the newest at the top; the values of one
+// day form a small cluster (one report, one Apple Watch week).
+const DATED = new Set(["Lab value", "Apple Watch week", "OMOPMeasurement"]);
+let spiralPinned = [], spiralMarks = [];
+function clearSpiral() {
+  spiralPinned.forEach(m => { if (!drill.includes(m)) { delete m.fx; delete m.fy; delete m.fz; } });
+  spiralPinned = []; spiralMarks = [];
+}
+function layoutSpiral(nodes, c) {
+  clearSpiral();
+  const pts = nodes.filter(m => DATED.has(m.g) && m.dt && !drill.includes(m))
+    .map(m => ({ m, t: Date.parse(m.dt.slice(0, 10)) })).filter(q => !isNaN(q.t)).sort((a, b) => a.t - b.t);
+  if (pts.length < 12 || new Set(pts.map(q => q.t)).size < 4) return;
+  const t0 = pts[0].t, t1 = pts[pts.length - 1].t, y0 = new Date(t0).getUTCFullYear();
+  const years = Math.max((t1 - t0) / (365.25 * 864e5), 0.25);
+  const R = 90 + Math.min(150, pts.length * 0.1), H = Math.max(180, years * 130);
+  const at = t => ({ a: 2 * Math.PI * (t - Date.UTC(y0, 0, 1)) / (365.25 * 864e5), y: c.y - H / 2 + (t - t0) / ((t1 - t0) || 1) * H });
+  const sameDay = {};
+  pts.forEach(({ m, t }) => {
+    // Values of one day form a small round cluster (golden-angle packing), not a long spoke.
+    const k = sameDay[t] = (sameDay[t] || 0) + 1, { a, y } = at(t);
+    const rho = 5 * Math.sqrt(k - 1), phi = (k - 1) * 2.39996, r = R + rho * Math.cos(phi);
+    m.fx = m.x = c.x + r * Math.cos(a); m.fy = m.y = y + rho * Math.sin(phi); m.fz = m.z = c.z + r * Math.sin(a);
+    m.vx = m.vy = m.vz = 0;
+    spiralPinned.push(m);
+  });
+  for (let yr = y0; yr <= new Date(t1).getUTCFullYear(); yr++) {
+    const t = Math.max(t0, Date.UTC(yr, 0, 1)), { a, y } = at(t);
+    spiralMarks.push({ x: c.x + (R - 28) * Math.cos(a), y, z: c.z + (R - 28) * Math.sin(a), label: String(yr) });
+  }
 }
 function applyFilter() {
   setData(drill.length ? drillSet(drill[drill.length - 1]) : new Set(DATA.nodes.filter(shown)));
@@ -292,7 +365,9 @@ function enterDrill(n) {
   pin(n);
   const keep = drillSet(n), had = new Set(Graph.graphData().nodes);
   keep.forEach(m => {
-    if (m === n || had.has(m)) return;
+    if (m === n) return;
+    // Already on screen but far away (a hub from the last view): bring it next to the node.
+    if (had.has(m) && m.x !== undefined && Math.hypot(m.x - n.x, m.y - n.y, m.z - n.z) < 400) return;
     m.x = n.x + (Math.random() - 0.5) * 24; m.y = n.y + (Math.random() - 0.5) * 24; m.z = n.z + (Math.random() - 0.5) * 24;
     m.vx = m.vy = m.vz = 0;
   });
@@ -324,7 +399,7 @@ function goTo(level) {
   if (v) Graph.cameraPosition(v.cam, v.target, 800);
   setTimeout(() => Graph.cooldownTicks(220), 100);
   hlLinks = selected ? linksOf(selected) : new Set();
-  Graph.linkOpacity(selected ? 0.55 : stage === 0 ? 0.6 : 0.22);
+  Graph.linkOpacity(selected ? 0.55 : stage <= 1 ? 0.6 : 0.22);
   refresh();
   curThumb = v ? v.thumb : null;
   if (selected) showDetail(selected); else document.getElementById("detail").style.display = "none";
@@ -336,7 +411,37 @@ addEventListener("keydown", e => {
   if ((e.key === "Escape" || (e.key === "Backspace" && e.target === document.body)) && drill.length) { e.preventDefault(); back(); }
 });
 
+// ── "What you see": one short explanation per screen ──────────────────────
+const SPIRAL = "on a time spiral (one turn per year, the oldest at the bottom; a small cluster is one day)";
+const EXPLAIN = {
+  HealthRisk: n => `The risk "${n.n}". Around it: the risk scores that estimate it (pink), the lab markers guidelines name for it (grey), every value of yours on them ${SPIRAL}, red when outside the lab's range, the guideline ranges (purple), the studies and guidelines behind it, and orange arrows to the risks it raises or that raise it.`,
+  RiskScore: n => `The score "${n.n}": the lab markers it is calculated from, your values on them over time, the risk it estimates, and the studies behind it.`,
+  LoincCode: n => `One marker, "${n.n}": all your values over time, the reports they come from, its guideline range, the risks it marks and the studies that examine it. The chart on the right shows the same values as a time series.`,
+  "Lab value": n => `One measurement: ${n.val || n.n}${n.dt ? " on " + n.dt.slice(0, 10) : ""}. Around it: the report it was printed on and the other values on that report, the scanned document, how it was scanned (provenance), the lab, its LOINC code and its OMOP research copy.`,
+  "Apple Watch week": n => `One weekly mean from your Apple Watch${n.val ? " (" + n.val + ")" : ""}. The chart on the right shows every week of this metric.`,
+  OMOPMeasurement: () => `The OMOP research copy of one value: what a research study would receive instead of the original, with the same value and date and without your name.`,
+  OMOPPerson: () => `You in the OMOP research format. Each orange dot is one of your values as a research study would see it, ${SPIRAL}.`,
+  Patient: () => `You. Every report and every value hangs on you; the values are ${SPIRAL}.`,
+  DiagnosticReport: () => `One lab report: the values printed on it, the scanned document, how it was scanned (provenance) and the lab that issued it.`,
+  DocumentReference: () => `The scanned document behind a report, and the report read from it.`,
+  Provenance: () => `How a report got into the graph: which app read it, when, and from which file.`,
+  Organization: () => `A lab or practice and the reports it issued.`,
+  ReferenceRange: n => `A reference range: the official guideline range and, where its source names one, an optimal band, for one marker in one unit. Linked to its source, with the date it applies from${n.r && n.r.until ? " and the date a newer edition replaced it" : ""}.`,
+  Study: () => `A study: the markers it examined (with your latest value on each), the risks it is about, the scores it informs, the sources it cites or that cite it, and its topic.`,
+  Guideline: () => `A guideline or consensus statement: the reference ranges it sets, the markers and risks it is about, the sources it cites or that cite it, and its topic.`,
+  Topic: n => `The topic "${n.n}": the studies (coral) and guidelines (amber) about it, the risks they connect, and the citations among them.`,
+  NcbiTaxon: () => `An organism from a microbiome report, and your values on it.`,
+  Knowledge: () => `The version of the knowledge layer: a fingerprint of every seeded fact.`,
+};
+function updateCaption() {
+  const el = document.getElementById("caption"), top = drill[drill.length - 1];
+  const kind = top ? `What you see · ${top.g}` : `What you see · step ${stage + 1}, ${STAGES[stage].name}`;
+  const text = top ? (EXPLAIN[top.g] ? EXPLAIN[top.g](top) : `${top.n} and what it is connected to.`) : STAGES[stage].hint;
+  el.innerHTML = `<div class="k">${esc(kind)}</div><div class="t">${esc(text)}</div>`;
+}
+
 function renderHistory() {
+  updateCaption();
   const h = document.getElementById("history");
   if (!drill.length) { h.style.display = "none"; return; }
   const cards = [`<button class="backbtn" title="Back (Esc)">← Back</button>`];
@@ -384,7 +489,7 @@ function showDetail(n) {
       (x.p.studies || []).forEach(id => { const st = studyById.get(id); if (st) html += btn(st, st.d[1] || st.n, "inset"); });
     });
   });
-  if (n.g === "Study") {
+  if (isEvidence(n)) {
     const ext = (u, t) => u ? `<a href="${esc(u)}" target="_blank" rel="noopener" style="color:var(--accent)">${t} ↗</a>` : "";
     html += `<p>${[ext(n.url, "Paper (DOI)"), ext(n.pubmed, "PubMed")].filter(Boolean).join(" · ")}</p>`;
     // The markers it examines, with your latest value on each.
@@ -432,16 +537,24 @@ function showDetail(n) {
   Object.entries(groups).sort((a, b) => a[1].length - b[1].length).forEach(([k, ms]) => {
     if (codes.length && /CODED_BY/.test(k)) return;  // listed above, by date
     if (n.rlinks && /RAISES_RISK_OF/.test(k)) return;  // listed above, with the studies
-    if (n.g === "Study" && /EXAMINES/.test(k)) return;    // listed above, with your values
+    if (isEvidence(n) && /EXAMINES/.test(k)) return;    // listed above, with your values
     html += `<div class="rel">${esc(FRIENDLY[k] || k)} (${ms.length})</div>`;
-    ms.slice(0, 40).forEach(m => html += btn(m));
-    if (ms.length > 40) html += `<div class="hint">… and ${ms.length - 40} more</div>`;
+    if (ms.length > 40) {
+      // A long list says little item by item: group it by name, newest first within a name.
+      const groups = new Map();
+      ms.forEach(m => groups.set(m.n, [...(groups.get(m.n) || []), m]));
+      [...groups].sort((a, b) => b[1].length - a[1].length).slice(0, 40).forEach(([name, list]) => {
+        const newest = list.sort((a, b) => (b.dt || "").localeCompare(a.dt || ""))[0];
+        html += btn(newest, `${name} (${list.length})`);
+      });
+      if (groups.size > 40) html += `<div class="hint">… and ${groups.size - 40} more names</div>`;
+    } else ms.forEach(m => html += btn(m));
   });
   el.innerHTML = html;
   el.style.display = "block";
   el.scrollTop = 0;
   el.querySelector(".close").onclick = clearFocus;
-  el.querySelectorAll(".nb, .chart .hit").forEach(b => b.onclick = () => focusNode(byId.get(+b.dataset.id)));
+  el.querySelectorAll(".nb, .chart .hit").forEach(b => b.onclick = () => focusNode(nodeById(b.dataset.id)));
   el.querySelectorAll("[data-back]").forEach(a => a.onclick = e => {
     e.preventDefault();
     const i = +a.dataset.back;
@@ -615,13 +728,20 @@ let labelled = [];
 function buildLabels(nodes) {
   labelsEl.innerHTML = "";
   labelled = [];
+  // The years of the time spiral, always.
+  spiralMarks.forEach(m => {
+    const d = document.createElement("div");
+    d.className = "year"; d.textContent = m.label;
+    labelsEl.appendChild(d); labelled.push([m, d]);
+  });
   if (nodes.length > 200) return;
   const top = drill[drill.length - 1];
   const allValues = top && !["HealthRisk", "RiskScore"].includes(top.g);
   nodes.forEach(n => {
     if (["Apple Watch week", "Provenance", "OMOPMeasurement", "OMOPPerson"].includes(n.g)) return;
     if (n.g === "ReferenceRange" && !(top && top.g === "LoincCode")) return;
-    if (n.g === "Study" && !top) return;  // named in the drill-down, not in the overview
+    if (isEvidence(n) && !top) return;                     // named in the drill-down, not in the overview
+    if (n.g === "Topic" && !top && stage !== 1) return;
     if (n.g === "Lab value" && !(allValues || n.cur || n.out)) return;
     const d = document.createElement("div");
     d.textContent = n.g === "Lab value" ? `${n.val || ""}${n.dt ? " · " + n.dt.slice(0, 7) : ""}` : short(n.n);
@@ -654,6 +774,18 @@ FAMILIES.forEach(([fam, gs]) => {
     `<label class="row"><input type="checkbox" data-g="${esc(g)}" checked><span class="dot" style="background:${c}"></span>${esc(g)}<span class="count">${counts[g].toLocaleString()}</span></label>`).join("");
   legend.appendChild(box);
 });
+// Evidence by topic: every study and guideline, one click away.
+(function renderTopics() {
+  const el = document.getElementById("topics");
+  const rows = [...topicNodes.values()].map(t => ({ t, ms: nb(t, ["IN_TOPIC"]) })).sort((a, b) => b.ms.length - a.ms.length);
+  el.innerHTML = `<div class="fam"><h2>Evidence by topic</h2>` + rows.map(({ t, ms }) =>
+    `<details><summary><span class="dot" style="background:${COLOR.Topic}"></span>${esc(t.n)}<span class="count">${ms.length}</span></summary>` +
+    `<button class="nb" data-id="${esc(t.id)}"><b>Show the cluster</b></button>` +
+    ms.sort((a, b) => a.g.localeCompare(b.g) || a.n.localeCompare(b.n)).map(m =>
+      `<button class="nb" data-id="${esc(m.id)}" title="${esc(m.d[1] || m.n)}"><span class="dot" style="display:inline-block;margin-right:6px;background:${COLOR[m.g]}"></span>${esc(m.n)}</button>`).join("") +
+    `</details>`).join("") + `</div>`;
+  el.querySelectorAll(".nb").forEach(b => b.onclick = () => focusNode(nodeById(b.dataset.id)));
+})();
 legend.addEventListener("change", e => { VISIBLE[e.target.dataset.g] = e.target.checked; applyFilter(); });
 function syncChecks() { legend.querySelectorAll("input").forEach(i => i.checked = VISIBLE[i.dataset.g]); }
 
@@ -677,7 +809,7 @@ function setStage(i, fit = true) {
   document.getElementById("stepHint").textContent = STAGES[i].hint;
   document.getElementById("next").textContent = i < STAGES.length - 1 ? `Next: ${STAGES[i + 1].name} →` : "Back to current risks";
   legend.querySelectorAll("label.row").forEach(l => l.style.opacity = STAGES[i].groups.includes(l.querySelector("input").dataset.g) ? 1 : 0.35);
-  Graph.linkOpacity(i === 0 ? 0.6 : 0.22);
+  Graph.linkOpacity(i <= 1 ? 0.6 : 0.22);
   syncChecks();
   applyFilter();
   refresh();

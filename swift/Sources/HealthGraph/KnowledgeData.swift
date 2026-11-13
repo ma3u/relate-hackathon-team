@@ -3,10 +3,72 @@
 // swiftlint:disable line_length
 
 enum KnowledgeData {
-  static let fingerprint = "ba16b297339f18d4"
+  static let fingerprint = "8355cefd52d9c2f9"
   static let rangesSource = "services/epa-ingest/src/reference-ranges.ts (MinimumViableHealthDataspacev2)"
   static let json = #"""
   {
+   "citations": [
+    {
+     "from": "easl-2024-masld",
+     "to": "mantovani-2021-cvd"
+    },
+    {
+     "from": "easl-2024-masld",
+     "to": "mantovani-2021-t2d"
+    },
+    {
+     "from": "easl-2024-masld",
+     "to": "mantovani-2022-ckd"
+    },
+    {
+     "from": "easl-2024-masld",
+     "to": "pmid-12093239"
+    },
+    {
+     "from": "mantovani-2021-cvd",
+     "to": "mantovani-2021-t2d"
+    },
+    {
+     "from": "mantovani-2021-cvd",
+     "to": "mantovani-2022-ckd"
+    },
+    {
+     "from": "mantovani-2022-ckd",
+     "to": "mantovani-2021-t2d"
+    },
+    {
+     "from": "pmid-15223694",
+     "to": "pmid-15223702"
+    },
+    {
+     "from": "pmid-31504418",
+     "to": "ckdpc-2010"
+    },
+    {
+     "from": "pmid-31504418",
+     "to": "erfc-2010"
+    },
+    {
+     "from": "pmid-36036785",
+     "to": "pmid-31504418"
+    },
+    {
+     "from": "pmid-38519239",
+     "to": "kdigo-2022-diabetes"
+    },
+    {
+     "from": "prevent-2024",
+     "to": "ckdpc-2010"
+    },
+    {
+     "from": "prevent-2024",
+     "to": "ckm-2023"
+    },
+    {
+     "from": "score2-diabetes-2023",
+     "to": "erfc-2010"
+    }
+   ],
    "examines": [
     {
      "code": "1920-8",
@@ -985,6 +1047,7 @@ enum KnowledgeData {
      "citation": "ESC/EAS 2019 dyslipidaemia guidelines (Mach et al., Eur Heart J 2020;41:111-188)",
      "design": "reference range source: guideline",
      "id": "pmid-31504418",
+     "kind": "guideline",
      "pmid": "31504418",
      "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/31504418/",
      "ranges": [
@@ -1004,6 +1067,9 @@ enum KnowledgeData {
       "cholesterol-total|mmol/L|any|2019-01-01"
      ],
      "title": "ESC/EAS 2019 dyslipidaemia guidelines (Mach et al., Eur Heart J 2020;41:111-188)",
+     "topics": [
+      "Heart and vessels"
+     ],
      "url": "https://doi.org/10.1093/eurheartj/ehz455",
      "year": 2019
     },
@@ -1011,6 +1077,7 @@ enum KnowledgeData {
      "citation": "EAS consensus on lipoprotein(a) (Kronenberg et al., Eur Heart J 2022;43:3925-3946)",
      "design": "reference range source: consensus",
      "id": "pmid-36036785",
+     "kind": "guideline",
      "pmid": "36036785",
      "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/36036785/",
      "ranges": [
@@ -1019,6 +1086,9 @@ enum KnowledgeData {
       "lipoprotein-a|g/L|any|2022-01-01"
      ],
      "title": "EAS consensus on lipoprotein(a) (Kronenberg et al., Eur Heart J 2022;43:3925-3946)",
+     "topics": [
+      "Heart and vessels"
+     ],
      "url": "https://doi.org/10.1093/eurheartj/ehac361",
      "year": 2022
     },
@@ -1026,12 +1096,16 @@ enum KnowledgeData {
      "citation": "AHA/CDC statement on inflammation markers (Pearson et al., Circulation 2003;107:499-511)",
      "design": "reference range source: guideline",
      "id": "pmid-12551878",
+     "kind": "guideline",
      "pmid": "12551878",
      "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/12551878/",
      "ranges": [
       "crp-hs|mg/L|any|2003-01-01"
      ],
      "title": "AHA/CDC statement on inflammation markers (Pearson et al., Circulation 2003;107:499-511)",
+     "topics": [
+      "Heart and vessels"
+     ],
      "url": "https://doi.org/10.1161/01.cir.0000052939.59093.45",
      "year": 2003
     },
@@ -1039,12 +1113,16 @@ enum KnowledgeData {
      "citation": "Total homocysteine, expert opinion (Refsum et al., Clin Chem 2004;50:3-32)",
      "design": "reference range source: consensus",
      "id": "pmid-14709635",
+     "kind": "guideline",
      "pmid": "14709635",
      "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/14709635/",
      "ranges": [
       "homocysteine|umol/L|any|2004-01-01"
      ],
      "title": "Total homocysteine, expert opinion (Refsum et al., Clin Chem 2004;50:3-32)",
+     "topics": [
+      "Heart and vessels"
+     ],
      "url": "https://doi.org/10.1373/clinchem.2003.021634",
      "year": 2004
     },
@@ -1052,6 +1130,7 @@ enum KnowledgeData {
      "citation": "ADA Standards of Care 2025, diagnosis and classification (Diabetes Care 2025;48:S27-S49)",
      "design": "reference range source: guideline",
      "id": "pmid-39651986",
+     "kind": "guideline",
      "pmid": "39651986",
      "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/39651986/",
      "ranges": [
@@ -1061,6 +1140,9 @@ enum KnowledgeData {
       "glucose|mmol/L|any|2025-01-01"
      ],
      "title": "ADA Standards of Care 2025, diagnosis and classification (Diabetes Care 2025;48:S27-S49)",
+     "topics": [
+      "Metabolism"
+     ],
      "url": "https://doi.org/10.2337/dc25-S002",
      "year": 2025
     },
@@ -1068,12 +1150,16 @@ enum KnowledgeData {
      "citation": "KDIGO 2024 CKD guideline, executive summary (Levin et al., Kidney Int 2024;105:684-701)",
      "design": "reference range source: guideline",
      "id": "pmid-38519239",
+     "kind": "guideline",
      "pmid": "38519239",
      "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/38519239/",
      "ranges": [
       "egfr|mL/min/{1.73_m2}|any|2024-01-01"
      ],
      "title": "KDIGO 2024 CKD guideline, executive summary (Levin et al., Kidney Int 2024;105:684-701)",
+     "topics": [
+      "Kidney"
+     ],
      "url": "https://doi.org/10.1016/j.kint.2023.10.016",
      "year": 2024
     },
@@ -1081,6 +1167,7 @@ enum KnowledgeData {
      "citation": "Updated definitions of healthy ranges for serum ALT (Prati et al., Ann Intern Med 2002;137:1-10)",
      "design": "reference range source: cohort",
      "id": "pmid-12093239",
+     "kind": "study",
      "pmid": "12093239",
      "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/12093239/",
      "ranges": [
@@ -1088,6 +1175,9 @@ enum KnowledgeData {
       "alt|U/L|female|2002-01-01"
      ],
      "title": "Updated definitions of healthy ranges for serum ALT (Prati et al., Ann Intern Med 2002;137:1-10)",
+     "topics": [
+      "Liver"
+     ],
      "url": "https://doi.org/10.7326/0003-4819-137-1-200207020-00006",
      "year": 2002
     },
@@ -1095,6 +1185,7 @@ enum KnowledgeData {
      "citation": "WHO guideline on haemoglobin cutoffs to define anaemia (2024)",
      "design": "reference range source: guideline",
      "id": "src-bb2e52403b",
+     "kind": "guideline",
      "pmid": null,
      "pubmedUrl": null,
      "ranges": [
@@ -1106,6 +1197,9 @@ enum KnowledgeData {
       "haemoglobin|mmol/L|female|2024-01-01"
      ],
      "title": "WHO guideline on haemoglobin cutoffs to define anaemia (2024)",
+     "topics": [
+      "Blood"
+     ],
      "url": "https://www.who.int/publications/i/item/9789240088542",
      "year": 2024
     },
@@ -1113,6 +1207,7 @@ enum KnowledgeData {
      "citation": "WHO guideline on ferritin concentrations to assess iron status (2020)",
      "design": "reference range source: guideline",
      "id": "src-d2014ed60b",
+     "kind": "guideline",
      "pmid": null,
      "pubmedUrl": null,
      "ranges": [
@@ -1120,6 +1215,9 @@ enum KnowledgeData {
       "ferritin|ng/mL|any|2020-01-01"
      ],
      "title": "WHO guideline on ferritin concentrations to assess iron status (2020)",
+     "topics": [
+      "Blood"
+     ],
      "url": "https://www.who.int/publications/i/item/9789240000124",
      "year": 2020
     },
@@ -1127,6 +1225,7 @@ enum KnowledgeData {
      "citation": "Waist circumference and waist-hip ratio: report of a WHO expert consultation (2011)",
      "design": "reference range source: guideline",
      "id": "src-44ae6dbbc2",
+     "kind": "guideline",
      "pmid": null,
      "pubmedUrl": null,
      "ranges": [
@@ -1134,6 +1233,9 @@ enum KnowledgeData {
       "waist-circumference|cm|female|2011-01-01"
      ],
      "title": "Waist circumference and waist-hip ratio: report of a WHO expert consultation (2011)",
+     "topics": [
+      "Body composition"
+     ],
      "url": "https://www.who.int/publications/i/item/9789241501491",
      "year": 2011
     },
@@ -1141,6 +1243,7 @@ enum KnowledgeData {
      "citation": "Endocrine Society vitamin D guideline (Holick et al., J Clin Endocrinol Metab 2011;96:1911-1930)",
      "design": "reference range source: guideline",
      "id": "pmid-21646368",
+     "kind": "guideline",
      "pmid": "21646368",
      "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/21646368/",
      "ranges": [
@@ -1148,6 +1251,9 @@ enum KnowledgeData {
       "vitamin-d|nmol/L|any|2011-01-01"
      ],
      "title": "Endocrine Society vitamin D guideline (Holick et al., J Clin Endocrinol Metab 2011;96:1911-1930)",
+     "topics": [
+      "Vitamins"
+     ],
      "url": "https://doi.org/10.1210/jc.2011-0385",
      "year": 2011
     },
@@ -1155,6 +1261,7 @@ enum KnowledgeData {
      "citation": "EAS/EFLM joint consensus on non-fasting lipid profiles and flagging cut-points (Nordestgaard et al., Eur Heart J 2016;37:1944-1958)",
      "design": "reference range source: consensus",
      "id": "pmid-27122601",
+     "kind": "guideline",
      "pmid": "27122601",
      "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/27122601/",
      "ranges": [
@@ -1162,6 +1269,9 @@ enum KnowledgeData {
       "apolipoprotein-a1|mg/dL|any|2016-01-01"
      ],
      "title": "EAS/EFLM joint consensus on non-fasting lipid profiles and flagging cut-points (Nordestgaard et al., Eur Heart J 2016;37:1944-1958)",
+     "topics": [
+      "Heart and vessels"
+     ],
      "url": "https://doi.org/10.1093/eurheartj/ehw152",
      "year": 2016
     },
@@ -1169,6 +1279,7 @@ enum KnowledgeData {
      "citation": "ESC 2021 guidelines for acute and chronic heart failure (McDonagh et al., Eur Heart J 2021;42:3599-3726)",
      "design": "reference range source: guideline",
      "id": "pmid-34447992",
+     "kind": "guideline",
      "pmid": "34447992",
      "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/34447992/",
      "ranges": [
@@ -1176,6 +1287,9 @@ enum KnowledgeData {
       "nt-probnp|ng/L|any|2021-01-01"
      ],
      "title": "ESC 2021 guidelines for acute and chronic heart failure (McDonagh et al., Eur Heart J 2021;42:3599-3726)",
+     "topics": [
+      "Heart and vessels"
+     ],
      "url": "https://doi.org/10.1093/eurheartj/ehab368",
      "year": 2021
     },
@@ -1183,6 +1297,7 @@ enum KnowledgeData {
      "citation": "AACE/ATA clinical practice guidelines for hypothyroidism in adults (Garber et al., Thyroid 2012;22:1200-1235)",
      "design": "reference range source: guideline",
      "id": "pmid-22954017",
+     "kind": "guideline",
      "pmid": "22954017",
      "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/22954017/",
      "ranges": [
@@ -1190,6 +1305,9 @@ enum KnowledgeData {
       "tsh|u[IU]/mL|any|2012-01-01"
      ],
      "title": "AACE/ATA clinical practice guidelines for hypothyroidism in adults (Garber et al., Thyroid 2012;22:1200-1235)",
+     "topics": [
+      "Metabolism"
+     ],
      "url": "https://doi.org/10.1089/thy.2012.0205",
      "year": 2012
     },
@@ -1197,6 +1315,7 @@ enum KnowledgeData {
      "citation": "Nordic Reference Interval Project 2000, 25 biochemical properties in about 3000 healthy adults (Rustad et al., Scand J Clin Lab Invest 2004;64:271-284)",
      "design": "reference range source: cohort",
      "id": "pmid-15223694",
+     "kind": "study",
      "pmid": "15223694",
      "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/15223694/",
      "ranges": [
@@ -1240,6 +1359,13 @@ enum KnowledgeData {
       "protein-total|g/dL|any|2004-01-01"
      ],
      "title": "Nordic Reference Interval Project 2000, 25 biochemical properties in about 3000 healthy adults (Rustad et al., Scand J Clin Lab Invest 2004;64:271-284)",
+     "topics": [
+      "Kidney",
+      "Liver",
+      "Electrolytes",
+      "Blood",
+      "Proteins and immunity"
+     ],
      "url": "https://doi.org/10.1080/00365510410006324",
      "year": 2004
     },
@@ -1247,6 +1373,7 @@ enum KnowledgeData {
      "citation": "ACR 2020 guideline for the management of gout (FitzGerald et al., Arthritis Rheumatol 2020;72:879-895)",
      "design": "reference range source: guideline",
      "id": "pmid-32390306",
+     "kind": "guideline",
      "pmid": "32390306",
      "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/32390306/",
      "ranges": [
@@ -1254,6 +1381,9 @@ enum KnowledgeData {
       "urate|umol/L|any|2020-01-01"
      ],
      "title": "ACR 2020 guideline for the management of gout (FitzGerald et al., Arthritis Rheumatol 2020;72:879-895)",
+     "topics": [
+      "Kidney"
+     ],
      "url": "https://doi.org/10.1002/art.41247",
      "year": 2020
     },
@@ -1261,6 +1391,7 @@ enum KnowledgeData {
      "citation": "Nordic reference intervals for the blood count in 1826 healthy adults (Nordin et al., Scand J Clin Lab Invest 2004;64:385-398)",
      "design": "reference range source: cohort",
      "id": "pmid-15223702",
+     "kind": "study",
      "pmid": "15223702",
      "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/15223702/",
      "ranges": [
@@ -1286,6 +1417,9 @@ enum KnowledgeData {
       "leukocytes|10*3/uL|any|2004-01-01"
      ],
      "title": "Nordic reference intervals for the blood count in 1826 healthy adults (Nordin et al., Scand J Clin Lab Invest 2004;64:385-398)",
+     "topics": [
+      "Blood"
+     ],
      "url": "https://doi.org/10.1080/00365510410002797",
      "year": 2004
     },
@@ -1293,6 +1427,7 @@ enum KnowledgeData {
      "citation": "Reference ranges in 280 healthy Korean adults on the Sysmex XN-2000 (Park et al., Ann Lab Med 2016;36:244-249)",
      "design": "reference range source: cohort",
      "id": "pmid-26915613",
+     "kind": "study",
      "pmid": "26915613",
      "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/26915613/",
      "ranges": [
@@ -1331,6 +1466,9 @@ enum KnowledgeData {
       "mpv|fL|any|2016-01-01"
      ],
      "title": "Reference ranges in 280 healthy Korean adults on the Sysmex XN-2000 (Park et al., Ann Lab Med 2016;36:244-249)",
+     "topics": [
+      "Blood"
+     ],
      "url": "https://doi.org/10.3343/alm.2016.36.3.244",
      "year": 2016
     },
@@ -1338,6 +1476,7 @@ enum KnowledgeData {
      "citation": "NICE guideline NG8, chronic kidney disease: managing anaemia (2015, updated 2021)",
      "design": "reference range source: guideline",
      "id": "src-b5ba362182",
+     "kind": "guideline",
      "pmid": null,
      "pubmedUrl": null,
      "ranges": [
@@ -1345,6 +1484,9 @@ enum KnowledgeData {
       "reticulocyte-haemoglobin|fmol|any|2021-01-01"
      ],
      "title": "NICE guideline NG8, chronic kidney disease: managing anaemia (2015, updated 2021)",
+     "topics": [
+      "Blood"
+     ],
      "url": "https://www.nice.org.uk/guidance/ng8",
      "year": 2021
     },
@@ -1352,12 +1494,16 @@ enum KnowledgeData {
      "citation": "BSG guideline on iron deficiency anaemia in adults (Snook et al., Gut 2021;70:2030-2051)",
      "design": "reference range source: guideline",
      "id": "pmid-34497146",
+     "kind": "guideline",
      "pmid": "34497146",
      "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/34497146/",
      "ranges": [
       "transferrin-saturation|%|any|2021-01-01"
      ],
      "title": "BSG guideline on iron deficiency anaemia in adults (Snook et al., Gut 2021;70:2030-2051)",
+     "topics": [
+      "Blood"
+     ],
      "url": "https://doi.org/10.1136/gutjnl-2021-325210",
      "year": 2021
     },
@@ -1365,6 +1511,7 @@ enum KnowledgeData {
      "citation": "Serum immunoglobulins in 8768 adults of the Rotterdam Study (Khan et al., J Clin Immunol 2021;41:1902-1914)",
      "design": "reference range source: cohort",
      "id": "pmid-34505230",
+     "kind": "study",
      "pmid": "34505230",
      "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/34505230/",
      "ranges": [
@@ -1372,6 +1519,9 @@ enum KnowledgeData {
       "immunoglobulin-g|mg/dL|any|2021-01-01"
      ],
      "title": "Serum immunoglobulins in 8768 adults of the Rotterdam Study (Khan et al., J Clin Immunol 2021;41:1902-1914)",
+     "topics": [
+      "Proteins and immunity"
+     ],
      "url": "https://doi.org/10.1007/s10875-021-01120-5",
      "year": 2021
     },
@@ -1379,6 +1529,7 @@ enum KnowledgeData {
      "citation": "NICE guideline NG239, vitamin B12 deficiency in over 16s (2024)",
      "design": "reference range source: guideline",
      "id": "src-cb5e7afd12",
+     "kind": "guideline",
      "pmid": null,
      "pubmedUrl": null,
      "ranges": [
@@ -1387,6 +1538,9 @@ enum KnowledgeData {
       "vitamin-b12|pmol/L|any|2024-01-01"
      ],
      "title": "NICE guideline NG239, vitamin B12 deficiency in over 16s (2024)",
+     "topics": [
+      "Vitamins"
+     ],
      "url": "https://www.nice.org.uk/guidance/ng239",
      "year": 2024
     },
@@ -1394,6 +1548,7 @@ enum KnowledgeData {
      "citation": "BCSH guideline on cobalamin and folate disorders (Devalia et al., Br J Haematol 2014;166:496-513)",
      "design": "reference range source: guideline",
      "id": "pmid-24942828",
+     "kind": "guideline",
      "pmid": "24942828",
      "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/24942828/",
      "ranges": [
@@ -1401,6 +1556,9 @@ enum KnowledgeData {
       "folate|ug/L|any|2014-01-01"
      ],
      "title": "BCSH guideline on cobalamin and folate disorders (Devalia et al., Br J Haematol 2014;166:496-513)",
+     "topics": [
+      "Vitamins"
+     ],
      "url": "https://doi.org/10.1111/bjh.12959",
      "year": 2014
     },
@@ -1408,6 +1566,7 @@ enum KnowledgeData {
      "citation": "Labcorp plasma amino acid reference intervals, fasting, over 15 years",
      "design": "reference range source: cohort",
      "id": "src-508e47dd13",
+     "kind": "study",
      "pmid": null,
      "pubmedUrl": null,
      "ranges": [
@@ -1435,6 +1594,9 @@ enum KnowledgeData {
       "tyrosine|umol/L|any|"
      ],
      "title": "Labcorp plasma amino acid reference intervals, fasting, over 15 years",
+     "topics": [
+      "Amino acids"
+     ],
      "url": "https://www.labcorp.com/resource/plasma-amino-acid-reference-intervals",
      "year": null
     },
@@ -1442,12 +1604,16 @@ enum KnowledgeData {
      "citation": "WHO Global Health Observatory, body mass index indicators for adults",
      "design": "reference range source: guideline",
      "id": "src-4b54912ea7",
+     "kind": "guideline",
      "pmid": null,
      "pubmedUrl": null,
      "ranges": [
       "bmi|kg/m2|any|"
      ],
      "title": "WHO Global Health Observatory, body mass index indicators for adults",
+     "topics": [
+      "Body composition"
+     ],
      "url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/body-mass-index",
      "year": null
     },
@@ -1455,6 +1621,7 @@ enum KnowledgeData {
      "citation": "Healthy percentage body fat ranges linked to BMI, 1626 adults measured by DXA and four-compartment model (Gallagher et al., Am J Clin Nutr 2000;72:694-701)",
      "design": "reference range source: cohort",
      "id": "pmid-10966886",
+     "kind": "study",
      "pmid": "10966886",
      "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/10966886/",
      "ranges": [
@@ -1462,6 +1629,9 @@ enum KnowledgeData {
       "body-fat|%|female|2000-01-01"
      ],
      "title": "Healthy percentage body fat ranges linked to BMI, 1626 adults measured by DXA and four-compartment model (Gallagher et al., Am J Clin Nutr 2000;72:694-701)",
+     "topics": [
+      "Body composition"
+     ],
      "url": "https://doi.org/10.1093/ajcn/72.3.694",
      "year": 2000
     },
@@ -1469,12 +1639,16 @@ enum KnowledgeData {
      "citation": "New criteria for obesity disease in Japan, 1193 adults with CT (Examination Committee, Circ J 2002;66:987-992)",
      "design": "reference range source: consensus",
      "id": "pmid-12419927",
+     "kind": "guideline",
      "pmid": "12419927",
      "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/12419927/",
      "ranges": [
       "visceral-fat|cm2|any|2002-01-01"
      ],
      "title": "New criteria for obesity disease in Japan, 1193 adults with CT (Examination Committee, Circ J 2002;66:987-992)",
+     "topics": [
+      "Body composition"
+     ],
      "url": "https://doi.org/10.1253/circj.66.987",
      "year": 2002
     }
@@ -5378,9 +5552,14 @@ enum KnowledgeData {
      "citation": "Mantovani et al., Lancet Gastroenterol Hepatol 2021;6:903",
      "design": "meta-analysis, 36 cohorts, 5.8 million adults",
      "id": "mantovani-2021-cvd",
+     "kind": "study",
      "pmid": "34555346",
      "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/34555346/",
      "title": "Non-alcoholic fatty liver disease and risk of fatal and non-fatal cardiovascular events",
+     "topics": [
+      "Liver",
+      "Heart and vessels"
+     ],
      "url": "https://doi.org/10.1016/S2468-1253(21)00308-3",
      "year": 2021
     },
@@ -5388,9 +5567,14 @@ enum KnowledgeData {
      "citation": "Mantovani et al., Gut 2021;70:962",
      "design": "meta-analysis, 33 studies, 501,022 adults",
      "id": "mantovani-2021-t2d",
+     "kind": "study",
      "pmid": "32938692",
      "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/32938692/",
      "title": "Non-alcoholic fatty liver disease and risk of incident diabetes mellitus",
+     "topics": [
+      "Liver",
+      "Metabolism"
+     ],
      "url": "https://doi.org/10.1136/gutjnl-2020-322572",
      "year": 2021
     },
@@ -5398,9 +5582,14 @@ enum KnowledgeData {
      "citation": "Mantovani et al., Gut 2022;71:156",
      "design": "meta-analysis of cohort studies",
      "id": "mantovani-2022-ckd",
+     "kind": "study",
      "pmid": "33303564",
      "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/33303564/",
      "title": "Non-alcoholic fatty liver disease and risk of incident chronic kidney disease",
+     "topics": [
+      "Liver",
+      "Kidney"
+     ],
      "url": "https://doi.org/10.1136/gutjnl-2020-323082",
      "year": 2022
     },
@@ -5408,9 +5597,14 @@ enum KnowledgeData {
      "citation": "Emerging Risk Factors Collaboration, Lancet 2010;375:2215",
      "design": "pooled analysis, 102 prospective studies, 698,782 people",
      "id": "erfc-2010",
+     "kind": "study",
      "pmid": "20609967",
      "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/20609967/",
      "title": "Diabetes mellitus, fasting blood glucose concentration, and risk of vascular disease",
+     "topics": [
+      "Metabolism",
+      "Heart and vessels"
+     ],
      "url": "https://doi.org/10.1016/S0140-6736(10)60484-9",
      "year": 2010
     },
@@ -5418,9 +5612,14 @@ enum KnowledgeData {
      "citation": "SCORE2-Diabetes Working Group, Eur Heart J 2023;44:2544",
      "design": "risk model, 229,460 people with type 2 diabetes",
      "id": "score2-diabetes-2023",
+     "kind": "study",
      "pmid": "37247330",
      "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/37247330/",
      "title": "SCORE2-Diabetes: 10-year cardiovascular risk estimation in type 2 diabetes in Europe",
+     "topics": [
+      "Metabolism",
+      "Heart and vessels"
+     ],
      "url": "https://doi.org/10.1093/eurheartj/ehad260",
      "year": 2023
     },
@@ -5428,9 +5627,15 @@ enum KnowledgeData {
      "citation": "Ndumele et al., Circulation 2023;148:1606",
      "design": "AHA presidential advisory",
      "id": "ckm-2023",
+     "kind": "guideline",
      "pmid": "37807924",
      "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/37807924/",
      "title": "Cardiovascular-Kidney-Metabolic Health: A Presidential Advisory From the American Heart Association",
+     "topics": [
+      "Metabolism",
+      "Heart and vessels",
+      "Kidney"
+     ],
      "url": "https://doi.org/10.1161/CIR.0000000000001184",
      "year": 2023
     },
@@ -5438,9 +5643,14 @@ enum KnowledgeData {
      "citation": "KDIGO 2022 Clinical Practice Guideline for Diabetes Management in CKD, Kidney Int 2022;102:S1",
      "design": "clinical practice guideline",
      "id": "kdigo-2022-diabetes",
+     "kind": "guideline",
      "pmid": "36272764",
      "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/36272764/",
      "title": "KDIGO 2022 Clinical Practice Guideline for Diabetes Management in Chronic Kidney Disease",
+     "topics": [
+      "Metabolism",
+      "Kidney"
+     ],
      "url": "https://doi.org/10.1016/j.kint.2022.06.008",
      "year": 2022
     },
@@ -5448,9 +5658,14 @@ enum KnowledgeData {
      "citation": "EASL-EASD-EASO, J Hepatol 2024;81:492",
      "design": "clinical practice guideline",
      "id": "easl-2024-masld",
+     "kind": "guideline",
      "pmid": "38851997",
      "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/38851997/",
      "title": "EASL-EASD-EASO Clinical Practice Guidelines on the management of MASLD",
+     "topics": [
+      "Liver",
+      "Metabolism"
+     ],
      "url": "https://doi.org/10.1016/j.jhep.2024.04.031",
      "year": 2024
     },
@@ -5458,9 +5673,14 @@ enum KnowledgeData {
      "citation": "Chronic Kidney Disease Prognosis Consortium (Matsushita et al.), Lancet 2010;375:2073",
      "design": "collaborative meta-analysis of general population cohorts",
      "id": "ckdpc-2010",
+     "kind": "study",
      "pmid": "20483451",
      "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/20483451/",
      "title": "Association of estimated glomerular filtration rate and albuminuria with all-cause and cardiovascular mortality in general population cohorts",
+     "topics": [
+      "Kidney",
+      "Heart and vessels"
+     ],
      "url": "https://doi.org/10.1016/S0140-6736(10)60674-5",
      "year": 2010
     },
@@ -5468,9 +5688,14 @@ enum KnowledgeData {
      "citation": "Khan et al., Circulation 2024;149:430",
      "design": "risk model (AHA PREVENT), US adults 30-79",
      "id": "prevent-2024",
+     "kind": "study",
      "pmid": "37947085",
      "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/37947085/",
      "title": "Development and Validation of the American Heart Association's PREVENT Equations",
+     "topics": [
+      "Kidney",
+      "Heart and vessels"
+     ],
      "url": "https://doi.org/10.1161/CIRCULATIONAHA.123.067626",
      "year": 2024
     },
@@ -5478,9 +5703,14 @@ enum KnowledgeData {
      "citation": "KDIGO 2017 CKD-MBD Guideline Update, Kidney Int Suppl 2017;7:1",
      "design": "clinical practice guideline",
      "id": "kdigo-2017-mbd",
+     "kind": "guideline",
      "pmid": "30675420",
      "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/30675420/",
      "title": "KDIGO 2017 Clinical Practice Guideline Update for CKD-Mineral and Bone Disorder",
+     "topics": [
+      "Kidney",
+      "Bone"
+     ],
      "url": "https://doi.org/10.1016/j.kisu.2017.04.001",
      "year": 2017
     },
@@ -5488,9 +5718,14 @@ enum KnowledgeData {
      "citation": "Vestergaard, Osteoporos Int 2007;18:427",
      "design": "meta-analysis",
      "id": "vestergaard-2007",
+     "kind": "study",
      "pmid": "17068657",
      "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/17068657/",
      "title": "Discrepancies in bone mineral density and fracture risk in patients with type 1 and type 2 diabetes",
+     "topics": [
+      "Metabolism",
+      "Bone"
+     ],
      "url": "https://doi.org/10.1007/s00198-006-0253-4",
      "year": 2007
     },
@@ -5498,9 +5733,14 @@ enum KnowledgeData {
      "citation": "Kodama et al., JAMA 2009;301:2024",
      "design": "meta-analysis, 33 studies, 102,980 people",
      "id": "kodama-2009",
+     "kind": "study",
      "pmid": "19454641",
      "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/19454641/",
      "title": "Cardiorespiratory fitness as a quantitative predictor of all-cause mortality and cardiovascular events in healthy men and women",
+     "topics": [
+      "Fitness",
+      "Heart and vessels"
+     ],
      "url": "https://doi.org/10.1001/jama.2009.681",
      "year": 2009
     }

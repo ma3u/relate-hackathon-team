@@ -12,6 +12,7 @@ the ranges those values sit in.
     (:HealthRisk)-[:RAISES_RISK_OF {summary, measure, estimate, ciLow, ciHigh, studies}]->(:HealthRisk)
     (:Study {citation, title, year, design, url, pmid, pubmedUrl})-[:ABOUT]->(:HealthRisk)   the evidence for a link
     (:Study)-[:EXAMINES]->(:LoincCode), (:Study)-[:INFORMS]->(:RiskScore)   the markers and scores it is about
+    (:Study {kind: study|guideline, topics})-[:CITES]->(:Study)            which sources cite each other
     (:Patient)-[:HAS_SCORE]->(:ScoreResult)-[:OF]->(:RiskScore)
     (:ScoreResult)-[:FROM]->(:Observation)              the exact values a score used
 
@@ -165,6 +166,33 @@ STUDIES = [
      "pmid": "19454641", "examines": ["94122-9"], "informs": []},
 ]
 
+# Which of these sources cite each other: OpenAlex `referenced_works` of every
+# source with a DOI (33 of 40), intersected with this list; retrieved 2026-11-13.
+STUDY_CITATIONS = [  # (citing, cited)
+    ("easl-2024-masld", "mantovani-2021-cvd"), ("easl-2024-masld", "mantovani-2021-t2d"),
+    ("easl-2024-masld", "mantovani-2022-ckd"), ("easl-2024-masld", "pmid-12093239"),
+    ("mantovani-2021-cvd", "mantovani-2021-t2d"), ("mantovani-2021-cvd", "mantovani-2022-ckd"),
+    ("mantovani-2022-ckd", "mantovani-2021-t2d"), ("pmid-15223694", "pmid-15223702"),
+    ("pmid-31504418", "ckdpc-2010"), ("pmid-31504418", "erfc-2010"), ("pmid-36036785", "pmid-31504418"),
+    ("pmid-38519239", "kdigo-2022-diabetes"), ("prevent-2024", "ckdpc-2010"), ("prevent-2024", "ckm-2023"),
+    ("score2-diabetes-2023", "erfc-2010"),
+]
+
+# Topics cluster the evidence: a risk link's studies by the risks they connect,
+# a range source by the groups of the ranges it sets.
+TOPIC_OF_RISK = {"cardiovascular": "Heart and vessels", "diabetes": "Metabolism", "kidney": "Kidney",
+                 "liver": "Liver", "bone": "Bone", "fitness": "Fitness"}
+TOPIC_OF_GROUP = {"cardiovascular": "Heart and vessels", "metabolic": "Metabolism", "kidney": "Kidney",
+                  "liver": "Liver", "electrolytes": "Electrolytes", "haematology": "Blood",
+                  "proteins": "Proteins and immunity", "vitamins": "Vitamins", "aminoAcids": "Amino acids",
+                  "body": "Body composition"}
+
+
+def _kind(design: str) -> str:
+    """A guideline (or consensus, advisory) states what to do; a study measured something."""
+    return "guideline" if any(w in design for w in ("guideline", "consensus", "advisory")) else "study"
+
+
 # Names for codes only the studies bring in (the others are named by the lab values).
 CODE_NAMES = {
     "9318-7": "Albumin/Creatinine [Mass Ratio] in Urine",
@@ -253,15 +281,27 @@ def _range_source_rows() -> list[dict]:
             "design": set(), "url": f"https://doi.org/{r['sourceDoi']}" if r["sourceDoi"] else r["sourceUrl"],
             "pmid": r["sourcePmid"],
             "pubmedUrl": f"https://pubmed.ncbi.nlm.nih.gov/{r['sourcePmid']}/" if r["sourcePmid"] else None,
-            "ranges": []})
+            "ranges": [], "topics": []})
         st["design"].add(r["basis"])
         st["ranges"].append(r["id"])
-    return [st | {"design": "reference range source: " + ", ".join(sorted(st["design"]))} for st in sources.values()]
+        if TOPIC_OF_GROUP[r["group"]] not in st["topics"]:
+            st["topics"].append(TOPIC_OF_GROUP[r["group"]])
+    return [st | {"design": "reference range source: " + ", ".join(sorted(st["design"])),
+                  "kind": "guideline" if st["design"] & {"guideline", "consensus"} else "study"}
+            for st in sources.values()]
 
 
 def _study_rows() -> list[dict]:
+    def topics(sid):
+        risks = [r for link in RISK_LINKS if sid in link["studies"] for r in (link["from"], link["to"])]
+        return list(dict.fromkeys(TOPIC_OF_RISK[r] for r in risks))
     return [{k: v for k, v in st.items() if k not in ("examines", "informs")} |
-            {"pubmedUrl": f"https://pubmed.ncbi.nlm.nih.gov/{st['pmid']}/"} for st in STUDIES]
+            {"pubmedUrl": f"https://pubmed.ncbi.nlm.nih.gov/{st['pmid']}/", "kind": _kind(st["design"]),
+             "topics": topics(st["id"])} for st in STUDIES]
+
+
+def _citation_rows() -> list[dict]:
+    return [{"from": a, "to": b} for a, b in STUDY_CITATIONS]
 
 
 def _examines_rows() -> list[dict]:
@@ -279,7 +319,8 @@ def _marker_rows() -> list[dict]:
 
 def fingerprint() -> str:
     """Changes whenever any seeded fact changes, so seeding runs only then."""
-    blob = json.dumps([HEALTH_RISKS, RISK_SCORES, _marker_rows(), _range_rows(), STUDIES, RISK_LINKS, CODE_NAMES],
+    blob = json.dumps([HEALTH_RISKS, RISK_SCORES, _marker_rows(), _range_rows(), STUDIES, RISK_LINKS, CODE_NAMES,
+                       STUDY_CITATIONS, TOPIC_OF_RISK, TOPIC_OF_GROUP],
                       sort_keys=True)
     return hashlib.sha256(blob.encode()).hexdigest()[:16]
 
@@ -328,8 +369,17 @@ SEED_STUDIES = """
 UNWIND $studies AS s
 MERGE (st:Study {id: s.id})
 SET st.citation = s.citation, st.title = s.title, st.year = s.year, st.design = s.design, st.url = s.url,
-    st.pmid = s.pmid, st.pubmedUrl = s.pubmedUrl
+    st.pmid = s.pmid, st.pubmedUrl = s.pubmedUrl, st.kind = s.kind, st.topics = s.topics
 RETURN count(st) AS studies
+"""
+
+SEED_STUDY_CITATIONS = """
+UNWIND $citations AS c
+MATCH (a:Study {id: c.from})
+MATCH (b:Study {id: c.to})
+MERGE (a)-[k:CITES]->(b)
+SET k.source = 'OpenAlex referenced_works'
+RETURN count(k) AS citations
 """
 
 SEED_STUDY_MARKERS = """
@@ -376,7 +426,7 @@ SEED_RANGE_SOURCES = """
 UNWIND $rangeSources AS s
 MERGE (st:Study {id: s.id})
 SET st.citation = s.citation, st.title = s.title, st.year = s.year, st.design = s.design, st.url = s.url,
-    st.pmid = s.pmid, st.pubmedUrl = s.pubmedUrl
+    st.pmid = s.pmid, st.pubmedUrl = s.pubmedUrl, st.kind = s.kind, st.topics = s.topics
 WITH st, s
 UNWIND s.ranges AS rid
 MATCH (rr:ReferenceRange {id: rid})
@@ -407,6 +457,7 @@ def seed(conn, force: bool = False) -> dict[str, int]:
         counts.update(dict(conn.execute(SEED_RANGES, {"ranges": _range_rows()}).single()))
         counts.update(dict(conn.execute(SEED_RANGE_SOURCES, {"rangeSources": _range_source_rows()}).single()))
         counts.update(dict(conn.execute(SEED_STUDIES, {"studies": _study_rows()}).single()))
+        counts.update(dict(conn.execute(SEED_STUDY_CITATIONS, {"citations": _citation_rows()}).single()))
         counts.update(dict(conn.execute(SEED_STUDY_MARKERS, {"examines": _examines_rows()}).single()))
         counts.update(dict(conn.execute(SEED_STUDY_SCORES, {"informs": _informs_rows()}).single()))
         counts.update(dict(conn.execute(SEED_RISK_LINKS, {"links": RISK_LINKS}).single()))
