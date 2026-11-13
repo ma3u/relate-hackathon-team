@@ -84,6 +84,10 @@ def describe(label, p):
         return label, p.get("name"), [p.get("source") or ""]
     if label == "Knowledge":
         return label, "Knowledge layer", [p.get("rangesSource") or ""]
+    if label == "Study":
+        first = (p.get("citation") or "").split(",")[0].replace(" et al.", "")
+        return label, f"{first} {p.get('year') or ''}".strip(), [p.get("title") or "", p.get("citation") or "",
+                                                               p.get("design") or "", p.get("url") or ""]
     if label == "OMOPPerson":
         return label, "OMOP person", []
     if label == "OMOPMeasurement":
@@ -150,6 +154,9 @@ def build(nodes_in, links_in):
                     node["rl"] = p["referenceLow"]
                 if p.get("referenceHigh") is not None:
                     node["rh"] = p["referenceHigh"]
+        if r["label"] == "Study":
+            node["sid"] = p.get("id")
+            node["url"] = p.get("url")
         if r["label"] == "ReferenceRange":
             node["r"] = {k: p.get(f) for k, f in (("gl", "guidelineLow"), ("gh", "guidelineHigh"), ("ol", "optimalLow"),
                                                    ("oh", "optimalHigh"), ("u", "ucum"), ("sex", "sex"), ("src", "sourceLabel"))
@@ -170,8 +177,27 @@ def build(nodes_in, links_in):
                 node["out"] = 1
                 node["d"].insert(1, "Outside the lab's range")
         nodes.append(node)
-    links = [{"source": r["s"], "target": r["t"], "t": r["type"]} for r in links_in]
+    links = [{"source": r["s"], "target": r["t"], "t": r["type"], **({"p": r["p"]} if r.get("p") else {})}
+             for r in links_in]
     return {"nodes": nodes, "links": links, "sex": sex}
+
+
+def seed_knowledge(db):
+    """Brings the copy's knowledge layer up to date (studies, risk links), so the view shows the newest
+    facts even before the app that wrote the store has seeded them. Only the copy is written."""
+    try:
+        sys.path.insert(0, str(ROOT))
+        from health_graph import knowledge, store
+    except ImportError as e:  # relate-db not installed for this Python
+        print(f"graph3d: knowledge layer left as stored ({e}); run with the repo's .venv to refresh it",
+              file=sys.stderr)
+        return
+    conn = store.connect(str(db))
+    try:
+        if counts := knowledge.seed(conn):
+            print(f"graph3d: refreshed the knowledge layer in the copy: {counts}", file=sys.stderr)
+    finally:
+        conn.close()
 
 
 def main():
@@ -192,8 +218,10 @@ def main():
         db = Path(tmp) / "store.rl"
         src = Path(a.db).expanduser()
         (shutil.copytree if src.is_dir() else shutil.copy2)(src, db)
+        seed_knowledge(db)
         nodes = query(a.relate, db, "MATCH (n) RETURN id(n) AS id, labels(n)[0] AS label, properties(n) AS p")
-        links = query(a.relate, db, "MATCH (a)-[r]->(b) RETURN id(a) AS s, id(b) AS t, type(r) AS type")
+        links = query(a.relate, db, "MATCH (a)-[r]->(b) RETURN id(a) AS s, id(b) AS t, type(r) AS type, "
+                                    "CASE WHEN type(r) = 'RAISES_RISK_OF' THEN properties(r) END AS p")
 
     data = build(nodes, links)
     page = TEMPLATE.read_text().replace(

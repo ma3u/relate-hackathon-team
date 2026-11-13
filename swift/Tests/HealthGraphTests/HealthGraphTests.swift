@@ -442,7 +442,8 @@ struct PatientAttributeTests {
 
 @Suite("Knowledge layer", .serialized)
 struct KnowledgeTests {
-  /// Same counts as the Python seed: 6 risks, 4 scores, 55 marker links, 173 ranges.
+  /// Same counts as the Python seed: 6 risks, 4 scores, 55 marker links, 173 ranges,
+  /// 13 studies, 10 risk links.
   @Test func seedsTheSameKnowledgeAsPython() throws {
     let store = try HealthStore(path: Fixtures.tempStore())
     try store.initSchema()
@@ -452,6 +453,9 @@ struct KnowledgeTests {
     #expect(try store.count("ReferenceRange") == 173)
     let markers = try store.rows(cypher: "MATCH (:LoincCode)-[k:MARKER_OF]->(:HealthRisk) RETURN count(k) AS n")
     #expect(markers.first?["n"] == "55")
+    #expect(try store.count("Study") == 13)
+    let links = try store.rows(cypher: "MATCH (:HealthRisk)-[k:RAISES_RISK_OF]->(:HealthRisk) RETURN count(k) AS n")
+    #expect(links.first?["n"] == "10")
   }
 
   @Test func seedingTwiceChangesNothing() throws {

@@ -95,7 +95,7 @@
 const DATA = /*DATA*/null;
 
 const FAMILIES = [
-  ["Risks", [["HealthRisk", "#F09595"], ["RiskScore", "#ED93B1"]]],
+  ["Risks", [["HealthRisk", "#F09595"], ["RiskScore", "#ED93B1"], ["Study", "#F5C4B3"]]],
   ["Measures", [
     ["Lab value", "#5DCAA5"], ["Apple Watch week", "#85B7EB"], ["LoincCode", "#D3D1C7"],
     ["ReferenceRange", "#AFA9EC"], ["NcbiTaxon", "#888780"]]],
@@ -105,6 +105,7 @@ const FAMILIES = [
   ["Research copy", [["OMOPPerson", "#F0997B"], ["OMOPMeasurement", "#D85A30"], ["Knowledge", "#7F77DD"]]],
 ];
 const OUT_COLOR = "#E24B4A";
+const RISK_LINK = "#EF9F27";  // (:HealthRisk)-[:RAISES_RISK_OF]->(:HealthRisk), from studies
 const COLOR = {}, VISIBLE = {};
 FAMILIES.forEach(([, gs]) => gs.forEach(([g, c]) => { COLOR[g] = c; VISIBLE[g] = true; }));
 const famGroups = i => FAMILIES.slice(0, i + 1).flatMap(([, gs]) => gs.map(([g]) => g));
@@ -113,7 +114,7 @@ const famGroups = i => FAMILIES.slice(0, i + 1).flatMap(([, gs]) => gs.map(([g])
 const STAGES = [
   { name: "Current risks", groups: [...famGroups(0), "LoincCode", "Lab value"],
     only: n => n.g === "LoincCode" ? n.mk : n.g === "Lab value" ? n.cur : true,
-    hint: "Health risks and risk scores, their marker codes, and your latest value on each. Red: outside the lab's range." },
+    hint: "Health risks and risk scores, their marker codes, and your latest value on each. Red: outside the lab's range. Orange arrows: how one risk raises another, from studies." },
   { name: "Measures", groups: famGroups(1), only: () => true,
     hint: "Every lab value and Apple Watch week, with LOINC codes and guideline ranges." },
   { name: "Documents", groups: famGroups(2), only: () => true,
@@ -128,7 +129,14 @@ DATA.nodes.forEach(n => { n.deg = 0; n.nbs = []; });
 DATA.links.forEach(l => {
   const a = byId.get(l.source), b = byId.get(l.target);
   a.deg++; b.deg++; a.nbs.push([l.t, b, "out"]); b.nbs.push([l.t, a, "in"]);
+  if (l.t === "RAISES_RISK_OF") {
+    (a.rlinks = a.rlinks || []).push({ dir: "out", other: b, p: l.p || {} });
+    (b.rlinks = b.rlinks || []).push({ dir: "in", other: a, p: l.p || {} });
+  }
 });
+const studyById = new Map(DATA.nodes.filter(n => n.sid).map(n => [n.sid, n]));
+const effect = p => p.estimate == null ? "" :
+  ` · ${(p.measure || "").split(",")[0]} ${p.estimate}${p.ciLow != null ? ` (${p.ciLow}–${p.ciHigh})` : ""}`;
 const counts = {};
 DATA.nodes.forEach(n => counts[n.g] = (counts[n.g] || 0) + 1);
 document.getElementById("totals").textContent =
@@ -149,9 +157,14 @@ const Graph = new ForceGraph3D(document.getElementById("graph"))
   .nodeColor(n => n.out ? OUT_COLOR : COLOR[n.g])
   .nodeLabel(n => `<b>${esc(n.n)}</b><br><span style="color:${COLOR[n.g]}">${esc(n.g)}</span>` +
     (n.d.length ? "<br>" + n.d.slice(0, 3).map(esc).join("<br>") : ""))
-  .linkColor(l => hlLinks.has(l) ? "#ffffff" : (COLOR[l.source.g || byId.get(l.source).g] || "#555"))
+  .linkColor(l => hlLinks.has(l) ? "#ffffff" : l.t === "RAISES_RISK_OF" ? RISK_LINK : (COLOR[l.source.g || byId.get(l.source).g] || "#555"))
   .linkOpacity(0.22)
-  .linkWidth(l => hlLinks.has(l) ? 1.4 : 0)
+  .linkWidth(l => hlLinks.has(l) ? 1.4 : l.t === "RAISES_RISK_OF" ? 1.2 : 0)
+  .linkCurvature(l => l.t === "RAISES_RISK_OF" ? 0.2 : 0)
+  .linkDirectionalArrowLength(l => l.t === "RAISES_RISK_OF" ? 7 : 0)
+  .linkDirectionalArrowRelPos(0.92)
+  .linkDirectionalArrowColor(() => RISK_LINK)
+  .linkLabel(l => l.t === "RAISES_RISK_OF" && l.p ? `<b>${esc(l.source.n)} → ${esc(l.target.n)}</b>${esc(effect(l.p))}<br>${esc(l.p.summary || "")}` : "")
   .linkDirectionalParticles(l => hlLinks.has(l) ? 3 : 0)
   .linkDirectionalParticleWidth(1.6)
   .linkDirectionalParticleSpeed(0.006)
@@ -179,6 +192,7 @@ function markerCodes(n) {
 }
 function drillSet(n) {
   const S = new Set([n]), add = ms => ms.forEach(m => S.add(m));
+  if (n.g === "HealthRisk") add(nb(n, ["RAISES_RISK_OF", "ABOUT"]));
   if (["HealthRisk", "RiskScore", "LoincCode"].includes(n.g)) {
     add(nb(n, ["ESTIMATES", "MARKER_OF", "USES"]));
     markerCodes(n).forEach(c => {
@@ -353,6 +367,29 @@ function showDetail(n) {
     if (c) html += chartsFor(c, n);
   }
 
+  // How this risk raises others, and is raised by them, with the studies.
+  if (n.rlinks) [["out", "Raises the risk of"], ["in", "Its risk is raised by"]].forEach(([dir, title]) => {
+    const ls = n.rlinks.filter(x => x.dir === dir);
+    if (!ls.length) return;
+    html += `<div class="rel">${title}, from studies</div>`;
+    ls.forEach(x => {
+      html += btn(x.other, `${dir === "out" ? "→" : "←"} ${x.other.n}${effect(x.p)}`, "code");
+      if (x.p.summary) html += `<div class="hint inset" style="margin-top:0">${esc(x.p.summary)}</div>`;
+      (x.p.studies || []).forEach(id => { const st = studyById.get(id); if (st) html += btn(st, st.d[1] || st.n, "inset"); });
+    });
+  });
+  if (n.g === "Study") {
+    if (n.url) html += `<p><a href="${esc(n.url)}" target="_blank" rel="noopener" style="color:var(--accent)">Open the study (DOI) ↗</a></p>`;
+    const ev = DATA.links.filter(l => l.p && (l.p.studies || []).includes(n.sid));
+    if (ev.length) {
+      html += `<div class="rel">Evidence for</div>`;
+      ev.forEach(l => {
+        const a = byId.get(endId(l.source)), b = byId.get(endId(l.target));
+        html += btn(a, `${a.n} → ${b.n}${effect(l.p)}`);
+      });
+    }
+  }
+
   const codes = n.g === "LoincCode" ? [] : markerCodes(n);
   if (codes.length) {
     const rows = codes.map(c => ({ c, vs: nb(c, ["CODED_BY"]).filter(o => o.g === "Lab value" && !o.dup)
@@ -375,6 +412,7 @@ function showDetail(n) {
   });
   Object.entries(groups).sort((a, b) => a[1].length - b[1].length).forEach(([k, ms]) => {
     if (codes.length && /CODED_BY/.test(k)) return;  // listed above, by date
+    if (n.rlinks && /RAISES_RISK_OF/.test(k)) return;  // listed above, with the studies
     html += `<div class="rel">${esc(k)} (${ms.length})</div>`;
     ms.slice(0, 40).forEach(m => html += btn(m));
     if (ms.length > 40) html += `<div class="hint">… and ${ms.length - 40} more</div>`;
@@ -560,6 +598,7 @@ function buildLabels(nodes) {
   nodes.forEach(n => {
     if (["Apple Watch week", "Provenance", "OMOPMeasurement", "OMOPPerson"].includes(n.g)) return;
     if (n.g === "ReferenceRange" && !(top && top.g === "LoincCode")) return;
+    if (n.g === "Study" && !top) return;  // named in the drill-down, not in the overview
     if (n.g === "Lab value" && !(allValues || n.cur || n.out)) return;
     const d = document.createElement("div");
     d.textContent = n.g === "Lab value" ? `${n.val || ""}${n.dt ? " · " + n.dt.slice(0, 7) : ""}` : short(n.n);

@@ -139,7 +139,8 @@ case "${1:-status}" in
     [ -f "$app" ] && { [ ! -e "$src" ] || [ "$app" -nt "$src" ]; } && src="$app"
     [ -e "$src" ] || { log "no graph yet: open Klarbefund for Mac or run '$0 receive', then send from the iPhone"; exit 1; }
     out="$MOUNT/graph3d/index.html"
-    RELATE_BIN="$RELATE" python3 "$REPO/scripts/graph3d.py" --db "$src" --out "$out"
+    py="$REPO/.venv/bin/python"; [ -x "$py" ] || py=python3
+    RELATE_BIN="$RELATE" "$py" "$REPO/scripts/graph3d.py" --db "$src" --out "$out"
     # 8799, or the next free port when another server (an earlier graph3d) has it.
     port="$(python3 -c '
 import socket, sys

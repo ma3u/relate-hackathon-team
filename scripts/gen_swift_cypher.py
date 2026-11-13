@@ -26,6 +26,8 @@ KNOWLEDGE = [
     ("seedScores", "SEED_SCORES"),
     ("seedMarkers", "SEED_MARKERS"),
     ("seedRanges", "SEED_RANGES"),
+    ("seedStudies", "SEED_STUDIES"),
+    ("seedRiskLinks", "SEED_RISK_LINKS"),
     ("seedVersion", "SEED_VERSION"),
 ]
 
@@ -88,13 +90,15 @@ def render() -> str:
 
 
 def render_knowledge() -> str:
-    """The knowledge layer's facts (risks, scores, markers, ranges) as JSON in Swift."""
+    """The knowledge layer's facts (risks, scores, markers, ranges, studies, risk links) as JSON in Swift."""
     import json
     data = {
         "risks": knowledge.HEALTH_RISKS,
         "scores": knowledge.RISK_SCORES,
         "markers": knowledge._marker_rows(),
         "ranges": knowledge._range_rows(),
+        "studies": knowledge.STUDIES,
+        "links": knowledge.RISK_LINKS,
     }
     source = json.loads((ROOT / "health_graph/reference_ranges.json").read_text())["source"]
     blob = json.dumps(data, ensure_ascii=False, sort_keys=True, indent=1)

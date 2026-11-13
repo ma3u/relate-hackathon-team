@@ -3,7 +3,8 @@ import Relate
 
 /// The knowledge layer, as `health_graph/knowledge.py` seeds it: health risks,
 /// risk scores, the measures guidelines name for each risk, and official and
-/// optimal reference ranges, each with its source. The facts and the Cypher are
+/// optimal reference ranges, and how the risks raise each other with the studies
+/// that show it, each with its source. The facts and the Cypher are
 /// generated from the Python (KnowledgeData.swift, Cypher.swift).
 extension HealthStore {
   /// Writes the knowledge layer; a no-op when it is already current.
@@ -17,6 +18,7 @@ extension HealthStore {
     let steps: [(String, String)] = [
       (Cypher.seedRisks, "risks"), (Cypher.seedScores, "scores"),
       (Cypher.seedMarkers, "markers"), (Cypher.seedRanges, "ranges"),
+      (Cypher.seedStudies, "studies"), (Cypher.seedRiskLinks, "links"),
     ]
     for (cypher, key) in steps {
       let rows = try connection.query(cypher, [key: JSON.cypher(data[key])]).records

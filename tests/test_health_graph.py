@@ -262,6 +262,21 @@ def test_knowledge_is_seeded_once_and_links_ranges_to_loinc(db):
     assert walk == 5  # total cholesterol and HDL in two units each, systolic BP
 
 
+def test_risk_links_name_their_studies(db):
+    from health_graph import knowledge
+    from health_graph.queries import QUERIES
+    conn, _ = db
+    counts = knowledge.seed(conn)
+    assert counts["studies"] == len(knowledge.STUDIES) and counts["riskLinks"] == len(knowledge.RISK_LINKS)
+    ids = {s["id"] for s in knowledge.STUDIES}
+    assert all(set(link["studies"]) <= ids for link in knowledge.RISK_LINKS)  # no dangling citation
+    rows = list(conn.execute(QUERIES["risk_links"][1]))
+    assert len(rows) == len(knowledge.RISK_LINKS)
+    liver = next(r for r in rows if r["risk"] == "Liver fibrosis" and r["raisesRiskOf"] == "Type 2 diabetes")
+    assert liver["estimate"] == 2.19 and liver["studies"] and all(liver["studies"])
+    assert all(r["studies"] for r in rows)  # every link reaches at least one Study
+
+
 def test_a_stored_score_points_at_the_values_it_used(db):
     from health_graph import knowledge
     conn, _ = db

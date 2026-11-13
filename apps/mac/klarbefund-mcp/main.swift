@@ -31,11 +31,15 @@ let instructions = """
   - Knowledge: (:LoincCode)-[:MARKER_OF {source}]->(:HealthRisk {id, name}); \
   (:RiskScore {name, source})-[:ESTIMATES]->(:HealthRisk), (:RiskScore)-[:USES]->(:LoincCode); \
   (:ReferenceRange {guidelineLow, guidelineHigh, optimalLow, optimalHigh, ucum, sex, summary, sourceLabel, sourceUrl})-[:APPLIES_TO]->(:LoincCode).
+  - How risks raise each other: (:HealthRisk)-[:RAISES_RISK_OF {summary, measure, estimate, ciLow, ciHigh, studies}]->(:HealthRisk), \
+  from meta-analyses and guidelines; (:Study {citation, title, year, design, url})-[:ABOUT]->(:HealthRisk) for the evidence \
+  (k.studies holds the Study ids). Observational: an association, not proof of cause.
   - OMOP research copies: (:OMOPPerson), (:OMOPMeasurement).
 
   How to work:
   - Call get_schema first, then read_cypher. Count a value seen in two reports once: filter `o.duplicateOf IS NULL`.
-  - Compare values with ReferenceRange in the same unit (r.ucum = o.ucum); say which range and source you used.
+  - Compare values with ReferenceRange in the same unit (r.ucum = o.unit); say which range and source you used.
+  - When a value raises one risk, follow RAISES_RISK_OF to the risks that one raises in turn, and cite the Study.
   - Name dates and sources (report title, lab) for every number you quote, so the user can check it on the paper.
   - If the graph is empty or unavailable, explain the setup: open Klarbefund for Mac, then on the iPhone open \
   Klarbefund, Menu, Export to my Mac (Relate), scan the QR code the Mac shows, and send the reports.

@@ -36,6 +36,8 @@ flowchart LR
   RS -- USES --> LC
   LC -- MARKER_OF --> HR
   RR((ReferenceRange)) -- APPLIES_TO --> LC
+  HR -- RAISES_RISK_OF --> HR
+  ST((Study)) -- ABOUT --> HR
   P -- HAS_SCORE --> SR((ScoreResult))
   SR -- OF --> RS
   SR -- FROM --> O
@@ -55,6 +57,7 @@ flowchart LR
 | Knowledge | `HealthRisk` | `id` | cardiovascular, diabetes, kidney, liver, bone (osteoporosis), fitness |
 | | `RiskScore` | `id` | SCORE2, eGFR (CKD-EPI 2021), FIB-4, TyG; `source`, `demographics`; `USES` the LOINC codes of its inputs |
 | | `ReferenceRange` | `analyteKey\|ucum\|sex` | `guidelineLow/High` (official), `optimalLow/High` (lowest-risk band), `basis`, `summary`, `sourceLabel/Url`; from Klarbefund's `reference-ranges.ts`, quoted unchanged |
+| | `Study` | `id` | `citation`, `title`, `year`, `design`, `url` (DOI); the evidence behind a `RAISES_RISK_OF` link, `ABOUT` both risks it connects |
 | | `ScoreResult` | `<patient>-<score>` | `value`, `band`, `light`, `computedAt`, `demographics`; `FROM` the exact Observations it used |
 | | `Knowledge` | `id` | `fingerprint` of the seeded facts, so seeding runs only when they change |
 
@@ -66,6 +69,7 @@ Files: [`health_graph/schema.cypher`](../health_graph/schema.cypher) (constraint
 - **Re-importing a report replaces it** (delete by `sourceReport`, then MERGE), the same rule the Hub uses. Imports are idempotent, and the tests check this.
 - **Duplicates are counted once, never deleted.** A value printed twice on one report (microbiome reports list a species in an overview and again in detail) becomes one `Observation` with `repeatedOnReport`. The same measurement in two reports (one sheet scanned twice, or one result printed on two documents of a visit: same LOINC code or printed label, day, value, comparator and unit) stays in both, but one copy is kept and the others get `duplicateOf` and `SAME_AS` to it, preferring the laboratory's digital file over a scan. `trend`, `analytes` and the OMOP transform count the kept copy only; `duplicates` lists the rest. Found in a real graph on Nov 12, 2026: one report scanned twice, two documents of one test day sharing 6 values, a body measurement entered twice, 13 repeated rows on one report.
 - **The knowledge layer** (`health_graph/knowledge.py`, `python -m health_graph knowledge`) is the same for everyone and sits next to the person's data: which scores estimate which health risk and from which measures, which measures a guideline names as markers of a risk (each `MARKER_OF` carries its source), and Klarbefund's sourced reference ranges, an official guideline range and, where the source names one, an optimal band. `health_graph/reference_ranges.json` is exported from MinimumViableHealthDataspacev2 with `npm run export:reference-ranges` in `services/epa-ingest`; refresh it there, never edit it here. The range a laboratory printed stays on the Observation and is shown alongside, never replaced.
+- **The risks raise each other** (`RAISES_RISK_OF`, query `risk_links`): fatty liver disease and fibrosis raise the risk of cardiovascular disease, type 2 diabetes and CKD; diabetes that of cardiovascular disease, CKD, liver fibrosis and hip fracture; CKD that of cardiovascular disease and bone disease; fitness lowers cardiovascular risk. That is the cardiovascular-kidney-metabolic (CKM) picture of the AHA's 2023 advisory. Each link carries the study's own effect size where there is one (`measure`, `estimate`, `ciLow/High`; observational, so an association, not proof of cause), a plain-language `summary`, and the ids of its `Study` nodes (meta-analyses, pooled cohorts, guidelines, each with its DOI, checked against Crossref).
 - **Score results are stored with their inputs** (`python -m health_graph scores`): a `ScoreResult` points at the exact Observations it used, so "what is my SCORE2 and from which values" is one query.
 - **`hubEligible`** applies the Hub's acceptance rules locally (status `preliminary`, LOINC code, number, UCUM unit, date). A `lab-issued-digital` report is `final`, so the Hub's sandbox would refuse it: `0 Hub-ready` above is correct.
 - **New in this project** (proposals, not in the Hub yet): `HAS_DIAGNOSTIC_REPORT`, `HAS_RESULT`, `DERIVED_FROM`, `PERFORMED_BY`, `TARGET`, `IDENTIFIES`, `Organization`, `NcbiTaxon`.

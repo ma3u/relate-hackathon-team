@@ -108,6 +108,18 @@ QUERIES: dict[str, tuple[str, str]] = {
         ORDER BY date DESC
         """,
     ),
+    "risk_links": (
+        "How the health risks raise each other, with the effect size and the studies that show it",
+        """
+        MATCH (a:HealthRisk)-[k:RAISES_RISK_OF]->(b:HealthRisk)
+        OPTIONAL MATCH (st:Study)-[:ABOUT]->(a)
+        WHERE st.id IN k.studies
+        RETURN a.name AS risk, b.name AS raisesRiskOf, k.measure AS measure, k.estimate AS estimate,
+               k.ciLow AS ciLow, k.ciHigh AS ciHigh, k.summary AS summary,
+               collect(st.citation) AS studies
+        ORDER BY risk, raisesRiskOf
+        """,
+    ),
     "provenance": (
         "Where one value (param resourceId) came from: line on the paper, OCR, document, agent",
         """

@@ -8,6 +8,8 @@ the ranges those values sit in.
     (:HealthRisk)<-[:ESTIMATES]-(:RiskScore)-[:USES]->(:LoincCode)
     (:LoincCode)-[:MARKER_OF {source}]->(:HealthRisk)
     (:ReferenceRange)-[:APPLIES_TO]->(:LoincCode)        guideline range + optimal band
+    (:HealthRisk)-[:RAISES_RISK_OF {summary, measure, estimate, ciLow, ciHigh, studies}]->(:HealthRisk)
+    (:Study {citation, title, year, design, url})-[:ABOUT]->(:HealthRisk)   the evidence for a link
     (:Patient)-[:HAS_SCORE]->(:ScoreResult)-[:OF]->(:RiskScore)
     (:ScoreResult)-[:FROM]->(:Observation)              the exact values a score used
 
@@ -84,6 +86,108 @@ MARKERS = [  # (LOINC codes, risk id, source)
     (["41950-7"], "fitness", "Paluch et al., Lancet Public Health 2022 (daily steps and mortality)"),
 ]
 
+# How the risks drive each other, from meta-analyses, pooled cohorts and
+# guidelines. Every link names its studies; the estimate is the study's own
+# (observational: an association, not proof of cause), None where a guideline
+# states the link without one number.
+STUDIES = [
+    {"id": "mantovani-2021-cvd", "year": 2021, "design": "meta-analysis, 36 cohorts, 5.8 million adults",
+     "citation": "Mantovani et al., Lancet Gastroenterol Hepatol 2021;6:903",
+     "title": "Non-alcoholic fatty liver disease and risk of fatal and non-fatal cardiovascular events",
+     "url": "https://doi.org/10.1016/S2468-1253(21)00308-3"},
+    {"id": "mantovani-2021-t2d", "year": 2021, "design": "meta-analysis, 33 studies, 501,022 adults",
+     "citation": "Mantovani et al., Gut 2021;70:962",
+     "title": "Non-alcoholic fatty liver disease and risk of incident diabetes mellitus",
+     "url": "https://doi.org/10.1136/gutjnl-2020-322572"},
+    {"id": "mantovani-2022-ckd", "year": 2022, "design": "meta-analysis of cohort studies",
+     "citation": "Mantovani et al., Gut 2022;71:156",
+     "title": "Non-alcoholic fatty liver disease and risk of incident chronic kidney disease",
+     "url": "https://doi.org/10.1136/gutjnl-2020-323082"},
+    {"id": "erfc-2010", "year": 2010, "design": "pooled analysis, 102 prospective studies, 698,782 people",
+     "citation": "Emerging Risk Factors Collaboration, Lancet 2010;375:2215",
+     "title": "Diabetes mellitus, fasting blood glucose concentration, and risk of vascular disease",
+     "url": "https://doi.org/10.1016/S0140-6736(10)60484-9"},
+    {"id": "score2-diabetes-2023", "year": 2023, "design": "risk model, 229,460 people with type 2 diabetes",
+     "citation": "SCORE2-Diabetes Working Group, Eur Heart J 2023;44:2544",
+     "title": "SCORE2-Diabetes: 10-year cardiovascular risk estimation in type 2 diabetes in Europe",
+     "url": "https://doi.org/10.1093/eurheartj/ehad260"},
+    {"id": "ckm-2023", "year": 2023, "design": "AHA presidential advisory",
+     "citation": "Ndumele et al., Circulation 2023;148:1606",
+     "title": "Cardiovascular-Kidney-Metabolic Health: A Presidential Advisory From the American Heart Association",
+     "url": "https://doi.org/10.1161/CIR.0000000000001184"},
+    {"id": "kdigo-2022-diabetes", "year": 2022, "design": "clinical practice guideline",
+     "citation": "KDIGO 2022 Clinical Practice Guideline for Diabetes Management in CKD, Kidney Int 2022;102:S1",
+     "title": "KDIGO 2022 Clinical Practice Guideline for Diabetes Management in Chronic Kidney Disease",
+     "url": "https://doi.org/10.1016/j.kint.2022.06.008"},
+    {"id": "easl-2024-masld", "year": 2024, "design": "clinical practice guideline",
+     "citation": "EASL-EASD-EASO, J Hepatol 2024;81:492",
+     "title": "EASL-EASD-EASO Clinical Practice Guidelines on the management of MASLD",
+     "url": "https://doi.org/10.1016/j.jhep.2024.04.031"},
+    {"id": "ckdpc-2010", "year": 2010, "design": "collaborative meta-analysis of general population cohorts",
+     "citation": "Chronic Kidney Disease Prognosis Consortium (Matsushita et al.), Lancet 2010;375:2073",
+     "title": "Association of estimated glomerular filtration rate and albuminuria with all-cause and "
+              "cardiovascular mortality in general population cohorts",
+     "url": "https://doi.org/10.1016/S0140-6736(10)60674-5"},
+    {"id": "prevent-2024", "year": 2024, "design": "risk model (AHA PREVENT), US adults 30-79",
+     "citation": "Khan et al., Circulation 2024;149:430",
+     "title": "Development and Validation of the American Heart Association's PREVENT Equations",
+     "url": "https://doi.org/10.1161/CIRCULATIONAHA.123.067626"},
+    {"id": "kdigo-2017-mbd", "year": 2017, "design": "clinical practice guideline",
+     "citation": "KDIGO 2017 CKD-MBD Guideline Update, Kidney Int Suppl 2017;7:1",
+     "title": "KDIGO 2017 Clinical Practice Guideline Update for CKD-Mineral and Bone Disorder",
+     "url": "https://doi.org/10.1016/j.kisu.2017.04.001"},
+    {"id": "vestergaard-2007", "year": 2007, "design": "meta-analysis",
+     "citation": "Vestergaard, Osteoporos Int 2007;18:427",
+     "title": "Discrepancies in bone mineral density and fracture risk in patients with type 1 and type 2 diabetes",
+     "url": "https://doi.org/10.1007/s00198-006-0253-4"},
+    {"id": "kodama-2009", "year": 2009, "design": "meta-analysis, 33 studies, 102,980 people",
+     "citation": "Kodama et al., JAMA 2009;301:2024",
+     "title": "Cardiorespiratory fitness as a quantitative predictor of all-cause mortality and cardiovascular "
+              "events in healthy men and women",
+     "url": "https://doi.org/10.1001/jama.2009.681"},
+]
+
+RISK_LINKS = [  # from risk raises the risk of to risk
+    {"from": "liver", "to": "cardiovascular", "studies": ["mantovani-2021-cvd"],
+     "measure": "HR, fatal or non-fatal cardiovascular events", "estimate": 1.45, "ciLow": 1.31, "ciHigh": 1.61,
+     "summary": "Fatty liver disease goes with about 1.5 times the risk of heart attack and stroke; "
+                "with liver fibrosis about 2.5 times (HR 2.50, 1.68-3.72)."},
+    {"from": "liver", "to": "diabetes", "studies": ["mantovani-2021-t2d", "easl-2024-masld"],
+     "measure": "HR, incident diabetes", "estimate": 2.19, "ciLow": 1.93, "ciHigh": 2.48,
+     "summary": "Fatty liver disease about doubles the risk of developing diabetes; with fibrosis more than "
+                "threefold (HR 3.42, 2.29-5.11)."},
+    {"from": "liver", "to": "kidney", "studies": ["mantovani-2022-ckd"],
+     "measure": "HR, incident CKD stage 3 or worse", "estimate": 1.43, "ciLow": 1.33, "ciHigh": 1.54,
+     "summary": "Fatty liver disease goes with a moderately higher risk of chronic kidney disease."},
+    {"from": "diabetes", "to": "cardiovascular", "studies": ["erfc-2010", "score2-diabetes-2023", "ckm-2023"],
+     "measure": "HR, coronary heart disease", "estimate": 2.00, "ciLow": 1.83, "ciHigh": 2.19,
+     "summary": "Diabetes about doubles the risk of coronary heart disease and ischaemic stroke; SCORE2-Diabetes "
+                "adds HbA1c, eGFR and age at diagnosis to the estimate."},
+    {"from": "diabetes", "to": "kidney", "studies": ["kdigo-2022-diabetes", "ckm-2023"],
+     "measure": None, "estimate": None, "ciLow": None, "ciHigh": None,
+     "summary": "Diabetes is a leading cause of chronic kidney disease; guidelines ask for yearly eGFR and urine "
+                "albumin checks."},
+    {"from": "diabetes", "to": "liver", "studies": ["easl-2024-masld"],
+     "measure": None, "estimate": None, "ciLow": None, "ciHigh": None,
+     "summary": "With type 2 diabetes the guideline recommends looking for liver fibrosis (FIB-4, then "
+                "elastography)."},
+    {"from": "kidney", "to": "cardiovascular", "studies": ["ckdpc-2010", "prevent-2024", "ckm-2023"],
+     "measure": "HR, all-cause mortality at eGFR 45 vs 95", "estimate": 1.57, "ciLow": None, "ciHigh": None,
+     "summary": "Below an eGFR of 60, and with any albumin in the urine, the risk of dying, also of heart "
+                "disease, rises; the AHA PREVENT equations therefore use eGFR."},
+    {"from": "kidney", "to": "bone", "studies": ["kdigo-2017-mbd"],
+     "measure": None, "estimate": None, "ciLow": None, "ciHigh": None,
+     "summary": "From CKD stage 3a the mineral and bone disorder of CKD raises the fracture risk; the guideline "
+                "suggests bone density tests when they would change treatment."},
+    {"from": "diabetes", "to": "bone", "studies": ["vestergaard-2007"],
+     "measure": "RR, hip fracture", "estimate": 1.38, "ciLow": 1.25, "ciHigh": 1.53,
+     "summary": "Type 2 diabetes goes with more hip fractures, although bone density is often higher."},
+    {"from": "fitness", "to": "cardiovascular", "studies": ["kodama-2009"],
+     "measure": "RR per 1 MET higher fitness, CHD/CVD events", "estimate": 0.85, "ciLow": 0.82, "ciHigh": 0.88,
+     "summary": "Each 1 MET more fitness goes with about 15% fewer heart events; low fitness with about 56% more "
+                "than high fitness."},
+]
+
 
 def reference_ranges() -> list[dict]:
     return json.loads((HERE / "reference_ranges.json").read_text(encoding="utf-8"))["ranges"]
@@ -111,7 +215,8 @@ def _marker_rows() -> list[dict]:
 
 def fingerprint() -> str:
     """Changes whenever any seeded fact changes, so seeding runs only then."""
-    blob = json.dumps([HEALTH_RISKS, RISK_SCORES, _marker_rows(), _range_rows()], sort_keys=True)
+    blob = json.dumps([HEALTH_RISKS, RISK_SCORES, _marker_rows(), _range_rows(), STUDIES, RISK_LINKS],
+                      sort_keys=True)
     return hashlib.sha256(blob.encode()).hexdigest()[:16]
 
 
@@ -155,6 +260,28 @@ MERGE (rr)-[:APPLIES_TO]->(lc)
 RETURN count(rr) AS ranges
 """
 
+SEED_STUDIES = """
+UNWIND $studies AS s
+MERGE (st:Study {id: s.id})
+SET st.citation = s.citation, st.title = s.title, st.year = s.year, st.design = s.design, st.url = s.url
+RETURN count(st) AS studies
+"""
+
+SEED_RISK_LINKS = """
+UNWIND $links AS l
+MATCH (a:HealthRisk {id: l.from})
+MATCH (b:HealthRisk {id: l.to})
+MERGE (a)-[k:RAISES_RISK_OF]->(b)
+SET k.summary = l.summary, k.measure = l.measure, k.estimate = l.estimate,
+    k.ciLow = l.ciLow, k.ciHigh = l.ciHigh, k.studies = l.studies
+WITH a, b, k, l
+UNWIND l.studies AS sid
+MATCH (st:Study {id: sid})
+MERGE (st)-[:ABOUT]->(a)
+MERGE (st)-[:ABOUT]->(b)
+RETURN count(DISTINCT k) AS riskLinks
+"""
+
 SEED_VERSION = """
 MERGE (k:Knowledge {id: 'health-graph'})
 SET k.fingerprint = $fingerprint, k.rangesSource = $rangesSource
@@ -175,6 +302,8 @@ def seed(conn, force: bool = False) -> dict[str, int]:
         counts.update(dict(conn.execute(SEED_SCORES, {"scores": RISK_SCORES}).single()))
         counts.update(dict(conn.execute(SEED_MARKERS, {"markers": _marker_rows()}).single()))
         counts.update(dict(conn.execute(SEED_RANGES, {"ranges": _range_rows()}).single()))
+        counts.update(dict(conn.execute(SEED_STUDIES, {"studies": STUDIES}).single()))
+        counts.update(dict(conn.execute(SEED_RISK_LINKS, {"links": RISK_LINKS}).single()))
         source = json.loads((HERE / "reference_ranges.json").read_text())["source"]
         conn.execute(SEED_VERSION, {"fingerprint": fp, "rangesSource": source})
         conn.commit()

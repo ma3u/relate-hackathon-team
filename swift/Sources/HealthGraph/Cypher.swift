@@ -41,6 +41,7 @@ enum Cypher {
   CREATE CONSTRAINT reference_range_id IF NOT EXISTS FOR (n:ReferenceRange) REQUIRE n.id IS UNIQUE;
   CREATE CONSTRAINT score_result_id IF NOT EXISTS FOR (n:ScoreResult) REQUIRE n.id IS UNIQUE;
   CREATE CONSTRAINT knowledge_id IF NOT EXISTS FOR (n:Knowledge) REQUIRE n.id IS UNIQUE;
+  CREATE CONSTRAINT study_id IF NOT EXISTS FOR (n:Study) REQUIRE n.id IS UNIQUE;
   """#
 
   static let omop = #"""
@@ -234,6 +235,28 @@ enum Cypher {
   RETURN count(rr) AS ranges
   """#
 
+  static let seedStudies = #"""
+  UNWIND $studies AS s
+  MERGE (st:Study {id: s.id})
+  SET st.citation = s.citation, st.title = s.title, st.year = s.year, st.design = s.design, st.url = s.url
+  RETURN count(st) AS studies
+  """#
+
+  static let seedRiskLinks = #"""
+  UNWIND $links AS l
+  MATCH (a:HealthRisk {id: l.from})
+  MATCH (b:HealthRisk {id: l.to})
+  MERGE (a)-[k:RAISES_RISK_OF]->(b)
+  SET k.summary = l.summary, k.measure = l.measure, k.estimate = l.estimate,
+      k.ciLow = l.ciLow, k.ciHigh = l.ciHigh, k.studies = l.studies
+  WITH a, b, k, l
+  UNWIND l.studies AS sid
+  MATCH (st:Study {id: sid})
+  MERGE (st)-[:ABOUT]->(a)
+  MERGE (st)-[:ABOUT]->(b)
+  RETURN count(DISTINCT k) AS riskLinks
+  """#
+
   static let seedVersion = #"""
   MERGE (k:Knowledge {id: 'health-graph'})
   SET k.fingerprint = $fingerprint, k.rangesSource = $rangesSource
@@ -341,6 +364,17 @@ public enum Queries {
              last.valueQuantity AS latest, last.unit AS unit, left(last.effectiveDate, 10) AS date,
              k.source AS source
       ORDER BY date DESC
+      """#),
+    "risk_links": (
+      "How the health risks raise each other, with the effect size and the studies that show it",
+      #"""
+      MATCH (a:HealthRisk)-[k:RAISES_RISK_OF]->(b:HealthRisk)
+      OPTIONAL MATCH (st:Study)-[:ABOUT]->(a)
+      WHERE st.id IN k.studies
+      RETURN a.name AS risk, b.name AS raisesRiskOf, k.measure AS measure, k.estimate AS estimate,
+             k.ciLow AS ciLow, k.ciHigh AS ciHigh, k.summary AS summary,
+             collect(st.citation) AS studies
+      ORDER BY risk, raisesRiskOf
       """#),
     "provenance": (
       "Where one value (param resourceId) came from: line on the paper, OCR, document, agent",

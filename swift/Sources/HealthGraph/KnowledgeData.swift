@@ -3,10 +3,138 @@
 // swiftlint:disable line_length
 
 enum KnowledgeData {
-  static let fingerprint = "c1b9f82012c51b0c"
+  static let fingerprint = "438aba158fc80163"
   static let rangesSource = "services/epa-ingest/src/reference-ranges.ts (MinimumViableHealthDataspacev2)"
   static let json = #"""
   {
+   "links": [
+    {
+     "ciHigh": 1.61,
+     "ciLow": 1.31,
+     "estimate": 1.45,
+     "from": "liver",
+     "measure": "HR, fatal or non-fatal cardiovascular events",
+     "studies": [
+      "mantovani-2021-cvd"
+     ],
+     "summary": "Fatty liver disease goes with about 1.5 times the risk of heart attack and stroke; with liver fibrosis about 2.5 times (HR 2.50, 1.68-3.72).",
+     "to": "cardiovascular"
+    },
+    {
+     "ciHigh": 2.48,
+     "ciLow": 1.93,
+     "estimate": 2.19,
+     "from": "liver",
+     "measure": "HR, incident diabetes",
+     "studies": [
+      "mantovani-2021-t2d",
+      "easl-2024-masld"
+     ],
+     "summary": "Fatty liver disease about doubles the risk of developing diabetes; with fibrosis more than threefold (HR 3.42, 2.29-5.11).",
+     "to": "diabetes"
+    },
+    {
+     "ciHigh": 1.54,
+     "ciLow": 1.33,
+     "estimate": 1.43,
+     "from": "liver",
+     "measure": "HR, incident CKD stage 3 or worse",
+     "studies": [
+      "mantovani-2022-ckd"
+     ],
+     "summary": "Fatty liver disease goes with a moderately higher risk of chronic kidney disease.",
+     "to": "kidney"
+    },
+    {
+     "ciHigh": 2.19,
+     "ciLow": 1.83,
+     "estimate": 2.0,
+     "from": "diabetes",
+     "measure": "HR, coronary heart disease",
+     "studies": [
+      "erfc-2010",
+      "score2-diabetes-2023",
+      "ckm-2023"
+     ],
+     "summary": "Diabetes about doubles the risk of coronary heart disease and ischaemic stroke; SCORE2-Diabetes adds HbA1c, eGFR and age at diagnosis to the estimate.",
+     "to": "cardiovascular"
+    },
+    {
+     "ciHigh": null,
+     "ciLow": null,
+     "estimate": null,
+     "from": "diabetes",
+     "measure": null,
+     "studies": [
+      "kdigo-2022-diabetes",
+      "ckm-2023"
+     ],
+     "summary": "Diabetes is a leading cause of chronic kidney disease; guidelines ask for yearly eGFR and urine albumin checks.",
+     "to": "kidney"
+    },
+    {
+     "ciHigh": null,
+     "ciLow": null,
+     "estimate": null,
+     "from": "diabetes",
+     "measure": null,
+     "studies": [
+      "easl-2024-masld"
+     ],
+     "summary": "With type 2 diabetes the guideline recommends looking for liver fibrosis (FIB-4, then elastography).",
+     "to": "liver"
+    },
+    {
+     "ciHigh": null,
+     "ciLow": null,
+     "estimate": 1.57,
+     "from": "kidney",
+     "measure": "HR, all-cause mortality at eGFR 45 vs 95",
+     "studies": [
+      "ckdpc-2010",
+      "prevent-2024",
+      "ckm-2023"
+     ],
+     "summary": "Below an eGFR of 60, and with any albumin in the urine, the risk of dying, also of heart disease, rises; the AHA PREVENT equations therefore use eGFR.",
+     "to": "cardiovascular"
+    },
+    {
+     "ciHigh": null,
+     "ciLow": null,
+     "estimate": null,
+     "from": "kidney",
+     "measure": null,
+     "studies": [
+      "kdigo-2017-mbd"
+     ],
+     "summary": "From CKD stage 3a the mineral and bone disorder of CKD raises the fracture risk; the guideline suggests bone density tests when they would change treatment.",
+     "to": "bone"
+    },
+    {
+     "ciHigh": 1.53,
+     "ciLow": 1.25,
+     "estimate": 1.38,
+     "from": "diabetes",
+     "measure": "RR, hip fracture",
+     "studies": [
+      "vestergaard-2007"
+     ],
+     "summary": "Type 2 diabetes goes with more hip fractures, although bone density is often higher.",
+     "to": "bone"
+    },
+    {
+     "ciHigh": 0.88,
+     "ciLow": 0.82,
+     "estimate": 0.85,
+     "from": "fitness",
+     "measure": "RR per 1 MET higher fitness, CHD/CVD events",
+     "studies": [
+      "kodama-2009"
+     ],
+     "summary": "Each 1 MET more fitness goes with about 15% fewer heart events; low fitness with about 56% more than high fitness.",
+     "to": "cardiovascular"
+    }
+   ],
    "markers": [
     {
      "loinc": "22748-8",
@@ -3138,6 +3266,112 @@ enum KnowledgeData {
       "2571-8",
       "1558-6"
      ]
+    }
+   ],
+   "studies": [
+    {
+     "citation": "Mantovani et al., Lancet Gastroenterol Hepatol 2021;6:903",
+     "design": "meta-analysis, 36 cohorts, 5.8 million adults",
+     "id": "mantovani-2021-cvd",
+     "title": "Non-alcoholic fatty liver disease and risk of fatal and non-fatal cardiovascular events",
+     "url": "https://doi.org/10.1016/S2468-1253(21)00308-3",
+     "year": 2021
+    },
+    {
+     "citation": "Mantovani et al., Gut 2021;70:962",
+     "design": "meta-analysis, 33 studies, 501,022 adults",
+     "id": "mantovani-2021-t2d",
+     "title": "Non-alcoholic fatty liver disease and risk of incident diabetes mellitus",
+     "url": "https://doi.org/10.1136/gutjnl-2020-322572",
+     "year": 2021
+    },
+    {
+     "citation": "Mantovani et al., Gut 2022;71:156",
+     "design": "meta-analysis of cohort studies",
+     "id": "mantovani-2022-ckd",
+     "title": "Non-alcoholic fatty liver disease and risk of incident chronic kidney disease",
+     "url": "https://doi.org/10.1136/gutjnl-2020-323082",
+     "year": 2022
+    },
+    {
+     "citation": "Emerging Risk Factors Collaboration, Lancet 2010;375:2215",
+     "design": "pooled analysis, 102 prospective studies, 698,782 people",
+     "id": "erfc-2010",
+     "title": "Diabetes mellitus, fasting blood glucose concentration, and risk of vascular disease",
+     "url": "https://doi.org/10.1016/S0140-6736(10)60484-9",
+     "year": 2010
+    },
+    {
+     "citation": "SCORE2-Diabetes Working Group, Eur Heart J 2023;44:2544",
+     "design": "risk model, 229,460 people with type 2 diabetes",
+     "id": "score2-diabetes-2023",
+     "title": "SCORE2-Diabetes: 10-year cardiovascular risk estimation in type 2 diabetes in Europe",
+     "url": "https://doi.org/10.1093/eurheartj/ehad260",
+     "year": 2023
+    },
+    {
+     "citation": "Ndumele et al., Circulation 2023;148:1606",
+     "design": "AHA presidential advisory",
+     "id": "ckm-2023",
+     "title": "Cardiovascular-Kidney-Metabolic Health: A Presidential Advisory From the American Heart Association",
+     "url": "https://doi.org/10.1161/CIR.0000000000001184",
+     "year": 2023
+    },
+    {
+     "citation": "KDIGO 2022 Clinical Practice Guideline for Diabetes Management in CKD, Kidney Int 2022;102:S1",
+     "design": "clinical practice guideline",
+     "id": "kdigo-2022-diabetes",
+     "title": "KDIGO 2022 Clinical Practice Guideline for Diabetes Management in Chronic Kidney Disease",
+     "url": "https://doi.org/10.1016/j.kint.2022.06.008",
+     "year": 2022
+    },
+    {
+     "citation": "EASL-EASD-EASO, J Hepatol 2024;81:492",
+     "design": "clinical practice guideline",
+     "id": "easl-2024-masld",
+     "title": "EASL-EASD-EASO Clinical Practice Guidelines on the management of MASLD",
+     "url": "https://doi.org/10.1016/j.jhep.2024.04.031",
+     "year": 2024
+    },
+    {
+     "citation": "Chronic Kidney Disease Prognosis Consortium (Matsushita et al.), Lancet 2010;375:2073",
+     "design": "collaborative meta-analysis of general population cohorts",
+     "id": "ckdpc-2010",
+     "title": "Association of estimated glomerular filtration rate and albuminuria with all-cause and cardiovascular mortality in general population cohorts",
+     "url": "https://doi.org/10.1016/S0140-6736(10)60674-5",
+     "year": 2010
+    },
+    {
+     "citation": "Khan et al., Circulation 2024;149:430",
+     "design": "risk model (AHA PREVENT), US adults 30-79",
+     "id": "prevent-2024",
+     "title": "Development and Validation of the American Heart Association's PREVENT Equations",
+     "url": "https://doi.org/10.1161/CIRCULATIONAHA.123.067626",
+     "year": 2024
+    },
+    {
+     "citation": "KDIGO 2017 CKD-MBD Guideline Update, Kidney Int Suppl 2017;7:1",
+     "design": "clinical practice guideline",
+     "id": "kdigo-2017-mbd",
+     "title": "KDIGO 2017 Clinical Practice Guideline Update for CKD-Mineral and Bone Disorder",
+     "url": "https://doi.org/10.1016/j.kisu.2017.04.001",
+     "year": 2017
+    },
+    {
+     "citation": "Vestergaard, Osteoporos Int 2007;18:427",
+     "design": "meta-analysis",
+     "id": "vestergaard-2007",
+     "title": "Discrepancies in bone mineral density and fracture risk in patients with type 1 and type 2 diabetes",
+     "url": "https://doi.org/10.1007/s00198-006-0253-4",
+     "year": 2007
+    },
+    {
+     "citation": "Kodama et al., JAMA 2009;301:2024",
+     "design": "meta-analysis, 33 studies, 102,980 people",
+     "id": "kodama-2009",
+     "title": "Cardiorespiratory fitness as a quantitative predictor of all-cause mortality and cardiovascular events in healthy men and women",
+     "url": "https://doi.org/10.1001/jama.2009.681",
+     "year": 2009
     }
    ]
   }
