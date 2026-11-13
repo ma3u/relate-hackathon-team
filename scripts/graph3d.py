@@ -136,9 +136,15 @@ def build(nodes_in, links_in):
             node["mk"] = 1
         if r["id"] in current:
             node["cur"] = 1
+        if r["label"] == "Observation":
             p = r["p"]
+            node["dt"] = p.get("effectiveDate") or p.get("effectiveStart") or ""
+            node["val"] = lines[0]
+            if p.get("duplicateOf"):
+                node["dup"] = 1
             v, lo, hi = p.get("valueQuantity"), p.get("referenceLow"), p.get("referenceHigh")
-            if isinstance(v, (int, float)) and ((lo is not None and v < lo) or (hi is not None and v > hi)):
+            if group == "Lab value" and isinstance(v, (int, float)) and (
+                    (lo is not None and v < lo) or (hi is not None and v > hi)):
                 node["out"] = 1
                 node["d"].insert(1, "Outside the lab's range")
         nodes.append(node)

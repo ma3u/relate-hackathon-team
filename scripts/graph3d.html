@@ -38,11 +38,20 @@
   .steps button b { color: var(--muted); font-weight: 600; margin-right: 4px; }
   .steps button[aria-selected=true] { border-color: var(--accent); background: #16312a; }
   #stepHint { margin-top: 8px; }
+  #labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+  #labels div { position: absolute; transform: translate(-50%, -150%); font-size: 11px; color: #e8e6df; white-space: nowrap; text-shadow: 0 0 3px #000, 0 0 3px #000, 0 0 6px #000; }
+  .trail { font-size: 12px; color: var(--muted); margin: 0 24px 8px 0; line-height: 1.6; }
+  .trail a { color: var(--accent); text-decoration: none; }
+  .trail a:hover { text-decoration: underline; }
+  .nb.inset, .hint.inset { padding-left: 20px; }
+  .nb.code { font-weight: 600; margin-top: 6px; }
+  .flag { color: #F09595; }
   .scene-tooltip { font: 13px/1.4 -apple-system, system-ui, sans-serif !important; background: rgba(14,17,22,.92) !important; border: 1px solid var(--line); border-radius: 8px; padding: 6px 9px !important; }
 </style>
 </head>
 <body>
 <div id="graph"></div>
+<div id="labels"></div>
 
 <div id="side" class="panel">
   <h1>Health graph in 3D</h1>
@@ -56,7 +65,7 @@
     <button id="next">Next step →</button>
     <button id="fit">Fit view</button>
   </div>
-  <p class="hint">Drag to rotate, scroll to zoom, right-drag to pan. Click a node to focus it and its neighbours; click empty space to clear.</p>
+  <p class="hint">Drag to rotate, scroll to zoom, right-drag to pan. Click a node to drill down into its relationships; click empty space or the trail to go back.</p>
 </div>
 
 <div id="detail" class="panel"></div>
@@ -113,11 +122,11 @@ let selected = null, hl = new Set(), hlLinks = new Set();
 const Graph = new ForceGraph3D(document.getElementById("graph"))
   .backgroundColor("#0e1116")
   .nodeId("id")
-  .nodeVal(n => n.g === "Patient" ? 30 : 1 + Math.pow(n.deg, 0.55) + (n.out ? 8 : n.cur ? 3 : 0))
+  .nodeVal(n => n.g === "Patient" ? 30 : 1 + Math.pow(n.deg, 0.55) + (n.cur ? 3 : 0) + (n.out ? 4 : 0) + (n === selected ? 12 : 0))
   .nodeRelSize(3)
   .nodeOpacity(0.92)
   .nodeResolution(12)
-  .nodeColor(n => !selected || hl.has(n) ? (n.out ? OUT_COLOR : COLOR[n.g]) : "#2b3038")
+  .nodeColor(n => n.out ? OUT_COLOR : COLOR[n.g])
   .nodeLabel(n => `<b>${esc(n.n)}</b><br><span style="color:${COLOR[n.g]}">${esc(n.g)}</span>` +
     (n.d.length ? "<br>" + n.d.slice(0, 3).map(esc).join("<br>") : ""))
   .linkColor(l => hlLinks.has(l) ? "#ffffff" : (COLOR[l.source.g || byId.get(l.source).g] || "#555"))
@@ -127,7 +136,7 @@ const Graph = new ForceGraph3D(document.getElementById("graph"))
   .linkDirectionalParticleWidth(1.6)
   .linkDirectionalParticleSpeed(0.006)
   .onNodeClick(focusNode)
-  .onBackgroundClick(clearFocus)
+  .onBackgroundClick(() => drill.length ? back() : null)
   .cooldownTicks(220)
   .warmupTicks(40);
 
@@ -135,65 +144,160 @@ Graph.d3Force("charge").strength(-28);
 Graph.d3Force("link").distance(l => (l.t === "HAS_OBSERVATION" ? 60 : 26));
 
 const shown = n => VISIBLE[n.g] && STAGES[stage].groups.includes(n.g) && STAGES[stage].only(n);
+const short = t => (t = String(t)).length > 26 ? t.slice(0, 25) + "…" : t;
+const nb = (n, types) => n.nbs.filter(([t]) => !types || types.includes(t)).map(x => x[1]);
+const HUB = new Set(["Patient", "OMOPPerson", "Knowledge", "Organization", "LoincCode"]);
+let drill = [];   // the drill-down trail; the last node is in focus
+
+// What a click opens: a risk shows its scores, marker codes, all your values on
+// them and the guideline ranges; a code its values and their reports; anything
+// else its neighbours and theirs (not through hubs such as you or a LOINC code).
+function markerCodes(n) {
+  if (n.g === "LoincCode") return [n];
+  if (n.g === "RiskScore") return nb(n, ["USES"]);
+  if (n.g === "HealthRisk") return [...new Set([...nb(n, ["MARKER_OF"]), ...nb(n, ["ESTIMATES"]).flatMap(x => nb(x, ["USES"]))])];
+  return [];
+}
+function drillSet(n) {
+  const S = new Set([n]), add = ms => ms.forEach(m => S.add(m));
+  if (["HealthRisk", "RiskScore", "LoincCode"].includes(n.g)) {
+    add(nb(n, ["ESTIMATES", "MARKER_OF", "USES"]));
+    markerCodes(n).forEach(c => {
+      S.add(c);
+      add(nb(c, ["CODED_BY"]).filter(o => o.g === "Lab value" || (n === c && o.g === "Apple Watch week")));
+      add(nb(c, ["APPLIES_TO"]));
+    });
+    if (n.g === "LoincCode") [...S].filter(o => o.g === "Lab value").forEach(o => add(nb(o, ["HAS_RESULT"])));
+  } else {
+    const first = nb(n);
+    add(first);
+    if (first.length <= 120) first.filter(m => !HUB.has(m.g)).forEach(m => add(nb(m)));
+  }
+  return S;
+}
 
 function applyFilter() {
-  const nodes = DATA.nodes.filter(shown);
-  const keep = new Set(nodes);
+  const keep = drill.length ? drillSet(drill[drill.length - 1]) : new Set(DATA.nodes.filter(shown));
   const links = DATA.links.filter(l => keep.has(byId.get(endId(l.source))) && keep.has(byId.get(endId(l.target))));
-  if (selected && !keep.has(selected)) clearFocus();
-  Graph.graphData({ nodes, links });
+  Graph.graphData({ nodes: [...keep], links });
+  buildLabels([...keep]);
+  Graph._fitted = false;
 }
 
 function refresh() {
-  Graph.nodeColor(Graph.nodeColor()).linkColor(Graph.linkColor())
+  Graph.nodeColor(Graph.nodeColor()).nodeVal(Graph.nodeVal()).linkColor(Graph.linkColor())
     .linkWidth(Graph.linkWidth()).linkDirectionalParticles(Graph.linkDirectionalParticles());
 }
 
 function focusNode(n) {
-  if (!shown(n)) {
-    VISIBLE[n.g] = true;
-    const s = STAGES.findIndex(st => st.groups.includes(n.g) && st.only(n));
-    if (s > stage) setStage(s, false); else { syncChecks(); applyFilter(); }
-  }
+  const i = drill.indexOf(n);
+  if (i >= 0) drill = drill.slice(0, i + 1); else drill.push(n);
+  openDrill();
+}
+function openDrill() {
+  const n = drill[drill.length - 1];
   selected = n;
-  hl = new Set([n, ...n.nbs.map(x => x[1])]);
+  applyFilter();
   hlLinks = new Set(Graph.graphData().links.filter(l => endId(l.source) === n.id || endId(l.target) === n.id));
+  Graph.linkOpacity(0.55);
   refresh();
   showDetail(n);
-  const go = () => {
-    const d = 260 + 12 * Math.cbrt(Graph.nodeVal()(n)), r = Math.hypot(n.x || 1, n.y || 1, n.z || 1);
-    const k = 1 + d / r;
-    Graph.cameraPosition({ x: (n.x || 1) * k, y: (n.y || 1) * k, z: (n.z || 1) * k }, n, 1200);
-  };
-  n.x === undefined ? setTimeout(go, 600) : go();
 }
-
+function back() {
+  drill.pop();
+  drill.length ? openDrill() : clearFocus();
+}
 function clearFocus() {
-  selected = null; hl = new Set(); hlLinks = new Set();
-  refresh();
+  drill = []; selected = null; hlLinks = new Set();
   document.getElementById("detail").style.display = "none";
+  Graph.linkOpacity(stage === 0 ? 0.6 : 0.22);
+  applyFilter();
+  refresh();
 }
+addEventListener("keydown", e => { if (e.key === "Escape" && drill.length) back(); });
 
 function showDetail(n) {
   const el = document.getElementById("detail");
+  const dot = m => `<span class="dot" style="display:inline-block;margin-right:6px;background:${m.out ? OUT_COLOR : COLOR[m.g]}"></span>`;
+  const btn = (m, text, cls = "") => `<button class="nb ${cls}" data-id="${m.id}">${dot(m)}${esc(text || m.n)}</button>`;
+  const trail = [`<a href="#" data-back="-1">${esc(STAGES[stage].name)}</a>`,
+    ...drill.map((m, i) => i === drill.length - 1 ? `<b>${esc(short(m.n))}</b>` : `<a href="#" data-back="${i}">${esc(short(m.n))}</a>`)];
+  let html = `<button class="close" aria-label="Close">×</button><div class="trail">${trail.join(" › ")}</div>` +
+    `<h3>${esc(n.n)}</h3><div class="tag">${dot(n)}${esc(n.g)} · ${n.deg} relationships</div>`;
+  if (n.d.length) html += "<ul>" + n.d.map(x => `<li>${esc(x)}</li>`).join("") + "</ul>";
+
+  const codes = markerCodes(n);
+  if (codes.length) {
+    const rows = codes.map(c => ({ c, vs: nb(c, ["CODED_BY"]).filter(o => o.g === "Lab value" && !o.dup)
+      .sort((a, b) => (b.dt || "").localeCompare(a.dt || "")) }))
+      .sort((a, b) => (b.vs[0]?.out ? 1 : 0) - (a.vs[0]?.out ? 1 : 0) || b.vs.length - a.vs.length);
+    html += `<div class="rel">Your values, newest first</div>`;
+    rows.forEach(({ c, vs }) => {
+      html += btn(c, `${c.n}${vs.length ? ` (${vs.length})` : ""}`, "code");
+      if (!vs.length) html += `<div class="hint inset" style="margin-top:0">No value yet</div>`;
+      vs.slice(0, 5).forEach(v => html += btn(v, `${v.dt || "?"} · ${v.val || v.n}`, "inset") .replace("</button>", v.out ? ` <span class="flag">outside range</span></button>` : "</button>"));
+      if (vs.length > 5) html += `<div class="hint inset" style="margin-top:0">… ${vs.length - 5} older: click the code</div>`;
+    });
+  }
+
   const groups = {};
   n.nbs.forEach(([t, m, dir]) => {
     const key = dir === "out" ? `${t} →` : `← ${t}`;
     (groups[key] = groups[key] || []).push(m);
   });
-  let html = `<button class="close" aria-label="Close">×</button><h3>${esc(n.n)}</h3>` +
-    `<div class="tag"><span class="dot" style="background:${COLOR[n.g]}"></span>${esc(n.g)} · ${n.deg} relationships</div>`;
-  if (n.d.length) html += "<ul>" + n.d.map(x => `<li>${esc(x)}</li>`).join("") + "</ul>";
   Object.entries(groups).sort((a, b) => a[1].length - b[1].length).forEach(([k, ms]) => {
+    if (codes.length && /CODED_BY/.test(k)) return;  // listed above, by date
     html += `<div class="rel">${esc(k)} (${ms.length})</div>`;
-    ms.slice(0, 40).forEach(m => html += `<button class="nb" data-id="${m.id}"><span class="dot" style="display:inline-block;margin-right:6px;background:${COLOR[m.g]}"></span>${esc(m.n)}</button>`);
+    ms.slice(0, 40).forEach(m => html += btn(m));
     if (ms.length > 40) html += `<div class="hint">… and ${ms.length - 40} more</div>`;
   });
   el.innerHTML = html;
   el.style.display = "block";
+  el.scrollTop = 0;
   el.querySelector(".close").onclick = clearFocus;
   el.querySelectorAll(".nb").forEach(b => b.onclick = () => focusNode(byId.get(+b.dataset.id)));
+  el.querySelectorAll("[data-back]").forEach(a => a.onclick = e => {
+    e.preventDefault();
+    const i = +a.dataset.back;
+    if (i < 0) clearFocus(); else { drill = drill.slice(0, i + 1); openDrill(); }
+  });
 }
+
+// Names next to the nodes while few are shown.
+const labelsEl = document.getElementById("labels");
+let labelled = [];
+function buildLabels(nodes) {
+  labelsEl.innerHTML = "";
+  labelled = [];
+  if (nodes.length > 200) return;
+  const top = drill[drill.length - 1];
+  const allValues = top && !["HealthRisk", "RiskScore"].includes(top.g);
+  nodes.forEach(n => {
+    if (["Apple Watch week", "Provenance", "OMOPMeasurement", "OMOPPerson"].includes(n.g)) return;
+    if (n.g === "ReferenceRange" && !(top && top.g === "LoincCode")) return;
+    if (n.g === "Lab value" && !(allValues || n.cur || n.out)) return;
+    const d = document.createElement("div");
+    d.textContent = n.g === "Lab value" ? `${n.val || ""}${n.dt ? " · " + n.dt.slice(0, 7) : ""}` : short(n.n);
+    if (n.out) d.style.color = "#F7C1C1";
+    if (n === top) d.style.fontWeight = "600";
+    labelsEl.appendChild(d);
+    labelled.push([n, d]);
+  });
+}
+(function tickLabels() {
+  if (labelled.length) {
+    const cam = Graph.camera(), e = cam.matrixWorld.elements, p = cam.position;
+    labelled.forEach(([n, d]) => {
+      if (n.x === undefined) { d.style.display = "none"; return; }
+      const ahead = -(n.x - p.x) * e[8] - (n.y - p.y) * e[9] - (n.z - p.z) * e[10];
+      const c = Graph.graph2ScreenCoords(n.x, n.y, n.z);
+      const ok = ahead > 0 && c.x > 0 && c.y > 0 && c.x < innerWidth && c.y < innerHeight;
+      d.style.display = ok ? "block" : "none";
+      if (ok) { d.style.left = c.x + "px"; d.style.top = c.y + "px"; }
+    });
+  }
+  requestAnimationFrame(tickLabels);
+})();
 
 const legend = document.getElementById("legend");
 FAMILIES.forEach(([fam, gs]) => {
@@ -216,6 +320,8 @@ STAGES.forEach((st, i) => {
 });
 function setStage(i, fit = true) {
   stage = i;
+  drill = []; selected = null; hlLinks = new Set();
+  document.getElementById("detail").style.display = "none";
   Object.keys(VISIBLE).forEach(g => VISIBLE[g] = true);
   steps.querySelectorAll("button").forEach((b, j) => b.setAttribute("aria-selected", j === i));
   document.getElementById("stepHint").textContent = STAGES[i].hint;
@@ -224,7 +330,7 @@ function setStage(i, fit = true) {
   Graph.linkOpacity(i === 0 ? 0.6 : 0.22);
   syncChecks();
   applyFilter();
-  if (fit) Graph._fitted = false;
+  refresh();
 }
 document.getElementById("next").onclick = () => setStage((stage + 1) % STAGES.length);
 document.getElementById("fit").onclick = () => Graph.zoomToFit(800, 40);

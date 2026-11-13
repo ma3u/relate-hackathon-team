@@ -38,7 +38,7 @@ python -m health_graph query --db examples/health-graph/health.rl ranges --param
 relate serve --mcp stdio --database examples/health-graph/health.rl --read-only   # for Claude Desktop or Claude Code
 ```
 
-**See it in 3D.** [`scripts/graph3d.py`](scripts/graph3d.py) turns a store into one interactive WebGL page ([3d-force-graph](https://github.com/vasturiano/3d-force-graph)). It opens on the current risks: health risks, risk scores, their marker codes and the latest value on each. Then it adds the measures, the documents, and finally everything, with search, label filters and a panel for each node's relationships.
+**See it in 3D.** [`scripts/graph3d.py`](scripts/graph3d.py) turns a store into one interactive WebGL page ([3d-force-graph](https://github.com/vasturiano/3d-force-graph)). It opens on the current risks: health risks, risk scores, their marker codes and the latest value on each. Then it adds the measures, the documents, and finally everything, with search and label filters. Click a risk to drill down: its scores, marker codes, every value on them by date, and the guideline ranges. Click on to a single value, then to its report and the scanned document. A trail at the top of the panel leads back.
 
 ```bash
 python3 scripts/graph3d.py --db examples/health-graph/health.rl --out /tmp/graph3d/index.html
