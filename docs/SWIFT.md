@@ -18,7 +18,7 @@ flowchart TB
 | Part | Where | What it does |
 |---|---|---|
 | **HealthGraph** library | [`Package.swift`](../Package.swift), [`swift/Sources/HealthGraph`](../swift/Sources/HealthGraph) | FHIR R4 Bundle → graph rows (Hub keys, provenance, unmapped values with their reason), Apple Health weekly-mean rules, schema, report replace, OMOP transform, the 9 named queries. Depends only on Relate. |
-| **health-graph** CLI + receiver | [`swift/mac`](../swift/mac) | `import`, `query`, `list`, `receive`. The receiver: SwiftNIO + TLS 1.2+, X.509 v3 P-256 certificate (swift-certificates), SHA-256 pin in the QR code, bearer token, private-network clients only, one writer at a time. |
+| **health-graph** CLI + receiver | [`swift/mac`](../swift/mac) | `import`, `query`, `list`, `receive`. The receiver: SwiftNIO + TLS 1.2+ from Apple's Network framework (the CLI uses swift-nio-ssl, so its identity never meets a keychain prompt), a self-signed X.509 v3 P-256 certificate written as DER and signed with CryptoKit, SHA-256 pin in the QR code, bearer token, private-network clients only, one writer at a time. |
 | **Health graph on this iPhone** | Klarbefund, `OnDeviceGraph.swift` / `OnDeviceGraphView.swift` | The same graph, built on the phone from the reports (and optionally Apple Health), queried with Cypher on the phone. |
 
 The Python package in [`health_graph/`](../health_graph) stays as the **reference**: the Swift tests check the same fixtures with the same expected numbers, and a parity test fails if the Cypher in Swift and Python drifts apart.
@@ -126,4 +126,4 @@ Relate keeps **one open handle per store per process**: release a writer before 
 
 - **The first `swift build` downloads a 311 MB XCFramework** (all slices: macOS, iOS device, Simulator). In a sandbox, or when it stalls, download it once and seed SwiftPM's cache: `~/Library/Caches/org.swift.swiftpm/artifacts/https___github_com_relatedb_relate_releases_download_v1_0_0_RelateFFI_xcframework_zip` (checksum `a787caf0…0566`, as in Relate's `Package.swift`).
 - **Writer and reader in one process:** opening a read-only `Database` while a writer on the same file is open fails with `internal error`. Close the writer first.
-- **Two packages, not one:** the iPhone app depends on the root package (HealthGraph + Relate only). The Mac CLI lives in `swift/mac`, so Klarbefund never fetches SwiftNIO, swift-certificates or ArgumentParser.
+- **Two packages, not one:** the iPhone app depends on the root package (HealthGraph + Relate only). The Mac CLI lives in `swift/mac`, so Klarbefund never fetches SwiftNIO or ArgumentParser. Klarbefund for Mac links only the receiver library, which bundles no crypto library: TLS, hashing and signatures are the operating system's, so the App Store build needs no export-compliance paperwork.

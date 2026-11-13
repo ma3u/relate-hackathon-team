@@ -5,6 +5,8 @@ import HealthGraph
 import Testing
 
 @testable import HealthGraphReceiver
+import HealthGraphReceiverNIOSSL
+import X509
 
 /// Port of tests/test_receiver.py: HTTPS with a pinned certificate + bearer token.
 let repoRoot = URL(fileURLWithPath: #filePath)
@@ -72,6 +74,24 @@ struct Running {
 
 @Suite("Receiver over HTTPS", .serialized)
 struct ReceiverTests {
+  /// The command-line receiver (BoringSSL, identity from the PEM files) answers
+  /// the same pinned, token-checked API as the app's (Apple TLS, keychain).
+  @Test func commandLineServer() async throws {
+    let dir = try tempDir()
+    let identity = try Identity.ensure(in: dir.appendingPathComponent("config"), host: "127.0.0.1")
+    let core = ReceiverCore(store: dir.appendingPathComponent("health.rl"), token: identity.token, name: "cli") { _ in }
+    let server = try NIOSSLReceiverServer(core: core, identity: identity)
+    defer { server.stop() }
+    let port = try server.start(host: "127.0.0.1", port: 0)
+    let pin = Pinning(identity.fingerprint)
+    let session = URLSession(configuration: .ephemeral, delegate: pin, delegateQueue: nil)
+    var r = URLRequest(url: URL(string: "https://127.0.0.1:\(port)/v1/status")!)
+    r.setValue("Bearer \(identity.token)", forHTTPHeaderField: "Authorization")
+    let (_, response) = try await session.data(for: r)
+    #expect((response as! HTTPURLResponse).statusCode == 200)
+    #expect(pin.seen == identity.fingerprint)
+  }
+
   @Test func requiresToken() async throws {
     let s = try Running.start()
     defer { s.server.stop() }
@@ -204,6 +224,20 @@ struct PairingTests {
     #expect(text.contains("IP Address:127.0.0.1") && text.contains("IP Address:192.168.1.20"))
     #expect(text.contains("TLS Web Server Authentication"))
     #expect(text.contains("prime256v1") && !text.contains("Field Type: prime-field"))
+  }
+
+  /// The certificate is DER written by hand: an independent X.509 parser reads
+  /// it back and its self-signature verifies.
+  @Test func handWrittenCertificateParsesAndVerifies() throws {
+    let id = try Identity.ensure(in: try tempDir(), host: "192.168.1.20")
+    let cert = try Certificate(pemEncoded: String(contentsOf: id.certificate, encoding: .utf8))
+    #expect(cert.version == .v3 && cert.issuer == cert.subject)
+    #expect(cert.publicKey.isValidSignature(cert.signature, for: cert))
+    #expect(cert.notValidAfter.timeIntervalSince(cert.notValidBefore) > 800 * 86400)
+    let sans = try #require(try cert.extensions.subjectAlternativeNames)
+    #expect(sans.contains(.dnsName("localhost")))
+    #expect(try cert.extensions.basicConstraints == .notCertificateAuthority)
+    #expect(Identity.certificateIsUsable(id.certificate))
   }
 
   @Test func replacesAnUnusableCertificate() throws {

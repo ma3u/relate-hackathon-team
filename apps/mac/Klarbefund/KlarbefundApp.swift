@@ -23,6 +23,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         do { print(try ClaudeConnect.makeExtension().path) } catch { print("error: \(error)") }
         exit(0)
       }
+      // `--tls-selftest`: a throwaway identity and store in the sandbox's temp
+      // folder, one pinned HTTPS request, then quit. Proves the keychain and
+      // Network-framework TLS path of a signed build without touching the graph.
+      if CommandLine.arguments.contains("--tls-selftest") {
+        Task.detached {
+          print(await TLSSelfTest.run())
+          exit(0)
+        }
+        return
+      }
       // `--screenshot PATH`: the window with fictional demo data (no token, a documentation
       // address), for the docs.
       if let i = CommandLine.arguments.firstIndex(of: "--screenshot"), i + 1 < CommandLine.arguments.count {

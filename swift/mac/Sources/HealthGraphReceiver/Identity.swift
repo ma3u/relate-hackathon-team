@@ -1,7 +1,7 @@
-import Crypto
+import CryptoKit
 import Foundation
+import Security
 import SwiftASN1
-import X509
 
 /// The receiver's TLS certificate, key and pairing token.
 ///
@@ -50,38 +50,33 @@ public struct Identity: Sendable {
   /// X.509 v3 with a named-curve P-256 key: what Apple's TLS stack accepts.
   static func certificateIsUsable(_ url: URL) -> Bool {
     guard let pem = try? String(contentsOf: url, encoding: .utf8),
-      let cert = try? Certificate(pemEncoded: pem)
+      let der = try? PEMDocument(pemString: pem).derBytes,
+      let cert = SecCertificateCreateWithData(nil, Data(der) as CFData),
+      let key = SecCertificateCopyKey(cert),
+      let attributes = SecKeyCopyAttributes(key) as? [CFString: Any]
     else { return false }
-    return cert.version == .v3 && P256.Signing.PublicKey(cert.publicKey) != nil
+    let p256 = (attributes[kSecAttrKeyType] as? String) == (kSecAttrKeyTypeECSECPrimeRandom as String)
+      && (attributes[kSecAttrKeySizeInBits] as? Int) == 256
+    return p256 && DER.isVersion3(der)
   }
 
+  /// A self-signed P-256 certificate for TLS server authentication, written as
+  /// DER by hand and signed with CryptoKit: no crypto library is bundled.
   static func makeCertificate(cert: URL, key: URL, lanAddress: String) throws {
     let privateKey = P256.Signing.PrivateKey()
-    let name = try DistinguishedName { CommonName("Relate Health Graph (local)") }
     let host = ProcessInfo.processInfo.hostName.split(separator: ".").first.map(String.init) ?? "mac"
-    var sans: [GeneralName] = [.dnsName("localhost"), .dnsName("\(host).local")]
-    for ip in Set(["127.0.0.1", lanAddress]) {
-      if let bytes = ipv4Bytes(ip) { sans.append(.ipAddress(ASN1OctetString(contentBytes: bytes[...]))) }
+    var sans = [DER.context(2, Array("localhost".utf8)), DER.context(2, Array("\(host).local".utf8))]
+    for ip in Set(["127.0.0.1", lanAddress]).sorted() {
+      if let bytes = ipv4Bytes(ip) { sans.append(DER.context(7, bytes)) }
     }
     let now = Date()
-    let certificate = try Certificate(
-      version: .v3,
-      serialNumber: Certificate.SerialNumber(),
-      publicKey: .init(privateKey.publicKey),
-      notValidBefore: now.addingTimeInterval(-3600),
-      notValidAfter: now.addingTimeInterval(825 * 86400),
-      issuer: name,
-      subject: name,
-      signatureAlgorithm: .ecdsaWithSHA256,
-      extensions: try Certificate.Extensions {
-        Critical(BasicConstraints.notCertificateAuthority)
-        Critical(KeyUsage(digitalSignature: true))
-        try ExtendedKeyUsage([.serverAuth])
-        SubjectAlternativeNames(sans)
-      },
-      issuerPrivateKey: .init(privateKey))
+    let der = try DER.selfSignedCertificate(
+      key: privateKey, commonName: "Relate Health Graph (local)",
+      notBefore: now.addingTimeInterval(-3600), notAfter: now.addingTimeInterval(825 * 86400),
+      subjectAltNames: sans)
+    let pem = PEMDocument(type: "CERTIFICATE", derBytes: der).pemString
     try writePrivate(privateKey.pemRepresentation + "\n", to: key)
-    try (try certificate.serializeAsPEM().pemString + "\n").write(to: cert, atomically: true, encoding: .utf8)
+    try (pem + "\n").write(to: cert, atomically: true, encoding: .utf8)
   }
 
   /// 256 random bits, base64url without padding (Python's `secrets.token_urlsafe(32)`).

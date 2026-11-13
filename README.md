@@ -62,7 +62,7 @@ No iPhone? The sample graph above runs anywhere Relate runs, and Klarbefund has 
 
 **Relate capabilities used:** the embedded engine in Swift on iOS and macOS (through `RelateFFI.xcframework`, our `HealthGraph` Swift package), the Python library (`relate-db`, the reference implementation in `health_graph/`), the `relate` CLI, single-file `.rl` stores, and `relate serve --mcp --read-only` for Claude.
 
-**Third-party tools:** FHIR R4, LOINC, NCBI Taxonomy and the OMOP CDM as data models; swift-nio, swift-nio-ssl and swift-certificates for the pinned-TLS receiver; ffmpeg, Playwright and headless Chrome for the video; ElevenLabs for the narration in my own cloned voice.
+**Third-party tools:** FHIR R4, LOINC, NCBI Taxonomy and the OMOP CDM as data models; swift-nio with Apple's Network framework for the pinned-TLS receiver in the Mac app (swift-nio-ssl only in the command-line receiver); ffmpeg, Playwright and headless Chrome for the video; ElevenLabs for the narration in my own cloned voice.
 
 **AI tools (disclosed as the rules ask):** the code, docs and video were written with Claude Code (Anthropic); Claude Desktop is the assistant that queries the graph in the demo.
 

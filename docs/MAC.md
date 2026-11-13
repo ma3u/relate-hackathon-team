@@ -32,13 +32,19 @@ open Klarbefund.xcodeproj      # or: xcodebuild -scheme Klarbefund build
 
 | Part | Where | What it does |
 | --- | --- | --- |
-| App | `apps/mac/Klarbefund/` | SwiftUI window with the three steps; `AppModel` runs `ReceiverServer` from `swift/mac` in-process, on port 8787 (or the next free one) |
+| App | `apps/mac/Klarbefund/` | SwiftUI window with the three steps; `AppModel` runs `ReceiverServer` from `swift/mac` in-process, on port 8787 (or the next free one). TLS comes from Apple's Network framework; the certificate and key go into the keychain as an identity while the app runs |
 | Sealing | `Seal.swift` | `health.rl` ↔ `health.rl.sealed`, AES-256-GCM (CryptoKit), key in the keychain, this device only |
 | Knowledge | `swift/Sources/HealthGraph/Knowledge.swift` | `seedKnowledge()`, generated from `health_graph/knowledge.py` by `scripts/gen_swift_cypher.py` (CI checks it is current) |
 | Claude | `ClaudeConnect.swift` | builds `Klarbefund Health Graph.mcpb` (manifest, helper, icon) and opens it with Claude Desktop |
 | MCP server | `apps/mac/klarbefund-mcp/main.swift` | MCP over stdio: `get_schema`, `read_cypher` (read-only, write clauses refused, 500 rows), three prompts, and instructions that describe the graph |
 
 The app and the helper are sandboxed and share the app group `38R8Z4P7S8.red.mabu.meinbefund`; the app writes `Snapshot/health.rl` there after each transfer and deletes it on quit. The bundle id is the iPhone app's (`red.mabu.meinbefund`), so both platforms live in one App Store Connect record (universal purchase).
+
+Check the receiver's TLS in a signed Debug build (throwaway identity, one pinned request over the LAN address):
+
+```bash
+.build/Build/Products/Debug/Klarbefund.app/Contents/MacOS/Klarbefund --tls-selftest
+```
 
 Check the extension with the official validator:
 

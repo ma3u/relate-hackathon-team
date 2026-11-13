@@ -2,6 +2,7 @@ import ArgumentParser
 import Foundation
 import HealthGraph
 import HealthGraphReceiver
+import HealthGraphReceiverNIOSSL
 import Relate
 
 @main
@@ -111,7 +112,7 @@ struct Receive: ParsableCommand {
       print(line)
       fflush(stdout)
     }
-    let server = try ReceiverServer(core: core, identity: identity)
+    let server = try NIOSSLReceiverServer(core: core, identity: identity)
     try server.start(port: port)
 
     print("\nScan this in Klarbefund: Menu -> Export to my Mac (Relate)\n")

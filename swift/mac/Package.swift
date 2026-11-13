@@ -17,15 +17,17 @@ let package = Package(
   products: [
     .executable(name: "health-graph", targets: ["health-graph"]),
     // The receiver as a library, for the Mac app (apps/mac, Klarbefund for Mac).
+    // TLS comes from Apple's Network framework (no bundled crypto), so the App
+    // Store build needs no export-compliance paperwork.
     .library(name: "HealthGraphReceiver", targets: ["HealthGraphReceiver"]),
   ],
   dependencies: [
     .package(path: repoRoot.path),
     .package(url: "https://github.com/apple/swift-nio", from: "2.65.0"),
     .package(url: "https://github.com/apple/swift-nio-ssl", from: "2.27.0"),
+    .package(url: "https://github.com/apple/swift-nio-transport-services", from: "1.20.0"),
     .package(url: "https://github.com/apple/swift-certificates", from: "1.5.0"),
     .package(url: "https://github.com/apple/swift-asn1", from: "1.1.0"),
-    .package(url: "https://github.com/apple/swift-crypto", from: "3.0.0"),
     .package(url: "https://github.com/apple/swift-argument-parser", from: "1.3.0"),
   ],
   targets: [
@@ -36,18 +38,34 @@ let package = Package(
         .product(name: "NIOCore", package: "swift-nio"),
         .product(name: "NIOPosix", package: "swift-nio"),
         .product(name: "NIOHTTP1", package: "swift-nio"),
-        .product(name: "NIOSSL", package: "swift-nio-ssl"),
-        .product(name: "X509", package: "swift-certificates"),
+        .product(name: "NIOTransportServices", package: "swift-nio-transport-services"),
+        // PEM only; the certificate is DER written by hand, signed with CryptoKit.
         .product(name: "SwiftASN1", package: "swift-asn1"),
-        .product(name: "Crypto", package: "swift-crypto"),
+      ]),
+    // The command-line receiver serves TLS with BoringSSL instead: its identity
+    // stays in files, so a rebuilt binary never meets a keychain prompt. Not in
+    // the Mac app.
+    .target(
+      name: "HealthGraphReceiverNIOSSL",
+      dependencies: [
+        "HealthGraphReceiver",
+        .product(name: "NIOCore", package: "swift-nio"),
+        .product(name: "NIOPosix", package: "swift-nio"),
+        .product(name: "NIOSSL", package: "swift-nio-ssl"),
       ]),
     .executableTarget(
       name: "health-graph",
       dependencies: [
         "HealthGraphReceiver",
+        "HealthGraphReceiverNIOSSL",
         .product(name: "HealthGraph", package: repoRoot.lastPathComponent),
         .product(name: "ArgumentParser", package: "swift-argument-parser"),
       ]),
-    .testTarget(name: "HealthGraphReceiverTests", dependencies: ["HealthGraphReceiver"]),
+    .testTarget(
+      name: "HealthGraphReceiverTests",
+      dependencies: [
+        "HealthGraphReceiver", "HealthGraphReceiverNIOSSL",
+        .product(name: "X509", package: "swift-certificates"),
+      ]),
   ]
 )

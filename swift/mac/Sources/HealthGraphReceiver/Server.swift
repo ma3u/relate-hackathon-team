@@ -1,44 +1,37 @@
 import Foundation
+import Network
 import NIOCore
 import NIOHTTP1
-import NIOPosix
-import NIOSSL
+import NIOTransportServices
 
-/// HTTPS server for `ReceiverCore` on SwiftNIO. Non-blocking: a client that
-/// stalls (no TLS hello, a slow upload) never holds up the others; idle
+/// HTTPS server for `ReceiverCore` on SwiftNIO over Apple's Network framework:
+/// TLS is the operating system's, nothing is bundled. Non-blocking: a client
+/// that stalls (no TLS hello, a slow upload) never holds up the others; idle
 /// connections are closed after 60 s.
 public final class ReceiverServer {
   let core: ReceiverCore
-  let tls: NIOSSLContext
-  let group = MultiThreadedEventLoopGroup(numberOfThreads: 2)
+  let tls: TLSIdentity
+  let group = NIOTSEventLoopGroup(loopCount: 2)
   var channel: Channel?
 
   public init(core: ReceiverCore, identity: Identity) throws {
     self.core = core
-    var config = TLSConfiguration.makeServerConfiguration(
-      certificateChain: try NIOSSLCertificate.fromPEMFile(identity.certificate.path).map { .certificate($0) },
-      privateKey: .privateKey(try NIOSSLPrivateKey(file: identity.key.path, format: .pem)))
-    config.minimumTLSVersion = .tlsv12
-    tls = try NIOSSLContext(configuration: config)
+    tls = try TLSIdentity(identity)
   }
 
   /// Binds and returns the port (pass 0 for any free port).
   @discardableResult
   public func start(host: String = "0.0.0.0", port: Int) throws -> Int {
     let core = self.core
-    let tls = self.tls
-    let bootstrap = ServerBootstrap(group: group)
-      .serverChannelOption(ChannelOptions.backlog, value: 64)
+    let options = NWProtocolTLS.Options()
+    let sec = options.securityProtocolOptions
+    sec_protocol_options_set_local_identity(sec, tls.secIdentity)
+    sec_protocol_options_set_min_tls_protocol_version(sec, .TLSv12)
+    let bootstrap = NIOTSListenerBootstrap(group: group)
       .serverChannelOption(ChannelOptions.socketOption(.so_reuseaddr), value: 1)
+      .tlsOptions(options)
       .childChannelInitializer { channel in
-        channel.eventLoop.makeCompletedFuture {
-          let ops = channel.pipeline.syncOperations
-          try ops.addHandler(IdleStateHandler(readTimeout: .seconds(60)))
-          try ops.addHandler(CloseOnIdle())
-          try ops.addHandler(NIOSSLServerHandler(context: tls))
-          try ops.configureHTTPServerPipeline(withErrorHandling: true)
-          try ops.addHandler(HTTPHandler(core: core))
-        }
+        channel.eventLoop.makeCompletedFuture { try ReceiverServer.configureHTTP(channel, core: core) }
       }
     let channel = try bootstrap.bind(host: host, port: port).wait()
     self.channel = channel
@@ -50,6 +43,17 @@ public final class ReceiverServer {
   public func stop() {
     try? channel?.close().wait()
     try? group.syncShutdownGracefully()
+    tls.remove()
+  }
+
+  /// Everything after TLS: idle timeout, HTTP/1.1, the receiver. Shared with the
+  /// command-line server (`HealthGraphReceiverNIOSSL`).
+  package static func configureHTTP(_ channel: Channel, core: ReceiverCore) throws {
+    let ops = channel.pipeline.syncOperations
+    try ops.addHandler(IdleStateHandler(readTimeout: .seconds(60)))
+    try ops.addHandler(CloseOnIdle())
+    try ops.configureHTTPServerPipeline(withErrorHandling: true)
+    try ops.addHandler(HTTPHandler(core: core))
   }
 }
 

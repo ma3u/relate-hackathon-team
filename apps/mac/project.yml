@@ -18,7 +18,7 @@ settings:
     DEVELOPMENT_TEAM: 38R8Z4P7S8
     CODE_SIGN_STYLE: Automatic
     MARKETING_VERSION: "1.0"
-    CURRENT_PROJECT_VERSION: "2"
+    CURRENT_PROJECT_VERSION: "3"
     ENABLE_HARDENED_RUNTIME: YES
     SWIFT_VERSION: "5.0"
 targets:
@@ -44,8 +44,10 @@ targets:
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         LSApplicationCategoryType: public.app-category.medical
         NSHumanReadableCopyright: "Your health data stays on your devices."
-        # No ITSAppUsesNonExemptEncryption: the app serves TLS through BoringSSL
-        # (swift-nio-ssl), so export compliance is answered per build in App Store Connect.
+        NSLocalNetworkUsageDescription: "Klarbefund receives your lab reports and Apple Health data from your iPhone over your Wi-Fi."
+        # TLS comes from Apple's Network framework, hashing and signatures from
+        # CryptoKit: only the operating system's encryption.
+        ITSAppUsesNonExemptEncryption: false
     entitlements:
       path: Klarbefund/Klarbefund.entitlements
       properties:
