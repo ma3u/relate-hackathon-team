@@ -47,6 +47,17 @@
   .nb.inset, .hint.inset { padding-left: 20px; }
   .nb.code { font-weight: 600; margin-top: 6px; }
   .flag { color: #F09595; }
+  #history { left: 50%; transform: translateX(-50%); bottom: 16px; display: none; align-items: center; gap: 6px; padding: 8px 10px;
+    max-width: calc(100% - 720px); min-width: 220px; overflow-x: auto; }
+  #history .backbtn { flex: none; background: #1b2029; color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; font: inherit; font-size: 12px; cursor: pointer; }
+  #history .card { flex: none; width: 138px; background: #0b0d11; border: 1px solid var(--line); border-radius: 8px; padding: 4px; cursor: pointer; color: var(--ink); text-align: left; font: inherit; }
+  #history .card:hover { border-color: #5a6372; }
+  #history .card.now { border-color: var(--accent); cursor: default; box-shadow: 0 0 0 1px var(--accent) inset; }
+  #history .card img, #history .card .ph { width: 100%; height: 72px; object-fit: cover; border-radius: 5px; display: block; background: #0e1116; }
+  #history .card .k { display: block; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin-top: 4px; }
+  #history .card.now .k { color: var(--accent); }
+  #history .card .t { display: block; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #history .sep { color: var(--muted); flex: none; }
   .chart { display: block; margin: 4px 0 2px; overflow: visible; }
   .chart text { font: 10px -apple-system, system-ui, sans-serif; fill: var(--muted); }
   .chart .last { fill: var(--ink); font-size: 11px; font-weight: 600; }
@@ -73,10 +84,11 @@
     <button id="next">Next step →</button>
     <button id="fit">Fit view</button>
   </div>
-  <p class="hint">Drag to rotate, scroll to zoom, right-drag to pan. Click a node to drill down into its relationships; click empty space or the trail to go back.</p>
+  <p class="hint">Drag to rotate, scroll to zoom, right-drag to pan. Click a node to drill down into its relationships. The bar at the bottom shows where you are and where you came from: click a perspective, or press Esc, to go back.</p>
 </div>
 
 <div id="detail" class="panel"></div>
+<nav id="history" class="panel" aria-label="Perspectives"></nav>
 
 <script src="https://cdn.jsdelivr.net/npm/3d-force-graph@1.80.1/dist/3d-force-graph.min.js"></script>
 <script>
@@ -144,8 +156,7 @@ const Graph = new ForceGraph3D(document.getElementById("graph"))
   .linkDirectionalParticleWidth(1.6)
   .linkDirectionalParticleSpeed(0.006)
   .onNodeClick(focusNode)
-  .onBackgroundClick(() => drill.length ? back() : null)
-  .cooldownTicks(220)
+    .cooldownTicks(220)
   .warmupTicks(40);
 
 Graph.d3Force("charge").strength(-28);
@@ -184,11 +195,13 @@ function drillSet(n) {
   return S;
 }
 
-function applyFilter() {
-  const keep = drill.length ? drillSet(drill[drill.length - 1]) : new Set(DATA.nodes.filter(shown));
+function setData(keep) {
   const links = DATA.links.filter(l => keep.has(byId.get(endId(l.source))) && keep.has(byId.get(endId(l.target))));
   Graph.graphData({ nodes: [...keep], links });
   buildLabels([...keep]);
+}
+function applyFilter() {
+  setData(drill.length ? drillSet(drill[drill.length - 1]) : new Set(DATA.nodes.filter(shown)));
   Graph._fitted = false;
 }
 
@@ -197,32 +210,132 @@ function refresh() {
     .linkWidth(Graph.linkWidth()).linkDirectionalParticles(Graph.linkDirectionalParticles());
 }
 
-function focusNode(n) {
-  const i = drill.indexOf(n);
-  if (i >= 0) drill = drill.slice(0, i + 1); else drill.push(n);
-  openDrill();
+// ── Navigation: perspectives you can see and return to ──────────────────
+// views[i] is the perspective at depth i (0 = the overview step), saved when
+// you leave it: a thumbnail, the camera, and every node's position, so going
+// back restores exactly what you saw.
+let views = [], curThumb = null, busy = false;
+
+function snapshot() {
+  const r = Graph.renderer();
+  r.render(Graph.scene(), Graph.camera());
+  const src = r.domElement, c = document.createElement("canvas");
+  c.width = 276; c.height = 144;
+  const k = Math.max(c.width / src.width, c.height / src.height);
+  const w = src.width * k, h = src.height * k;
+  c.getContext("2d").drawImage(src, (c.width - w) / 2, (c.height - h) / 2, w, h);
+  const cam = Graph.camera().position, t = Graph.controls().target;
+  return {
+    thumb: c.toDataURL("image/jpeg", 0.8),
+    cam: { x: cam.x, y: cam.y, z: cam.z }, target: { x: t.x, y: t.y, z: t.z },
+    pos: new Map(Graph.graphData().nodes.map(n => [n.id, [n.x, n.y, n.z]])),
+  };
 }
-function openDrill() {
-  const n = drill[drill.length - 1];
+
+const pin = n => { n.fx = n.x; n.fy = n.y; n.fz = n.z; };
+const unpin = n => { delete n.fx; delete n.fy; delete n.fz; };
+const linksOf = n => new Set(Graph.graphData().links.filter(l => endId(l.source) === n.id || endId(l.target) === n.id));
+
+// Keep the current viewing direction and move closer to the node.
+function flyTo(n, ms) {
+  const c = Graph.camera().position;
+  let dx = c.x - n.x, dy = c.y - n.y, dz = c.z - n.z;
+  const d = Math.hypot(dx, dy, dz) || 1, want = 170 + 10 * Math.cbrt(Graph.nodeVal()(n));
+  Graph.cameraPosition({ x: n.x + dx / d * want, y: n.y + dy / d * want, z: n.z + dz / d * want }, { x: n.x, y: n.y, z: n.z }, ms);
+}
+
+function focusNode(n) {
+  if (busy) return;
+  const i = drill.indexOf(n);
+  if (i >= 0) return goTo(i + 1);
+  views[drill.length] = snapshot();
+  views.length = drill.length + 1;
+  const visible = Graph.graphData().nodes.includes(n) && n.x !== undefined;
+  drill.push(n);
   selected = n;
-  applyFilter();
-  hlLinks = new Set(Graph.graphData().links.filter(l => endId(l.source) === n.id || endId(l.target) === n.id));
+  curThumb = null;
+  showDetail(n);
+  renderHistory();
+  if (!visible) return enterDrill(n);
+  // First fly to it with everything still in view, then open its chain.
+  busy = true;
+  hlLinks = linksOf(n);
+  refresh();
+  flyTo(n, 650);
+  setTimeout(() => { busy = false; enterDrill(n); }, 700);
+}
+
+// The node stays where it is; what is new grows out of it.
+function enterDrill(n) {
+  if (n.x === undefined) { n.x = 0; n.y = 0; n.z = 0; }
+  drill.slice(0, -1).forEach(unpin);
+  pin(n);
+  const keep = drillSet(n), had = new Set(Graph.graphData().nodes);
+  keep.forEach(m => {
+    if (m === n || had.has(m)) return;
+    m.x = n.x + (Math.random() - 0.5) * 24; m.y = n.y + (Math.random() - 0.5) * 24; m.z = n.z + (Math.random() - 0.5) * 24;
+    m.vx = m.vy = m.vz = 0;
+  });
+  Graph.warmupTicks(0).cooldownTicks(220);
+  setData(keep);
+  Graph._fitted = false;
+  hlLinks = linksOf(n);
   Graph.linkOpacity(0.55);
   refresh();
-  showDetail(n);
 }
-function back() {
-  drill.pop();
-  drill.length ? openDrill() : clearFocus();
-}
-function clearFocus() {
-  drill = []; selected = null; hlLinks = new Set();
-  document.getElementById("detail").style.display = "none";
-  Graph.linkOpacity(stage === 0 ? 0.6 : 0.22);
-  applyFilter();
+
+// Back to the perspective at depth `level`, exactly as it was.
+function goTo(level) {
+  if (busy || level >= drill.length + 1) return;
+  const v = views[level];
+  drill.forEach(unpin);
+  drill = drill.slice(0, level);
+  views.length = level;
+  selected = drill[level - 1] || null;
+  if (selected) pin(selected);
+  const keep = selected ? drillSet(selected) : new Set(DATA.nodes.filter(shown));
+  if (v) keep.forEach(m => {
+    const p = v.pos.get(m.id);
+    if (p) { [m.x, m.y, m.z] = p; m.vx = m.vy = m.vz = 0; if (m === selected) pin(m); }
+  });
+  Graph.warmupTicks(0).cooldownTicks(v ? 0 : 220);
+  setData(keep);
+  Graph._fitted = !!v;
+  if (v) Graph.cameraPosition(v.cam, v.target, 800);
+  setTimeout(() => Graph.cooldownTicks(220), 100);
+  hlLinks = selected ? linksOf(selected) : new Set();
+  Graph.linkOpacity(selected ? 0.55 : stage === 0 ? 0.6 : 0.22);
   refresh();
+  curThumb = v ? v.thumb : null;
+  if (selected) showDetail(selected); else document.getElementById("detail").style.display = "none";
+  renderHistory();
 }
-addEventListener("keydown", e => { if (e.key === "Escape" && drill.length) back(); });
+function back() { if (drill.length) goTo(drill.length - 1); }
+function clearFocus() { goTo(0); }
+addEventListener("keydown", e => {
+  if ((e.key === "Escape" || (e.key === "Backspace" && e.target === document.body)) && drill.length) { e.preventDefault(); back(); }
+});
+
+function renderHistory() {
+  const h = document.getElementById("history");
+  if (!drill.length) { h.style.display = "none"; return; }
+  const cards = [`<button class="backbtn" title="Back (Esc)">← Back</button>`];
+  for (let i = 0; i <= drill.length; i++) {
+    const now = i === drill.length, node = drill[i - 1];
+    const img = now ? curThumb : views[i] && views[i].thumb;
+    const kind = now ? "You are here" : i === 0 ? "Overview" : node.g;
+    const title = i === 0 ? STAGES[stage].name : node.n;
+    if (i) cards.push(`<span class="sep">›</span>`);
+    cards.push(`<button class="card${now ? " now" : ""}" data-level="${i}"${now ? ' aria-current="page"' : ` title="Back to ${esc(title)}"`}>` +
+      (img ? `<img src="${img}" alt="">` : `<div class="ph"></div>`) +
+      `<span class="k">${esc(kind)}</span><span class="t">${esc(title)}</span></button>`);
+  }
+  h.innerHTML = cards.join("");
+  h.style.display = "flex";
+  h.querySelector(".backbtn").onclick = back;
+  h.querySelectorAll(".card:not(.now)").forEach(b => b.onclick = () => goTo(+b.dataset.level));
+  h.scrollLeft = h.scrollWidth;
+}
 
 function showDetail(n) {
   const el = document.getElementById("detail");
@@ -274,7 +387,7 @@ function showDetail(n) {
   el.querySelectorAll("[data-back]").forEach(a => a.onclick = e => {
     e.preventDefault();
     const i = +a.dataset.back;
-    if (i < 0) clearFocus(); else { drill = drill.slice(0, i + 1); openDrill(); }
+    goTo(i + 1);
   });
 }
 
@@ -492,8 +605,11 @@ STAGES.forEach((st, i) => {
 });
 function setStage(i, fit = true) {
   stage = i;
-  drill = []; selected = null; hlLinks = new Set();
+  drill.forEach(unpin);
+  drill = []; views = []; selected = null; hlLinks = new Set();
   document.getElementById("detail").style.display = "none";
+  renderHistory();
+  Graph.warmupTicks(40).cooldownTicks(220);
   Object.keys(VISIBLE).forEach(g => VISIBLE[g] = true);
   steps.querySelectorAll("button").forEach((b, j) => b.setAttribute("aria-selected", j === i));
   document.getElementById("stepHint").textContent = STAGES[i].hint;
@@ -524,7 +640,13 @@ q.addEventListener("input", () => {
 });
 
 setStage(0);
-Graph.onEngineStop(() => { if (!Graph._fitted) { Graph._fitted = true; Graph.zoomToFit(800, 40); } });
+// After a layout settles: frame it, then take the thumbnail of where you are.
+Graph.onEngineStop(() => {
+  if (Graph._fitted) return;
+  Graph._fitted = true;
+  Graph.zoomToFit(900, 60);
+  if (drill.length) setTimeout(() => { if (!busy) { curThumb = snapshot().thumb; renderHistory(); } }, 1000);
+});
 window.addEventListener("resize", () => Graph.width(innerWidth).height(innerHeight));
 </script>
 </body>

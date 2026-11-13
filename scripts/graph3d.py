@@ -109,8 +109,9 @@ def build(nodes_in, links_in):
     for r in links_in:
         o, c = by_id[r["s"]], by_id[r["t"]]
         if r["type"] == "CODED_BY" and o["label"] == "Observation" and c["label"] == "LoincCode":
-            if not (o["p"].get("display") or o["p"].get("loincDisplay")) and c["p"].get("display"):
-                o["p"]["loincDisplay"] = c["p"]["display"]
+            own = o["p"].get("display") or o["p"].get("loincDisplay")
+            if (not own or own == o["p"].get("code")) and c["p"].get("display") not in (None, c["p"].get("code")):
+                o["p"]["display"] = c["p"]["display"]
 
     # The first view shows the current risks: the risks and scores, their marker
     # codes, and the latest lab value on each marker.
