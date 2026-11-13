@@ -140,7 +140,20 @@ case "${1:-status}" in
     [ -e "$src" ] || { log "no graph yet: open Klarbefund for Mac or run '$0 receive', then send from the iPhone"; exit 1; }
     out="$MOUNT/graph3d/index.html"
     RELATE_BIN="$RELATE" python3 "$REPO/scripts/graph3d.py" --db "$src" --out "$out"
-    port="${GRAPH3D_PORT:-8799}"
+    # 8799, or the next free port when another server (an earlier graph3d) has it.
+    port="$(python3 -c '
+import socket, sys
+p = int(sys.argv[1])
+for q in range(p, p + 20):
+    s = socket.socket()
+    try:
+        s.bind(("127.0.0.1", q)); print(q); break
+    except OSError:
+        pass
+    finally:
+        s.close()
+else:
+    sys.exit("no free port")' "${GRAPH3D_PORT:-8799}")"
     log "serving http://127.0.0.1:$port/ from the vault (this Mac only); Ctrl-C stops it"
     ( sleep 1; open "http://127.0.0.1:$port/" ) &
     cd "$MOUNT/graph3d" && exec python3 -m http.server "$port" --bind 127.0.0.1
