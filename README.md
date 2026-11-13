@@ -38,6 +38,14 @@ python -m health_graph query --db examples/health-graph/health.rl ranges --param
 relate serve --mcp stdio --database examples/health-graph/health.rl --read-only   # for Claude Desktop or Claude Code
 ```
 
+**See it in 3D.** [`scripts/graph3d.py`](scripts/graph3d.py) turns a store into one interactive WebGL page ([3d-force-graph](https://github.com/vasturiano/3d-force-graph)). It opens on the current risks: health risks, risk scores, their marker codes and the latest value on each. Then it adds the measures, the documents, and finally everything, with search, label filters and a panel for each node's relationships.
+
+```bash
+python3 scripts/graph3d.py --db examples/health-graph/health.rl --out /tmp/graph3d/index.html
+python3 -m http.server -d /tmp/graph3d --bind 127.0.0.1 8799   # then open http://127.0.0.1:8799
+scripts/health_vault.sh graph3d   # your own graph: built and served inside the encrypted vault
+```
+
 Rebuild it: `python -m health_graph import --db health.rl fixtures/fhir/*.json`, then `python -m health_graph knowledge --db health.rl`. Setup: [docs/INSTALL.md](docs/INSTALL.md).
 
 ### Run it with your own data
@@ -61,7 +69,7 @@ No iPhone? The sample graph above runs anywhere Relate runs, and Klarbefund has 
 
 **Relate capabilities used:** the embedded engine in Swift on iOS and macOS (through `RelateFFI.xcframework`, our `HealthGraph` Swift package), the Python library (`relate-db`, the reference implementation in `health_graph/`), the `relate` CLI, single-file `.rl` stores, and `relate serve --mcp --read-only` for Claude.
 
-**Third-party tools:** FHIR R4, LOINC, NCBI Taxonomy and the OMOP CDM as data models; swift-nio with Apple's Network framework for the pinned-TLS receiver in the Mac app (swift-nio-ssl only in the command-line receiver); ffmpeg, Playwright and headless Chrome for the video; ElevenLabs for the narration in my own cloned voice.
+**Third-party tools:** FHIR R4, LOINC, NCBI Taxonomy and the OMOP CDM as data models; swift-nio with Apple's Network framework for the pinned-TLS receiver in the Mac app (swift-nio-ssl only in the command-line receiver); 3d-force-graph (Three.js) for the 3D view; ffmpeg, Playwright and headless Chrome for the video; ElevenLabs for the narration in my own cloned voice.
 
 **AI tools (disclosed as the rules ask):** the code, docs and video were written with Claude Code (Anthropic); Claude Desktop is the assistant that queries the graph in the demo.
 

@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Health Graph 3D</title>
+<style>
+  :root { color-scheme: dark; --bg: #0e1116; --panel: rgba(22, 26, 33, 0.92); --line: #2a303a; --ink: #e8e6df; --muted: #9c9a92; --accent: #5DCAA5; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font: 14px/1.45 -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif; overflow: hidden; }
+  #graph { position: absolute; inset: 0; }
+  .panel { position: absolute; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; backdrop-filter: blur(6px); }
+  #side { top: 16px; left: 16px; width: 290px; max-height: calc(100% - 32px); overflow-y: auto; }
+  #detail { top: 16px; right: 16px; width: 330px; max-height: calc(100% - 32px); overflow-y: auto; display: none; }
+  h1 { font-size: 17px; font-weight: 600; margin: 0 0 2px; }
+  .sub { color: var(--muted); font-size: 12px; margin: 0 0 12px; }
+  input[type=search] { width: 100%; padding: 7px 10px; border-radius: 8px; border: 1px solid var(--line); background: #0b0d11; color: var(--ink); font: inherit; }
+  #hits { margin: 6px 0 0; }
+  #hits button, .nb { display: block; width: 100%; text-align: left; background: none; border: 0; color: var(--ink); padding: 3px 4px; border-radius: 6px; cursor: pointer; font: inherit; font-size: 13px; }
+  #hits button:hover, .nb:hover { background: #222833; }
+  .fam { margin-top: 14px; }
+  .fam h2 { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 0 0 4px; font-weight: 600; }
+  label.row { display: flex; align-items: center; gap: 8px; padding: 2px 0; cursor: pointer; font-size: 13px; }
+  label.row input { margin: 0; accent-color: var(--accent); }
+  .dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+  .count { margin-left: auto; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .btns { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
+  .btns button { background: #1b2029; color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 5px 9px; font: inherit; font-size: 12px; cursor: pointer; }
+  .btns button:hover { border-color: #444c58; }
+  #detail h3 { margin: 0 0 4px; font-size: 16px; font-weight: 600; }
+  #detail .tag { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+  #detail ul { margin: 0 0 10px; padding-left: 18px; }
+  #detail .rel { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin: 10px 0 2px; }
+  .close { float: right; background: none; border: 0; color: var(--muted); font-size: 18px; cursor: pointer; }
+  .hint { color: var(--muted); font-size: 12px; margin-top: 12px; }
+  .steps { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 12px; }
+  .steps button { text-align: left; background: #1b2029; color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; font: inherit; font-size: 12px; cursor: pointer; }
+  .steps button b { color: var(--muted); font-weight: 600; margin-right: 4px; }
+  .steps button[aria-selected=true] { border-color: var(--accent); background: #16312a; }
+  #stepHint { margin-top: 8px; }
+  .scene-tooltip { font: 13px/1.4 -apple-system, system-ui, sans-serif !important; background: rgba(14,17,22,.92) !important; border: 1px solid var(--line); border-radius: 8px; padding: 6px 9px !important; }
+</style>
+</head>
+<body>
+<div id="graph"></div>
+
+<div id="side" class="panel">
+  <h1>Health graph in 3D</h1>
+  <p class="sub" id="totals"></p>
+  <input type="search" id="q" placeholder="Search: HbA1c, a lab, a LOINC code…" autocomplete="off">
+  <div id="hits"></div>
+  <div id="steps" class="steps" role="tablist"></div>
+  <p class="hint" id="stepHint"></p>
+  <div id="legend"></div>
+  <div class="btns">
+    <button id="next">Next step →</button>
+    <button id="fit">Fit view</button>
+  </div>
+  <p class="hint">Drag to rotate, scroll to zoom, right-drag to pan. Click a node to focus it and its neighbours; click empty space to clear.</p>
+</div>
+
+<div id="detail" class="panel"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/3d-force-graph@1.80.1/dist/3d-force-graph.min.js"></script>
+<script>
+const DATA = /*DATA*/null;
+
+const FAMILIES = [
+  ["Risks", [["HealthRisk", "#F09595"], ["RiskScore", "#ED93B1"]]],
+  ["Measures", [
+    ["Lab value", "#5DCAA5"], ["Apple Watch week", "#85B7EB"], ["LoincCode", "#D3D1C7"],
+    ["ReferenceRange", "#AFA9EC"], ["NcbiTaxon", "#888780"]]],
+  ["Documents", [
+    ["Patient", "#ffffff"], ["DiagnosticReport", "#1D9E75"], ["DocumentReference", "#97C459"],
+    ["Provenance", "#C0DD97"], ["Organization", "#FAC775"]]],
+  ["Research copy", [["OMOPPerson", "#F0997B"], ["OMOPMeasurement", "#D85A30"], ["Knowledge", "#7F77DD"]]],
+];
+const OUT_COLOR = "#E24B4A";
+const COLOR = {}, VISIBLE = {};
+FAMILIES.forEach(([, gs]) => gs.forEach(([g, c]) => { COLOR[g] = c; VISIBLE[g] = true; }));
+const famGroups = i => FAMILIES.slice(0, i + 1).flatMap(([, gs]) => gs.map(([g]) => g));
+
+// Start with the current risks, then add the measures, then the documents.
+const STAGES = [
+  { name: "Current risks", groups: [...famGroups(0), "LoincCode", "Lab value"],
+    only: n => n.g === "LoincCode" ? n.mk : n.g === "Lab value" ? n.cur : true,
+    hint: "Health risks and risk scores, their marker codes, and your latest value on each. Red: outside the lab's range." },
+  { name: "Measures", groups: famGroups(1), only: () => true,
+    hint: "Every lab value and Apple Watch week, with LOINC codes and guideline ranges." },
+  { name: "Documents", groups: famGroups(2), only: () => true,
+    hint: "The scanned reports, their source documents, provenance and labs." },
+  { name: "Everything", groups: famGroups(3), only: () => true,
+    hint: "Plus the OMOP research copy." },
+];
+let stage = 0;
+
+const byId = new Map(DATA.nodes.map(n => [n.id, n]));
+DATA.nodes.forEach(n => { n.deg = 0; n.nbs = []; });
+DATA.links.forEach(l => {
+  const a = byId.get(l.source), b = byId.get(l.target);
+  a.deg++; b.deg++; a.nbs.push([l.t, b, "out"]); b.nbs.push([l.t, a, "in"]);
+});
+const counts = {};
+DATA.nodes.forEach(n => counts[n.g] = (counts[n.g] || 0) + 1);
+document.getElementById("totals").textContent =
+  `${DATA.nodes.length.toLocaleString()} nodes · ${DATA.links.length.toLocaleString()} relationships · Neo4j Relate`;
+
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const endId = e => typeof e === "object" ? e.id : e;
+
+let selected = null, hl = new Set(), hlLinks = new Set();
+
+const Graph = new ForceGraph3D(document.getElementById("graph"))
+  .backgroundColor("#0e1116")
+  .nodeId("id")
+  .nodeVal(n => n.g === "Patient" ? 30 : 1 + Math.pow(n.deg, 0.55) + (n.out ? 8 : n.cur ? 3 : 0))
+  .nodeRelSize(3)
+  .nodeOpacity(0.92)
+  .nodeResolution(12)
+  .nodeColor(n => !selected || hl.has(n) ? (n.out ? OUT_COLOR : COLOR[n.g]) : "#2b3038")
+  .nodeLabel(n => `<b>${esc(n.n)}</b><br><span style="color:${COLOR[n.g]}">${esc(n.g)}</span>` +
+    (n.d.length ? "<br>" + n.d.slice(0, 3).map(esc).join("<br>") : ""))
+  .linkColor(l => hlLinks.has(l) ? "#ffffff" : (COLOR[l.source.g || byId.get(l.source).g] || "#555"))
+  .linkOpacity(0.22)
+  .linkWidth(l => hlLinks.has(l) ? 1.4 : 0)
+  .linkDirectionalParticles(l => hlLinks.has(l) ? 3 : 0)
+  .linkDirectionalParticleWidth(1.6)
+  .linkDirectionalParticleSpeed(0.006)
+  .onNodeClick(focusNode)
+  .onBackgroundClick(clearFocus)
+  .cooldownTicks(220)
+  .warmupTicks(40);
+
+Graph.d3Force("charge").strength(-28);
+Graph.d3Force("link").distance(l => (l.t === "HAS_OBSERVATION" ? 60 : 26));
+
+const shown = n => VISIBLE[n.g] && STAGES[stage].groups.includes(n.g) && STAGES[stage].only(n);
+
+function applyFilter() {
+  const nodes = DATA.nodes.filter(shown);
+  const keep = new Set(nodes);
+  const links = DATA.links.filter(l => keep.has(byId.get(endId(l.source))) && keep.has(byId.get(endId(l.target))));
+  if (selected && !keep.has(selected)) clearFocus();
+  Graph.graphData({ nodes, links });
+}
+
+function refresh() {
+  Graph.nodeColor(Graph.nodeColor()).linkColor(Graph.linkColor())
+    .linkWidth(Graph.linkWidth()).linkDirectionalParticles(Graph.linkDirectionalParticles());
+}
+
+function focusNode(n) {
+  if (!shown(n)) {
+    VISIBLE[n.g] = true;
+    const s = STAGES.findIndex(st => st.groups.includes(n.g) && st.only(n));
+    if (s > stage) setStage(s, false); else { syncChecks(); applyFilter(); }
+  }
+  selected = n;
+  hl = new Set([n, ...n.nbs.map(x => x[1])]);
+  hlLinks = new Set(Graph.graphData().links.filter(l => endId(l.source) === n.id || endId(l.target) === n.id));
+  refresh();
+  showDetail(n);
+  const go = () => {
+    const d = 260 + 12 * Math.cbrt(Graph.nodeVal()(n)), r = Math.hypot(n.x || 1, n.y || 1, n.z || 1);
+    const k = 1 + d / r;
+    Graph.cameraPosition({ x: (n.x || 1) * k, y: (n.y || 1) * k, z: (n.z || 1) * k }, n, 1200);
+  };
+  n.x === undefined ? setTimeout(go, 600) : go();
+}
+
+function clearFocus() {
+  selected = null; hl = new Set(); hlLinks = new Set();
+  refresh();
+  document.getElementById("detail").style.display = "none";
+}
+
+function showDetail(n) {
+  const el = document.getElementById("detail");
+  const groups = {};
+  n.nbs.forEach(([t, m, dir]) => {
+    const key = dir === "out" ? `${t} →` : `← ${t}`;
+    (groups[key] = groups[key] || []).push(m);
+  });
+  let html = `<button class="close" aria-label="Close">×</button><h3>${esc(n.n)}</h3>` +
+    `<div class="tag"><span class="dot" style="background:${COLOR[n.g]}"></span>${esc(n.g)} · ${n.deg} relationships</div>`;
+  if (n.d.length) html += "<ul>" + n.d.map(x => `<li>${esc(x)}</li>`).join("") + "</ul>";
+  Object.entries(groups).sort((a, b) => a[1].length - b[1].length).forEach(([k, ms]) => {
+    html += `<div class="rel">${esc(k)} (${ms.length})</div>`;
+    ms.slice(0, 40).forEach(m => html += `<button class="nb" data-id="${m.id}"><span class="dot" style="display:inline-block;margin-right:6px;background:${COLOR[m.g]}"></span>${esc(m.n)}</button>`);
+    if (ms.length > 40) html += `<div class="hint">… and ${ms.length - 40} more</div>`;
+  });
+  el.innerHTML = html;
+  el.style.display = "block";
+  el.querySelector(".close").onclick = clearFocus;
+  el.querySelectorAll(".nb").forEach(b => b.onclick = () => focusNode(byId.get(+b.dataset.id)));
+}
+
+const legend = document.getElementById("legend");
+FAMILIES.forEach(([fam, gs]) => {
+  const box = document.createElement("div");
+  box.className = "fam";
+  box.innerHTML = `<h2>${esc(fam)}</h2>` + gs.filter(([g]) => counts[g]).map(([g, c]) =>
+    `<label class="row"><input type="checkbox" data-g="${esc(g)}" checked><span class="dot" style="background:${c}"></span>${esc(g)}<span class="count">${counts[g].toLocaleString()}</span></label>`).join("");
+  legend.appendChild(box);
+});
+legend.addEventListener("change", e => { VISIBLE[e.target.dataset.g] = e.target.checked; applyFilter(); });
+function syncChecks() { legend.querySelectorAll("input").forEach(i => i.checked = VISIBLE[i.dataset.g]); }
+
+const steps = document.getElementById("steps");
+STAGES.forEach((st, i) => {
+  const b = document.createElement("button");
+  b.setAttribute("role", "tab");
+  b.innerHTML = `<b>${i + 1}</b>${esc(st.name)}`;
+  b.onclick = () => setStage(i);
+  steps.appendChild(b);
+});
+function setStage(i, fit = true) {
+  stage = i;
+  Object.keys(VISIBLE).forEach(g => VISIBLE[g] = true);
+  steps.querySelectorAll("button").forEach((b, j) => b.setAttribute("aria-selected", j === i));
+  document.getElementById("stepHint").textContent = STAGES[i].hint;
+  document.getElementById("next").textContent = i < STAGES.length - 1 ? `Next: ${STAGES[i + 1].name} →` : "Back to current risks";
+  legend.querySelectorAll("label.row").forEach(l => l.style.opacity = STAGES[i].groups.includes(l.querySelector("input").dataset.g) ? 1 : 0.35);
+  Graph.linkOpacity(i === 0 ? 0.6 : 0.22);
+  syncChecks();
+  applyFilter();
+  if (fit) Graph._fitted = false;
+}
+document.getElementById("next").onclick = () => setStage((stage + 1) % STAGES.length);
+document.getElementById("fit").onclick = () => Graph.zoomToFit(800, 40);
+
+const q = document.getElementById("q"), hits = document.getElementById("hits");
+q.addEventListener("input", () => {
+  const s = q.value.trim().toLowerCase();
+  hits.innerHTML = "";
+  if (s.length < 2) return;
+  const found = DATA.nodes.filter(n => n.n.toLowerCase().includes(s) || n.d.some(x => x.toLowerCase().includes(s)))
+    .sort((a, b) => b.deg - a.deg).slice(0, 12);
+  found.forEach(n => {
+    const b = document.createElement("button");
+    b.innerHTML = `<span class="dot" style="display:inline-block;margin-right:6px;background:${COLOR[n.g]}"></span>${esc(n.n)} <span style="color:var(--muted)">· ${esc(n.g)}</span>`;
+    b.onclick = () => focusNode(n);
+    hits.appendChild(b);
+  });
+  if (!found.length) hits.innerHTML = `<div class="hint">No match.</div>`;
+});
+
+setStage(0);
+Graph.onEngineStop(() => { if (!Graph._fitted) { Graph._fitted = true; Graph.zoomToFit(800, 40); } });
+window.addEventListener("resize", () => Graph.width(innerWidth).height(innerHeight));
+</script>
+</body>
+</html>

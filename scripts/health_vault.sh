@@ -16,6 +16,7 @@
 #                                     # (Swift: swift/mac; HEALTH_GRAPH_RECEIVER=python for the Python one)
 #   scripts/health_vault.sh usb       # mount, then fetch from Klarbefund over the USB cable (no Wi-Fi)
 #   scripts/health_vault.sh mcp       # mount, then serve the graph read-only over MCP (for Claude)
+#   scripts/health_vault.sh graph3d   # mount, build the 3D view into the vault, serve it on 127.0.0.1
 set -euo pipefail
 
 VAULT="${RELATE_HEALTH_VAULT:-$HOME/RelateHealthVault.sparsebundle}"
@@ -130,5 +131,19 @@ case "${1:-status}" in
     [ -f "$MOUNT/health.rl" ] && cp -f "$MOUNT/health.rl" "$snap.tmp" && mv -f "$snap.tmp" "$snap" && chmod 600 "$snap"
     exec "$RELATE" serve --mcp stdio --database "$snap" --read-only
     ;;
-  *) sed -n '2,16p' "$0"; exit 2 ;;
+  graph3d)
+    do_mount
+    # Newest graph wins: Klarbefund for Mac's snapshot, or the receiver's store.
+    src="$MOUNT/health.rl"
+    app="$HOME/Library/Group Containers/38R8Z4P7S8.red.mabu.meinbefund/Snapshot/health.rl"
+    [ -f "$app" ] && { [ ! -e "$src" ] || [ "$app" -nt "$src" ]; } && src="$app"
+    [ -e "$src" ] || { log "no graph yet: open Klarbefund for Mac or run '$0 receive', then send from the iPhone"; exit 1; }
+    out="$MOUNT/graph3d/index.html"
+    RELATE_BIN="$RELATE" python3 "$REPO/scripts/graph3d.py" --db "$src" --out "$out"
+    port="${GRAPH3D_PORT:-8799}"
+    log "serving http://127.0.0.1:$port/ from the vault (this Mac only); Ctrl-C stops it"
+    ( sleep 1; open "http://127.0.0.1:$port/" ) &
+    cd "$MOUNT/graph3d" && exec python3 -m http.server "$port" --bind 127.0.0.1
+    ;;
+  *) sed -n '2,17p' "$0"; exit 2 ;;
 esac
