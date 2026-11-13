@@ -35,8 +35,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
           if let png = QRCode("klarbefund://relate?demo=fictional-pairing-for-the-docs")?.png(scale: 10, border: 2) {
             demo.qr = NSImage(data: png)
           }
-          let view = ContentView(model: demo).frame(width: 1020, height: 672)
-            .background(Color(nsColor: .windowBackgroundColor)).environment(\.colorScheme, .dark)
+          // `--size WxH` (points, rendered at 2x), `--light`, `--claude`: App Store variants.
+          let args = CommandLine.arguments
+          var w: CGFloat = 1020, h: CGFloat = 672
+          if let s = args.firstIndex(of: "--size"), s + 1 < args.count {
+            let p = args[s + 1].split(separator: "x").compactMap { Double($0) }
+            if p.count == 2 { w = p[0]; h = p[1] }
+          }
+          if args.contains("--claude") {
+            demo.claudeMessage = "Claude Desktop is asking to install “Klarbefund Health Graph”. Click Install, then start a new chat."
+          }
+          let view = ContentView(model: demo).frame(width: w, height: h)
+            .background(Color(nsColor: .windowBackgroundColor))
+            .environment(\.colorScheme, args.contains("--light") ? .light : .dark)
           let renderer = ImageRenderer(content: view)
           renderer.scale = 2
           if let cg = renderer.cgImage {

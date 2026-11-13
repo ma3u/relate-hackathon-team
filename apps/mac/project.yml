@@ -18,7 +18,7 @@ settings:
     DEVELOPMENT_TEAM: 38R8Z4P7S8
     CODE_SIGN_STYLE: Automatic
     MARKETING_VERSION: "1.0"
-    CURRENT_PROJECT_VERSION: "1"
+    CURRENT_PROJECT_VERSION: "2"
     ENABLE_HARDENED_RUNTIME: YES
     SWIFT_VERSION: "5.0"
 targets:
@@ -40,9 +40,12 @@ targets:
       path: Klarbefund/Info.plist
       properties:
         CFBundleDisplayName: Klarbefund
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         LSApplicationCategoryType: public.app-category.medical
         NSHumanReadableCopyright: "Your health data stays on your devices."
-        ITSAppUsesNonExemptEncryption: false
+        # No ITSAppUsesNonExemptEncryption: the app serves TLS through BoringSSL
+        # (swift-nio-ssl), so export compliance is answered per build in App Store Connect.
     entitlements:
       path: Klarbefund/Klarbefund.entitlements
       properties:
