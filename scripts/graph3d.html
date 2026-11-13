@@ -12,7 +12,7 @@
   #graph { position: absolute; inset: 0; }
   .panel { position: absolute; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; backdrop-filter: blur(6px); }
   #side { top: 16px; left: 16px; width: 290px; max-height: calc(100% - 32px); overflow-y: auto; }
-  #detail { top: 16px; right: 16px; width: 330px; max-height: calc(100% - 32px); overflow-y: auto; display: none; }
+  #detail { top: 16px; right: 16px; width: 364px; max-height: calc(100% - 32px); overflow-y: auto; display: none; }
   h1 { font-size: 17px; font-weight: 600; margin: 0 0 2px; }
   .sub { color: var(--muted); font-size: 12px; margin: 0 0 12px; }
   input[type=search] { width: 100%; padding: 7px 10px; border-radius: 8px; border: 1px solid var(--line); background: #0b0d11; color: var(--ink); font: inherit; }
@@ -47,6 +47,13 @@
   .nb.inset, .hint.inset { padding-left: 20px; }
   .nb.code { font-weight: 600; margin-top: 6px; }
   .flag { color: #F09595; }
+  .chart { display: block; margin: 4px 0 2px; overflow: visible; }
+  .chart text { font: 10px -apple-system, system-ui, sans-serif; fill: var(--muted); }
+  .chart .last { fill: var(--ink); font-size: 11px; font-weight: 600; }
+  .chart .hit { fill: transparent; cursor: pointer; }
+  .chart .hit:hover + .pt, .chart .pt.hl { stroke: #fff; stroke-width: 2; }
+  .chartnote { font-size: 11px; color: var(--muted); margin: 0 0 6px; }
+  .chartnote i { font-style: normal; display: inline-block; width: 14px; height: 8px; border-radius: 2px; vertical-align: middle; margin-right: 4px; }
   .scene-tooltip { font: 13px/1.4 -apple-system, system-ui, sans-serif !important; background: rgba(14,17,22,.92) !important; border: 1px solid var(--line); border-radius: 8px; padding: 6px 9px !important; }
 </style>
 </head>
@@ -227,7 +234,13 @@ function showDetail(n) {
     `<h3>${esc(n.n)}</h3><div class="tag">${dot(n)}${esc(n.g)} · ${n.deg} relationships</div>`;
   if (n.d.length) html += "<ul>" + n.d.map(x => `<li>${esc(x)}</li>`).join("") + "</ul>";
 
-  const codes = markerCodes(n);
+  if (n.g === "LoincCode") html += chartsFor(n);
+  if (n.g === "Lab value" || n.g === "Apple Watch week") {
+    const c = nb(n, ["CODED_BY"]).find(m => m.g === "LoincCode");
+    if (c) html += chartsFor(c, n);
+  }
+
+  const codes = n.g === "LoincCode" ? [] : markerCodes(n);
   if (codes.length) {
     const rows = codes.map(c => ({ c, vs: nb(c, ["CODED_BY"]).filter(o => o.g === "Lab value" && !o.dup)
       .sort((a, b) => (b.dt || "").localeCompare(a.dt || "")) }))
@@ -236,8 +249,9 @@ function showDetail(n) {
     rows.forEach(({ c, vs }) => {
       html += btn(c, `${c.n}${vs.length ? ` (${vs.length})` : ""}`, "code");
       if (!vs.length) html += `<div class="hint inset" style="margin-top:0">No value yet</div>`;
-      vs.slice(0, 5).forEach(v => html += btn(v, `${v.dt || "?"} · ${v.val || v.n}`, "inset") .replace("</button>", v.out ? ` <span class="flag">outside range</span></button>` : "</button>"));
-      if (vs.length > 5) html += `<div class="hint inset" style="margin-top:0">… ${vs.length - 5} older: click the code</div>`;
+      else if (vs.length > 1) html += `<div class="inset" style="padding-left:20px">${chart(c, { spark: true, w: 300 })}</div>`;
+      vs.slice(0, 3).forEach(v => html += btn(v, `${v.dt || "?"} · ${v.val || v.n}`, "inset") .replace("</button>", v.out ? ` <span class="flag">outside range</span></button>` : "</button>"));
+      if (vs.length > 3) html += `<div class="hint inset" style="margin-top:0">… ${vs.length - 3} older: click the code for the chart</div>`;
     });
   }
 
@@ -256,12 +270,169 @@ function showDetail(n) {
   el.style.display = "block";
   el.scrollTop = 0;
   el.querySelector(".close").onclick = clearFocus;
-  el.querySelectorAll(".nb").forEach(b => b.onclick = () => focusNode(byId.get(+b.dataset.id)));
+  el.querySelectorAll(".nb, .chart .hit").forEach(b => b.onclick = () => focusNode(byId.get(+b.dataset.id)));
   el.querySelectorAll("[data-back]").forEach(a => a.onclick = e => {
     e.preventDefault();
     const i = +a.dataset.back;
     if (i < 0) clearFocus(); else { drill = drill.slice(0, i + 1); openDrill(); }
   });
+}
+
+
+// ── Time-series charts in the panel ──────────────────────────────────────
+// Real calendar spacing; the guideline range as a band (darker: optimal); out
+// of range in red with a ring; the latest value labelled; one shape per lab.
+const SVGNS = "http://www.w3.org/2000/svg";
+const BAND = "rgba(93, 202, 165, 0.13)", BAND2 = "rgba(93, 202, 165, 0.26)", LABBAND = "rgba(175, 169, 236, 0.16)";
+const day = 864e5;
+const fmt = v => Math.abs(v) >= 100 ? v.toFixed(0) : Math.abs(v) >= 10 ? (+v.toFixed(1)).toString() : (+v.toPrecision(3)).toString();
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+function series(code, device) {
+  const obs = nb(code, ["CODED_BY"]).filter(o => (device ? o.g === "Apple Watch week" : o.g === "Lab value" && !o.dup)
+    && typeof o.v === "number" && o.dt);
+  const cnt = {};
+  obs.forEach(o => cnt[o.u] = (cnt[o.u] || 0) + 1);
+  const unit = Object.keys(cnt).sort((a, b) => cnt[b] - cnt[a])[0] ?? "";
+  const pts = obs.filter(o => o.u === unit).map(o => ({ o, t: Date.parse(o.dt.slice(0, 10)), v: o.v }))
+    .filter(p => !isNaN(p.t)).sort((a, b) => a.t - b.t);
+  return { pts, unit, other: obs.length - pts.length };
+}
+
+// The guideline range in the values' unit, for this person's sex (or "any");
+// otherwise the range the lab printed on its latest report.
+function bandFor(code, s) {
+  const rs = nb(code, ["APPLIES_TO"]).map(r => r.r).filter(r => r && r.u === s.unit && (r.gl != null || r.gh != null));
+  const g = rs.find(r => DATA.sex && r.sex === DATA.sex) || rs.find(r => r.sex === "any");
+  if (g) return { lo: g.gl, hi: g.gh, olo: g.ol, ohi: g.oh, label: "Guideline range" + (g.src ? ` (${g.src})` : ""), fill: BAND };
+  const last = [...s.pts].reverse().find(p => p.o.rl != null || p.o.rh != null);
+  if (last) return { lo: last.o.rl, hi: last.o.rh, label: "Range printed by the lab", fill: LABBAND };
+  return null;
+}
+
+function niceStep(span, n) {
+  const raw = span / n, mag = Math.pow(10, Math.floor(Math.log10(raw))), r = raw / mag;
+  return (r < 1.5 ? 1 : r < 3 ? 2 : r < 7 ? 5 : 10) * mag;
+}
+
+function timeTicks(t0, t1) {
+  const a = new Date(t0), b = new Date(t1), out = [];
+  const months = (b.getFullYear() - a.getFullYear()) * 12 + b.getMonth() - a.getMonth();
+  if (months >= 24) {
+    const every = Math.ceil((months / 12) / 5);
+    for (let y = a.getFullYear() + 1; y <= b.getFullYear(); y += every) out.push([Date.UTC(y, 0, 1), String(y)]);
+  } else {
+    const every = Math.max(1, Math.ceil(months / 5));
+    for (let m = 1; m <= months + 1; m += every) {
+      const d = new Date(Date.UTC(a.getFullYear(), a.getMonth() + m, 1));
+      if (d.getTime() <= t1) out.push([d.getTime(), `${MONTHS[d.getUTCMonth()]} ${String(d.getUTCFullYear()).slice(2)}`]);
+    }
+  }
+  return out;
+}
+
+const SHAPES = ["circle", "square", "diamond", "triangle"];
+function mark(shape, x, y, r, attrs) {
+  if (shape === "square") return `<rect x="${x - r}" y="${y - r}" width="${2 * r}" height="${2 * r}" ${attrs}/>`;
+  if (shape === "diamond") return `<path d="M${x} ${y - r * 1.3}L${x + r * 1.3} ${y}L${x} ${y + r * 1.3}L${x - r * 1.3} ${y}Z" ${attrs}/>`;
+  if (shape === "triangle") return `<path d="M${x} ${y - r * 1.3}L${x + r * 1.2} ${y + r}L${x - r * 1.2} ${y + r}Z" ${attrs}/>`;
+  return `<circle cx="${x}" cy="${y}" r="${r}" ${attrs}/>`;
+}
+
+function chart(code, { device = false, spark = false, focus = null, w = 328 } = {}) {
+  const s = series(code, device);
+  if (!s.pts.length) return "";
+  const H = spark ? 34 : 176, W = w;
+  const m = spark ? { l: 2, r: 2, t: 4, b: 4 } : { l: 36, r: 12, t: 12, b: 22 };
+  const band = device ? null : bandFor(code, s);
+  const vs = s.pts.map(p => p.v);
+  let lo = Math.min(...vs), hi = Math.max(...vs);
+  if (band) { if (band.lo != null) lo = Math.min(lo, band.lo); if (band.hi != null) hi = Math.max(hi, band.hi); }
+  const pad = (hi - lo || Math.abs(hi) || 1) * (band ? 0.22 : 0.12);  // room outside the band, so its edges show
+  lo -= pad; hi += pad;
+  if (vs.every(v => v >= 0) && lo < 0) lo = 0;
+  let t0 = s.pts[0].t, t1 = s.pts[s.pts.length - 1].t;
+  if (t1 - t0 < 30 * day) { t0 -= 30 * day; t1 += 30 * day; }
+  const tp = (t1 - t0) * 0.04;
+  t0 -= tp; t1 += tp;
+  const X = t => m.l + (t - t0) / (t1 - t0) * (W - m.l - m.r);
+  const Y = v => H - m.b - (v - lo) / (hi - lo) * (H - m.t - m.b);
+  const name = `${code.n}${s.unit ? " in " + s.unit : ""}`;
+  let g = `<svg class="chart" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${esc(name)}, ${s.pts.length} values over time">`;
+
+  if (band) {
+    const yt = Y(band.hi ?? hi), yb = Y(band.lo ?? lo);
+    g += `<rect x="${m.l}" y="${yt}" width="${W - m.l - m.r}" height="${Math.max(0, yb - yt)}" fill="${band.fill}"/>`;
+    if ((band.olo != null || band.ohi != null) && (band.olo !== band.lo || band.ohi !== band.hi)) {
+      const ot = Y(band.ohi ?? band.hi ?? hi), ob = Y(band.olo ?? band.lo ?? lo);
+      g += `<rect x="${m.l}" y="${ot}" width="${W - m.l - m.r}" height="${Math.max(0, ob - ot)}" fill="${BAND2}"/>`;
+    }
+  }
+  if (band && !spark) [band.lo, band.hi].filter(v => v != null).forEach(v => {
+    g += `<line x1="${m.l}" x2="${W - m.r}" y1="${Y(v)}" y2="${Y(v)}" stroke="#5DCAA5" stroke-opacity="0.55" stroke-dasharray="3 3"/>` +
+      `<text x="${W - m.r}" y="${Y(v) - 3}" text-anchor="end" style="fill:#5DCAA5">${fmt(v)}</text>`;
+  });
+  if (!spark) {
+    const step = niceStep(hi - lo, 3);
+    for (let v = Math.ceil(lo / step) * step; v <= hi; v += step) {
+      g += `<line x1="${m.l}" x2="${W - m.r}" y1="${Y(v)}" y2="${Y(v)}" stroke="#2a303a" stroke-width="1"/>` +
+        `<text x="${m.l - 6}" y="${Y(v) + 3}" text-anchor="end">${fmt(v)}</text>`;
+    }
+    timeTicks(t0, t1).forEach(([t, l]) => {
+      g += `<line x1="${X(t)}" x2="${X(t)}" y1="${H - m.b}" y2="${H - m.b + 4}" stroke="#444c58"/>` +
+        `<text x="${X(t)}" y="${H - 6}" text-anchor="middle">${l}</text>`;
+    });
+  }
+
+  if (device) {
+    // Faint weekly means, a bold four-week average on top.
+    s.pts.forEach(p => g += `<circle cx="${X(p.t)}" cy="${Y(p.v)}" r="${spark ? 1 : 1.8}" fill="#85B7EB" opacity="0.35"/>`);
+    const avg = s.pts.map((p, i) => {
+      const win = s.pts.slice(Math.max(0, i - 3), i + 1);
+      return [X(p.t), Y(win.reduce((a, q) => a + q.v, 0) / win.length)];
+    });
+    g += `<polyline points="${avg.map(a => a.join(",")).join(" ")}" fill="none" stroke="#85B7EB" stroke-width="2" stroke-linejoin="round"/>`;
+  } else {
+    g += `<polyline points="${s.pts.map(p => `${X(p.t)},${Y(p.v)}`).join(" ")}" fill="none" stroke="#5DCAA5" stroke-opacity="0.7" stroke-width="${spark ? 1.2 : 1.5}"/>`;
+  }
+
+  const labs = [...new Set(s.pts.map(p => p.o.lab || ""))]
+    .sort((a, b) => s.pts.filter(p => (p.o.lab || "") === b).length - s.pts.filter(p => (p.o.lab || "") === a).length);
+  const shapeOf = o => SHAPES[Math.min(labs.indexOf(o.lab || ""), SHAPES.length - 1)];
+  if (!device) s.pts.forEach(p => {
+    const x = X(p.t), y = Y(p.v), c = p.o.out ? OUT_COLOR : "#5DCAA5";
+    const tip = `${p.o.dt} · ${p.o.val}${p.o.out ? " · outside the lab's range" : ""}${p.o.lab ? " · " + p.o.lab : ""}`;
+    if (!spark) g += `<circle class="hit" data-id="${p.o.id}" cx="${x}" cy="${y}" r="10"><title>${esc(tip)}</title></circle>`;
+    g += mark(shapeOf(p.o), x, y, spark ? 2.2 : 4, `class="pt${p.o === focus ? " hl" : ""}" fill="${c}" stroke="#0e1116" stroke-width="1.5"`);
+    if (p.o.out && !spark) g += `<circle cx="${x}" cy="${y}" r="7" fill="none" stroke="${OUT_COLOR}" stroke-width="1"/>`;
+  });
+  if (device && focus) {
+    const p = s.pts.find(q => q.o === focus);
+    if (p) g += `<circle cx="${X(p.t)}" cy="${Y(p.v)}" r="4.5" fill="#85B7EB" stroke="#fff" stroke-width="2"/>`;
+  }
+  if (!spark) {
+    const last = s.pts[s.pts.length - 1], x = X(last.t), y = Y(last.v);
+    const right = x > W - 70;
+    g += `<text class="last" x="${right ? x - 9 : x + 9}" y="${y - 8}" text-anchor="${right ? "end" : "start"}">${esc(fmt(last.v))}${device ? "" : ""}</text>`;
+  }
+  g += "</svg>";
+  if (spark) return g;
+
+  let note = `<div class="chartnote">${s.pts.length} ${device ? "weekly means, line: 4-week average" : "values"}${s.unit ? ` in ${esc(s.unit)}` : ""}`;
+  if (band) note += ` · <i style="background:${band.fill}"></i>${esc(band.label)}` + ((band.olo != null || band.ohi != null) && (band.olo !== band.lo || band.ohi !== band.hi) ? ` · <i style="background:${BAND2}"></i>optimal` : "");
+  if (!device && s.pts.some(p => p.o.out)) note += ` · <span class="flag">● outside the lab's range</span>`;
+  if (labs.length > 1) note += "<br>" + labs.slice(0, SHAPES.length).map((l, i) => `${["●", "■", "◆", "▲"][i]} ${esc(l || "lab not recorded")}`).join(" · ");
+  if (s.other) note += `<br>${s.other} more in other units, not drawn`;
+  return g + note + "</div>";
+}
+
+function chartsFor(code, focus) {
+  let html = "";
+  const lab = chart(code, { focus });
+  const dev = chart(code, { device: true, focus });
+  if (lab) html += `<div class="rel">Over time</div>${lab}`;
+  if (dev) html += `<div class="rel">Apple Watch, weekly</div>${dev}`;
+  return html;
 }
 
 // Names next to the nodes while few are shown.

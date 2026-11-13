@@ -128,10 +128,31 @@ def build(nodes_in, links_in):
             latest[r["t"]] = o
     current = {o["id"] for o in latest.values()}
 
+    # The lab behind each value, for the charts: its own performer, or its report's.
+    report_lab = {r["t"]: by_id[r["s"]]["p"].get("performer") for r in links_in if r["type"] == "HAS_RESULT"}
+    sex = None
+    for r in nodes_in:
+        if r["label"] == "OMOPPerson":
+            sex = {8507: "male", 8532: "female"}.get(r["p"].get("genderConceptId"))
+
     nodes = []
     for r in nodes_in:
         group, name, lines = describe(r["label"], r["p"])
         node = {"id": r["id"], "g": group, "n": str(name), "d": [str(x) for x in lines if x]}
+        p = r["p"]
+        if r["label"] == "Observation" and isinstance(p.get("valueQuantity"), (int, float)):
+            node["v"] = p["valueQuantity"]
+            node["u"] = p.get("unit") or ""
+            if group == "Lab value":
+                node["lab"] = p.get("performer") or report_lab.get(r["id"]) or ""
+                if p.get("referenceLow") is not None:
+                    node["rl"] = p["referenceLow"]
+                if p.get("referenceHigh") is not None:
+                    node["rh"] = p["referenceHigh"]
+        if r["label"] == "ReferenceRange":
+            node["r"] = {k: p.get(f) for k, f in (("gl", "guidelineLow"), ("gh", "guidelineHigh"), ("ol", "optimalLow"),
+                                                   ("oh", "optimalHigh"), ("u", "ucum"), ("sex", "sex"), ("src", "sourceLabel"))
+                         if p.get(f) is not None}
         if r["id"] in markers:
             node["mk"] = 1
         if r["id"] in current:
@@ -149,7 +170,7 @@ def build(nodes_in, links_in):
                 node["d"].insert(1, "Outside the lab's range")
         nodes.append(node)
     links = [{"source": r["s"], "target": r["t"], "t": r["type"]} for r in links_in]
-    return {"nodes": nodes, "links": links}
+    return {"nodes": nodes, "links": links, "sex": sex}
 
 
 def main():
