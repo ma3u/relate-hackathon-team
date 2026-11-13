@@ -23,6 +23,8 @@ flowchart LR
   end
 ```
 
+> **Nov 13, 2026: no scripts any more.** [Klarbefund for Mac](MAC.md) replaces the receiver, the vault script and the Claude config: install it from the same [TestFlight link](https://testflight.apple.com/join/ssADSXX6), scan its QR code with Klarbefund (iPhone build 15 or later), and click **Connect Claude Desktop**. It keeps the graph sealed with AES-256-GCM while it is closed (key in the keychain), and its TLS is Apple's own. The command-line route below stays for developers.
+>
 > **Nov 12, 2026:** the Mac side is now Swift, Klarbefund can keep the **same graph on the iPhone** (Menu → Privacy and sharing → Health graph on this iPhone), and it can **send over a USB cable** when the Mac is not on the same Wi-Fi (`scripts/health_vault.sh usb`): see [SWIFT.md](SWIFT.md).
 >
 > **Status (Nov 11, 2026):** working end to end **on a real iPhone 17 Pro over Wi-Fi** ([results](#real-iphone-run-nov-11-2026)) and in the iOS Simulator (the app screenshots below are from the Simulator, with Klarbefund's fictional demo data). Klarbefund code: branch `feat/klarbefund-local-relate-main` of [MinimumViableHealthDataspacev2](https://github.com/ma3u/MinimumViableHealthDataspacev2). In the current app the entry is under **Menu → Privacy and sharing → Export to my Mac (Relate)**.

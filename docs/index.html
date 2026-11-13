@@ -82,9 +82,9 @@ pre{font:17px/1.5 var(--mono);background:#0a0e14;border:1px solid var(--line);bo
     <p style="font-size:50px;font-weight:800;margin:0 0 26px;line-height:1.1">My local health graph.<br><span style="color:var(--accent)">Not the cloud's.</span></p>
     <p class="lead">Paper lab reports and Apple Watch, in one private Relate graph on my iPhone and my Mac. Claude answers through Relate's MCP server, read-only.</p>
     <div class="row" style="margin-top:30px">
-      <a class="btn" href="#" data-goto="6">▶ Watch the 2-minute demo</a>
+      <a class="btn" href="#" data-goto="7">▶ Watch the 2-minute demo</a>
       <a class="btn ghost" href="https://github.com/ma3u/relate-hackathon-team">GitHub</a>
-      <a class="btn ghost" href="https://testflight.apple.com/join/ssADSXX6">iPhone app on TestFlight</a>
+      <a class="btn ghost" href="https://testflight.apple.com/join/ssADSXX6">iPhone and Mac apps on TestFlight</a>
     </div>
     <p style="color:var(--muted);font-size:18px;margin-top:26px">Use ← → or the dots below. Everything on this page is clickable.</p>
   </div>
@@ -124,11 +124,24 @@ pre{font:17px/1.5 var(--mono);background:#0a0e14;border:1px solid var(--line);bo
     <div>
       <p class="kicker">Export to my Mac</p>
       <h2>A copy on hardware I own</h2>
-      <ul class="pts"><li>Paired by QR code: pinned certificate and secret token</li><li>Over Wi-Fi with TLS, or over a USB cable</li><li>Into an AES-256 encrypted disk image, open only while in use</li></ul>
+      <ul class="pts"><li>Paired by QR code: pinned certificate and secret token</li><li>Over Wi-Fi with Apple's TLS, or over a USB cable</li><li>Into Klarbefund for Mac, sealed with AES-256 while it is closed</li></ul>
       <div class="steps" data-phone="p3"></div>
       <div class="cap" id="cap-p3"></div>
     </div>
     <div class="phone" id="p3"><div class="scr"></div><div class="hint">Tap the phone</div></div>
+  </div>
+</section>
+
+<!-- 4b mac app -->
+<section class="slide" data-title="Klarbefund for Mac">
+  <div class="cols" style="grid-template-columns:470px 1fr;gap:44px">
+    <div>
+      <p class="kicker">Klarbefund for Mac · TestFlight</p>
+      <h2>No scripts. Three steps.</h2>
+      <ul class="pts"><li><b>Pair</b>: scan the Mac's QR code with the iPhone, tap <i>Send everything now</i></li><li><b>See</b>: one Relate file in the app's sandbox, sealed with AES-256-GCM while the app is closed; the key stays in the Mac's keychain</li><li><b>Ask</b>: <i>Connect Claude Desktop</i> installs a read-only extension with one click</li></ul>
+      <p style="color:var(--muted);font-size:18px;margin-top:18px">TLS, hashing and signatures come from macOS itself: no bundled crypto. Same TestFlight link as the iPhone app.</p>
+    </div>
+    <img src="presentation/mac.png" alt="Klarbefund for Mac with fictional data: pair your iPhone, your health graph, ask Claude" style="width:100%;border-radius:14px;box-shadow:0 40px 110px rgba(0,0,0,.6),0 0 0 1px #2c323c">
   </div>
 </section>
 
@@ -189,8 +202,8 @@ pre{font:17px/1.5 var(--mono);background:#0a0e14;border:1px solid var(--line);bo
   <h2>Private by construction</h2>
   <div class="tri">
     <div class="card"><h3>iPhone</h3><div class="big">Data Protection</div><p>Relate's single file under <code>FileProtectionType.complete</code>, excluded from backup. Talks only to the paired Mac.</p></div>
-    <div class="card"><h3>Mac</h3><div class="big">AES-256 vault</div><p>The same graph inside an encrypted disk image, mounted only while you use it. Pinned TLS or a USB cable, no cloud on the way.</p></div>
-    <div class="card"><h3>Claude</h3><div class="big">read-only</div><p><code>relate serve --mcp --read-only</code> on a snapshot copy. Only the rows Claude asks for leave the Mac.</p></div>
+    <div class="card"><h3>Mac</h3><div class="big">AES-256 seal</div><p>Klarbefund for Mac keeps the graph sealed (AES-256-GCM) while it is closed; the key never leaves the Mac's keychain. Pinned TLS or a USB cable, no cloud on the way.</p></div>
+    <div class="card"><h3>Claude</h3><div class="big">read-only</div><p>The Klarbefund extension reads a snapshot copy, only while the Mac app is open; write queries are refused. Only the rows Claude asks for leave the Mac.</p></div>
   </div>
 </section>
 
@@ -208,7 +221,7 @@ relate query --database examples/health-graph/health.rl --mode table &lt;&lt;&lt
 relate serve --mcp stdio --database examples/health-graph/health.rl --read-only</pre>
       <p class="lead" style="font-size:22px">The sample store is synthetic: no real person. <a href="https://github.com/ma3u/relate-hackathon-team#readme" style="color:#9ccaff">README</a> · <a href="https://devpost.com/software/myhealthcoach-my-local-health-graph-not-the-cloud-s" style="color:#9ccaff">Devpost</a> · <a href="https://www.youtube.com/watch?v=HRmlXPt0r_k" style="color:#9ccaff">3-minute version</a></p>
     </div>
-    <div style="text-align:center"><div class="qr"><img src="presentation/qr-testflight.png" alt="QR code: Klarbefund on TestFlight"></div><p style="font-size:24px;font-weight:700;margin:16px 0 4px">Klarbefund on TestFlight</p><p style="color:#9ccaff;font-size:17px;margin:0">testflight.apple.com/join/ssADSXX6</p></div>
+    <div style="text-align:center"><div class="qr"><img src="presentation/qr-testflight.png" alt="QR code: Klarbefund on TestFlight"></div><p style="font-size:24px;font-weight:700;margin:16px 0 4px">Klarbefund on TestFlight</p><p style="font-size:17px;margin:0 0 6px;color:var(--muted)">iPhone and Mac</p><p style="color:#9ccaff;font-size:17px;margin:0">testflight.apple.com/join/ssADSXX6</p></div>
   </div>
 </section>
 

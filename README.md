@@ -1,6 +1,6 @@
 # MyHealthCoach: My Local Health Graph, Not the Cloud's
 
-**My lab reports and Apple Watch, in one Neo4j Relate graph on my own iPhone and Mac. Encrypted, local, no cloud. Claude answers through Relate's MCP server, read-only.**
+**My lab reports and Apple Watch, in one Neo4j Relate graph on my own iPhone and Mac. Encrypted, local, no cloud. Claude reads it read-only, through an MCP server on Relate.**
 
 Our submission to the **[Relate by Neo4j Hackathon](https://relate.devpost.com/)** (NODES 2026).
 
@@ -9,8 +9,7 @@ Our submission to the **[Relate by Neo4j Hackathon](https://relate.devpost.com/)
 | 🎬 **Demo video (2 min)** | [youtu.be/nu4nKFkpwJw](https://www.youtube.com/watch?v=nu4nKFkpwJw) · full 3-minute version: [youtu.be/HRmlXPt0r_k](https://www.youtube.com/watch?v=HRmlXPt0r_k) |
 | 🖥️ **Interactive presentation** | [ma3u.github.io/relate-hackathon-team](https://ma3u.github.io/relate-hackathon-team/) |
 | 🏆 **Devpost** | [MyHealthCoach on Devpost](https://devpost.com/software/myhealthcoach-my-local-health-graph-not-the-cloud-s) |
-| 📱 **iPhone app (TestFlight)** | [testflight.apple.com/join/ssADSXX6](https://testflight.apple.com/join/ssADSXX6) |
-| 💻 **Mac app** | [Klarbefund for Mac](docs/MAC.md): pair, seal, connect Claude with one click, no scripts |
+| 📱💻 **iPhone and Mac apps (TestFlight)** | [testflight.apple.com/join/ssADSXX6](https://testflight.apple.com/join/ssADSXX6): one link for Klarbefund on iPhone and [Klarbefund for Mac](docs/MAC.md) (pair, seal, connect Claude with one click, no scripts). Both versions are in App Store review |
 | 🧪 **Sample graph** | [`examples/health-graph/health.rl`](examples/health-graph/health.rl), synthetic, no real person |
 
 [![The interactive presentation: MyHealthCoach, my local health graph, not the cloud's](docs/img/presentation-cover.png)](https://ma3u.github.io/relate-hackathon-team/)
@@ -25,7 +24,7 @@ Story: [docs/DEVPOST.md](docs/DEVPOST.md) · how it works: [docs/KLARBEFUND.md](
 
 ### How it uses Relate
 
-**Single-file mode.** Each person's whole health graph is one `.rl` file, so it can be encrypted as one unit to protect the personal data: on the iPhone, Klarbefund keeps it in the app's sandbox (`Application Support/HealthGraph`) under iOS Data Protection (`FileProtectionType.complete`, excluded from backup); on the Mac, `health.rl` lives inside an AES-256 encrypted disk image (`~/RelateHealth`) that is open only while in use. Relate itself does not encrypt the file; where it lives does. One file is also easy to back up encrypted, to delete for good, and to copy as a snapshot; the same Swift library (`HealthGraph`, on `RelateFFI.xcframework`) writes it on both devices, and Claude reads a read-only snapshot copy through `relate serve --mcp --read-only`.
+**Single-file mode.** Each person's whole health graph is one `.rl` file, so it can be encrypted as one unit to protect the personal data: on the iPhone, Klarbefund keeps it in the app's sandbox (`Application Support/HealthGraph`) under iOS Data Protection (`FileProtectionType.complete`, excluded from backup); on the Mac, Klarbefund for Mac keeps `health.rl` in its sandbox and seals it with AES-256-GCM whenever the app is closed, with the key in the Mac's keychain (the command-line route uses an AES-256 encrypted disk image, `~/RelateHealth`, instead). Relate itself does not encrypt the file; where it lives does. One file is also easy to back up encrypted, to delete for good, and to copy as a snapshot; the same Swift library (`HealthGraph`, on `RelateFFI.xcframework`) writes it on both devices, and Claude reads a read-only snapshot copy: through the Klarbefund extension while the Mac app is open, or through `relate serve --mcp --read-only`.
 
 ### Try it with the sample graph
 
@@ -47,13 +46,13 @@ The project runs on **your own devices**, with your own (or synthetic) health da
 
 | You need | Why | Notes |
 |---|---|---|
-| 📱 **iPhone** (iOS 26) | Runs **Klarbefund**, which scans lab reports and reads Apple Health | Get it via **[TestFlight: testflight.apple.com/join/ssADSXX6](https://testflight.apple.com/join/ssADSXX6)** (QR code below). "Export to my Mac" reaches this public beta once its build passes Apple's Beta App Review; until then I add testers as internal testers |
+| 📱 **iPhone** (iOS 26) | Runs **Klarbefund**, which scans lab reports and reads Apple Health | Get it via **[TestFlight: testflight.apple.com/join/ssADSXX6](https://testflight.apple.com/join/ssADSXX6)** (QR code below). Build 15: "Export to my Mac" pairs with Klarbefund for Mac |
 | ⌚ **A wearable**: Apple Watch, **Oura Ring**, Garmin, Withings, Whoop, a smart scale … | Pulse, HRV, sleep and sleep stages, VO2 max, SpO₂, steps, weight | Anything that syncs into **Apple Health** works, since Klarbefund reads from Apple Health. Sleep stages and VO2 max need a device that records them (Apple Watch, Oura, Garmin …) |
-| 💻 **Mac** (Apple silicon, macOS 26) | Runs the **Relate** graph database (Neo4j's embedded graph DB), the receiver the phone pairs with by QR code, and Claude for questions | Setup in ~10 min: [docs/INSTALL.md](docs/INSTALL.md). Relate also runs on Linux/Windows, but the encrypted-vault script and the iOS build are macOS-only |
+| 💻 **Mac** (macOS 14 or later) | Runs **Klarbefund for Mac**: the **Relate** graph (Neo4j's embedded graph DB), the receiver the phone pairs with by QR code, and the one-click connection to Claude Desktop | **No scripts:** install it from the same [TestFlight link](https://testflight.apple.com/join/ssADSXX6), see [docs/MAC.md](docs/MAC.md). Developers can still use the command-line receiver and the encrypted vault: [docs/INSTALL.md](docs/INSTALL.md) |
 | 📶 The **same Wi-Fi**, or a **USB cable** | The phone sends data straight to your Mac, encrypted, no cloud | Pinned TLS over Wi-Fi; no shared network (guest Wi-Fi, client isolation) → USB cable |
 | 📄 *Optional:* a few **paper lab reports** | Real-world test material for the scanner | Your data stays on your devices; nothing goes into this repo |
 
-<img src="docs/img/klarbefund/testflight-qr.svg" width="140" alt="QR code: Klarbefund TestFlight beta, testflight.apple.com/join/ssADSXX6"> *Scan with the iPhone camera to join the Klarbefund beta on TestFlight.*
+<img src="docs/img/klarbefund/testflight-qr.svg" width="140" alt="QR code: Klarbefund TestFlight beta, testflight.apple.com/join/ssADSXX6"> *Scan with the iPhone camera to join the Klarbefund beta on TestFlight; open the same link on the Mac for Klarbefund for Mac.*
 
 No iPhone? The sample graph above runs anywhere Relate runs, and Klarbefund has a demo mode with fictional data in the iOS Simulator (Mac with Xcode).
 
