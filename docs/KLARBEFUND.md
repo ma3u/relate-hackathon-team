@@ -2,9 +2,9 @@
 
 Your lab reports (scanned with Klarbefund) and your Apple Health weekly means land in a **Relate graph on your own Mac**, over your own Wi-Fi, encrypted and pinned to that one Mac. No cloud is involved in getting the data to the Mac. Claude (Desktop or Code) can then read the graph through Relate's MCP server, read-only. **Note:** whatever Claude reads to answer you (query results) is sent to Anthropic's API over TLS. Use a local model as the MCP client if nothing may leave the Mac.
 
-<img src="img/klarbefund/klarbefund-relate-claude.gif" width="720" alt="Animation: the receiver starts on the Mac with a QR code; Klarbefund pairs and sends 34 reports with 240 values; the Mac's Relate graph counts its nodes; Claude Desktop asks the local MCP server about LDL cholesterol and gets five rows back (fictional development data)">
+<img src="img/klarbefund/klarbefund-relate-claude.gif" width="720" alt="Animation: Klarbefund for Mac shows a QR code; Klarbefund on the iPhone scans it, pairs and sends 34 reports with 240 values; the Mac app counts them in its Relate graph; Claude Desktop asks the local MCP server about LDL cholesterol and gets five rows back (fictional development data)">
 
-*The whole way with fictional development data: Klarbefund in the iOS Simulator, a scratch receiver and graph on the Mac, and the MCP exchange Claude Desktop uses. Made by [`scripts/flow_gifs.py`](../scripts/flow_gifs.py).*
+*The whole way with fictional development data: Klarbefund in the iOS Simulator, Klarbefund for Mac's window (rendered with the counts of the same run, which a scratch receiver with the same receiver code stored), and the MCP exchange Claude Desktop uses. Made by [`scripts/flow_gifs.py`](../scripts/flow_gifs.py).*
 
 ```mermaid
 flowchart LR
@@ -14,12 +14,10 @@ flowchart LR
   end
   FHIR -- "HTTPS, pinned cert<br/>POST /v1/record" --> R
   Weekly -- "POST /v1/wearables" --> R
-  subgraph Mac["Your Mac"]
-    R["health-graph receive (Swift)<br/>(QR pairing)"] --> RL[("~/RelateHealth/health.rl<br/>Relate graph")]
-    RL --> MCP["relate serve --mcp<br/>--read-only"]
+  subgraph Mac["Your Mac: Klarbefund for Mac"]
+    R["Receiver in the app<br/>(QR pairing, Apple TLS)"] --> RL[("health.rl in the app's sandbox<br/>Relate graph, sealed when closed")]
+    RL --> MCP["Klarbefund Health Graph<br/>MCP extension, read-only"]
     MCP --> CD["Claude Desktop"]
-    MCP --> CC["Claude Code"]
-    RL --> CLI["health-graph query …"]
   end
 ```
 
@@ -31,9 +29,15 @@ flowchart LR
 
 ---
 
-## 1. On the Mac: start the receiver
+## 1. On the Mac: open Klarbefund for Mac
 
-One-time setup is in [INSTALL.md](INSTALL.md) (Relate CLI, `.venv` with `relate-db`). Then:
+Install **Klarbefund for Mac** from the [TestFlight link](https://testflight.apple.com/join/ssADSXX6) (macOS 14 or later) and open it. Its window has three steps: a QR code to pair the iPhone, the counts of your health graph, and **Connect Claude Desktop**. No terminal, no scripts. Details: [MAC.md](MAC.md).
+
+<img src="img/mac/klarbefund-mac.png" width="720" alt="Klarbefund for Mac: 1 Pair your iPhone with a QR code, 2 Your health graph with its counts, 3 Ask Claude with Connect Claude Desktop (fictional demo data)">
+
+### For developers: the command-line receiver
+
+The same receiver also runs from the command line, into an encrypted disk image. It is the route for the USB cable (the App Store sandbox does not let an app reach the iPhone over USB) and for working on the code. One-time setup is in [INSTALL.md](INSTALL.md) (Relate CLI, `.venv` with `relate-db`). Then:
 
 ```bash
 cd ~/projects/Neo4j-relate
@@ -45,11 +49,11 @@ scripts/health_vault.sh receive    # unlock it, then start the receiver
 
 To look at your graph in 3D, run `scripts/health_vault.sh graph3d`. It unlocks the vault and takes the newest graph: Klarbefund for Mac's snapshot or the receiver's store. It builds `~/RelateHealth/graph3d/index.html` and serves it on `http://127.0.0.1:8799` for this Mac only. The page holds your values, so it never leaves the vault, and `scripts/graph3d.py` refuses to write into the repository. The page opens on your current risks, then the measures, then the documents.
 
-`receive` prints a QR code in the terminal:
+Klarbefund for Mac shows its QR code in the window; `receive` prints one in the terminal:
 
 <img src="img/klarbefund/00-pairing-qr-example.png" width="220" alt="Example pairing QR code (dummy token)">
 
-*(Example with a dummy token. Your terminal shows the real one; never share it.)*
+*(Example with a dummy token. Your Mac shows the real one; never share it.)*
 
 The code carries a `klarbefund://relate` link:
 
@@ -66,7 +70,7 @@ The certificate, key and token live in `~/.config/relate-health-graph/` (mode 06
 
 ## 2. In Klarbefund: pair by QR code
 
-**Get the app:** [Klarbefund on TestFlight](https://testflight.apple.com/join/ssADSXX6) (public beta, iPhone with iOS 26+). The public group gets a build after Apple's Beta App Review, so "Export to my Mac (Relate)" appears there once a build with it (13 or later) has passed review. Hackathon teammates can be added as internal testers to get it right away.
+**Get the app:** [Klarbefund on TestFlight](https://testflight.apple.com/join/ssADSXX6) (public beta, iPhone with iOS 26+). Build 15 or later points "Export to my Mac (Relate)" at Klarbefund for Mac; the public group gets a build after Apple's Beta App Review. Hackathon teammates can be added as internal testers to get it right away.
 
 <img src="img/klarbefund/testflight-qr.svg" width="140" alt="QR code: Klarbefund TestFlight beta">
 
@@ -130,7 +134,7 @@ Observation 131 · OMOPMeasurement 91 · LoincCode 11
 
 ## Real iPhone run (Nov 11, 2026)
 
-Klarbefund on an iPhone 17 Pro, paired by QR code with the receiver on a MacBook over home Wi-Fi. One tap on **Send everything now**:
+Klarbefund on an iPhone 17 Pro, paired by QR code with the command-line receiver on a MacBook over home Wi-Fi (before Klarbefund for Mac existed). One tap on **Send everything now**:
 
 <img src="img/klarbefund/08-iphone-paired.png" width="320" alt="Klarbefund on the iPhone: paired with the Mac, 780 values on the Mac, 324 Apple Health weekly values sent">
 

@@ -4,11 +4,11 @@ Our lab reports sit on paper, our heart data on an Apple Watch, and every app th
 
 ## What it does
 
-Klarbefund scans a paper lab report on the iPhone and codes every value with LOINC. Relate builds a graph on the phone and, over Wi-Fi or a USB cable, the same graph in an encrypted vault on the Mac. There it adds official and optimal ranges, risk scores with their evidence, a dashboard, and answers from Claude through Relate's MCP server.
+Klarbefund scans a paper lab report on the iPhone and codes every value with LOINC. Relate builds a graph on the phone and, over Wi-Fi, the same graph in Klarbefund for Mac, sealed with AES-256 whenever the app is closed (developers can use a USB cable and an encrypted vault from the command line). There it adds official and optimal ranges, risk scores with their evidence, a dashboard, and answers from Claude through Relate's MCP server.
 
 ## How we built it
 
-One Swift library on Relate for iPhone and Mac, generated from a tested Python reference. FHIR, LOINC and OMOP throughout; pinned TLS, a USB path and an AES-256 vault.
+One Swift library on Relate for iPhone and Mac, generated from a tested Python reference. FHIR, LOINC and OMOP throughout; pinned TLS, a Mac app that seals the graph with AES-256, and a USB path for developers.
 
 ## Challenges we ran into
 

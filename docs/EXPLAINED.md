@@ -89,7 +89,7 @@ flowchart LR
 
 - **On the phone:** every report is encrypted on its own. The key stays on that phone: it's not in iCloud, not in backups, and doesn't move to a new phone.
 - **On the way:** the phone talks only to *your* computer on *your* home network. Scanning the QR code once teaches the phone your computer's "fingerprint". A stranger's computer on the same Wi-Fi can't pretend to be yours. And everything travels encrypted, like HTTPS on a banking website.
-- **On your computer:** the data sits in an **encrypted safe**: a locked container (AES-256) that is opened only while the phone sends data or you ask questions, and locked again afterwards. Its key is kept in your Mac's Keychain. On top of that, your whole disk is encrypted (FileVault). While the safe is locked, the folder is simply empty.
+- **On your computer:** the Klarbefund app for the Mac keeps the data in **one locked file**: while the app is closed it is encrypted (AES-256), and its key is kept in your Mac's Keychain. (Developers can use an encrypted safe from the command line instead: a locked container that is opened only while it is used.) On top of that, your whole disk is encrypted (FileVault). While the safe is locked, the folder is simply empty.
 - **Nothing goes to a cloud** on the way from phone to computer.
 
 **One honest caveat:** if you ask an online AI assistant (such as Claude) about your data, the answer it needs, for example your cholesterol values, is sent to that assistant over an encrypted connection. Ask general questions ("how many reports do I have?"), or use an AI that runs on your own computer, if nothing at all may leave your home.

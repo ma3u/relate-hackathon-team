@@ -124,7 +124,7 @@ pre{font:17px/1.5 var(--mono);background:#0a0e14;border:1px solid var(--line);bo
     <div>
       <p class="kicker">Export to my Mac</p>
       <h2>A copy on hardware I own</h2>
-      <ul class="pts"><li>Paired by QR code: pinned certificate and secret token</li><li>Over Wi-Fi with Apple's TLS, or over a USB cable</li><li>Into Klarbefund for Mac, sealed with AES-256 while it is closed</li></ul>
+      <ul class="pts"><li>Paired by QR code: pinned certificate and secret token</li><li>Over Wi-Fi with Apple's TLS; a USB cable works with the command-line receiver</li><li>Into Klarbefund for Mac, sealed with AES-256 while it is closed</li></ul>
       <div class="steps" data-phone="p3"></div>
       <div class="cap" id="cap-p3"></div>
     </div>
@@ -258,7 +258,7 @@ document.querySelectorAll("[data-goto]").forEach(a => a.onclick = e => { e.preve
 const FLOWS = {
   p1: [["scan", "Scan the paper report"], ["list", "Each report: lab, date, how it was read"], ["detail", "Every value with its LOINC code, reference and page and line"]],
   p2: [["graph-menu", "Menu → Health graph on this iPhone"], ["graph", "Reports, values, LOINC codes and OMOP rows: a Relate graph on the phone"]],
-  p3: [["relate", "Export to my Mac: keep a copy on hardware I own"], ["relatePaired", "Paired with my Mac by QR code"], ["relateUSB", "No shared Wi-Fi? Send over a USB cable"], ["relateUSBDone", "Sent: reports and Apple Watch weeks are in the Mac's graph"]],
+  p3: [["relate", "Export to my Mac: scan the QR code Klarbefund for Mac shows"], ["relatePaired", "Paired with my Mac by QR code"], ["relateUSB", "No shared Wi-Fi? Send over a USB cable (command-line receiver)"], ["relateUSBDone", "Sent: reports and Apple Watch weeks are in the Mac's graph"]],
 };
 for (const [id, flow] of Object.entries(FLOWS)) {
   const ph = document.getElementById(id), scr = ph.querySelector(".scr"), steps = document.querySelector(`[data-phone=${id}]`), cap = document.getElementById("cap-" + id);

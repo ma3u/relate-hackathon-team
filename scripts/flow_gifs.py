@@ -2,9 +2,13 @@
 (docs/img/klarbefund/klarbefund-relate-claude.gif, klarbefund-usb.gif).
 
 Left: frames recorded from Klarbefund in the iOS Simulator with the fictional
-development dataset. Right: the Mac side, from the real logs and query results
-of a scratch receiver and graph fed by that same Simulator run. Nothing here
-is real health data, and neither the vault nor the real pairing is involved.
+development dataset. Right: the Mac side. Over Wi-Fi it is Klarbefund for Mac's
+window, rendered by the app's debug `--screenshot` mode with the counts of a
+scratch receiver and graph fed by that same Simulator run (the app runs the
+same receiver code in-process). Over USB, and for the graph and MCP steps, it is
+the real logs and query results of that scratch run. Nothing here is real health
+data, and neither the vault, the Mac app's own graph nor the real pairing is
+involved.
 
 Recording, into one scratch folder D:
 
@@ -20,8 +24,14 @@ Recording, into one scratch folder D:
      `relate serve --mcp stdio --read-only` -> D/mcp-query.cypher, D/mcp-result.json.
   5. Changed frames: ffmpeg -i D/phone.mp4 -vf "mpdecimate,scale=330:-1" -fps_mode vfr D/f-phone/%04d.png
      (and D/f-phone-usb). The frame numbers below were picked from those.
+  6. D/unpaired.png: a screenshot of Export to my Mac before pairing, from the
+     current Klarbefund (build 15 or later points it at Klarbefund for Mac).
+  7. A Debug build of Klarbefund for Mac for the window renders. It renders in
+     `init` and quits before any window opens, so the app's own graph is never
+     opened; build it under another bundle id anyway
+     (PRODUCT_BUNDLE_IDENTIFIER=red.mabu.meinbefund.docs).
 
-usage: uv run --python 3.12 --with pillow python scripts/flow_gifs.py <D> <qr example png> <out dir>
+usage: uv run --python 3.12 --with pillow python scripts/flow_gifs.py <D> <out dir> <Klarbefund.app>
 """
 import json
 import re
@@ -31,7 +41,7 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
 
-D, QR, OUT = Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3])
+D, OUT, MAC_APP = Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3])
 OUT.mkdir(parents=True, exist_ok=True)
 
 W, H = 960, 600
@@ -72,7 +82,51 @@ def phone(name):
     return framed, fm
 
 
-def frame(phone_path, title, step, lines, panel="Mac · Terminal", extra=None):
+FOOT = "Fictional development data · Klarbefund (iOS Simulator) → Klarbefund for Mac, a Relate graph → Claude Desktop over MCP"
+FOOT_USB = "Fictional development data · Klarbefund (iOS Simulator) → the command-line receiver over USB → a Relate graph on the Mac"
+
+
+def mac_window(counts, received_ago=None):
+    """Klarbefund for Mac's window with these counts (reports, values, weeks,
+    codes, ranges), rendered by the app itself, scaled into the panel."""
+    key = "-".join(map(str, counts)) + ("" if received_ago is None else f"-r{received_ago}")
+    png = OUT / f".mac-{key}.png"
+    args = [str(MAC_APP / "Contents/MacOS/Klarbefund"), "--screenshot", str(png),
+            "--counts", ",".join(map(str, counts))]
+    args += ["--waiting"] if received_ago is None else ["--received-ago", str(received_ago)]
+    subprocess.run(args, check=True, timeout=60)
+    im = Image.open(png).convert("RGB")
+    # Cards 1 and 2 (pair, the graph's counts) without the window's heading and
+    # empty bottom; card 3, Ask Claude, comes later in the animation.
+    im = im.crop((0, round(im.height * 0.165), round(im.width * 0.665), round(im.height * 0.80)))
+    x0, y0, x1, y1 = TERM_BOX
+    s = min((x1 - x0) / im.width, (y1 - y0 - 30) / im.height)
+    return im.resize((round(im.width * s), round(im.height * s)), Image.LANCZOS)
+
+
+def frame_mac(phone_path, title, step, window):
+    """The phone left, Klarbefund for Mac's window right."""
+    c = Image.new("RGB", (W, H), BG)
+    d = ImageDraw.Draw(c)
+    d.text((24, 18), title, font=f_title, fill=INK)
+    d.text((24, 48), step, font=f_step, fill=ACCENT)
+    ph, pm = phone(phone_path)
+    c.paste(ph, (24 + (280 - ph.width) // 2, 74), pm)
+    x0, y0, x1, y1 = TERM_BOX
+    bar = 30
+    top = y0 + (y1 - y0 - window.height - bar) // 2
+    x0 = x0 + (x1 - x0 - window.width) // 2
+    x1 = x0 + window.width
+    d.rounded_rectangle((x0, top, x1, top + bar + window.height), 12, fill=TERM_BG)
+    for i, col in enumerate([(255, 95, 86), (255, 189, 46), (39, 201, 63)]):
+        d.ellipse((x0 + 14 + i * 18, top + 10, x0 + 26 + i * 18, top + 22), fill=col)
+    d.text((x0 + 80, top + 8), "Mac · Klarbefund for Mac", font=f_label, fill=TERM_DIM)
+    c.paste(window, (x0, top + bar))
+    d.text((24, H - 22), FOOT, font=f_foot, fill=MUTED)
+    return c
+
+
+def frame(phone_path, title, step, lines, panel="Mac · Terminal", extra=None, foot=FOOT):
     """lines: list of (text, color). extra: (image, (x, y)) pasted into the panel."""
     c = Image.new("RGB", (W, H), BG)
     d = ImageDraw.Draw(c)
@@ -92,8 +146,7 @@ def frame(phone_path, title, step, lines, panel="Mac · Terminal", extra=None):
     if extra:
         img, (ex, ey) = extra
         c.paste(img, (x0 + ex, y0 + ey))
-    d.text((24, H - 22), "Fictional development data · Klarbefund (iOS Simulator) → Relate graph on the Mac → Claude Desktop over MCP",
-           font=f_foot, fill=MUTED)
+    d.text((24, H - 22), foot, font=f_foot, fill=MUTED)
     return c
 
 
@@ -125,48 +178,36 @@ def term_table(text):
 fp = lambda n: str(D / "f-phone" / f"{n:04d}.png")
 fu = lambda n: str(D / "f-phone-usb" / f"{n:04d}.png")
 log = [l.split("\t", 1)[1] for l in (D / "receiver.log").read_text().splitlines() if "\t" in l]
-posts = [l for l in log if l.startswith("127.0.0.1 POST") or l.startswith("report ")]
-qr = Image.open(QR).convert("RGB").resize((150, 150), Image.NEAREST)
 
-# Shown as the documented command prints it; the run behind it used a
-# scratch store and its own identity, never the vault or the real pairing.
-LAN = "192.168.1.20"
-PHONE_IP = "192.168.1.31"
-recv_head = [
-    ("$ scripts/health_vault.sh receive", TERM_CMD),
-    ("", TERM_FG),
-    ("Scan this in Klarbefund: Menu -> Export to my Mac (Relate)", TERM_FG),
-] + [("", TERM_FG)] * 10 + [
-    (f"Receiving at https://{LAN}:8787 into ~/RelateHealth/health.rl", TERM_FG),
-    ("Ctrl+C stops the receiver.", TERM_DIM),
-    ("", TERM_FG),
-]
-qr_at = (16, 40 + 3 * LINE_H)
-
-T1 = "Klarbefund → your own Mac (Wi-Fi)"
+# The Mac side over Wi-Fi is Klarbefund for Mac: its window, with the counts the
+# scratch receiver reached at each step. Codes and ranges are the knowledge
+# layer the app seeds on first open (127 LOINC codes and 173 ranges before any
+# report; 181 codes once the reports add theirs).
+KNOW_CODES, RANGES, CODES_AFTER = 127, 173, 181
+reports = [int(m.group(1)) for l in log if (m := re.match(r"report \S+: (\d+) values", l))]
+T1 = "Klarbefund → Klarbefund for Mac (Wi-Fi)"
+waiting = mac_window((0, 0, 0, KNOW_CODES, RANGES))
+unpaired = str(D / "unpaired.png")
 frames = []
-frames.append((frame(fp(1), T1, "1  On the Mac: unlock the vault and start the receiver", recv_head[:1]), 1200))
-frames.append((frame(fp(1), T1, "1  On the Mac: unlock the vault and start the receiver", recv_head, extra=(qr, qr_at)), 1800))
-for n, ms in [(8, 1400), (20, 1600)]:
-    frames.append((frame(fp(n), T1, "2  In Klarbefund: Menu → Export to my Mac (Relate)", recv_head, extra=(qr, qr_at)), ms))
-status = [(f"{PHONE_IP} GET /v1/status 200", TERM_OK)]
-frames.append((frame(fp(30), T1, "3  Scan the Mac's QR code: paired, certificate pinned", recv_head + status), 2000))
-frames.append((frame(fp(31), T1, "4  Send my reports, then Send everything now", recv_head + status), 1200))
-shown = recv_head + status
+frames.append((frame_mac(fp(1), T1, "1  On the Mac: open Klarbefund for Mac. It shows a QR code", waiting), 2400))
+frames.append((frame_mac(fp(8), T1, "2  In Klarbefund: Menu → Export to my Mac (Relate)", waiting), 1400))
+frames.append((frame_mac(unpaired, T1, "2  Export to my Mac points at Klarbefund for Mac", waiting), 2200))
+frames.append((frame_mac(fp(30), T1, "3  Scan the Mac's QR code: paired, certificate pinned", waiting), 2000))
+frames.append((frame_mac(fp(31), T1, "4  Send my reports, then Send everything now", waiting), 1200))
 sending = [35, 40, 45, 50, 55, 60, 64]
-chunk = max(1, len(posts) // len(sending))
+chunk = max(1, len(reports) // len(sending))
 for i, n in enumerate(sending):
-    for l in posts[i * chunk:(i + 1) * chunk]:
-        shown = shown + [(l.replace("127.0.0.1", PHONE_IP), TERM_OK if "201" in l else TERM_FG)]
-    frames.append((frame(fp(n), T1, "4  34 reports go to the Mac over TLS, one FHIR bundle each", shown), 450))
-for l in posts[len(sending) * chunk:]:
-    shown = shown + [(l.replace("127.0.0.1", PHONE_IP), TERM_OK if "201" in l else TERM_FG)]
+    got = reports[:(i + 1) * chunk]
+    codes = KNOW_CODES + round((CODES_AFTER - KNOW_CODES) * len(got) / len(reports))
+    win = mac_window((len(got), sum(got), 0, codes, RANGES), received_ago=1)
+    frames.append((frame_mac(fp(n), T1, "4  The reports go to the Mac over TLS, one FHIR bundle each", win), 450))
 DONE = str(D / "wifi-done.png")
-frames.append((frame(DONE, T1, "4  Done: 240 values from 34 reports on Demo-Mac", shown), 2600))
+done = mac_window((len(reports), sum(reports), 0, CODES_AFTER, RANGES), received_ago=5)
+frames.append((frame_mac(DONE, T1, f"4  Done: {sum(reports)} values from {len(reports)} reports in Klarbefund for Mac", done), 2800))
 
 stats = (D / "q-stats.txt").read_text()
-q = [("$ health-graph query --db ~/RelateHealth/health.rl stats", TERM_CMD)] + term_table(stats)
-frames.append((frame(DONE, "The graph on the Mac: Relate, Neo4j's embedded graph database", "5  One node per report, value, LOINC code and source", q), 3800))
+q = [("$ health-graph query --db health.rl stats", TERM_CMD)] + term_table(stats)
+frames.append((frame(DONE, "The graph on the Mac: Relate, Neo4j's embedded graph database", "5  One node per report, value, LOINC code and source", q, panel="Inside the graph: one Relate file"), 3800))
 
 res = json.loads((D / "mcp-result.json").read_text())
 cy = (D / "mcp-query.cypher").read_text().splitlines()
@@ -174,7 +215,7 @@ rows = res["rows"]
 table = [f"{'date':<11}{'value':>6} {'unit':<6} {'printed':<8} source"]
 table += [f"{r['date']:<11}{r['value']:>6} {r['unit']:<6} {r['printed']:<8} {r['source']}" for r in rows]
 mcp = (
-    [("MCP server klarbefund-health: relate serve --mcp --read-only", TERM_DIM), ("", TERM_FG),
+    [("MCP server: Klarbefund Health Graph (Klarbefund for Mac), read-only", TERM_DIM), ("", TERM_FG),
      ("Asked in Claude Desktop: \"How did my LDL cholesterol develop?\"", TERM_CMD), ("", TERM_FG),
      ("→ tools/call read_cypher   (an example of the Cypher Claude writes)", TERM_OK)]
     + [("  " + l, TERM_FG) for l in cy]
@@ -187,7 +228,8 @@ frames.append((frame(DONE, T3, "6  It writes Cypher; Relate answers from the gra
 frames.append((frame(DONE, T3, "6  Only the rows a question returns go to Claude", mcp, panel="MCP: what Claude Desktop sends and gets back"), 5000))
 gif("klarbefund-relate-claude", frames)
 
-# --- USB ---
+# --- USB: the command-line receiver (the App Store sandbox has no USB route) ---
+frame_usb = lambda *a, **k: frame(*a, foot=FOOT_USB, **k)
 ulog = [l.split("\t", 1)[1] for l in (D / "usb.log").read_text().splitlines() if "\t" in l]
 reports = [l for l in ulog if l.startswith("report ")]
 done = [l for l in ulog if l.startswith("Done:")][0]
@@ -195,16 +237,16 @@ done = re.sub(r"into .*$", "into ~/RelateHealth/health.rl", done)
 T2 = "Klarbefund → your own Mac (USB cable, no shared Wi-Fi)"
 head = [("$ scripts/health_vault.sh usb", TERM_CMD), ("Waiting for an iPhone on the USB cable...", TERM_FG)]
 uf = []
-uf.append((frame(DONE, T2, "1  Connect the iPhone with a cable; run the usb command", head), 1800))
+uf.append((frame_usb(DONE, T2, "1  Connect the iPhone with a cable; run the usb command", head), 1800))
 found = head + [("iPhone found. In Klarbefund: Menu -> Export to my Mac (Relate)", TERM_FG), ("  -> Send over USB cable", TERM_FG)]
-uf.append((frame(fu(2), T2, "2  In Klarbefund: Send over USB cable", found), 2200))
+uf.append((frame_usb(fu(2), T2, "2  In Klarbefund: Send over USB cable", found), 2200))
 shown = found + [("Connected over USB. Receiving...", TERM_OK)]
 steps = [34, 38, 42, 46, 50, 54, 58]
 chunk = max(1, len(reports) // len(steps))
 for i, n in enumerate(steps):
     shown = shown + [(l, TERM_FG) for l in reports[i * chunk:(i + 1) * chunk]]
-    uf.append((frame(fu(n), T2, "3  The Mac proves it is the paired one, then the phone sends", shown), 450))
+    uf.append((frame_usb(fu(n), T2, "3  The Mac proves it is the paired one, then the phone sends", shown), 450))
 head_done, tail_done = done.split(" into ")
 shown = shown + [(l, TERM_FG) for l in reports[len(steps) * chunk:]] + [(head_done, TERM_OK), ("  into " + tail_done, TERM_OK)]
-uf.append((frame(str(D / "usb-done.png"), T2, "4  Done: the same graph, no network involved", shown), 4000))
+uf.append((frame_usb(str(D / "usb-done.png"), T2, "4  Done: the same graph, no network involved", shown), 4000))
 gif("klarbefund-usb", uf)
