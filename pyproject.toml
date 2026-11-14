@@ -12,3 +12,12 @@ dev = ["pytest>=8"]
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]
+
+# One Python package. Without this, setuptools' flat-layout discovery also finds
+# apps/, swift/ and fixtures/ and refuses to build ("Multiple top-level
+# packages"), which broke the test workflow once apps/ (Klarbefund for Mac) came.
+[tool.setuptools]
+packages = ["health_graph"]
+
+[tool.setuptools.package-data]
+health_graph = ["*.json", "*.cypher"]
