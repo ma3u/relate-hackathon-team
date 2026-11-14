@@ -320,6 +320,142 @@ enum Cypher {
   SET k.fingerprint = $fingerprint, k.rangesSource = $rangesSource
   RETURN k.fingerprint AS fingerprint
   """#
+
+  static let anamnesisFindings = #"""
+  MATCH (p:Patient)
+  UNWIND $groups AS g
+  MATCH (p)-[:HAS_OBSERVATION]->(o:Observation)-[:CODED_BY]->(c:LoincCode)
+  WHERE c.code IN g.codes AND o.duplicateOf IS NULL AND o.valueQuantity IS NOT NULL
+    AND coalesce(o.sourceKind, '') <> 'device-weekly-mean'
+  WITH p, g, o ORDER BY o.effectiveDate DESC
+  WITH p, g, collect(o)[0] AS o
+  MATCH (o)-[:CODED_BY]->(c:LoincCode)
+  OPTIONAL MATCH (r:ReferenceRange)-[:APPLIES_TO]->(c)
+  WHERE toLower(r.ucum) = toLower(o.unit) AND r.sex IN ['any', coalesce(p.gender, 'any')]
+    AND coalesce(r.validFrom, '0000') <= o.effectiveDate
+    AND (r.validUntil IS NULL OR o.effectiveDate < r.validUntil)
+  WITH g, o, c, collect(r)[0] AS r
+  RETURN g.id AS group, c.code AS code, o.display AS display, o.valueQuantity AS value, o.unit AS unit,
+         o.effectiveDate AS date, o.comparator AS comparator,
+         r.guidelineLow AS low, r.guidelineHigh AS high, r.sourceLabel AS source,
+         o.referenceLow AS labLow, o.referenceHigh AS labHigh
+  """#
+
+  static let anamnesisFacts = #"""
+  MATCH (p:Patient)
+  OPTIONAL MATCH (p)-[:HAS_OBSERVATION]->(abpm:Observation)-[:CODED_BY]->(ac:LoincCode)
+  WHERE ac.code IN ['8490-5', '8472-3', '96608-5', '96609-3'] AND abpm.effectiveDate >= $since3y
+  WITH p, max(abpm.effectiveDate) AS abpm
+  OPTIONAL MATCH (p)-[:HAS_OBSERVATION]->(bp:Observation)-[:CODED_BY]->(:LoincCode {code: '8480-6'})
+  WHERE bp.effectiveDate >= $since1y AND bp.duplicateOf IS NULL
+  WITH p, abpm, count(bp) AS officeBp, max(bp.effectiveDate) AS lastBp
+  OPTIONAL MATCH (p)-[:HAS_OBSERVATION]->(ex:Observation)-[:CODED_BY]->(:LoincCode {code: '55411-3'})
+  WHERE ex.sourceKind = 'device-weekly-mean' AND ex.effectiveDate >= $since1y
+  WITH p, abpm, officeBp, lastBp, count(ex) AS activeWeeks
+  OPTIONAL MATCH (p)-[:HAS_OBSERVATION]->(w:Observation)-[:CODED_BY]->(:LoincCode {code: '29463-7'})
+  WHERE w.effectiveDate >= $since3y AND w.duplicateOf IS NULL
+  WITH p, abpm, officeBp, lastBp, activeWeeks, count(w) AS weights, min(w.effectiveDate) AS firstWeight,
+       max(w.effectiveDate) AS lastWeight
+  OPTIONAL MATCH (p)-[:HAS_OBSERVATION]->(d:Observation)
+  WHERE d.duplicateOf IS NULL AND (toLower(coalesce(d.display, '')) CONTAINS 'knochendichte'
+     OR toLower(coalesce(d.display, '')) CONTAINS 'bone mineral density'
+     OR d.code IN ['38263-0', '38262-2', '46278-8', '80948-3'])
+  RETURN abpm, officeBp, lastBp, activeWeeks, weights, firstWeight, lastWeight,
+         max(d.effectiveDate) AS boneDensity, p.birthYear AS birthYear, p.gender AS sex
+  """#
+
+  static let anamnesisAnswered = #"""
+  MATCH (:Patient)-[:HAS_RESPONSE]->(:QuestionnaireResponse)-[:HAS_ANSWER]->(a:Answer)
+  WITH a.linkId + CASE WHEN a.context IS NULL THEN '' ELSE '@' + a.context END AS key, a
+  ORDER BY a.authored DESC
+  WITH key, collect(a)[0] AS a
+  RETURN key, a.authored AS authored, a.labels AS labels, a.text AS text
+  """#
+
+  static let anamnesisFib4 = #"""
+  MATCH (p:Patient)-[:HAS_OBSERVATION]->(a:Observation)-[:CODED_BY]->(:LoincCode {code: '1920-8'})
+  WHERE a.duplicateOf IS NULL AND p.birthYear IS NOT NULL AND a.valueQuantity > 0
+  MATCH (p)-[:HAS_OBSERVATION]->(l:Observation)-[:CODED_BY]->(:LoincCode {code: '1742-6'})
+  WHERE l.duplicateOf IS NULL AND l.effectiveDate = a.effectiveDate AND l.valueQuantity > 0
+  WITH p, a, l ORDER BY a.effectiveDate DESC
+  WITH p, collect([a, l])[0] AS day
+  WITH p, day[0] AS a, day[1] AS l
+  OPTIONAL MATCH (p)-[:HAS_OBSERVATION]->(t:Observation)-[:CODED_BY]->(tc:LoincCode)
+  WHERE tc.code IN ['777-3', '26515-7'] AND t.duplicateOf IS NULL AND t.valueQuantity > 0
+  RETURN a.effectiveDate AS date, toInteger(substring(a.effectiveDate, 0, 4)) - p.birthYear AS age,
+         a.valueQuantity AS ast, a.unit AS astUnit, l.valueQuantity AS alt, l.unit AS altUnit,
+         collect([t.effectiveDate, t.valueQuantity]) AS platelets
+  """#
+
+  static let anamnesisStoredFib4 = #"""
+  MATCH (:Patient)-[:HAS_SCORE]->(s:ScoreResult)-[:OF]->(:RiskScore {id: 'fib4'})
+  RETURN s.value AS value, s.computedAt AS computedAt, s.band AS band
+  """#
+
+  static let anamnesisExerciseBp = #"""
+  MATCH (p:Patient)-[:HAS_OBSERVATION]->(o:Observation)-[:CODED_BY]->(:LoincCode {code: '87739-9'})
+  WHERE o.valueQuantity IS NOT NULL
+  WITH p, o ORDER BY o.effectiveDate DESC, o.valueQuantity DESC
+  WITH p, collect(o)[0] AS o
+  RETURN o.effectiveDate AS date, o.valueQuantity AS value, o.unit AS unit, p.gender AS sex
+  """#
+
+  static let anamnesisSpo2 = #"""
+  MATCH (:Patient)-[:HAS_OBSERVATION]->(o:Observation)-[:CODED_BY]->(:LoincCode {code: '59408-5'})
+  WHERE o.sourceKind = 'device-weekly-mean' AND o.effectiveDate >= $since1y
+  RETURN count(o) AS weeks, sum(CASE WHEN o.valueQuantity < 95 THEN 1 ELSE 0 END) AS low,
+         min(o.valueQuantity) AS lowest
+  """#
+
+  static let anamnesisSeed = #"""
+  MERGE (q:Questionnaire {id: $id})
+  SET q.version = $version, q.title = $title
+  WITH q
+  UNWIND $items AS it
+  MERGE (i:QuestionnaireItem {id: $id + '|' + it.linkId})
+  SET i.linkId = it.linkId, i.text = it.text, i.multiple = it.multiple, i.options = it.options,
+      i.labels = it.labels, i.riskFactors = it.riskFactors
+  MERGE (q)-[:HAS_ITEM]->(i)
+  WITH i, it
+  OPTIONAL MATCH (i)-[old:INFORMS]->()
+  DELETE old
+  WITH DISTINCT i, it
+  UNWIND it.risks AS riskId
+  MATCH (h:HealthRisk {id: riskId})
+  MERGE (i)-[:INFORMS]->(h)
+  RETURN count(*) AS links
+  """#
+
+  static let anamnesisStoreResponse = #"""
+  MATCH (p:Patient {id: $patientId})
+  MATCH (q:Questionnaire {id: $questionnaire})
+  MERGE (r:QuestionnaireResponse {id: $responseId})
+  SET r.authored = $authored, r.status = 'completed', r.source = $source, r.version = q.version
+  MERGE (p)-[:HAS_RESPONSE]->(r)
+  MERGE (r)-[:RESPONDS_TO]->(q)
+  WITH r
+  UNWIND $answers AS a
+  MATCH (i:QuestionnaireItem {id: $questionnaire + '|' + a.linkId})
+  MERGE (ans:Answer {id: $responseId + '|' + a.key})
+  SET ans.linkId = a.linkId, ans.context = a.context, ans.question = a.question, ans.codes = a.codes, ans.labels = a.labels,
+      ans.text = a.text, ans.riskFactor = a.riskFactor, ans.authored = $authored, ans.findings = a.findings
+  MERGE (r)-[:HAS_ANSWER]->(ans)
+  MERGE (ans)-[:ANSWERS]->(i)
+  WITH ans, a
+  UNWIND CASE WHEN a.riskFactor THEN a.risks ELSE [] END AS riskId
+  MATCH (h:HealthRisk {id: riskId})
+  MERGE (ans)-[:RISK_FACTOR_FOR]->(h)
+  RETURN count(*) AS links
+  """#
+
+  static let anamnesisStoreBasedOn = #"""
+  UNWIND $rows AS row
+  MATCH (ans:Answer {id: $responseId + '|' + row.key})
+  UNWIND row.basedOn AS code
+  MATCH (c:LoincCode {code: code})
+  MERGE (ans)-[:BASED_ON]->(c)
+  RETURN count(*) AS links
+  """#
 }
 
 /// Named read-only queries (CLI, tests, the app). Same as health_graph/queries.py.

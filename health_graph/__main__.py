@@ -6,8 +6,9 @@
   python -m health_graph receive --db health.rl      # pair Klarbefund by QR code
   python -m health_graph knowledge --db health.rl    # seed risks, scores, markers, reference ranges
   python -m health_graph scores --db health.rl       # compute risk scores, store them with their inputs
-  python -m health_graph anamnesis --questions       # the anamnesis questions and their answer codes
+  python -m health_graph anamnesis --db health.rl --plan      # findings in the data, the questions they raise
   python -m health_graph anamnesis --db health.rl --answers answers.json   # store answers (- = stdin)
+  python -m health_graph anamnesis --questions       # every question and its answer codes
 """
 import argparse
 import sys
@@ -61,9 +62,12 @@ def main(argv=None) -> int:
                     help="default: the latest anamnesis answer, else no")
     sc.add_argument("--region", choices=["low", "moderate", "high", "very high"], default="moderate")
 
-    an = sub.add_parser("anamnesis", help="the anamnesis questions; store a person's answers in the graph")
+    an = sub.add_parser("anamnesis", help="anamnesis from the data: findings, questions, store the answers")
     an.add_argument("--db")
-    an.add_argument("--answers", help='JSON {linkId: code | [codes] | {"codes": [...], "text": "..."}}, - = stdin')
+    an.add_argument("--plan", action="store_true", help="the findings, what the data answers, the questions to ask")
+    an.add_argument("--json", action="store_true", help="with --plan: print the plan as JSON")
+    an.add_argument("--answers", help='JSON {key: code | [codes] | {"codes", "text", "basedOn", "findings"}}, '
+                                      'key = question or question@date from the plan, - = stdin')
     an.add_argument("--questions", action="store_true", help="print the questions and answer codes")
     an.add_argument("--show", action="store_true", help="print the latest stored answers")
 
@@ -99,6 +103,26 @@ def main(argv=None) -> int:
                 print(f"{it['linkId']:17} {it['text']}\n{'':17} [{opts}]{' (several)' if it['multiple'] else ''}"
                       f"  risks: {', '.join(it['risks'])}")
             print("* = a known risk factor")
+            return 0
+        if args.plan:
+            conn = store.connect(args.db, read_only=True)
+            plan = anamnesis.plan(conn)
+            conn.close()
+            if args.json:
+                print(json.dumps(plan, ensure_ascii=False, indent=1))
+                return 0
+            for f in plan["findings"]:
+                vals = "; ".join(f"{v['name']} {v['value']} {v['unit']} ({v['date']}, {v['trigger']})"
+                                 for v in f["values"]) or json.dumps(f["detail"], ensure_ascii=False)
+                print(f"finding  {f['id']:16} {vals}")
+            for k in plan["known"]:
+                print(f"known    {k['fact']:16} {k['detail']}")
+            for r in plan["rechecks"]:
+                print(f"recheck  {r['name']:16} {r['date']} ({r['flag']}, {r['ageDays']} days old)")
+            for s in plan["skipped"]:
+                print(f"skip     {s['key']:16} {s['reason'][:100]}")
+            for q in plan["questions"]:
+                print(f"ask      {q['key']:16} {q['text']}  [{', '.join(o['code'] for o in q['options'])}]")
             return 0
         conn = store.connect(args.db)
         store.init_schema(conn)

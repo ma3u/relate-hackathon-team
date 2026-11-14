@@ -472,3 +472,65 @@ struct KnowledgeTests {
     #expect(try store.count("ReferenceRange") == 173)
   }
 }
+
+/// Port of tests/test_anamnesis.py: the same fixtures give the same findings and questions.
+@Suite("Anamnesis", .serialized)
+struct AnamnesisTests {
+  static func store() throws -> HealthStore {
+    let (store, _) = try Fixtures.loadedStore()
+    try store.seedKnowledge()
+    return store
+  }
+
+  @Test func findingsAndQuestionsMatchPython() throws {
+    let plan = try Self.store().anamnesisPlan(today: "2026-11-15")
+    let findings = (plan["findings"] as? [JSONObject] ?? []).compactMap { $0["id"] as? String }
+    #expect(findings == ["lipids", "ntprobnp", "smoking_unknown"])
+    let keys = (plan["questions"] as? [JSONObject] ?? []).compactMap { $0["key"] as? String }
+    #expect(keys == ["lipid-medication", "diet-fat", "family-lipids", "family-cvd", "cardiac-symptoms",
+                     "exercise-before-sample@2026-09-04", "smoking"])
+    let known = (plan["known"] as? [JSONObject] ?? []).compactMap { $0["fact"] as? String }
+    #expect(known == ["weight_series"])
+    let ldl = (plan["findings"] as? [JSONObject])?.first?["values"] as? [JSONObject]
+    #expect(ldl?.first?["trigger"] as? String == "high")
+  }
+
+  @Test func answeredQuestionsAreSkippedAndLinked() throws {
+    let store = try Self.store()
+    let counts = try store.storeAnamnesis([
+      "smoking": "never",
+      "exercise-before-sample@2026-09-04": ["codes": ["yes"], "basedOn": ["33762-6"], "findings": ["ntprobnp"]],
+      "cardiac-symptoms": ["breathless", "palpitations"],
+    ], authored: "2026-11-15T09:00:00Z")
+    #expect(counts == ["answers": 3, "riskFactors": 1, "basedOn": 1])
+    let plan = try store.anamnesisPlan(today: "2026-11-15")
+    let findings = (plan["findings"] as? [JSONObject] ?? []).compactMap { $0["id"] as? String }
+    #expect(!findings.contains("smoking_unknown"))
+    let keys = (plan["questions"] as? [JSONObject] ?? []).compactMap { $0["key"] as? String }
+    #expect(!keys.contains("exercise-before-sample@2026-09-04") && !keys.contains("cardiac-symptoms"))
+    let context = try store.rows(cypher: "MATCH (a:Answer {linkId: 'exercise-before-sample'})-[:BASED_ON]->(c) RETURN a.context AS d, c.code AS c")
+    #expect(context.first?["d"] == "2026-09-04" && context.first?["c"] == "33762-6")
+  }
+
+  @Test func theInboxCarriesAnswersToTheAppsGraph() throws {
+    let store = try Self.store()
+    let inbox = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    let sent = try AnamnesisInbox.submit(["smoking": "never", "diet-fat": "rarely"], source: "claude", into: inbox)
+    #expect(sent.answers == 2)
+    #expect(throws: (any Error).self) {
+      try AnamnesisInbox.submit(["smoking": "sometimes"], source: "claude", into: inbox)
+    }
+    let log = AnamnesisInbox.apply(from: inbox, to: store)
+    #expect(log == ["Anamnesis: 2 answers stored"])
+    #expect(try store.count("Answer") == 2)
+    #expect(try FileManager.default.contentsOfDirectory(atPath: inbox.path).isEmpty)
+  }
+
+  @Test func aWrongAnswerNeverReachesTheGraph() throws {
+    let store = try Self.store()
+    #expect(throws: (any Error).self) { try store.storeAnamnesis(["smoking": "sometimes"]) }
+    #expect(throws: (any Error).self) { try store.storeAnamnesis(["alcohol": ["none", "1-7"]]) }
+    #expect(throws: (any Error).self) { try store.storeAnamnesis(["nonsense": "yes"]) }
+    #expect(try store.count("Answer") == 0)
+  }
+}

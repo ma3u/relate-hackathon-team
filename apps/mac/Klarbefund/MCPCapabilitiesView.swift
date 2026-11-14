@@ -37,7 +37,7 @@ struct MCPCapabilitiesView: View {
   private var content: some View {
     VStack(alignment: .leading, spacing: 18) {
       header
-      CatalogSection(title: "Tools", detail: "2, read-only", symbol: "wrench.and.screwdriver") { tools }
+      CatalogSection(title: "Tools", detail: "4: three read-only, one for your anamnesis answers", symbol: "wrench.and.screwdriver") { tools }
       CatalogSection(title: "Prompts", detail: "\(MCPCatalog.prompts.count), in Claude's prompt menu (+)",
                      symbol: "text.bubble") { prompts }
       CatalogSection(title: "Guides", detail: "\(MCPCatalog.guides.count) resources Claude can read",
@@ -74,6 +74,10 @@ struct MCPCapabilitiesView: View {
       Item(title: "get_schema", detail: "Labels and relationship types in your health graph, with counts.")
       Item(title: "read_cypher", detail: "One read-only Cypher query (MATCH ... RETURN), at most 500 rows. "
         + "Queries that would write are rejected.")
+      Item(title: "anamnesis_plan", detail: "What stands out in your values, what your data already answers, "
+        + "and only the questions left.")
+      Item(title: "save_anamnesis_answers", detail: "Hands the answers you confirmed to Klarbefund for Mac, "
+        + "which checks and stores them in your graph. The only way anything is written.")
     }
   }
 

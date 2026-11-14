@@ -64,9 +64,10 @@ enum MCPCatalog {
     index of plasma and remnant cholesterol as signs of insulin resistance and triglyceride-rich particles; \
     Lp(a) once in life. LDL cholesterol stays a cause of atherosclerosis; the newer markers add to it, \
     they do not replace it.
-    - Before you judge a risk, ask what the graph cannot know: smoking, alcohol, diet, whether the blood \
-    was taken fasting, physical activity, sleep, family history, medication and supplements. Do not store \
-    the answers.
+    - Before you judge a risk, ask what the graph cannot know, and only that: anamnesis_plan lists the \
+    findings in my data, what the graph already answers, and the questions left. Never ask what my data \
+    shows (a 24-hour blood pressure, Apple Watch activity, a weight series) or what I answered in the last \
+    year. Store answers only with save_anamnesis_answers, after I confirmed them.
     - Say what is missing or too old to judge, and which test would close the gap.
     - Not medical advice and not a diagnosis: help me understand my data and prepare questions for my \
     doctor. Anything urgent (chest pain, shortness of breath, fainting, signs of a stroke) belongs with a \
@@ -256,6 +257,33 @@ enum MCPCatalog {
         """),
 
     // Doctor's visit
+    Prompt(
+      name: "anamnesis", title: "Anamnesis from my data, for my family doctor",
+      description: "Questions only about what stands out in your own values, your answers stored in the graph, "
+        + "and a brief that helps your family doctor weigh your risks.",
+      group: .doctor,
+      arguments: [
+        Argument(name: "language", description: "Optional: the brief's language, e.g. German",
+                 required: false, phrase: " Write the brief in %@.", fallback: "")
+      ],
+      template: """
+        Take my anamnesis from my own data, so my family doctor can weigh my risks better. \
+        1. Call anamnesis_plan. \
+        2. Show me briefly what stands out: each finding with its values, dates, units, the range and its \
+        source, and in one sentence why it matters (the finding's why). Then what my data already answers \
+        (known), what I answered before (skipped, with the date), and the values too old to judge (rechecks), \
+        so I can see you will not ask about them. \
+        3. Ask only the plan's questions, two to four at a time, grouped by the finding that raises them, with \
+        the options as given; take my own words where no option fits. Ask nothing my data already answers; \
+        if a question can be answered from the graph after all, check with read_cypher instead of asking. \
+        4. Read my answers back in a short list. When I confirm, store them with save_anamnesis_answers: the \
+        plan's key, the option codes, my own words as text, and the plan's basedOn and findings. \
+        5. Write a one-page brief for my family doctor.{{language}} Per finding: the values with date, lab, \
+        unit, range and source; my answers that change how to read it (for example hard exercise before \
+        the sample for NT-proBNP or creatinine, smoking in SCORE2); the tests the plan suggests. Then the \
+        risk scores in the graph with their inputs, the rechecks, and three questions for the appointment. \
+        Factual and short, no diagnosis, every number as in the graph so it can be checked on the paper.
+        """),
     Prompt(
       name: "doctor_brief", title: "Write a doctor's brief",
       description: "One page to hand over: reason, values outside the range, trends, scores, gaps, questions.",
@@ -554,6 +582,10 @@ enum MCPCatalog {
           cannot reach the network.
           - It opens the snapshot read-only and rejects queries that would write. It can only answer \
           what Claude asks.
+          - One exception, for the anamnesis: save_anamnesis_answers checks the answers you confirmed and \
+          leaves them in a folder only Klarbefund for Mac reads (the app-group container's Inbox). The app, \
+          which owns your graph, stores them and deletes the request; it refuses an answer that is not one of \
+          the question's options. Nothing else can be written this way.
           - Claude Desktop asks before a tool runs, unless you allowed it.
 
           ## Protocol and authorization

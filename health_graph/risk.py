@@ -134,16 +134,27 @@ def compute_scores(conn, age, sex, smoker, region):
         out.append(scores.Score("eGFR (CKD-EPI 2021)", None, "", None, "Inker et al., NEJM 2021",
                                 note="needs creatinine and " + need, risk="kidney"))
 
-    ast = latest(marker_series(conn, "AST"))
-    alt = latest(marker_series(conn, "ALT"))
-    plt = latest(series(conn, ["777-3", "26515-7"]))
+    # One visit: AST and ALT of the same day and the platelet count nearest it, within 14
+    # days, with the age then. Mixing the newest of each from different months (as this did
+    # until Nov 15, 2026) can move FIB-4 across a cut-off.
+    ast = alt = plt = None
+    alt_by_day = {p[0]: p for p in marker_series(conn, "ALT")}
+    platelets = series(conn, ["777-3", "26515-7"])
+    for a in reversed(marker_series(conn, "AST")):
+        near = [p for p in platelets
+                if abs((dt.date.fromisoformat(p[0]) - dt.date.fromisoformat(a[0])).days) <= 14]
+        if a[0] in alt_by_day and near:
+            ast, alt = a, alt_by_day[a[0]]
+            plt = min(near, key=lambda p: abs((dt.date.fromisoformat(p[0]) - dt.date.fromisoformat(a[0])).days))
+            break
     if ast and alt and plt and age:
-        f = scores.fib4(age, ast[1], alt[1], plt[1])
-        out.append(scores.Score("FIB-4 (liver fibrosis)", f, "", scores.fib4_band(f, age),
+        age_then = age - (TODAY.year - int(ast[0][:4]))
+        f = scores.fib4(age_then, ast[1], alt[1], plt[1])
+        out.append(scores.Score("FIB-4 (liver fibrosis)", f, "", scores.fib4_band(f, age_then),
                                 "Sterling et al., Hepatology 2006; EASL 2021 cut-offs",
                                 {"AST": f"{ast[1]:.0f} U/L ({ast[0]})", "ALT": f"{alt[1]:.0f} U/L ({alt[0]})",
-                                 "platelets": f"{plt[1]:.0f} ×10⁹/L ({plt[0]})", "age": str(age)},
-                                light=scores.fib4_light(scores.fib4_band(f, age)), id="fib4",
+                                 "platelets": f"{plt[1]:.0f} ×10⁹/L ({plt[0]})", "age": str(age_then)},
+                                light=scores.fib4_light(scores.fib4_band(f, age_then)), id="fib4",
                                 observations=[ast[6], alt[6], plt[6]], risk="liver",
                                 date=min(ast[0], alt[0], plt[0])))
     else:

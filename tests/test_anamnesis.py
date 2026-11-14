@@ -1,4 +1,4 @@
-"""Anamnesis: questions linked to the health risks, answers stored as FHIR-like responses."""
+"""Anamnesis from the person's own data: findings, what the graph already answers, the questions left."""
 from pathlib import Path
 
 import pytest
@@ -8,6 +8,7 @@ from health_graph import anamnesis, fhir, knowledge, store
 
 ROOT = Path(__file__).resolve().parents[1]
 BUNDLES = sorted((ROOT / "fixtures" / "fhir").glob("*.json"))
+TODAY = "2026-11-15"
 
 
 @pytest.fixture()
@@ -27,55 +28,78 @@ def rows(conn, cypher, **params):
     return [dict(r) for r in conn.execute(cypher, params)]
 
 
-def test_every_question_informs_a_tracked_risk():
+def test_rules_ask_only_known_questions_about_tracked_risks():
     risk_ids = {r["id"] for r in knowledge.HEALTH_RISKS}
     assert len({i["linkId"] for i in anamnesis.ITEMS}) == len(anamnesis.ITEMS)
     for item in anamnesis.ITEMS:
         assert item["risks"] and set(item["risks"]) <= risk_ids, item["linkId"]
-        assert 2 <= len(item["options"]) <= 5, item["linkId"]
+    for rule in anamnesis.RULES:
+        assert set(rule["questions"]) <= set(anamnesis.ITEM), rule["id"]
+        assert set(rule["risks"]) <= risk_ids, rule["id"]
+        assert set(rule.get("groups", [])) <= set(anamnesis.GROUP), rule["id"]
 
 
-def test_questionnaire_links_each_item_to_its_risks(db):
+def test_findings_come_from_the_newest_values_and_raise_their_questions(db):
+    """Same expectations as the Swift AnamnesisTests: the two finders agree."""
     conn, _, _ = db
-    anamnesis.seed(conn)
-    anamnesis.seed(conn)  # idempotent
-    got = rows(conn, "MATCH (:Questionnaire)-[:HAS_ITEM]->(i:QuestionnaireItem) RETURN count(i) AS n")
-    assert got[0]["n"] == len(anamnesis.ITEMS)
-    links = rows(conn, "MATCH (i:QuestionnaireItem {linkId: 'alcohol'})-[:INFORMS]->(h) RETURN h.id AS id")
-    assert {r["id"] for r in links} == {"liver", "cardiovascular", "bone"}
+    plan = anamnesis.plan(conn, today=TODAY)
+    assert [f["id"] for f in plan["findings"]] == ["lipids", "ntprobnp", "smoking_unknown"]
+    assert [q["key"] for q in plan["questions"]] == [
+        "lipid-medication", "diet-fat", "family-lipids", "family-cvd", "cardiac-symptoms",
+        "exercise-before-sample@2026-09-04", "smoking"]
+    assert [k["fact"] for k in plan["known"]] == ["weight_series"]
+    ldl = plan["findings"][0]["values"][0]
+    assert ldl["trigger"] == "high" and ldl["range"]["basis"] == "guideline"
+    dated = next(q for q in plan["questions"] if q["linkId"] == "exercise-before-sample")
+    assert "2026-09-04" in dated["text"] and dated["basedOn"] == ["33762-6"]
 
 
-def test_answers_are_stored_with_risk_factors_and_sources(db):
+def test_answers_are_stored_skipped_next_time_and_linked(db):
     conn, _, pid = db
     counts = anamnesis.store_response(conn, pid, {
         "smoking": {"codes": ["current"], "text": "a few a week"},
-        "alcohol": "1-7",
         "cardiac-symptoms": ["breathless", "palpitations"],
-        "blood-pressure": {"codes": ["no"], "basedOn": ["4548-4"]},
+        "exercise-before-sample@2026-09-04": {"codes": ["yes"], "basedOn": ["33762-6"], "findings": ["ntprobnp"]},
         "liver-imaging": {"text": "not sure"},
-    }, authored="2026-11-14T10:00:00+00:00")
-    assert counts == {"answers": 5, "riskFactors": 2, "basedOn": 1}
-    factors = rows(conn, "MATCH (a:Answer)-[:RISK_FACTOR_FOR]->(h) RETURN a.linkId AS q, h.id AS risk")
-    assert {(r["q"], r["risk"]) for r in factors} >= {("smoking", "cardiovascular"), ("cardiac-symptoms", "fitness")}
-    assert not [r for r in factors if r["q"] == "alcohol"]
-    latest = anamnesis.latest_answers(conn, pid)
-    assert latest["liver-imaging"]["codes"] == [] and latest["liver-imaging"]["text"] == "not sure"
-    assert latest["cardiac-symptoms"]["labels"][0].startswith("Short of breath")
+    }, authored="2026-11-15T09:00:00+00:00")
+    assert counts == {"answers": 4, "riskFactors": 2, "basedOn": 1}
+    plan = anamnesis.plan(conn, today=TODAY)
+    assert "smoking_unknown" not in [f["id"] for f in plan["findings"]]
+    keys = [q["key"] for q in plan["questions"]]
+    assert "cardiac-symptoms" not in keys and "exercise-before-sample@2026-09-04" not in keys
+    skipped = {s["key"]: s["reason"] for s in plan["skipped"]}
+    assert skipped["cardiac-symptoms"].startswith("answered on 2026-11-15")
+    got = rows(conn, "MATCH (a:Answer {linkId: 'exercise-before-sample'})-[:BASED_ON]->(c) "
+                     "RETURN a.context AS d, c.code AS c, a.question AS q, a.findings AS f")
+    assert got == [{"d": "2026-09-04", "c": "33762-6", "f": ["ntprobnp"],
+                    "q": "Did you do hard endurance exercise or HIIT in the 48 hours before the blood "
+                         "sample on 2026-09-04?"}]
+    # A year later the answers are asked again.
+    later = anamnesis.plan(conn, today="2027-12-01")
+    assert "smoking" in [q["key"] for q in later["questions"]]
 
 
-def test_a_later_response_keeps_the_earlier_one_as_history(db):
-    conn, _, pid = db
-    anamnesis.store_response(conn, pid, {"smoking": "current"}, authored="2026-01-01T00:00:00+00:00")
-    anamnesis.store_response(conn, pid, {"smoking": "former"}, authored="2026-11-14T00:00:00+00:00")
-    n = rows(conn, "MATCH (:Patient)-[:HAS_RESPONSE]->(r:QuestionnaireResponse) RETURN count(r) AS n")[0]["n"]
-    assert n == 2
-    assert anamnesis.latest_answers(conn, pid)["smoking"]["codes"] == ["former"]
+def test_an_old_value_goes_on_the_recheck_list(db):
+    conn, _, _ = db
+    plan = anamnesis.plan(conn, today="2028-11-15")
+    assert [f["id"] for f in plan["findings"]] == ["smoking_unknown"]
+    assert {r["name"] for r in plan["rechecks"]} >= {"LDL cholesterol", "NT-proBNP"}
+
+
+def test_fib4_uses_one_visit():
+    row = {"date": "2025-05-10", "age": 60, "ast": 0.6, "astUnit": "ukat/L", "alt": 0.5, "altUnit": "ukat/L",
+           "platelets": [["2025-05-12", 240], ["2025-11-20", 180]]}
+    got = anamnesis.fib4(row)
+    assert got["value"] == 1.64 and got["platelets"] == 240 and got["ast"] == 36.0
+    far = {**row, "platelets": [["2025-11-20", 180]]}
+    assert anamnesis.fib4(far) is None  # six months apart is not one visit
 
 
 @pytest.mark.parametrize("answers", [
     {"smoking": "sometimes"},                       # not an option
     {"nonsense": "yes"},                            # not a question
     {"alcohol": ["none", "1-7"]},                   # one answer only
+    {"alcohol": {"codes": ["none"], "findings": ["made-up"]}},  # not a finding
 ])
 def test_a_wrong_answer_never_reaches_the_graph(db, answers):
     conn, _, pid = db

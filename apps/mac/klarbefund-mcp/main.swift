@@ -11,13 +11,16 @@ import Relate
 
 let appGroup = "38R8Z4P7S8.red.mabu.meinbefund"
 let version = "1.0.0"
-let snapshot = FileManager.default
-  .containerURL(forSecurityApplicationGroupIdentifier: appGroup)?
-  .appendingPathComponent("Snapshot/health.rl")
+let container = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroup)
+let snapshot = container?.appendingPathComponent("Snapshot/health.rl")
+/// Where anamnesis answers wait for Klarbefund for Mac, which owns the graph and stores them.
+let inbox = container?.appendingPathComponent("Inbox", isDirectory: true)
 
 let instructions = """
   This server is the user's personal health graph, kept by Klarbefund for Mac on their own Mac \
-  (Neo4j Relate, an embedded graph database; one file, read-only here, nothing is stored in a cloud).
+  (Neo4j Relate, an embedded graph database; one file, read-only here, nothing is stored in a cloud). \
+  The one thing it can hand back is the user's own anamnesis answers, through save_anamnesis_answers, \
+  which Klarbefund for Mac checks and stores.
 
   What is in it:
   - (:Patient) the user, with birthYear and gender when they chose to share them.
@@ -40,7 +43,10 @@ let instructions = """
   - OMOP research copies: (:OMOPPerson), (:OMOPMeasurement).
   - Anamnesis, when the person answered one: (:Patient)-[:HAS_RESPONSE]->(:QuestionnaireResponse {authored})-[:HAS_ANSWER]->\
   (:Answer {linkId, question, labels, text, riskFactor})-[:RISK_FACTOR_FOR]->(:HealthRisk); (:Answer)-[:BASED_ON]->(:LoincCode). \
-  Use the latest answer per linkId, and quote the person's own words in a.text.
+  Use the latest answer per linkId (with a.context, the sample date it was asked about), and quote the \
+  person's own words in a.text.
+  - Anamnesis: call anamnesis_plan and ask only its questions, never what its known and skipped lists \
+  already answer; store the answers with save_anamnesis_answers once the person has confirmed them.
 
   How to work:
   - Call get_schema first, then read_cypher. Count a value seen in two reports once: filter `o.duplicateOf IS NULL`.
@@ -142,6 +148,26 @@ func schema() throws -> String {
 
 let readOnly: [String: Any] = ["readOnlyHint": true, "destructiveHint": false, "openWorldHint": false]
 
+/// Anamnesis answers leave this process only as a request Klarbefund for Mac stores: no graph write here.
+let handsOver: [String: Any] = [
+  "readOnlyHint": false, "destructiveHint": false, "idempotentHint": false, "openWorldHint": false,
+]
+
+func anamnesisPlan() throws -> String {
+  let graph = try openGraph()
+  let data = try JSONSerialization.data(withJSONObject: try graph.anamnesisPlan(), options: [.sortedKeys])
+  return String(decoding: data, as: UTF8.self)
+}
+
+func saveAnamnesis(_ answers: [String: Any]) throws -> String {
+  guard snapshot.map({ FileManager.default.fileExists(atPath: $0.path) }) == true, let inbox else {
+    throw GraphError.closed
+  }
+  let sent = try AnamnesisInbox.submit(answers, source: "claude", into: inbox)
+  return "Handed \(sent.answers) answers to Klarbefund for Mac, which stores them in the health graph within a "
+    + "few seconds. Call anamnesis_plan again afterwards: answered questions then appear under skipped."
+}
+
 let tools: [[String: Any]] = [
   [
     "name": "get_schema",
@@ -163,6 +189,33 @@ let tools: [[String: Any]] = [
       "required": ["statement"],
     ],
     "annotations": readOnly,
+  ],
+  [
+    "name": "anamnesis_plan",
+    "title": "Anamnesis from my data",
+    "description": "Findings in the user's own data (newest values outside the guideline range valid on their date, "
+      + "or at a limit; FIB-4; exercise test; blood oxygen; a score input only the user knows), what the graph "
+      + "already answers (known, and questions answered in the last 12 months under skipped), values too old "
+      + "to judge (rechecks), and only the questions left, each with its options, the findings that raise it "
+      + "and the LOINC codes it is about. Ask these questions; do not ask what known or skipped already answers.",
+    "inputSchema": ["type": "object", "properties": [String: Any]()],
+    "annotations": readOnly,
+  ],
+  [
+    "name": "save_anamnesis_answers",
+    "title": "Store my anamnesis answers",
+    "description": "Hands the user's anamnesis answers to Klarbefund for Mac, which checks them and stores them in "
+      + "the health graph. Only after the user has seen and confirmed the answers. Keys are the question keys "
+      + "from anamnesis_plan (e.g. smoking, exercise-before-sample@2026-01-15); a value is an option code, a "
+      + "list of codes where several are allowed, or {\"codes\": [...], \"text\": \"the user's own words\", "
+      + "\"basedOn\": [LOINC codes from the plan], \"findings\": [finding ids from the plan]}. A code that is not "
+      + "one of the question's options refuses all answers.",
+    "inputSchema": [
+      "type": "object",
+      "properties": ["answers": ["type": "object", "description": "Question key -> answer, as described."]],
+      "required": ["answers"],
+    ],
+    "annotations": handsOver,
   ],
 ]
 
@@ -292,6 +345,13 @@ while let line = readLine(strippingNewline: true) {
         } catch {
           reply(text("\(error)", error: true))
         }
+      case "anamnesis_plan":
+        do { reply(text(try anamnesisPlan())) } catch { reply(text("\(error)", error: true)) }
+      case "save_anamnesis_answers":
+        guard let answers = args["answers"] as? [String: Any], !answers.isEmpty else {
+          reply(text("save_anamnesis_answers needs answers", error: true)); break
+        }
+        do { reply(text(try saveAnamnesis(answers))) } catch { reply(text("\(error)", error: true)) }
       default:
         throw RPCError(code: -32602, message: "unknown tool \(name)")
       }

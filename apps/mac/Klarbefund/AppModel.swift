@@ -20,6 +20,11 @@ enum Paths {
       .appendingPathComponent("Snapshot", isDirectory: true)
   }
   static var snapshot: URL? { snapshotDir?.appendingPathComponent("health.rl") }
+  /// Anamnesis answers the MCP helper hands over (AnamnesisInbox); the app stores them.
+  static var inbox: URL? {
+    FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroup)?
+      .appendingPathComponent("Inbox", isDirectory: true)
+  }
 }
 
 struct GraphCounts: Equatable {
@@ -41,6 +46,7 @@ final class AppModel: ObservableObject {
 
   private var server: ReceiverServer?
   private var refresh: Task<Void, Never>?
+  private var inboxTimer: Timer?
   private var started = false
 
   /// Opens the sealed graph, prepares it, and starts receiving from the paired iPhone.
@@ -72,13 +78,33 @@ final class AppModel: ObservableObject {
       self.link = link
       if let png = QRCode(link)?.png(scale: 10, border: 2) { qr = NSImage(data: png) }
       scheduleRefresh(after: 0)
+      // Anamnesis answers from Claude: stored by the app, which owns the graph (every 3 s while open).
+      inboxTimer = Timer.scheduledTimer(withTimeInterval: 3, repeats: true) { _ in
+        Task { @MainActor in AppModel.shared.applyInbox() }
+      }
     } catch {
       problem = "Klarbefund could not open your health graph: \(error)"
     }
   }
 
+  /// Stores the anamnesis answers waiting in the inbox, then refreshes Claude's snapshot.
+  func applyInbox() {
+    guard let inbox = Paths.inbox,
+      let waiting = try? FileManager.default.contentsOfDirectory(atPath: inbox.path),
+      waiting.contains(where: { $0.hasSuffix(AnamnesisInbox.suffix) })
+    else { return }
+    do {
+      let store = try HealthStore(path: Paths.store.path)
+      for line in AnamnesisInbox.apply(from: inbox, to: store) { received(line) }
+    } catch {
+      NSLog("anamnesis inbox: \(error)")  // the store is busy (a transfer): the next tick tries again
+    }
+  }
+
   /// Stops receiving, removes Claude's snapshot and seals the graph.
   func stop() {
+    inboxTimer?.invalidate()
+    applyInbox()
     server?.stop()
     server = nil
     if let snap = Paths.snapshotDir { try? FileManager.default.removeItem(at: snap) }
