@@ -89,6 +89,21 @@
   .q button { background: #1b2029; color: var(--ink); border: 1px solid var(--line); border-radius: 999px; padding: 2px 9px; font: inherit; font-size: 11px; cursor: pointer; }
   .q button[aria-pressed=true] { border-color: var(--accent); background: #16312a; }
   .q .note { color: var(--muted); font-size: 11px; margin-top: 4px; }
+  .q .pre { color: #9AD0EC; font-size: 11px; margin-top: 3px; }
+  .q .code, .codes { color: var(--muted); font-size: 10px; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .q input[type=month] { background: #1b2029; color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 2px 6px; font: inherit; font-size: 12px; color-scheme: dark; }
+  .proto { border: 1px solid var(--line); border-radius: 10px; margin: 8px 0; }
+  .proto[open] { border-color: #5c5a2e; background: rgba(242, 232, 109, 0.04); }
+  .proto > summary { list-style: none; cursor: pointer; padding: 7px 10px; display: flex; gap: 6px; align-items: center; font-weight: 600; font-size: 13px; }
+  .proto > summary::-webkit-details-marker { display: none; }
+  .proto .meta { font-size: 11px; color: var(--muted); font-weight: 400; }
+  .proto .body { padding: 0 10px 9px; }
+  .chip.flag { color: #F7C1C1; border-color: #8a3b3b; }
+  .chip.ok { color: #5DCAA5; border-color: #2a5c4c; }
+  .scorebox { border-top: 1px solid var(--line); margin-top: 9px; padding-top: 7px; font-size: 12px; }
+  .critical { border-left: 3px solid #EF9F27; padding: 3px 0 3px 8px; margin: 6px 0; font-size: 11px; color: var(--ink); }
+  .savebtn { margin-top: 8px; background: #16312a; color: var(--ink); border: 1px solid var(--accent); border-radius: 8px; padding: 4px 10px; font: inherit; font-size: 12px; cursor: pointer; }
+  .savebtn[disabled] { opacity: .5; cursor: default; }
   #labels div.depth { color: #EF9F27; font-size: 11px; opacity: .8; }
   .scene-tooltip { font: 13px/1.4 -apple-system, system-ui, sans-serif !important; background: rgba(14,17,22,.92) !important; border: 1px solid var(--line); border-radius: 8px; padding: 6px 9px !important; }
 </style>
@@ -132,6 +147,8 @@ const FAMILIES = [
     ["Patient", "#ffffff"], ["DiagnosticReport", "#1D9E75"], ["DocumentReference", "#97C459"],
     ["Provenance", "#C0DD97"], ["Organization", "#FAC775"]]],
   ["Research copy", [["OMOPPerson", "#F0997B"], ["OMOPMeasurement", "#D85A30"], ["Knowledge", "#7F77DD"]]],
+  ["Anamnesis", [["Anamnesis protocol", "#F2E86D"], ["Protocol question", "#C9C27A"], ["SNOMED code", "#64D2FF"],
+    ["Your answer", "#B8F06A"]]],
 ];
 const OUT_COLOR = "#E24B4A";
 
@@ -172,6 +189,7 @@ FAMILIES.forEach(([, gs]) => gs.forEach(([g, c]) => { COLOR[g] = c; VISIBLE[g] =
 const groupsOf = (...fams) => FAMILIES.filter(([f]) => fams.includes(f)).flatMap(([, gs]) => gs.map(([g]) => g));
 const isEvidence = n => n.g === "Study" || n.g === "Guideline";
 const MEASURES = groupsOf("Measures"), DOCS = groupsOf("Documents"), RESEARCH = groupsOf("Research copy");
+const ANAMNESIS = groupsOf("Anamnesis");
 
 // Risks first, then the evidence behind them, then the measures, then the documents.
 const STAGES = [
@@ -190,12 +208,22 @@ const STAGES = [
   { name: "Evidence", groups: ["HealthRisk", "RiskScore", "Study", "Guideline", "Topic"], only: () => true,
     get hint() { return `All ${(counts.Study || 0) + (counts.Guideline || 0)} sources behind the graph:` + this.rest; },
     rest: " studies (coral) and guidelines (amber), clustered around their topics (white). A thin arrow from one source to another means it cites it. Orange arrows: in studies, people who have one condition develop another more often. Click a topic or a source." },
+  { name: "Anamnesis", groups: ["HealthRisk", "LoincCode", ...ANAMNESIS],
+    // The protocols and their questions, coded: LOINC codes only where a question uses one.
+    only: n => n.g !== "LoincCode" || (n._pq ??= n.nbs.some(([t, m]) => t === "CODED_BY" && (m.g === "Protocol question" || m.g === "Anamnesis protocol"))),
+    get hint() {
+      const n = (DATA.protocols || { protocols: [] }).protocols.length;
+      return `Your own category: ${n} anamnesis protocols (yellow), the validated questionnaires doctors and studies use: ` +
+        "Life's Essential 8, FINDRISC, AUDIT-C, MEDAS-14, PHQ-2, and structured history for tobacco, family, medication and diet. " +
+        "Their questions (olive) carry LOINC codes (grey), every answer the SNOMED CT concept it asserts (cyan); your stored answers are lime. " +
+        "Each protocol points at the health risks it informs. Answer them in the overview on the right: what your data already says is prefilled.";
+    } },
   { name: "Measures", groups: ["HealthRisk", "RiskScore", ...MEASURES], only: () => true, spiral: true,
     hint: "Every lab value (green) and Apple Watch week (blue) on a time spiral: one turn per year, the oldest at the bottom, the newest at the top; a small cluster is one day (one report, one week). Grey LOINC codes tie together the values of one marker; purple: guideline ranges." },
   { name: "Documents", groups: ["HealthRisk", "RiskScore", ...MEASURES, ...DOCS], only: () => true, spiral: true,
     hint: "Adds you (white), the scanned reports (dark green), their documents, how they were scanned (provenance) and the labs, around the same time spiral of your values." },
-  { name: "Everything", groups: ["HealthRisk", "RiskScore", "Study", "Guideline", ...MEASURES, ...DOCS, ...RESEARCH], only: () => true, spiral: true,
-    hint: "Adds the evidence and the OMOP research copy (orange): each of your values in the format a research study would receive." },
+  { name: "Everything", groups: ["HealthRisk", "RiskScore", "Study", "Guideline", ...MEASURES, ...DOCS, ...RESEARCH, ...ANAMNESIS], only: () => true, spiral: true,
+    hint: "Adds the evidence, the anamnesis protocols and the OMOP research copy (orange): each of your values in the format a research study would receive." },
 ];
 let stage = 0;
 
@@ -238,7 +266,7 @@ let selected = null, hl = new Set(), hlLinks = new Set();
 const Graph = new ForceGraph3D(document.getElementById("graph"))
   .backgroundColor("#0e1116")
   .nodeId("id")
-  .nodeVal(n => n.g === "Patient" ? 30 : n.g === "Topic" ? 14
+  .nodeVal(n => n.g === "Patient" ? 30 : n.g === "Topic" ? 14 : n.g === "Anamnesis protocol" ? 12
     : n.g === "HealthRisk" && n.st && !drill.length ? 4 + 6 * Math.min(n.st.E, 3) + (n.st.status === "main" ? 12 : 0)
     : (1 + Math.pow(n.deg, 0.55) + (n.cur ? 3 : 0) + (n.out ? 4 : 0)) * (0.3 + 0.7 * recency(n)) + (n === selected ? 12 : 0))
   .nodeRelSize(3)
@@ -509,6 +537,10 @@ const EXPLAIN = {
   Topic: n => `The topic "${n.n}": the studies (coral) and guidelines (amber) about it, the risks they connect, and the citations among them.`,
   NcbiTaxon: () => `An organism from a microbiome report, and your values on it.`,
   Knowledge: () => `The version of the knowledge layer: a fingerprint of every seeded fact.`,
+  "Anamnesis protocol": n => `The protocol "${n.n}": its questions, the LOINC and SNOMED CT codes they carry, the health risks it informs and your stored answers. The overview on the right asks it, prefilled from your data.`,
+  "Protocol question": n => `One question: "${n.n}". Its LOINC code, the SNOMED CT concept each answer stands for, and your answers to it.`,
+  "SNOMED code": n => `The SNOMED CT concept "${n.n}": the answers that mean it, in every protocol. SNOMED CT is the clinical terminology of the EHDS Patient Summary.`,
+  "Your answer": n => `${n.n}: stored in your graph, with the SNOMED CT concept it asserts and, when it was prefilled, the value it was read from.`,
 };
 function updateCaption() {
   const el = document.getElementById("caption"), top = drill[drill.length - 1];
@@ -624,30 +656,187 @@ const NEWER = { "62292-8": "demay-2024-vitd", "68438-1": "demay-2024-vitd", "198
 const loincOf = c => (c.d[0] || "").replace("LOINC ", "");
 const BEYOND_LDL = ["eas-2017-ldl", "esc-eas-2025-lipids", "sniderman-2019-apob", "mclaughlin-2003-tg-hdl",
   "assempoor-2025-aip", "balling-2025-remnant", "voight-2012-hdl"];
-const QUESTIONS = [
-  { k: "smoking", q: "Do you smoke?", opts: [["never", "Never"], ["former", "Not any more"], ["current", "Yes"]],
-    note: a => a === "current" ? "SCORE2 above now counts you as a smoker: stopping is the largest single change it knows."
-      : a === "former" ? "SCORE2 counts former smokers as non-smokers; the benefit grows with every year since stopping." : "" },
-  { k: "alcohol", q: "Alcohol per week?", opts: [["0", "None"], ["1-7", "Up to 7 drinks"], ["8-14", "8 to 14"], ["15+", "More than 14"]],
-    note: a => a === "8-14" || a === "15+" ? "Alcohol raises triglycerides, GGT and blood pressure; the ESC 2021 prevention guideline advises at most 100 g of alcohol a week." : "" },
-  { k: "fasting", q: "Was your last blood sample taken fasting?", opts: [["yes", "Yes"], ["no", "No"], ["unsure", "Not sure"]],
-    note: a => a === "no" ? "Lipids need no fasting (EAS/EFLM 2016); non-fasting triglycerides count as raised from 2.0 mmol/L instead of 1.7. The TyG index needs a fasting glucose: read it with care."
-      : a === "unsure" ? "Note it next time: it changes how triglycerides and glucose are read." : "" },
-  { k: "diet", q: "How do you eat, mostly?", opts: [["mixed", "Mixed"], ["med", "Mediterranean"], ["lowcarb", "Low-carb or keto"], ["plant", "Vegetarian or vegan"]],
-    note: a => a === "lowcarb" ? "Low-carb and ketogenic diets often lower triglycerides and raise HDL, and in some people raise LDL cholesterol and ApoB a lot: tell your doctor next to these values."
-      : a === "med" ? "A Mediterranean diet lowered heart attacks and strokes in the PREDIMED trial (NEJM 2018)." : "" },
-  { k: "fastinghabit", q: "Do you fast regularly?", opts: [["no", "No"], ["trf", "Time-restricted eating"], ["long", "Fasts of a day or more"]],
-    note: a => a === "long" ? "Longer fasts can raise LDL cholesterol, bilirubin and uric acid for a while: mention it when a sample falls in such a week."
-      : a === "trf" ? "Note the time of your last meal with each sample; it helps to read glucose and triglycerides." : "" },
-  { k: "activity", q: "Moderate exercise per week (brisk walking counts)?", opts: [["lt150", "Under 150 minutes"], ["150-300", "150 to 300"], ["gt300", "More"]],
-    note: a => a === "lt150" ? "WHO and ESC advise 150 to 300 minutes a week; more fitness goes with fewer heart events (Kodama 2009, in this graph)." : "" },
-  { k: "family", q: "A heart attack or stroke in a parent or sibling at a young age (men under 55, women under 65)?", opts: [["no", "No"], ["yes", "Yes"], ["unsure", "Not sure"]],
-    note: a => a === "yes" ? "A risk modifier in the ESC 2021 prevention guideline; with a raised LDL also a reason to ask about familial hypercholesterolaemia and Lp(a)."
-      : a === "no" ? "Heart disease in parents only at an older age does not count as a family history in the ESC 2021 guideline; it is still worth telling your doctor." : "" },
-  { k: "statin", q: "Do you take, or did you take, a cholesterol-lowering medicine (a statin, for example)?", opts: [["no", "No"], ["now", "Yes, now"], ["before", "Earlier, not now"]],
-    note: a => a === "now" ? "Your recent lipid values then show the treatment, not your untreated level."
-      : a === "before" ? "Values from that time show the medicine's effect, likely your lowest ones; your newest values describe you without it. The graph cannot tell which values those are until the medication and its dates are in it." : "" },
-];
+// ── Anamnesis protocols (health_graph/protocols.py), prefilled from your data ──
+// The answers live in this page; with the vault's server (scripts/graph3d_serve.py)
+// "Save to my graph" stores one protocol at a time, coded with SNOMED CT.
+const PLAN = DATA.protocols || { protocols: [], snomed: {}, treatedLipids: [] };
+const SAVE = window.GRAPH3D_SAVE || null;   // {url, token}: injected by the vault's server only
+const PANS = {}, PSRC = {}, PTEXT = {}, SAVED = {};
+PLAN.protocols.forEach(p => {
+  PANS[p.id] = {}; PSRC[p.id] = {}; PTEXT[p.id] = {};
+  p.items.forEach(it => {
+    const pre = it.prefilled;
+    if (!pre) return;
+    if (it.type === "month") PTEXT[p.id][it.linkId] = pre.value || "";
+    else PANS[p.id][it.linkId] = [pre.code];
+    PSRC[p.id][it.linkId] = pre;
+  });
+});
+HABITS.smoking = ((PANS.tobacco || {}).smoking || [])[0];  // SCORE2 shows the smoker's or the non-smoker's value
+let openProto = null;
+const LIPID_CODES = new Set(["2093-3", "14647-2", "2089-1", "13457-7", "18262-6", "22748-8", "43396-1", "70204-3", "1884-6"]);
+
+function enabledItem(it, ans) {
+  return !it.enableWhen || Object.entries(it.enableWhen).every(([k, want]) =>
+    (ans[k] || []).some(c => (Array.isArray(want) ? want : [want]).includes(c)));
+}
+const optOf = (it, code) => it.options.find(o => o.code === code) || {};
+function bandIndex(p, v) {
+  if (p.cutOff) return v >= (p.cutOff[(PLAN.sex || "any").toLowerCase()] ?? p.cutOff.any) ? 1 : 0;
+  let i = 0;
+  p.bands.forEach((b, k) => { if (v >= b[0]) i = k; });
+  return i;
+}
+const flagged = (p, v, i) => p.cutOff ? i === 1 : p.flagFrom != null ? v >= p.flagFrom : p.flagBelow != null ? v < p.flagBelow : false;
+// The same rules as protocols.score() in Python: sums, the LE8 average, the ESC family rule.
+function pscore(p, ans) {
+  if (p.method === "family") return familySummary(ans);
+  if (!p.method) return null;
+  const items = p.items.filter(it => enabledItem(it, ans));
+  let r;
+  if (p.method === "sum") {
+    let got = 0, lo = 0, hi = 0;
+    const missing = [];
+    items.forEach(it => {
+      if (it.skipIf && Object.entries(it.skipIf).every(([k, v]) => (ans[k] || [])[0] === v)) return;
+      const pts = it.options.map(o => o.points).filter(x => x != null), code = (ans[it.linkId] || [])[0];
+      if (code != null) got += optOf(it, code).points || 0;
+      else { missing.push(it.linkId); lo += Math.min(...pts); hi += Math.max(...pts); }
+    });
+    r = { value: got, min: got + lo, max: got + hi, missing, complete: !missing.length };
+  } else {
+    const metrics = {};
+    items.forEach(it => {
+      const m = metrics[it.metric] ??= { base: null, adjust: 0 }, code = (ans[it.linkId] || [])[0];
+      if (code == null) return;
+      if (it.adjust) m.adjust += optOf(it, code).points || 0; else m.base = optOf(it, code).points;
+    });
+    const per = {};
+    Object.entries(metrics).forEach(([k, m]) => { if (m.base != null) per[k] = m.base === 0 ? 0 : Math.max(0, m.base + m.adjust); });
+    const keys = Object.keys(metrics), sum = Object.values(per).reduce((a, b) => a + b, 0), n = Object.keys(per).length;
+    const missing = keys.filter(k => !(k in per));
+    r = { value: n ? Math.round(sum / n) : null, metrics: per, missing, complete: !missing.length,
+      min: Math.round(sum / keys.length), max: Math.round((sum + 100 * missing.length) / keys.length) };
+  }
+  if (r.value != null && r.complete) {
+    const i = bandIndex(p, r.value);
+    Object.assign(r, { band: p.bands[i][1], meaning: p.bands[i][2], flag: flagged(p, r.value, i),
+      snomed: p.bandSnomed ? p.bandSnomed[i] : null });
+  }
+  return r;
+}
+function familySummary(ans) {
+  const who = new Set(ans["family-cvd-who"] || []), one = k => (ans[k] || [])[0];
+  if (!who.size) return null;
+  if (who.size === 1 && who.has("none")) return { band: "none", meaning: "no heart disease in parents or siblings", snomed: "160270001", complete: true };
+  const early = [];
+  if (who.has("father") && one("family-cvd-father-age") === "<55") early.push("father before 55");
+  if (who.has("mother") && one("family-cvd-mother-age") === "<65") early.push("mother before 65");
+  if ((who.has("brother") || who.has("sister")) && one("family-cvd-sibling-age") === "yes") early.push("a brother or sister early");
+  if (early.length) return { band: "premature", flag: true, complete: true, meaning: `premature heart disease in the family (${early.join(", ")}): an ESC 2021 risk modifier`,
+    snomed: early.some(e => e.startsWith("father") || e.startsWith("a brother")) ? "439724007" : "438825005" };
+  const unknown = (who.has("father") && (one("family-cvd-father-age") || "unknown") === "unknown") ||
+    (who.has("mother") && (one("family-cvd-mother-age") || "unknown") === "unknown") ||
+    ((who.has("brother") || who.has("sister")) && (one("family-cvd-sibling-age") || "unknown") === "unknown");
+  if (unknown || (who.size === 1 && who.has("unknown"))) return { band: "age unknown", complete: false, meaning: "the age at the first event decides whether it counts", snomed: "266894000" };
+  return { band: "later in life", complete: true, meaning: "heart disease in the family, but not early: not a risk modifier in ESC 2021", snomed: "266894000" };
+}
+// Your lab values on a lipid marker measured between the months you gave.
+function treatedLive() {
+  const med = (PANS["lipid-therapy"] || {})["lipid-medication"], from = (PTEXT["lipid-therapy"] || {})["lipid-from"];
+  if (!med || med[0] === "none" || !from) return [];
+  const until = med[0] === "stopped" ? (PTEXT["lipid-therapy"] || {})["lipid-until"] : null;
+  return DATA.nodes.filter(n => n.g === "Lab value" && !n.dup && n.dt && n.dt.slice(0, 7) >= from && (!until || n.dt.slice(0, 7) <= until) &&
+    nb(n, ["CODED_BY"]).some(c => c.g === "LoincCode" && LIPID_CODES.has(loincOf(c)))).sort((a, b) => a.dt.localeCompare(b.dt));
+}
+// What your answers mean for you, beyond the score.
+const PNOTE = {
+  tobacco: a => (a.smoking || [])[0] === "current" ? ["SCORE2 in the risk cards above now shows your value as a smoker."]
+    : (a.smoking || [])[0] === "former" ? ["SCORE2 counts former smokers as non-smokers; the benefit grows with every year since stopping."] : [],
+  "lipid-therapy": () => {
+    const t = treatedLive();
+    return t.length ? [`${t.length} lipid value${t.length > 1 ? "s" : ""} fall in the treated months: ` + t.slice(0, 6).map(n => `${short(n.n)} ${n.val} (${n.dt.slice(0, 10)})`).join(", ") +
+      (t.length > 6 ? ", …" : "") + ". They show the medicine's effect, not your untreated level."] : [];
+  },
+  "diet-pattern": a => {
+    const d = (a["diet-pattern"] || [])[0], f = (a["fasting-habit"] || [])[0], out = [];
+    if (d === "keto" || d === "low-carb") out.push("Read LDL cholesterol and ApoB with this diet in mind: in some people, often lean and active ones, they rise a lot; triglycerides and the TG/HDL ratio then look better than on a mixed diet.");
+    if (d === "mediterranean") out.push("The Mediterranean pattern lowered heart attacks and strokes in PREDIMED (Estruch 2018); MEDAS-14 measures how close you are.");
+    if (f === "long") out.push("Fasts of a day or more raise LDL cholesterol, bilirubin and uric acid for a while: note it when a sample falls in such a week.");
+    if (f === "time-restricted") out.push("Note the time of your last meal with each sample; it helps to read glucose and triglycerides.");
+    return out;
+  },
+};
+function scoreChip(p, sc) {
+  const ans = PANS[p.id], shown = p.items.filter(it => enabledItem(it, ans));
+  const done = shown.filter(it => it.type === "month" ? PTEXT[p.id][it.linkId] : (ans[it.linkId] || []).length).length;
+  if (sc && sc.band && sc.complete !== false) return `<span class="chip ${sc.flag ? "flag" : "ok"}">${esc(sc.value != null ? `${sc.value} · ` : "")}${esc(sc.band)}</span>`;
+  if (!done) return `<span class="chip">to answer</span>`;
+  return `<span class="chip">${done} of ${shown.length} answered</span>`;
+}
+function scoreBlock(p, sc) {
+  if (!sc) return "";
+  let h = `<div class="scorebox">`;
+  if (p.method === "family") h += `<b>${esc(sc.band)}</b>: ${esc(sc.meaning)}`;
+  else if (sc.complete && sc.band) h += `<b>${p.method === "le8" ? "Cardiovascular health" : "Score"} ${sc.value}</b> · ${esc(sc.band)}: ${esc(sc.meaning)}`;
+  else if (sc.value != null) h += `So far <b>${sc.value}</b>; with the ${sc.missing.length} open ${p.method === "le8" ? "metrics" : "questions"} it lands between ${sc.min} and ${sc.max}.`;
+  if (p.method === "le8" && sc.metrics && Object.keys(sc.metrics).length)
+    h += `<div class="codes">` + Object.entries(sc.metrics).map(([k, v]) => `${k} ${v}`).join(" · ") + ` (each 0 to 100; diet not scored here)</div>`;
+  if (sc.snomed && PLAN.snomed[sc.snomed]) h += `<div class="codes">SNOMED CT ${sc.snomed} · ${esc(PLAN.snomed[sc.snomed].display)}</div>`;
+  return h + `</div>`;
+}
+function protoCard(p) {
+  const ans = PANS[p.id], sc = pscore(p, ans);
+  let h = `<details class="proto" data-p="${p.id}"${openProto === p.id ? " open" : ""}><summary>${dotHtml(COLOR["Anamnesis protocol"])}` +
+    `<span>${esc(p.name)} <span class="meta">${esc(p.year || "")}</span></span>${scoreChip(p, sc)}</summary><div class="body">`;
+  if (p.forYou.length) h += `<div class="hint" style="margin-top:0"><b>For you:</b> ${p.forYou.map(esc).join("; ")}.</div>`;
+  h += `<div class="hint" style="margin-top:4px">${esc(p.why)}</div>`;
+  const pre = p.items.filter(it => PSRC[p.id][it.linkId]).length;
+  if (pre) h += `<div class="hint" style="margin-top:4px;color:#9AD0EC">${pre} answer${pre > 1 ? "s" : ""} prefilled from your data: check ${pre > 1 ? "them" : "it"}, change what is wrong.</div>`;
+  if (p.lastAnswered) h += `<div class="hint" style="margin-top:4px">Stored in your graph on ${esc(p.lastAnswered.authored.slice(0, 10))}.</div>`;
+  p.items.forEach(it => {
+    if (!enabledItem(it, ans)) return;
+    const cur = ans[it.linkId] || [];
+    h += `<div class="q">${esc(it.text)}${it.loinc ? ` <span class="code">LOINC ${esc(it.loinc)}</span>` : ""}`;
+    h += it.type === "month"
+      ? `<div class="opts"><input type="month" data-p="${p.id}" data-l="${it.linkId}" value="${esc(PTEXT[p.id][it.linkId] || "")}"></div>`
+      : `<div class="opts">` + it.options.map(o => `<button data-p="${p.id}" data-l="${it.linkId}" data-v="${esc(o.code)}" aria-pressed="${cur.includes(o.code)}">${esc(o.label)}</button>`).join("") + `</div>`;
+    const src = PSRC[p.id][it.linkId];
+    if (src) h += `<div class="pre">From your data: ${esc(src.text || "")}</div>`;
+    const coded = it.options.filter(o => cur.includes(o.code) && o.snomed);
+    if (coded.length) h += `<div class="code">` + coded.map(o => `SNOMED CT ${o.snomed} · ${esc((PLAN.snomed[o.snomed] || {}).display || "")}`).join("<br>") + `</div>`;
+    h += `</div>`;
+  });
+  h += scoreBlock(p, sc);
+  (PNOTE[p.id] ? PNOTE[p.id](ans) : []).forEach(t => h += `<div class="note" style="font-size:11px;margin-top:6px">${esc(t)}</div>`);
+  p.critical.forEach(t => h += `<div class="critical">${esc(t)}</div>`);
+  const links = [p.url ? `<a href="${esc(p.url)}" target="_blank" rel="noopener" style="color:var(--accent)">${esc(p.source || "Source")} ↗</a>` : esc(p.source || ""),
+    ...p.evidence.map(e => `<a href="https://doi.org/${esc(e.doi)}" target="_blank" rel="noopener" style="color:var(--accent)">${esc(e.citation.split(",")[0])} ${esc((e.citation.match(/(19|20)\d\d/) || [""])[0])} ↗</a>`)];
+  h += `<div class="codes" style="margin-top:6px">${links.join(" · ")}</div>`;
+  const codes = [p.loinc && `LOINC panel ${p.loinc}`, p.snomed && `SNOMED CT ${p.snomed} · ${(PLAN.snomed[p.snomed] || {}).display || ""}`].filter(Boolean);
+  if (codes.length || p.licence) h += `<div class="codes">${esc([...codes, p.licence].filter(Boolean).join(" · "))}</div>`;
+  if (SAVE) h += `<button class="savebtn" data-save="${p.id}"${SAVED[p.id] === "saving" ? " disabled" : ""}>Save to my graph</button>` +
+    (SAVED[p.id] && SAVED[p.id] !== "saving" ? `<div class="note" style="font-size:11px;margin-top:4px">${esc(SAVED[p.id])}</div>` : "");
+  return h + `</div></details>`;
+}
+async function saveProtocol(id) {
+  const p = PLAN.protocols.find(x => x.id === id), answers = {};
+  p.items.forEach(it => {
+    if (!enabledItem(it, PANS[id])) return;
+    const src = PSRC[id][it.linkId];
+    if (it.type === "month") { if (PTEXT[id][it.linkId]) answers[it.linkId] = { text: PTEXT[id][it.linkId] }; return; }
+    const codes = PANS[id][it.linkId];
+    if (codes && codes.length) answers[it.linkId] = { codes, prefilled: src ? src.text : null, observation: src ? src.observation : null };
+  });
+  SAVED[id] = "saving"; showOverview();
+  try {
+    const r = await fetch(SAVE.url, { method: "POST", headers: { "Content-Type": "application/json", "X-Graph3d-Token": SAVE.token },
+      body: JSON.stringify({ protocol: id, answers }) });
+    const j = await r.json();
+    SAVED[id] = r.ok ? j.message : `Not stored: ${j.error || r.status}`;
+  } catch (e) { SAVED[id] = `Not stored: ${e.message}`; }
+  showOverview();
+}
 const codeNode = new Map(DATA.nodes.filter(n => n.g === "LoincCode").map(n => [loincOf(n), n]));
 const KEY_TESTS = [
   ["ApoB", ["1884-6"], "counts the atherogenic particles"], ["Lp(a)", ["10835-7"], "once in life is enough"],
@@ -717,13 +906,13 @@ function showOverview() {
       if (newer) html += `<button class="nb inset" data-id="${newer.id}">${dotHtml(COLOR[newer.g])}${esc(newer.n)}</button>`;
     });
   }
-  html += `<div class="rel">What the graph cannot know</div><div class="hint" style="margin-top:0">` +
-    `Your answers change the scores and the notes here. They stay in this page and are gone when you close it.</div>`;
-  QUESTIONS.forEach(({ k, q, opts, note }) => {
-    html += `<div class="q">${esc(q)}<div class="opts">` + opts.map(([v, l]) =>
-      `<button data-q="${k}" data-v="${v}" aria-pressed="${HABITS[k] === v}">${esc(l)}</button>`).join("") + `</div>` +
-      (HABITS[k] && note(HABITS[k]) ? `<div class="note">${esc(note(HABITS[k]))}</div>` : "") + `</div>`;
-  });
+  if (PLAN.protocols.length) {
+    html += `<div class="rel">Anamnesis protocols, prefilled from your data</div><div class="hint" style="margin-top:0">` +
+      `What the graph cannot know, asked the way doctors and studies ask it: validated questionnaires, each answer coded with SNOMED CT. ` +
+      `Ranked by your own findings; what your data already says is filled in for you to check. ` +
+      (SAVE ? `“Save to my graph” stores one protocol in your encrypted vault.` : `Your answers stay in this page and are gone when you close it.`) + `</div>`;
+    PLAN.protocols.forEach(p => html += protoCard(p));
+  }
   const g = gaps();
   if (g.length) {
     html += `<div class="rel">Missing or older than two years</div>`;
@@ -734,15 +923,35 @@ function showOverview() {
   el.style.display = "block";
   el.querySelector(".close").onclick = () => { overviewClosed = true; el.style.display = "none"; };
   el.querySelectorAll(".nb, .risk .head").forEach(b => b.onclick = () => focusNode(nodeById(b.dataset.id)));
-  el.querySelectorAll(".q button").forEach(b => b.onclick = () => {
-    const k = b.dataset.q;
-    HABITS[k] = HABITS[k] === b.dataset.v ? undefined : b.dataset.v;
+  const rerender = () => {
+    HABITS.smoking = ((PANS.tobacco || {}).smoking || [])[0];
     const top = el.scrollTop;
     computeStandings(); refresh(); buildLabels(Graph.graphData().nodes); updateCaption();
     if (!drill.length && stage === 0) document.getElementById("stepHint").textContent = STAGES[0].hint;
     showOverview();
     el.scrollTop = top;
+  };
+  el.querySelectorAll(".proto").forEach(d => d.addEventListener("toggle", () => {
+    if (d.open) { openProto = d.dataset.p; el.querySelectorAll(".proto").forEach(o => { if (o !== d) o.open = false; }); }
+    else if (openProto === d.dataset.p) openProto = null;
+  }));
+  el.querySelectorAll(".q button[data-p]").forEach(b => b.onclick = () => {
+    const p = PLAN.protocols.find(x => x.id === b.dataset.p), it = p.items.find(x => x.linkId === b.dataset.l);
+    const ans = PANS[p.id], cur = ans[it.linkId] || [], v = b.dataset.v;
+    ans[it.linkId] = it.multiple ? (cur.includes(v) ? cur.filter(c => c !== v) : [...cur.filter(c => v === "none" ? false : c !== "none"), v])
+      : (cur[0] === v ? [] : [v]);
+    if (!ans[it.linkId].length) delete ans[it.linkId];
+    delete PSRC[p.id][it.linkId];  // changed by you: no longer "from your data"
+    delete SAVED[p.id];
+    rerender();
   });
+  el.querySelectorAll(".q input[type=month]").forEach(i => i.onchange = () => {
+    PTEXT[i.dataset.p][i.dataset.l] = i.value;
+    delete PSRC[i.dataset.p][i.dataset.l];
+    delete SAVED[i.dataset.p];
+    rerender();
+  });
+  el.querySelectorAll(".savebtn").forEach(b => b.onclick = () => saveProtocol(b.dataset.save));
 }
 
 function showDetail(n) {
@@ -1034,6 +1243,9 @@ function buildLabels(nodes) {
     if (n.g === "ReferenceRange" && !(top && top.g === "LoincCode")) return;
     if (isEvidence(n) && !top) return;                     // named in the drill-down, not in the overview
     if (n.g === "Topic" && !top && stage !== 1) return;
+    // The anamnesis at a glance: the protocols and the risks; questions and codes once you click one.
+    if (!top && ["Protocol question", "SNOMED code", "Your answer"].includes(n.g)) return;
+    if (!top && n.g === "LoincCode" && STAGES[stage].name === "Anamnesis") return;
     if (n.g === "Lab value" && !(allValues || n.cur || n.out)) return;
     const d = document.createElement("div");
     d.textContent = n.g === "Lab value" ? `${n.val || ""}${n.dt ? " · " + n.dt.slice(0, 7) : ""}`

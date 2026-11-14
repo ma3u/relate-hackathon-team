@@ -46,6 +46,11 @@ enum Cypher {
   CREATE CONSTRAINT questionnaire_item_id IF NOT EXISTS FOR (n:QuestionnaireItem) REQUIRE n.id IS UNIQUE;
   CREATE CONSTRAINT questionnaire_response_id IF NOT EXISTS FOR (n:QuestionnaireResponse) REQUIRE n.id IS UNIQUE;
   CREATE CONSTRAINT answer_id IF NOT EXISTS FOR (n:Answer) REQUIRE n.id IS UNIQUE;
+  // Anamnesis protocols (health_graph/protocols.py): validated questionnaires, coded with LOINC and SNOMED CT.
+  CREATE CONSTRAINT anamnesis_category_id IF NOT EXISTS FOR (n:AnamnesisCategory) REQUIRE n.id IS UNIQUE;
+  CREATE CONSTRAINT anamnesis_protocol_id IF NOT EXISTS FOR (n:AnamnesisProtocol) REQUIRE n.id IS UNIQUE;
+  CREATE CONSTRAINT protocol_item_id IF NOT EXISTS FOR (n:ProtocolItem) REQUIRE n.id IS UNIQUE;
+  CREATE CONSTRAINT snomed_code IF NOT EXISTS FOR (n:SnomedCode) REQUIRE n.code IS UNIQUE;
   """#
 
   static let omop = #"""
@@ -455,6 +460,147 @@ enum Cypher {
   MATCH (c:LoincCode {code: code})
   MERGE (ans)-[:BASED_ON]->(c)
   RETURN count(*) AS links
+  """#
+
+  static let protocolSeedCategory = #"""
+  MERGE (cat:AnamnesisCategory {id: $category.id})
+  SET cat.name = $category.name, cat.description = $category.description, cat.version = $version
+  WITH cat
+  UNWIND $snomed AS s
+  MERGE (c:SnomedCode {code: s.code})
+  SET c.display = s.display, c.semanticTag = s.tag, c.system = 'http://snomed.info/sct'
+  RETURN count(*) AS codes
+  """#
+
+  static let protocolSeedProtocols = #"""
+  MATCH (cat:AnamnesisCategory {id: $categoryId})
+  UNWIND $protocols AS p
+  MERGE (q:AnamnesisProtocol {id: p.id})
+  SET q.name = p.name, q.title = p.title, q.kind = p.kind, q.year = p.year, q.source = p.source, q.pmid = p.pmid,
+      q.doi = p.doi, q.url = p.url, q.licence = p.licence, q.why = p.why, q.critical = p.critical,
+      q.method = p.method, q.panelLoinc = p.panelLoinc, q.scoreLoinc = p.scoreLoinc, q.snomed = p.snomed,
+      q.scoreSnomed = p.scoreSnomed, q.bandFrom = p.bandFrom, q.bandLabels = p.bandLabels,
+      q.bandMeanings = p.bandMeanings
+  MERGE (cat)-[:HAS_PROTOCOL]->(q)
+  WITH q, p
+  OPTIONAL MATCH (q)-[old:INFORMS|CODED_BY]->()
+  DELETE old
+  WITH DISTINCT q, p
+  UNWIND p.risks AS riskId
+  MATCH (h:HealthRisk {id: riskId})
+  MERGE (q)-[:INFORMS]->(h)
+  RETURN count(*) AS links
+  """#
+
+  static let protocolSeedLoinc = #"""
+  UNWIND $protocols AS p
+  MATCH (q:AnamnesisProtocol {id: p.id})
+  UNWIND p.codes AS code
+  MERGE (c:LoincCode {code: code})
+  MERGE (q)-[:CODED_BY]->(c)
+  RETURN count(*) AS links
+  """#
+
+  static let protocolSeedSnomed = #"""
+  UNWIND $protocols AS p
+  MATCH (q:AnamnesisProtocol {id: p.id})
+  UNWIND p.snomedCodes AS code
+  MATCH (s:SnomedCode {code: code})
+  MERGE (q)-[:CODED_BY]->(s)
+  RETURN count(*) AS links
+  """#
+
+  static let protocolSeedItems = #"""
+  UNWIND $protocols AS p
+  MATCH (q:AnamnesisProtocol {id: p.id})
+  UNWIND p.items AS it
+  MERGE (i:ProtocolItem {id: it.id})
+  SET i.linkId = it.linkId, i.order = it.order, i.text = it.text, i.type = it.type, i.multiple = it.multiple,
+      i.loinc = it.loinc, i.snomed = it.snomed, i.metric = it.metric, i.prefill = it.prefill,
+      i.enableWhen = it.enableWhen, i.options = it.options, i.labels = it.labels, i.points = it.points,
+      i.optionSnomed = it.optionSnomed, i.optionLoinc = it.optionLoinc, i.protocol = p.id
+  MERGE (q)-[:HAS_ITEM]->(i)
+  WITH i, it
+  OPTIONAL MATCH (i)-[old:CODED_BY|ANSWER_CODE]->()
+  DELETE old
+  WITH DISTINCT i, it
+  UNWIND it.answerCodes AS ac
+  MATCH (s:SnomedCode {code: ac.snomed})
+  MERGE (i)-[:ANSWER_CODE {option: ac.option}]->(s)
+  RETURN count(*) AS links
+  """#
+
+  static let protocolSeedItemLoinc = #"""
+  UNWIND $items AS it
+  MATCH (i:ProtocolItem {id: it.id})
+  MERGE (c:LoincCode {code: it.loinc})
+  MERGE (i)-[:CODED_BY]->(c)
+  RETURN count(*) AS links
+  """#
+
+  static let protocolSeedItemSnomed = #"""
+  UNWIND $items AS it
+  MATCH (i:ProtocolItem {id: it.id}), (s:SnomedCode {code: it.snomed})
+  MERGE (i)-[:CODED_BY]->(s)
+  RETURN count(*) AS links
+  """#
+
+  static let protocolStoreResponse = #"""
+  MATCH (p:Patient {id: $patientId})
+  MATCH (q:AnamnesisProtocol {id: $protocol})
+  MERGE (r:QuestionnaireResponse {id: $responseId})
+  SET r.authored = $authored, r.status = $status, r.source = $source, r.protocol = $protocol,
+      r.score = $score, r.band = $band, r.meaning = $meaning, r.flag = $flag
+  MERGE (p)-[:HAS_RESPONSE]->(r)
+  MERGE (r)-[:RESPONDS_TO]->(q)
+  WITH r
+  UNWIND $answers AS a
+  MATCH (i:ProtocolItem {id: $protocol + '|' + a.linkId})
+  MERGE (ans:Answer {id: $responseId + '|' + a.linkId})
+  SET ans.linkId = a.linkId, ans.question = a.question, ans.codes = a.codes, ans.labels = a.labels, ans.text = a.text,
+      ans.snomed = a.snomed, ans.points = a.points, ans.riskFactor = a.riskFactor, ans.authored = $authored,
+      ans.prefilled = a.prefilled, ans.protocol = $protocol
+  MERGE (r)-[:HAS_ANSWER]->(ans)
+  MERGE (ans)-[:ANSWERS]->(i)
+  RETURN count(*) AS answers
+  """#
+
+  static let protocolStoreAnswerCodes = #"""
+  UNWIND $rows AS row
+  MATCH (ans:Answer {id: $responseId + '|' + row.linkId})
+  UNWIND row.snomed AS code
+  MATCH (s:SnomedCode {code: code})
+  MERGE (ans)-[:CODED_BY]->(s)
+  RETURN count(*) AS links
+  """#
+
+  static let protocolStorePrefilledFrom = #"""
+  UNWIND $rows AS row
+  MATCH (ans:Answer {id: $responseId + '|' + row.linkId}), (o:Observation {resourceId: row.observation})
+  MERGE (ans)-[:PREFILLED_FROM]->(o)
+  RETURN count(*) AS links
+  """#
+
+  static let protocolStoreResponseLinks = #"""
+  MATCH (r:QuestionnaireResponse {id: $responseId})
+  UNWIND $snomed AS code
+  MATCH (s:SnomedCode {code: code})
+  MERGE (r)-[:CODED_BY]->(s)
+  WITH DISTINCT r
+  UNWIND $risks AS riskId
+  MATCH (h:HealthRisk {id: riskId})
+  MERGE (r)-[:RISK_FACTOR_FOR]->(h)
+  RETURN count(*) AS links
+  """#
+
+  static let protocolStoreDerived = #"""
+  MATCH (r:QuestionnaireResponse {id: $responseId})
+  UNWIND $rows AS row
+  MERGE (ans:Answer {id: $responseId + '|' + row.linkId})
+  SET ans.linkId = row.linkId, ans.codes = row.codes, ans.labels = row.labels, ans.authored = $authored,
+      ans.riskFactor = row.riskFactor, ans.derivedFrom = $protocol, ans.question = row.question
+  MERGE (r)-[:HAS_ANSWER]->(ans)
+  RETURN count(*) AS answers
   """#
 }
 

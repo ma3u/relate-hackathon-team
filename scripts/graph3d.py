@@ -100,6 +100,26 @@ def describe(label, p):
             p.get("title") or "", p.get("citation") or "", p.get("design") or "",
             "Topics: " + ", ".join(p["topics"]) if p.get("topics") else "",
             f"PubMed {p['pmid']}" if p.get("pmid") else ""]
+    # The anamnesis: protocols (validated questionnaires), their questions, SNOMED CT codes, your answers.
+    if label in ("AnamnesisCategory", "AnamnesisProtocol", "Questionnaire"):
+        return "Anamnesis protocol", p.get("name") or p.get("title") or label, [
+            p.get("title") or "", p.get("source") or "", p.get("why") or p.get("description") or "",
+            f"PubMed {p['pmid']}" if p.get("pmid") else ""]
+    if label in ("ProtocolItem", "QuestionnaireItem"):
+        return "Protocol question", p.get("text") or p.get("linkId"), [
+            f"LOINC {p['loinc']}" if p.get("loinc") else "", f"SNOMED CT {p['snomed']}" if p.get("snomed") else "",
+            "Options: " + ", ".join(p.get("labels") or []), f"Prefilled from {p['prefill']}" if p.get("prefill") else ""]
+    if label == "SnomedCode":
+        return "SNOMED code", p.get("display") or p.get("code"), [f"SNOMED CT {p.get('code')}",
+                                                                  p.get("semanticTag") or ""]
+    if label == "QuestionnaireResponse":
+        what = p.get("protocol") or "anamnesis"
+        score = f"score {num(p['score'])}" if p.get("score") is not None else ""
+        return "Your answer", f"Your {what} answers", [p.get("authored") or "", score, p.get("band") or "",
+                                                       p.get("meaning") or ""]
+    if label == "Answer":
+        return "Your answer", f"{p.get('linkId')}: {', '.join(p.get('labels') or []) or p.get('text') or ''}", [
+            p.get("question") or "", p.get("authored") or "", f"Prefilled from {p['prefilled']}" if p.get("prefilled") else ""]
     if label == "OMOPPerson":
         return label, "OMOP person", []
     if label == "OMOPMeasurement":
@@ -220,7 +240,7 @@ def seed_knowledge(db):
     engine in health_graph/risk.py, once for a non-smoker and once for a smoker: the page asks."""
     try:
         sys.path.insert(0, str(ROOT))
-        from health_graph import knowledge, risk, store
+        from health_graph import knowledge, protocols, risk, store
     except ImportError as e:  # relate-db not installed for this Python
         print(f"graph3d: knowledge layer left as stored ({e}); run with the repo's .venv to refresh it",
               file=sys.stderr)
@@ -229,10 +249,12 @@ def seed_knowledge(db):
     try:
         if counts := knowledge.seed(conn):
             print(f"graph3d: refreshed the knowledge layer in the copy: {counts}", file=sys.stderr)
+        protocols.seed(conn)  # the anamnesis protocols, their questions and SNOMED codes
         p = next(iter(conn.execute("MATCH (p:Patient) RETURN p.birthYear AS y, p.gender AS g")), None)
         birth, sex = (p["y"], p["g"]) if p else (None, None)
         age = risk.TODAY.year - birth if birth else None
         return {"birthYear": birth, "age": age, "gender": sex, "region": "moderate",
+                "protocols": protocols.plan(conn, today=date.today().isoformat()),
                 "scores": {k: [dataclasses.asdict(x) for x in risk.compute_scores(conn, age, sex, smoker, "moderate")]
                            for k, smoker in (("nonsmoker", False), ("smoker", True))}}
     finally:

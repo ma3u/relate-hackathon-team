@@ -68,6 +68,9 @@ enum MCPCatalog {
     findings in my data, what the graph already answers, and the questions left. Never ask what my data \
     shows (a 24-hour blood pressure, Apple Watch activity, a weight series) or what I answered in the last \
     year. Store answers only with save_anamnesis_answers, after I confirmed them.
+    - For habits, family and medication, prefer the validated protocols (anamnesis_protocols: Life's \
+    Essential 8, FINDRISC, AUDIT-C, MEDAS-14, PHQ-2, tobacco, family history, lipid-lowering medication), \
+    prefilled from my data, and store them with save_protocol_answers after I confirmed them.
     - Say what is missing or too old to judge, and which test would close the gap.
     - Not medical advice and not a diagnosis: help me understand my data and prepare questions for my \
     doctor. Anything urgent (chest pain, shortness of breath, fainting, signs of a stroke) belongs with a \
@@ -283,6 +286,29 @@ enum MCPCatalog {
         the sample for NT-proBNP or creatinine, smoking in SCORE2); the tests the plan suggests. Then the \
         risk scores in the graph with their inputs, the rechecks, and three questions for the appointment. \
         Factual and short, no diagnosis, every number as in the graph so it can be checked on the paper.
+        """),
+    Prompt(
+      name: "anamnesis_protocols", title: "Validated anamnesis protocols, prefilled from my data",
+      description: "Life's Essential 8, FINDRISC, AUDIT-C, MEDAS-14 and more, filled in from your own values "
+        + "where they can be, the rest asked; scored, coded with SNOMED CT and stored in your graph.",
+      group: .habits,
+      arguments: [
+        Argument(name: "protocol", description: "Optional: one protocol, e.g. findrisc or le8",
+                 required: false, phrase: " Start with %@.", fallback: "")
+      ],
+      template: """
+        Take my anamnesis with the validated protocols.{{protocol}} \
+        1. Call anamnesis_protocols, and get_schema. Rank the protocols by what my graph shows (values outside \
+        the guideline range, scores) and say in one line per protocol why it matters for me. \
+        2. For one protocol at a time: prefill every question my graph can answer (the question's prefill says \
+        from what; read the values with read_cypher, newest first, in the unit of the bands) and show each \
+        prefilled answer with its value and date for me to confirm. Ask the rest with the options as given, \
+        and skip questions whose enableWhen does not hold. \
+        3. Give the score with the band and what it means, and the protocol's critical note in one sentence: \
+        where newer evidence disagrees with the instrument (wine in MEDAS-14, light smoking, family history \
+        that started late), say so. \
+        4. Read my answers back. When I confirm, store them with save_protocol_answers, prefilled ones with \
+        where they came from. Then offer the next protocol.
         """),
     Prompt(
       name: "doctor_brief", title: "Write a doctor's brief",
@@ -585,7 +611,9 @@ enum MCPCatalog {
           - One exception, for the anamnesis: save_anamnesis_answers checks the answers you confirmed and \
           leaves them in a folder only Klarbefund for Mac reads (the app-group container's Inbox). The app, \
           which owns your graph, stores them and deletes the request; it refuses an answer that is not one of \
-          the question's options. Nothing else can be written this way.
+          the question's options. save_protocol_answers does the same for one anamnesis protocol (FINDRISC, \
+          AUDIT-C, ...): checked against its options, scored and stored by the app with SNOMED CT codes. \
+          Nothing else can be written this way.
           - Claude Desktop asks before a tool runs, unless you allowed it.
 
           ## Protocol and authorization

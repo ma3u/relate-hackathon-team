@@ -155,9 +155,12 @@ for q in range(p, p + 20):
         s.close()
 else:
     sys.exit("no free port")' "${GRAPH3D_PORT:-8799}")"
+    # Protocol answers given in the view: into the vault's own store when the view came from it, else to
+    # Klarbefund for Mac's inbox (the app owns its graph and stores them, as it does Claude's answers).
+    if [ "$src" = "$MOUNT/health.rl" ]; then save=(--db "$src"); else save=(--inbox "$(dirname "$(dirname "$app")")/Inbox"); fi
     log "serving http://127.0.0.1:$port/ from the vault (this Mac only); Ctrl-C stops it"
     ( sleep 1; open "http://127.0.0.1:$port/" ) &
-    cd "$MOUNT/graph3d" && exec python3 -m http.server "$port" --bind 127.0.0.1
+    cd "$MOUNT/graph3d" && exec "$py" "$REPO/scripts/graph3d_serve.py" --dir "$MOUNT/graph3d" --port "$port" "${save[@]}"
     ;;
   *) sed -n '2,17p' "$0"; exit 2 ;;
 esac

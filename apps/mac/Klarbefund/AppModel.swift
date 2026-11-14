@@ -60,6 +60,7 @@ final class AppModel: ObservableObject {
         let store = try HealthStore(path: Paths.store.path)
         try store.initSchema()
         try store.seedKnowledge()
+        try store.seedProtocols()  // the anamnesis protocols' category, questions and SNOMED CT codes
       }
       address = Network.lanAddress()
       let identity = try Identity.ensure(in: Paths.identity, host: address)
@@ -91,7 +92,7 @@ final class AppModel: ObservableObject {
   func applyInbox() {
     guard let inbox = Paths.inbox,
       let waiting = try? FileManager.default.contentsOfDirectory(atPath: inbox.path),
-      waiting.contains(where: { $0.hasSuffix(AnamnesisInbox.suffix) })
+      AnamnesisInbox.waiting(waiting)
     else { return }
     do {
       let store = try HealthStore(path: Paths.store.path)

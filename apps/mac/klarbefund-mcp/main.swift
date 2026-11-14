@@ -168,6 +168,34 @@ func saveAnamnesis(_ answers: [String: Any]) throws -> String {
     + "few seconds. Call anamnesis_plan again afterwards: answered questions then appear under skipped."
 }
 
+func anamnesisProtocols() throws -> String {
+  // What was stored before, newest first; the definitions come with the helper (Protocols, generated).
+  let stored = (try? openGraph().rows(cypher: """
+    MATCH (:Patient)-[:HAS_RESPONSE]->(r:QuestionnaireResponse)-[:HAS_ANSWER]->(a:Answer)
+    WHERE r.protocol IS NOT NULL
+    RETURN r.protocol AS protocol, r.authored AS authored, r.score AS score, r.band AS band,
+           a.linkId AS linkId, a.codes AS codes, a.text AS text ORDER BY r.authored DESC
+    """)) ?? []
+  let body: [String: Any] = [
+    "protocols": Protocols.catalog(), "stored": stored,
+    "prefill": "Each question's prefill says what in the graph can answer it (a LOINC code, Apple Watch weekly "
+      + "means, an earlier answer). Read those values with read_cypher, choose the option they fall in, and "
+      + "show the person the value, its date and the option, to confirm or change. Never prefill what only "
+      + "the person knows.",
+  ]
+  let data = try JSONSerialization.data(withJSONObject: body, options: [.sortedKeys])
+  return String(decoding: data, as: UTF8.self)
+}
+
+func saveProtocol(_ id: String, _ answers: [String: Any]) throws -> String {
+  guard snapshot.map({ FileManager.default.fileExists(atPath: $0.path) }) == true, let inbox else {
+    throw GraphError.closed
+  }
+  let sent = try AnamnesisInbox.submitProtocol(id, answers, source: "claude", into: inbox)
+  return "Handed \(sent.answers) answers of \(id) to Klarbefund for Mac, which scores them and stores them, "
+    + "coded with SNOMED CT, within a few seconds."
+}
+
 let tools: [[String: Any]] = [
   [
     "name": "get_schema",
@@ -214,6 +242,37 @@ let tools: [[String: Any]] = [
       "type": "object",
       "properties": ["answers": ["type": "object", "description": "Question key -> answer, as described."]],
       "required": ["answers"],
+    ],
+    "annotations": handsOver,
+  ],
+  [
+    "name": "anamnesis_protocols",
+    "title": "Anamnesis protocols",
+    "description": "The validated questionnaires in the graph's own category: Life's Essential 8, FINDRISC, "
+      + "AUDIT-C, MEDAS-14, PHQ-2, and structured history (tobacco as the Patient Summary codes it, family "
+      + "history read by the ESC 2021 rule, lipid-lowering medication with dates, eating pattern and fasting). "
+      + "Each question with its LOINC code, options with points and the SNOMED CT concept each asserts, what "
+      + "in the graph can prefill it, the bands, why it matters and a critical note; plus what the user "
+      + "stored before.",
+    "inputSchema": ["type": "object", "properties": [String: Any]()],
+    "annotations": readOnly,
+  ],
+  [
+    "name": "save_protocol_answers",
+    "title": "Store my answers to a protocol",
+    "description": "Hands one protocol's answers to Klarbefund for Mac, which checks, scores and stores them "
+      + "with their SNOMED CT codes. Only after the user has seen and confirmed them, prefilled ones included. "
+      + "protocol: an id from anamnesis_protocols (e.g. findrisc). answers: {linkId: option code, a list of "
+      + "codes where several are allowed, or {\"codes\": [...], \"text\": \"YYYY-MM for a month, or the user's "
+      + "words\", \"prefilled\": \"where a prefilled answer came from\"}}. A code that is not an option refuses "
+      + "all answers.",
+    "inputSchema": [
+      "type": "object",
+      "properties": [
+        "protocol": ["type": "string", "description": "The protocol id, e.g. findrisc."],
+        "answers": ["type": "object", "description": "linkId -> answer, as described."],
+      ],
+      "required": ["protocol", "answers"],
     ],
     "annotations": handsOver,
   ],
@@ -347,6 +406,12 @@ while let line = readLine(strippingNewline: true) {
         }
       case "anamnesis_plan":
         do { reply(text(try anamnesisPlan())) } catch { reply(text("\(error)", error: true)) }
+      case "anamnesis_protocols":
+        do { reply(text(try anamnesisProtocols())) } catch { reply(text("\(error)", error: true)) }
+      case "save_protocol_answers":
+        guard let id = args["protocol"] as? String, let answers = args["answers"] as? [String: Any], !answers.isEmpty
+        else { reply(text("save_protocol_answers needs a protocol and answers", error: true)); break }
+        do { reply(text(try saveProtocol(id, answers))) } catch { reply(text("\(error)", error: true)) }
       case "save_anamnesis_answers":
         guard let answers = args["answers"] as? [String: Any], !answers.isEmpty else {
           reply(text("save_anamnesis_answers needs answers", error: true)); break

@@ -534,3 +534,68 @@ struct AnamnesisTests {
     #expect(try store.count("Answer") == 0)
   }
 }
+
+/// Port of tests/test_protocols.py: the same seed, the same scores, answers stored with SNOMED CT codes.
+@Suite("Anamnesis protocols", .serialized)
+struct ProtocolsTests {
+  static func store() throws -> HealthStore {
+    let (store, _) = try Fixtures.loadedStore()
+    try store.seedKnowledge()
+    return store
+  }
+
+  @Test func theCategorySeedsLikePython() throws {
+    let store = try Self.store()
+    #expect(try store.seedProtocols() == ["protocols": 9, "items": 52, "snomedCodes": 54, "riskLinks": 19, "answerCodes": 63])
+    #expect(try store.seedProtocols().isEmpty)  // current: nothing to do
+    let never = try store.rows(cypher: "MATCH (:ProtocolItem {linkId: 'smoking'})-[r:ANSWER_CODE]->(s:SnomedCode) WHERE r.option = 'never' RETURN s.code AS c")
+    #expect(never.first?["c"] == "266919005")
+  }
+
+  @Test func scoresFollowThePublishedPoints() throws {
+    let findrisc = try #require(Protocols.definition("findrisc"))
+    let full = ["findrisc-age": ["55-64"], "findrisc-bmi": [">30"], "findrisc-waist": ["large"],
+                "findrisc-activity": ["no"], "findrisc-vegetables": ["not-daily"], "findrisc-bp-drugs": ["yes"],
+                "findrisc-glucose": ["yes"], "findrisc-family": ["close"]]
+    let s = try #require(Protocols.score(findrisc, full))
+    #expect(s["value"] as? Double == 25 && s["band"] as? String == "very high" && s["flag"] as? Bool == true)
+    let part = try #require(Protocols.score(findrisc, ["findrisc-glucose": ["yes"]]))
+    #expect(part["value"] as? Double == 5 && part["min"] as? Double == 5 && part["max"] as? Double == 26)
+    let audit = try #require(Protocols.definition("audit-c"))
+    let three = ["audit-c-1": ["2-3-week"], "audit-c-2": ["1-2"], "audit-c-3": ["never"]]
+    #expect(Protocols.score(audit, three, sex: "female")?["flag"] as? Bool == true)
+    #expect(Protocols.score(audit, three, sex: "male")?["flag"] as? Bool == false)
+    #expect(Protocols.score(audit, ["audit-c-1": ["never"]])?["value"] as? Double == 0)
+    let le8 = try #require(Protocols.definition("le8"))
+    let l = try #require(Protocols.score(le8, [
+      "le8-activity": ["150+"], "le8-nicotine": ["current"], "le8-home-smoke": ["yes"], "le8-sleep": ["7-9"],
+      "le8-bmi": ["<25"], "le8-lipids": ["<130"], "le8-lipid-drug": ["yes"], "le8-glucose": ["normal"],
+      "le8-bp": ["<120"], "le8-bp-drug": ["no"]]))
+    #expect(l["value"] as? Double == 83 && l["band"] as? String == "high")
+    #expect((l["metrics"] as? [String: Double])?["lipids"] == 80 && (l["metrics"] as? [String: Double])?["nicotine"] == 0)
+  }
+
+  @Test func theInboxStoresAProtocolWithItsSnomedCodes() throws {
+    let store = try Self.store()
+    let inbox = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    try AnamnesisInbox.submitProtocol("tobacco", ["smoking": "current", "tobacco-amount": "occasional"],
+                                      source: "graph3d", into: inbox)
+    try AnamnesisInbox.submitProtocol("family-cvd", [
+      "family-cvd-who": ["father", "mother"], "family-cvd-father-age": "65+", "family-cvd-mother-age": "65+"],
+      source: "graph3d", into: inbox)
+    #expect(throws: (any Error).self) {
+      try AnamnesisInbox.submitProtocol("tobacco", ["smoking": "sometimes"], source: "graph3d", into: inbox)
+    }
+    #expect(AnamnesisInbox.waiting(try FileManager.default.contentsOfDirectory(atPath: inbox.path)))
+    let log = AnamnesisInbox.apply(from: inbox, to: store)
+    #expect(log == ["Tobacco use: 2 answers stored", "Family history of heart disease: 3 answers stored, later in life"])
+    let coded = try store.rows(cypher: "MATCH (a:Answer)-[:CODED_BY]->(s:SnomedCode) WHERE a.linkId IN ['smoking', 'tobacco-amount'] RETURN a.linkId AS l, s.code AS c ORDER BY l")
+    #expect(coded.map { $0["c"] ?? "" } == ["77176002", "230059006"])
+    // The data-driven anamnesis now knows the smoking status and the family history.
+    let plan = try store.anamnesisPlan(today: "2026-11-15")
+    let findings = (plan["findings"] as? [JSONObject] ?? []).compactMap { $0["id"] as? String }
+    let keys = (plan["questions"] as? [JSONObject] ?? []).compactMap { $0["key"] as? String }
+    #expect(!findings.contains("smoking_unknown") && !keys.contains("family-cvd"))
+    #expect(throws: (any Error).self) { try store.storeProtocol("lipid-therapy", ["lipid-from": ["text": "spring"]]) }
+  }
+}

@@ -39,3 +39,8 @@ CREATE CONSTRAINT questionnaire_id IF NOT EXISTS FOR (n:Questionnaire) REQUIRE n
 CREATE CONSTRAINT questionnaire_item_id IF NOT EXISTS FOR (n:QuestionnaireItem) REQUIRE n.id IS UNIQUE;
 CREATE CONSTRAINT questionnaire_response_id IF NOT EXISTS FOR (n:QuestionnaireResponse) REQUIRE n.id IS UNIQUE;
 CREATE CONSTRAINT answer_id IF NOT EXISTS FOR (n:Answer) REQUIRE n.id IS UNIQUE;
+// Anamnesis protocols (health_graph/protocols.py): validated questionnaires, coded with LOINC and SNOMED CT.
+CREATE CONSTRAINT anamnesis_category_id IF NOT EXISTS FOR (n:AnamnesisCategory) REQUIRE n.id IS UNIQUE;
+CREATE CONSTRAINT anamnesis_protocol_id IF NOT EXISTS FOR (n:AnamnesisProtocol) REQUIRE n.id IS UNIQUE;
+CREATE CONSTRAINT protocol_item_id IF NOT EXISTS FOR (n:ProtocolItem) REQUIRE n.id IS UNIQUE;
+CREATE CONSTRAINT snomed_code IF NOT EXISTS FOR (n:SnomedCode) REQUIRE n.code IS UNIQUE;
