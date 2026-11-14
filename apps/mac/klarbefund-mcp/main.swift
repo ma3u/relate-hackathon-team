@@ -48,8 +48,15 @@ let instructions = """
   - When a value raises one risk, follow RAISES_RISK_OF to the risks that one raises in turn, and cite the Study.
   - Name dates and sources (report title, lab) for every number you quote, so the user can check it on the paper.
   - If the graph is empty or unavailable, explain the setup: open Klarbefund for Mac, then on the iPhone open \
-  Klarbefund, Menu, Export to my Mac (Relate), scan the QR code the Mac shows, and send the reports.
+  Klarbefund, More (the … button), Export to my Mac (Relate), scan the QR code the Mac shows, and send the reports.
   - This is not medical advice. Help the user understand their data and prepare questions for their doctor.
+
+  Prompts and guides: this server offers \(MCPCatalog.prompts.count) prompts for the common questions \
+  (prompts/list: risks, values and trends, the doctor's visit, habits, the evidence, setup and privacy) and \
+  \(MCPCatalog.guides.count) guides as resources (resources/list). Start with klarbefund://guide/start; \
+  klarbefund://guide/security explains where the data is and what this server can do.
+
+  \(MCPCatalog.rules)
   """
 
 // ── JSON-RPC over stdio ───────────────────────────────────────────────────────
@@ -60,8 +67,10 @@ func send(_ object: [String: Any]) {
 }
 
 func result(_ id: Any, _ value: Any) { send(["jsonrpc": "2.0", "id": id, "result": value]) }
-func failure(_ id: Any, _ code: Int, _ message: String) {
-  send(["jsonrpc": "2.0", "id": id, "error": ["code": code, "message": message]])
+func failure(_ id: Any, _ code: Int, _ message: String, data: Any? = nil) {
+  var error: [String: Any] = ["code": code, "message": message]
+  if let data { error["data"] = data }
+  send(["jsonrpc": "2.0", "id": id, "error": error])
 }
 
 func text(_ s: String, error: Bool = false) -> [String: Any] {
@@ -128,14 +137,19 @@ func schema() throws -> String {
   return lines.joined(separator: "\n")
 }
 
+let readOnly: [String: Any] = ["readOnlyHint": true, "destructiveHint": false, "openWorldHint": false]
+
 let tools: [[String: Any]] = [
   [
     "name": "get_schema",
+    "title": "Health graph schema",
     "description": "Labels and relationship types in the user's health graph, with counts. Call this first.",
     "inputSchema": ["type": "object", "properties": [String: Any]()],
+    "annotations": readOnly,
   ],
   [
     "name": "read_cypher",
+    "title": "Read-only Cypher query",
     "description": "Run one read-only Cypher query (MATCH ... RETURN) against the user's health graph. Returns JSON rows (at most 500).",
     "inputSchema": [
       "type": "object",
@@ -145,17 +159,81 @@ let tools: [[String: Any]] = [
       ],
       "required": ["statement"],
     ],
+    "annotations": readOnly,
   ],
 ]
 
-let prompts: [(name: String, title: String, text: String)] = [
-  ("whats_in_my_graph", "What is in my health graph?",
-   "Using my Klarbefund health graph: what is in it? Count the kinds of data, the sources and the time span, and suggest three questions I could ask next."),
-  ("out_of_range", "Which values need attention?",
-   "Which of my latest lab values are outside the official guideline range, and which are inside it but not optimal? Use the ReferenceRange nodes, name the health risk each value is a marker of, and the source."),
-  ("doctor_visit", "Prepare my doctor's visit",
-   "Prepare my next doctor's visit from my health graph: the four most important topics for a six-minute appointment, the trends behind each (with dates), one question per topic, and the guideline sources. Not medical advice."),
+// ── the catalog: prompts and guides (MCPCatalog, shared with Klarbefund for Mac) ──
+struct RPCError: Error {
+  let code: Int, message: String
+  var data: Any? = nil
+}
+
+let prompts: [[String: Any]] = MCPCatalog.prompts.map { p in
+  [
+    "name": p.name, "title": p.title, "description": p.description,
+    "arguments": p.arguments.map { ["name": $0.name, "description": $0.description, "required": $0.required] },
+  ]
+}
+
+func getPrompt(_ params: [String: Any]) throws -> [String: Any] {
+  let name = params["name"] as? String ?? ""
+  guard let p = MCPCatalog.prompts.first(where: { $0.name == name }) else {
+    throw RPCError(code: -32602, message: "unknown prompt: \(name)")
+  }
+  let given = (params["arguments"] as? [String: Any] ?? [:]).compactMapValues { $0 as? String }
+  if let missing = p.arguments.first(where: {
+    $0.required && (given[$0.name]?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "").isEmpty
+  }) {
+    throw RPCError(code: -32602, message: "missing required argument: \(missing.name)", data: ["argument": missing.name])
+  }
+  return [
+    "description": p.title,
+    "messages": [["role": "user", "content": ["type": "text", "text": MCPCatalog.render(p, arguments: given)]]],
+  ]
+}
+
+let guides = MCPCatalog.guides
+let resources: [[String: Any]] = guides.map {
+  ["uri": $0.uri, "name": $0.name, "title": $0.title, "description": $0.description, "mimeType": "text/markdown"]
+}
+
+func readResource(_ params: [String: Any], modern: Bool) throws -> [String: Any] {
+  let uri = params["uri"] as? String ?? ""
+  guard let g = guides.first(where: { $0.uri == uri }) else {
+    // 2026-07-28 answers an unknown resource with invalid params; older revisions used -32002.
+    throw RPCError(code: modern ? -32602 : -32002, message: "Resource not found", data: ["uri": uri])
+  }
+  return ["contents": [["uri": g.uri, "mimeType": "text/markdown", "text": g.text]]]
+}
+
+// ── the protocol ─────────────────────────────────────────────────────────────
+// Legacy revisions (2025-11-25 and older) start with initialize. 2026-07-28 is
+// stateless: discovery through server/discover, and every request names its
+// revision in params._meta. A request without that entry is a legacy request.
+let versionKey = "io.modelcontextprotocol/protocolVersion"
+let serverInfoKey = "io.modelcontextprotocol/serverInfo"
+let supportedVersions = MCPCatalog.modernVersions + MCPCatalog.legacyVersions
+let serverInfo: [String: Any] = ["name": MCPCatalog.serverName, "title": MCPCatalog.serverTitle, "version": version]
+let capabilities: [String: Any] = [
+  "tools": ["listChanged": false], "prompts": ["listChanged": false], "resources": ["listChanged": false],
 ]
+
+/// A 2026-07-28 result: resultType, the server in _meta, and, for the lists and
+/// guides (the same for everyone, changed only by an app update), caching hints.
+/// Never for tools/call: its rows are the user's own.
+func modern(_ value: [String: Any], cache: Bool = false) -> [String: Any] {
+  var out = value
+  out["resultType"] = "complete"
+  var meta = out["_meta"] as? [String: Any] ?? [:]
+  meta[serverInfoKey] = serverInfo
+  out["_meta"] = meta
+  if cache {
+    out["ttlMs"] = 3_600_000
+    out["cacheScope"] = "public"
+  }
+  return out
+}
 
 // ── the loop ─────────────────────────────────────────────────────────────────
 while let line = readLine(strippingNewline: true) {
@@ -165,45 +243,71 @@ while let line = readLine(strippingNewline: true) {
   else { continue }
   guard let id = msg["id"] else { continue }  // a notification: nothing to answer
   let params = msg["params"] as? [String: Any] ?? [:]
-  switch method {
-  case "initialize":
-    let asked = params["protocolVersion"] as? String
-    let known = ["2025-06-18", "2025-03-26", "2024-11-05"]
-    result(id, [
-      "protocolVersion": known.contains(asked ?? "") ? asked! : known[0],
-      "capabilities": ["tools": [String: Any](), "prompts": [String: Any]()],
-      "serverInfo": ["name": "klarbefund-health", "title": "Klarbefund Health Graph", "version": version],
-      "instructions": instructions,
-    ])
-  case "ping":
-    result(id, [String: Any]())
-  case "tools/list":
-    result(id, ["tools": tools])
-  case "tools/call":
-    let name = params["name"] as? String ?? ""
-    let args = params["arguments"] as? [String: Any] ?? [:]
-    do {
+  let requested = (params["_meta"] as? [String: Any])?[versionKey] as? String
+  if let requested, !MCPCatalog.modernVersions.contains(requested) {
+    failure(id, -32022, "Unsupported protocol version", data: ["supported": supportedVersions, "requested": requested])
+    continue
+  }
+  let isModern = requested != nil
+  /// Answers in the revision the request came in.
+  func reply(_ value: [String: Any], cache: Bool = false) {
+    result(id, isModern ? modern(value, cache: cache) : value)
+  }
+  do {
+    switch method {
+    case "initialize":
+      let asked = params["protocolVersion"] as? String ?? ""
+      let legacy = MCPCatalog.legacyVersions
+      result(id, [
+        "protocolVersion": legacy.contains(asked) ? asked : legacy[0],
+        "capabilities": capabilities,
+        "serverInfo": serverInfo,
+        "instructions": instructions,
+      ])
+    case "server/discover":
+      result(id, modern([
+        "supportedVersions": supportedVersions,
+        "capabilities": capabilities,
+        "instructions": instructions,
+      ], cache: true))
+    case "ping":
+      reply([:])
+    case "tools/list":
+      reply(["tools": tools], cache: true)
+    case "tools/call":
+      let name = params["name"] as? String ?? ""
+      let args = params["arguments"] as? [String: Any] ?? [:]
       switch name {
-      case "get_schema": result(id, text(try schema()))
+      case "get_schema":
+        do { reply(text(try schema())) } catch { reply(text("\(error)", error: true)) }
       case "read_cypher":
         guard let statement = args["statement"] as? String else {
-          result(id, text("read_cypher needs a statement", error: true)); continue
+          reply(text("read_cypher needs a statement", error: true)); break
         }
-        result(id, text(try readCypher(statement, args["parameters"] as? [String: Any] ?? [:])))
-      default: failure(id, -32602, "unknown tool \(name)")
+        do {
+          reply(text(try readCypher(statement, args["parameters"] as? [String: Any] ?? [:])))
+        } catch {
+          reply(text("\(error)", error: true))
+        }
+      default:
+        throw RPCError(code: -32602, message: "unknown tool \(name)")
       }
-    } catch {
-      result(id, text("\(error)", error: true))
+    case "prompts/list":
+      reply(["prompts": prompts], cache: true)
+    case "prompts/get":
+      reply(try getPrompt(params))
+    case "resources/list":
+      reply(["resources": resources], cache: true)
+    case "resources/templates/list":
+      reply(["resourceTemplates": [[String: Any]]()], cache: true)
+    case "resources/read":
+      reply(try readResource(params, modern: isModern), cache: true)
+    default:
+      failure(id, -32601, "method not found: \(method)")
     }
-  case "prompts/list":
-    result(id, ["prompts": prompts.map { ["name": $0.name, "title": $0.title, "description": $0.title] }])
-  case "prompts/get":
-    if let p = prompts.first(where: { $0.name == params["name"] as? String }) {
-      result(id, ["description": p.title, "messages": [["role": "user", "content": ["type": "text", "text": p.text]]]])
-    } else {
-      failure(id, -32602, "unknown prompt")
-    }
-  default:
-    failure(id, -32601, "method not found: \(method)")
+  } catch let error as RPCError {
+    failure(id, error.code, error.message, data: error.data)
+  } catch {
+    failure(id, -32603, "\(error)")
   }
 }

@@ -92,6 +92,7 @@ Relate is an **open-source, embedded graph database for AI agents** and the engi
 
 - 🛠️ **Our setup guide, with screenshots: [docs/INSTALL.md](docs/INSTALL.md)** (Relate CLI, agent skill, Python, MCP, ElevenLabs)
 - 📱 **Klarbefund + Apple Health → local Relate → Claude: [docs/KLARBEFUND.md](docs/KLARBEFUND.md)**
+- 🔌 **The Klarbefund MCP server (tools, 24 prompts, guides, protocol revisions, security, why no OAuth): [docs/MCP.md](docs/MCP.md)**
 - 🍎 **Swift on iPhone and Mac, the graph on the phone itself: [docs/SWIFT.md](docs/SWIFT.md)**
 - 🌐 Website: <https://relatedb.ai>
 - ⚡ Quickstart / install: <https://relatedb.ai/docs/get-started/install>

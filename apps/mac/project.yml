@@ -25,7 +25,7 @@ targets:
   Klarbefund:
     type: application
     platform: macOS
-    sources: [Klarbefund]
+    sources: [Klarbefund, Shared]
     dependencies:
       - package: HealthGraph
         product: HealthGraph
@@ -62,7 +62,7 @@ targets:
   klarbefund-mcp:
     type: tool
     platform: macOS
-    sources: [klarbefund-mcp]
+    sources: [klarbefund-mcp, Shared]
     dependencies:
       - package: HealthGraph
         product: HealthGraph

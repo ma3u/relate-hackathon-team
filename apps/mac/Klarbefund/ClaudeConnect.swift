@@ -43,8 +43,8 @@ enum ClaudeConnect {
     let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0"
     let manifest: [String: Any] = [
       "manifest_version": "0.2",
-      "name": "klarbefund-health",
-      "display_name": "Klarbefund Health Graph",
+      "name": MCPCatalog.serverName,
+      "display_name": MCPCatalog.serverTitle,
       "version": version + ".0",
       "description": "Your lab reports and Apple Watch data from Klarbefund, as a local Neo4j Relate graph. Read-only, on this Mac.",
       "long_description": "Klarbefund for Mac keeps your health graph on your own Mac. This extension lets Claude read it, read-only, while Klarbefund for Mac is open. Nothing is uploaded to a cloud by Klarbefund; only the rows Claude asks for go into your conversation.",
@@ -60,10 +60,14 @@ enum ClaudeConnect {
         ["name": "get_schema", "description": "Labels and relationships in your health graph, with counts."],
         ["name": "read_cypher", "description": "One read-only Cypher query against your health graph."],
       ],
-      "prompts": [
-        ["name": "whats_in_my_graph", "description": "What is in my health graph?", "text": "Using my Klarbefund health graph: what is in it?"],
-        ["name": "doctor_visit", "description": "Prepare my doctor's visit", "text": "Prepare my next doctor's visit from my health graph."],
-      ],
+      // The same catalog the helper serves through prompts/list and prompts/get.
+      "prompts": MCPCatalog.prompts.map { p -> [String: Any] in
+        [
+          "name": p.name, "description": p.description,
+          "arguments": p.arguments.map(\.name),
+          "text": MCPCatalog.render(p, arguments: [:]),
+        ]
+      },
       "keywords": ["health", "neo4j", "relate", "graph", "fhir", "loinc"],
       "license": "MIT",
       "compatibility": ["platforms": ["darwin"]],

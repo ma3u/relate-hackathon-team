@@ -21,7 +21,8 @@ struct KlarbefundApp: App {
     /// `--size WxH` (points, rendered at 2x), `--light`, `--claude`: App Store
     /// variants. `--counts R,V,W,C,RA`, `--waiting` (nothing received yet) and
     /// `--received-ago SECONDS`: the states of one fictional run, for the
-    /// docs' pairing animation.
+    /// docs' pairing animation. `--capabilities`: the "What Claude can do here"
+    /// sheet, unscrolled, at its full height.
     @MainActor private static func renderForDocsIfAsked() {
       let args = CommandLine.arguments
       guard let i = args.firstIndex(of: "--screenshot"), i + 1 < args.count else { return }
@@ -51,7 +52,10 @@ struct KlarbefundApp: App {
       if args.contains("--claude") {
         demo.claudeMessage = "Claude Desktop is asking to install “Klarbefund Health Graph”. Click Install, then start a new chat."
       }
-      let view = ContentView(model: demo).frame(width: w, height: h)
+      // `--capabilities`: the "What Claude can do here" sheet instead (no data at all).
+      let screen = args.contains("--capabilities")
+        ? AnyView(MCPCapabilitiesView(scrolls: false)) : AnyView(ContentView(model: demo).frame(width: w, height: h))
+      let view = screen
         .background(Color(nsColor: .windowBackgroundColor))
         .environment(\.colorScheme, args.contains("--light") ? .light : .dark)
       let renderer = ImageRenderer(content: view)

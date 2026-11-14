@@ -9,6 +9,7 @@ import SwiftUI
 struct ContentView: View {
   @ObservedObject var model: AppModel
   @State private var showManual = false
+  @State private var showCapabilities = false
 
   var body: some View {
     VStack(alignment: .leading, spacing: 18) {
@@ -47,7 +48,7 @@ struct ContentView: View {
     }
     Numbered(items: [
       "On your iPhone, open **Klarbefund**.",
-      "Menu → **Export to my Mac (Relate)**.",
+      "More (…) → **Export to my Mac (Relate)**.",
       "Scan this code, then tap **Send everything now**.",
     ])
     Text("iPhone and Mac need the same Wi-Fi. The connection is encrypted and pinned to this Mac (\(model.address)).")
@@ -98,9 +99,17 @@ struct ContentView: View {
       Text(msg).font(.callout).foregroundStyle(.secondary).textSelection(.enabled)
     }
     Text("Then ask Claude, for example:").font(.callout.weight(.semibold)).padding(.top, 4)
-    Ask("What is in my health graph?")
-    Ask("Which of my values are outside the guideline range?")
-    Ask("Prepare my next doctor's visit.")
+    ForEach(MCPCatalog.prompts.filter { $0.group == .risks }.prefix(3), id: \.name) { Ask($0.ask) }
+    let catalog = Label(
+      "What Claude can do here (\(MCPCatalog.prompts.count) prompts, \(MCPCatalog.guides.count) guides)",
+      systemImage: "list.bullet.rectangle")
+    if renderingForDocs {
+      catalog.font(.callout).foregroundStyle(Color.accentColor)
+    } else {
+      Button { showCapabilities = true } label: { catalog }
+        .buttonStyle(.link).font(.callout)
+        .sheet(isPresented: $showCapabilities) { MCPCapabilitiesView() }
+    }
     DisclosureGroup("Set it up by hand", isExpanded: $showManual) {
       Text("Claude Desktop → Settings → Developer → Edit Config, add:").font(.caption)
       Text(ClaudeConnect.manualConfig).font(.caption.monospaced()).textSelection(.enabled)
@@ -183,7 +192,7 @@ private struct Ask: View {
   }
 }
 
-private func copy(_ s: String) {
+func copy(_ s: String) {
   NSPasteboard.general.clearContents()
   NSPasteboard.general.setString(s, forType: .string)
 }
