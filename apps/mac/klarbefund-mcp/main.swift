@@ -38,6 +38,9 @@ let instructions = """
   so a value leads to its evidence: (o:Observation)-[:CODED_BY]->(:LoincCode)<-[:EXAMINES]-(st:Study). \
   Study.kind is 'study' or 'guideline', Study.topics clusters them; (:Study)-[:CITES]->(:Study) where one source cites another.
   - OMOP research copies: (:OMOPPerson), (:OMOPMeasurement).
+  - Anamnesis, when the person answered one: (:Patient)-[:HAS_RESPONSE]->(:QuestionnaireResponse {authored})-[:HAS_ANSWER]->\
+  (:Answer {linkId, question, labels, text, riskFactor})-[:RISK_FACTOR_FOR]->(:HealthRisk); (:Answer)-[:BASED_ON]->(:LoincCode). \
+  Use the latest answer per linkId, and quote the person's own words in a.text.
 
   How to work:
   - Call get_schema first, then read_cypher. Count a value seen in two reports once: filter `o.duplicateOf IS NULL`.

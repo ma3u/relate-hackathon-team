@@ -45,6 +45,13 @@ flowchart LR
   P -- HAS_SCORE --> SR((ScoreResult))
   SR -- OF --> RS
   SR -- FROM --> O
+  QI((QuestionnaireItem)) -- INFORMS --> HR
+  P -- HAS_RESPONSE --> QR((QuestionnaireResponse))
+  QR -- HAS_ANSWER --> A((Answer))
+  A -- ANSWERS --> QI
+  A -- RISK_FACTOR_FOR --> HR
+  A -- BASED_ON --> LC
+  SR -- FROM_ANSWER --> A
 ```
 
 | Layer | Label | Key (unique) | Notable properties |
@@ -64,6 +71,9 @@ flowchart LR
 | | `Study` | `id` | `citation`, `title`, `year`, `design`, `url` (DOI), `pmid`, `pubmedUrl`; the evidence behind a `RAISES_RISK_OF` link, `ABOUT` both risks it connects, `EXAMINES` the markers it measured or recommends, `INFORMS` the risk scores it bears on; `kind` (study or guideline), `topics` (Liver, Kidney, Heart and vessels …); `CITES` the other sources it cites (OpenAlex) |
 | | `ScoreResult` | `<patient>-<score>` | `value`, `band`, `light`, `computedAt`, `demographics`; `FROM` the exact Observations it used |
 | | `Knowledge` | `id` | `fingerprint` of the seeded facts, so seeding runs only when they change |
+| Anamnesis | `Questionnaire`, `QuestionnaireItem` | `id`, `<questionnaire>\|<linkId>` | the questions (`text`, `options`, `labels`, `riskFactors`), each `INFORMS` the health risks it bears on; the same for everyone |
+| | `QuestionnaireResponse` | `<patient>\|<questionnaire>\|<authored>` | `authored`, `status`, `source`; one per sitting, earlier ones kept as history |
+| | `Answer` | `<response>\|<linkId>` | `codes`, `labels`, `text`, `riskFactor`; `ANSWERS` its item, `RISK_FACTOR_FOR` the risks when the answer is a known risk factor, `BASED_ON` the LOINC codes it was read from |
 
 Files: [`health_graph/schema.cypher`](../health_graph/schema.cypher) (constraints, indexes, 2 full-text indexes) · [`health_graph/omop.cypher`](../health_graph/omop.cypher) · [`health_graph/fhir.py`](../health_graph/fhir.py) (pure parser) · [`health_graph/store.py`](../health_graph/store.py) (writes) · [`health_graph/queries.py`](../health_graph/queries.py).
 
@@ -75,6 +85,7 @@ Files: [`health_graph/schema.cypher`](../health_graph/schema.cypher) (constraint
 - **The knowledge layer** (`health_graph/knowledge.py`, `python -m health_graph knowledge`) is the same for everyone and sits next to the person's data: which scores estimate which health risk and from which measures, which measures a guideline names as markers of a risk (each `MARKER_OF` carries its source), and Klarbefund's sourced reference ranges, an official guideline range and, where the source names one, an optimal band. `health_graph/reference_ranges.json` is exported from MinimumViableHealthDataspacev2 with `npm run export:reference-ranges` in `services/epa-ingest`; refresh it there, never edit it here. The range a laboratory printed stays on the Observation and is shown alongside, never replaced. **Ranges are versioned and sourced:** each is `SOURCED_FROM` a `Study` node for its guideline or study (DOI and PubMed, the same kind of node as the risk links' evidence), and carries the edition's `validFrom`; when a newer edition drops or changes it, the old range stays with `validUntil` and `supersededBy`, so a value measured back then can still be explained (first case: the Endocrine Society's 2011 vitamin D thresholds, superseded on 2024-06-03). Compare a value with the range that applied on its date. Reseeding prunes range ids the table no longer has.
 - **The risks raise each other** (`RAISES_RISK_OF`, query `risk_links`): fatty liver disease and fibrosis raise the risk of cardiovascular disease, type 2 diabetes and CKD; diabetes that of cardiovascular disease, CKD, liver fibrosis and hip fracture; CKD that of cardiovascular disease and bone disease; fitness lowers cardiovascular risk. That is the cardiovascular-kidney-metabolic (CKM) picture of the AHA's 2023 advisory. Each link carries the study's own effect size where there is one (`measure`, `estimate`, `ciLow/High`; observational, so an association, not proof of cause), a plain-language `summary`, and the ids of its `Study` nodes (meta-analyses, pooled cohorts, guidelines, each with its DOI, checked against Crossref, and its PubMed id). Each study also `EXAMINES` the LOINC codes it measured or recommends and `INFORMS` the scores it bears on, so a lab value leads to its evidence in one query (`evidence`, param `loinc`).
 - **Score results are stored with their inputs** (`python -m health_graph scores`): a `ScoreResult` points at the exact Observations it used, so "what is my SCORE2 and from which values" is one query.
+- **The anamnesis** (`health_graph/anamnesis.py`, `python -m health_graph anamnesis`) asks what lab values cannot show: family history, smoking, alcohol, symptoms, sleep apnoea, exercise, painkillers, fractures, supplements. It is modelled on FHIR `Questionnaire` and `QuestionnaireResponse`; each question `INFORMS` the health risks it bears on, and an answer that is a known risk factor points at those risks (`RISK_FACTOR_FOR`). An answer read from measurements already in the graph (blood pressure from a 24-hour measurement, exercise from Apple Health) points at their codes (`BASED_ON`). A code that is not one of the question's options is refused. `scores` takes smoking from the latest answer when `--smoker` is not given, and SCORE2 then points at that answer (`FROM_ANSWER`). The questions are in the repo; the answers belong to one person and go only into their own store.
 - **`hubEligible`** applies the Hub's acceptance rules locally (status `preliminary`, LOINC code, number, UCUM unit, date). A `lab-issued-digital` report is `final`, so the Hub's sandbox would refuse it: `0 Hub-ready` above is correct.
 - **New in this project** (proposals, not in the Hub yet): `HAS_DIAGNOSTIC_REPORT`, `HAS_RESULT`, `DERIVED_FROM`, `PERFORMED_BY`, `TARGET`, `IDENTIFIES`, `Organization`, `NcbiTaxon`.
 - **OMOP transform** is ported from the Hub's `fhir-to-omop-transform.cypher` (plain MERGE/SET, no APOC), but reads `valueQuantity`/`effectiveDate`. The Hub's version reads `value`/`dateTime`, so it currently maps app values to 0 with no date (worth a Hub fix).

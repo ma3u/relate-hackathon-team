@@ -35,3 +35,7 @@ CREATE CONSTRAINT reference_range_id IF NOT EXISTS FOR (n:ReferenceRange) REQUIR
 CREATE CONSTRAINT score_result_id IF NOT EXISTS FOR (n:ScoreResult) REQUIRE n.id IS UNIQUE;
 CREATE CONSTRAINT knowledge_id IF NOT EXISTS FOR (n:Knowledge) REQUIRE n.id IS UNIQUE;
 CREATE CONSTRAINT study_id IF NOT EXISTS FOR (n:Study) REQUIRE n.id IS UNIQUE;
+CREATE CONSTRAINT questionnaire_id IF NOT EXISTS FOR (n:Questionnaire) REQUIRE n.id IS UNIQUE;
+CREATE CONSTRAINT questionnaire_item_id IF NOT EXISTS FOR (n:QuestionnaireItem) REQUIRE n.id IS UNIQUE;
+CREATE CONSTRAINT questionnaire_response_id IF NOT EXISTS FOR (n:QuestionnaireResponse) REQUIRE n.id IS UNIQUE;
+CREATE CONSTRAINT answer_id IF NOT EXISTS FOR (n:Answer) REQUIRE n.id IS UNIQUE;
