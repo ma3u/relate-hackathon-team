@@ -127,7 +127,7 @@ def build(nodes_in, links_in):
             if (not own or own == o["p"].get("code")) and c["p"].get("display") not in (None, c["p"].get("code")):
                 o["p"]["display"] = c["p"]["display"]
 
-    # The first view shows the current risks: the risks and scores, their marker
+    # The first view shows the health risks: the risks and scores, their marker
     # codes, and the latest lab value on each marker.
     markers = {r["t"] for r in links_in if r["type"] in ("MARKER_OF", "USES")}
     latest = {}  # LoincCode id -> newest lab Observation (duplicates count once)

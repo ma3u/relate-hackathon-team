@@ -34,6 +34,7 @@
   #detail .rel { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin: 10px 0 2px; }
   .close { float: right; background: none; border: 0; color: var(--muted); font-size: 18px; cursor: pointer; }
   .hint { color: var(--muted); font-size: 12px; margin-top: 12px; }
+  .callout { border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 8px; padding: 7px 10px; margin: 8px 0 4px; font-size: 12px; line-height: 1.45; }
   .steps { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 12px; }
   .steps button { text-align: left; background: #1b2029; color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; font: inherit; font-size: 12px; cursor: pointer; }
   .steps button b { color: var(--muted); font-weight: 600; margin-right: 4px; }
@@ -126,11 +127,11 @@ const MEASURES = groupsOf("Measures"), DOCS = groupsOf("Documents"), RESEARCH = 
 
 // Risks first, then the evidence behind them, then the measures, then the documents.
 const STAGES = [
-  { name: "Current risks", groups: ["HealthRisk", "RiskScore", "Study", "Guideline", "LoincCode", "Lab value"],
+  { name: "Health risks", groups: ["HealthRisk", "RiskScore", "Study", "Guideline", "LoincCode", "Lab value"],
     only: n => n.g === "LoincCode" ? n.mk : n.g === "Lab value" ? n.cur : isEvidence(n) ? n.nbs.some(([t]) => t === "ABOUT") : true,
-    hint: "Your six health risks (red) and four risk scores (pink), the lab markers they rest on (grey), and your latest value on each marker (green; red when outside the lab's range). Orange arrows: one risk raises another, as studies show; the coral and amber dots are those studies and guidelines. Click a risk to drill down." },
+    hint: "The six health risks the knowledge layer tracks (red): conditions guidelines watch for, not diagnoses. Nothing in the graph links you to one. Around them: four risk scores (pink), the lab markers each risk is watched by (grey), and your latest value on each marker (green; red when outside the lab's range). Orange arrows: in studies, people who have one condition develop another more often; the coral and amber dots are those studies and guidelines. Click a risk to see your values on its markers." },
   { name: "Evidence", groups: ["HealthRisk", "RiskScore", "Study", "Guideline", "Topic"], only: () => true,
-    hint: "All 40 sources behind the graph: studies (coral) and guidelines (amber), clustered around their topics (white). A thin arrow from one source to another means it cites it. Orange arrows: how the risks raise each other. Click a topic or a source." },
+    hint: "All 40 sources behind the graph: studies (coral) and guidelines (amber), clustered around their topics (white). A thin arrow from one source to another means it cites it. Orange arrows: in studies, people who have one condition develop another more often. Click a topic or a source." },
   { name: "Measures", groups: ["HealthRisk", "RiskScore", ...MEASURES], only: () => true, spiral: true,
     hint: "Every lab value (green) and Apple Watch week (blue) on a time spiral: one turn per year, the oldest at the bottom, the newest at the top; a small cluster is one day (one report, one week). Grey LOINC codes tie together the values of one marker; purple: guideline ranges." },
   { name: "Documents", groups: ["HealthRisk", "RiskScore", ...MEASURES, ...DOCS], only: () => true, spiral: true,
@@ -414,7 +415,7 @@ addEventListener("keydown", e => {
 // ── "What you see": one short explanation per screen ──────────────────────
 const SPIRAL = "on a time spiral (one turn per year, the oldest at the bottom; a small cluster is one day)";
 const EXPLAIN = {
-  HealthRisk: n => `The risk "${n.n}". Around it: the risk scores that estimate it (pink), the lab markers guidelines name for it (grey), every value of yours on them ${SPIRAL}, red when outside the lab's range, the guideline ranges (purple), the studies and guidelines behind it, and orange arrows to the risks it raises or that raise it.`,
+  HealthRisk: n => `"${n.n}", a health risk the knowledge layer tracks: a condition, not a diagnosis, and nothing in the graph says you have it. Around it: the risk scores that estimate it (pink), the lab markers guidelines name for it (grey), every value of yours on them ${SPIRAL}, red when outside the lab's range, the guideline ranges (purple), the studies and guidelines behind it, and orange arrows to the conditions it makes more likely, or that make it more likely, in people who have them.`,
   RiskScore: n => `The score "${n.n}": the lab markers it is calculated from, your values on them over time, the risk it estimates, and the studies behind it.`,
   LoincCode: n => `One marker, "${n.n}": all your values over time, the reports they come from, its guideline range, the risks it marks and the studies that examine it. The chart on the right shows the same values as a time series.`,
   "Lab value": n => `One measurement: ${n.val || n.n}${n.dt ? " on " + n.dt.slice(0, 10) : ""}. Around it: the report it was printed on and the other values on that report, the scanned document, how it was scanned (provenance), the lab, its LOINC code and its OMOP research copy.`,
@@ -462,6 +463,36 @@ function renderHistory() {
   h.scrollLeft = h.scrollWidth;
 }
 
+// A risk node is a condition from the knowledge layer, the same for everyone.
+// Say so, then say where this person's own latest values on its markers stand:
+// against the guideline range when one exists in the value's unit, else
+// against the range the lab printed.
+function riskStanding(n) {
+  const rows = markerCodes(n).map(c => {
+    const s = series(c), last = s.pts[s.pts.length - 1];
+    if (!last) return null;
+    const b = bandFor(c, s), v = last.v;
+    const off = b && ((b.lo != null && v < b.lo) ? "below" : (b.hi != null && v > b.hi) ? "above" : null);
+    return { c, o: last.o, off, ranged: !!b, guide: b && !b.label.startsWith("Range printed") };
+  }).filter(Boolean)
+    // One marker can sit on two LOINC codes, one per unit (LDL in mg/dL from
+    // one lab, mmol/L from another): keep the newest value per marker, named by
+    // the LOINC component (the part before " ["), so a 2024 value does not
+    // speak for a marker measured again in 2026.
+    .sort((a, b) => (b.o.dt || "").localeCompare(a.o.dt || ""))
+    .filter((r, i, all) => all.findIndex(x => x.c.n.split(" [")[0] === r.c.n.split(" [")[0]) === i);
+  const off = rows.filter(r => r.off), unranged = rows.filter(r => !r.ranged).length;
+  let html = `<div class="callout"><b>Not a diagnosis.</b> A condition the knowledge layer tracks for everyone, from guidelines. Nothing in your graph says you have it.</div>`;
+  if (!rows.length) return html + `<div class="hint">None of its markers has a value of yours yet.</div>`;
+  html += `<div class="rel">Your latest values on its markers</div>`;
+  html += `<div class="hint" style="margin-top:0">${rows.length} marker${rows.length > 1 ? "s" : ""} with a value, the newest of each; ` +
+    (off.length ? `${off.length} outside the range` : rows.length > unranged ? "none outside the range" : "no range to compare them with") +
+    (unranged && rows.length > unranged ? ` (${unranged} without a range to compare)` : "") + (off.length ? ":" : ".") + `</div>`;
+  off.forEach(r => html += `<button class="nb inset" data-id="${r.o.id}"><span class="dot" style="display:inline-block;margin-right:6px;background:${OUT_COLOR}"></span>` +
+    `${esc(short(r.c.n))}: ${esc(r.o.val || "")} (${r.o.dt ? r.o.dt.slice(0, 10) : "?"}), ${r.off} the ${r.guide ? "guideline" : "lab's"} range</button>`);
+  return html;
+}
+
 function showDetail(n) {
   const el = document.getElementById("detail");
   const dot = m => `<span class="dot" style="display:inline-block;margin-right:6px;background:${m.out ? OUT_COLOR : COLOR[m.g]}"></span>`;
@@ -478,11 +509,14 @@ function showDetail(n) {
     if (c) html += chartsFor(c, n);
   }
 
-  // How this risk raises others, and is raised by them, with the studies.
-  if (n.rlinks) [["out", "Raises the risk of"], ["in", "Its risk is raised by"]].forEach(([dir, title]) => {
+  if (n.g === "HealthRisk") html += riskStanding(n);
+
+  // How this condition makes others more likely, and the reverse, with the studies.
+  // Population evidence: what happens in people who HAVE the condition.
+  if (n.rlinks) [["out", "In people who have it, studies find more"], ["in", "It is more common in people who have"]].forEach(([dir, title]) => {
     const ls = n.rlinks.filter(x => x.dir === dir);
     if (!ls.length) return;
-    html += `<div class="rel">${title}, from studies</div>`;
+    html += `<div class="rel">${title}</div>`;
     ls.forEach(x => {
       html += btn(x.other, `${dir === "out" ? "→" : "←"} ${x.other.n}${effect(x.p)}`, "code");
       if (x.p.summary) html += `<div class="hint inset" style="margin-top:0">${esc(x.p.summary)}</div>`;
@@ -807,7 +841,7 @@ function setStage(i, fit = true) {
   Object.keys(VISIBLE).forEach(g => VISIBLE[g] = true);
   steps.querySelectorAll("button").forEach((b, j) => b.setAttribute("aria-selected", j === i));
   document.getElementById("stepHint").textContent = STAGES[i].hint;
-  document.getElementById("next").textContent = i < STAGES.length - 1 ? `Next: ${STAGES[i + 1].name} →` : "Back to current risks";
+  document.getElementById("next").textContent = i < STAGES.length - 1 ? `Next: ${STAGES[i + 1].name} →` : "Back to health risks";
   legend.querySelectorAll("label.row").forEach(l => l.style.opacity = STAGES[i].groups.includes(l.querySelector("input").dataset.g) ? 1 : 0.35);
   Graph.linkOpacity(i <= 1 ? 0.6 : 0.22);
   syncChecks();
