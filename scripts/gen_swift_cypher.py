@@ -33,6 +33,7 @@ KNOWLEDGE = [
     ("seedStudyMarkers", "SEED_STUDY_MARKERS"),
     ("seedStudyScores", "SEED_STUDY_SCORES"),
     ("seedRiskLinks", "SEED_RISK_LINKS"),
+    ("seedStudyRisks", "SEED_STUDY_RISKS"),
     ("seedVersion", "SEED_VERSION"),
 ]
 
@@ -108,6 +109,7 @@ def render_knowledge() -> str:
         "citations": knowledge._citation_rows(),
         "examines": knowledge._examines_rows(),
         "informs": knowledge._informs_rows(),
+        "about": knowledge._about_rows(),
         "links": knowledge.RISK_LINKS,
     }
     source = json.loads((ROOT / "health_graph/reference_ranges.json").read_text())["source"]

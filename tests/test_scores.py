@@ -62,3 +62,21 @@ def test_traffic_lights_follow_the_published_categories():
     assert [scores.non_hdl_light(x, 3.4)[0] for x in (3.0, 4.9, 6.0)] == [G, A, R]
     assert scores.range_light(5, 1, 10) == G and scores.range_light(11, 1, 10) == A
     assert scores.range_light(5, None, None) is None
+
+
+def test_lipids_beyond_ldl():
+    G, A = scores.GREEN, scores.AMBER
+    # TG 1.7, HDL 1.0 mmol/L: ratio 1.7 (3.9 in mg/dL units), AIP log10(1.7) = 0.23
+    assert scores.tg_hdl_ratio(1.7, 1.0) == pytest.approx(1.7)
+    # McLaughlin's 3.0 in mg/dL units is 1.31 in mmol/L units
+    assert scores.tg_hdl_light(1.2)[0] == G and scores.tg_hdl_light(1.4)[0] == A and scores.tg_hdl_light(1.7)[0] == A
+    assert scores.aip(1.7, 1.0) == pytest.approx(0.2304, abs=1e-4)
+    assert scores.aip_band(0.05).startswith("below 0.11") and scores.aip_band(0.3).startswith("above 0.21")
+    # Remnant: total 5.5 - LDL 3.5 - HDL 1.3 = 0.7 mmol/L, flagged from 0.9 (EAS/EFLM 2016)
+    assert scores.remnant_cholesterol(5.5, 3.5, 1.3) == pytest.approx(0.7)
+    assert [scores.remnant_light(x)[0] for x in (0.7, 0.9)] == [G, A]
+    # ESC/EAS goals by risk category
+    assert [scores.ldl_goal(b) for b in ("low to moderate", "high", "very high", None)] == [2.6, 1.8, 1.4, 2.6]
+    assert [scores.apob_goal(b) for b in ("low to moderate", "high", "very high")] == [100, 80, 65]
+    assert scores.goal_light(105, 100, "mg/dL", "ESC/EAS")[0] == A
+    assert scores.goal_light(95, 100, "mg/dL", "ESC/EAS")[0] == G

@@ -74,6 +74,22 @@
   .chart .hit:hover + .pt, .chart .pt.hl { stroke: #fff; stroke-width: 2; }
   .chartnote { font-size: 11px; color: var(--muted); margin: 0 0 6px; }
   .chartnote i { font-style: normal; display: inline-block; width: 14px; height: 8px; border-radius: 2px; vertical-align: middle; margin-right: 4px; }
+  .risk { border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; margin: 8px 0; }
+  .risk.main { border-color: #8a3b3b; background: rgba(226, 75, 74, 0.08); }
+  .risk .head { display: flex; align-items: center; gap: 8px; width: 100%; background: none; border: 0; color: var(--ink); font: inherit; font-weight: 600; padding: 0; cursor: pointer; text-align: left; }
+  .chip { margin-left: auto; font-size: 11px; font-weight: 600; border-radius: 999px; padding: 1px 8px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+  .chip.main { color: #fff; background: #E24B4A; border-color: #E24B4A; }
+  .chip.watch { color: #F7C1C1; border-color: #8a3b3b; }
+  .sc { display: flex; gap: 7px; align-items: baseline; font-size: 12px; margin: 4px 0 0 2px; }
+  .sc .lt { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  .age { color: var(--muted); }
+  .kicker { font-size: 10px; color: var(--accent); text-transform: uppercase; letter-spacing: .06em; }
+  .q { margin: 9px 0 2px; font-size: 12px; }
+  .q .opts { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+  .q button { background: #1b2029; color: var(--ink); border: 1px solid var(--line); border-radius: 999px; padding: 2px 9px; font: inherit; font-size: 11px; cursor: pointer; }
+  .q button[aria-pressed=true] { border-color: var(--accent); background: #16312a; }
+  .q .note { color: var(--muted); font-size: 11px; margin-top: 4px; }
+  #labels div.depth { color: #EF9F27; font-size: 11px; opacity: .8; }
   .scene-tooltip { font: 13px/1.4 -apple-system, system-ui, sans-serif !important; background: rgba(14,17,22,.92) !important; border: 1px solid var(--line); border-radius: 8px; padding: 6px 9px !important; }
 </style>
 </head>
@@ -93,6 +109,7 @@
   <div class="btns">
     <button id="next">Next step →</button>
     <button id="fit">Fit view</button>
+    <button id="ovbtn">Your risk overview</button>
   </div>
   <p class="hint">Drag to rotate, scroll to zoom, right-drag to pan. Click a node to drill down into its relationships. The bar at the bottom shows where you are and where you came from: click a perspective, or press Esc, to go back.</p>
 </div>
@@ -117,6 +134,37 @@ const FAMILIES = [
   ["Research copy", [["OMOPPerson", "#F0997B"], ["OMOPMeasurement", "#D85A30"], ["Knowledge", "#7F77DD"]]],
 ];
 const OUT_COLOR = "#E24B4A";
+
+// ── Time: newer values weigh more ─────────────────────────────────────────
+// A display rule, not a clinical one: a value counts half after one year and a
+// quarter after two, and sits further back (z) and smaller in the view. An old
+// value describes the past; it needs a recheck before it says much about now.
+const YEAR = 365.25 * 864e5, HALF_LIFE = 1, DEPTH = 140;
+const TODAY = DATA.today ? Date.parse(DATA.today) : Date.now(), TODAY_YEAR = new Date(TODAY).getUTCFullYear();
+const ageY = dt => dt ? Math.max(0, (TODAY - Date.parse(String(dt).slice(0, 10))) / YEAR) : NaN;
+const weightOf = dt => { const a = ageY(dt); return isNaN(a) ? 1 : Math.pow(0.5, a / HALF_LIFE); };
+const isDated = n => n.g === "Lab value" || n.g === "Apple Watch week" || n.g === "OMOPMeasurement";
+const recency = n => isDated(n) && n.dt ? (n._w ??= weightOf(n.dt)) : 1;
+const ago = dt => {
+  const a = ageY(dt);
+  return isNaN(a) ? "" : a < 1 / 12 ? "this month" : a < 1 ? `${Math.round(a * 12)} months ago` : `${a.toFixed(1)} years ago`;
+};
+// Older: closer to the background colour.
+function fade(hex, w) {
+  const t = (1 - Math.max(w, 0.15)) * 0.7, bg = [14, 17, 22];
+  return "#" + [1, 3, 5].map((i, k) => {
+    const v = parseInt(hex.slice(i, i + 2), 16);
+    return Math.round(v + (bg[k] - v) * t).toString(16).padStart(2, "0");
+  }).join("");
+}
+// Your standing on a risk, from your newest values and the published scores.
+const STATUS = {
+  main: { color: "#E24B4A", label: "Your main risk", short: "your main risk" },
+  watch: { color: "#F09595", label: "Worth watching", short: "worth watching" },
+  clear: { color: "#8a7d80", label: "No sign in recent values", short: "no sign" },
+  old: { color: "#6a6470", label: "Too little recent data", short: "data too old" },
+  none: { color: "#6a6470", label: "No values of yours yet", short: "no data" },
+};
 const RISK_LINK = "#EF9F27";  // (:HealthRisk)-[:RAISES_RISK_OF]->(:HealthRisk), from studies
 const CITE_LINK = "#F5C4B3";  // (:Study)-[:CITES]->(:Study)
 const COLOR = {}, VISIBLE = {};
@@ -128,10 +176,20 @@ const MEASURES = groupsOf("Measures"), DOCS = groupsOf("Documents"), RESEARCH = 
 // Risks first, then the evidence behind them, then the measures, then the documents.
 const STAGES = [
   { name: "Health risks", groups: ["HealthRisk", "RiskScore", "Study", "Guideline", "LoincCode", "Lab value"],
-    only: n => n.g === "LoincCode" ? n.mk : n.g === "Lab value" ? n.cur : isEvidence(n) ? n.nbs.some(([t]) => t === "ABOUT") : true,
-    hint: "The six health risks the knowledge layer tracks (red): conditions guidelines watch for, not diagnoses. Nothing in the graph links you to one. Around them: four risk scores (pink), the lab markers each risk is watched by (grey), and your latest value on each marker (green; red when outside the lab's range). Orange arrows: in studies, people who have one condition develop another more often; the coral and amber dots are those studies and guidelines. Click a risk to see your values on its markers." },
+    // The marker codes you have a value on, your newest value on each, the evidence about the risks.
+    only: n => n.g === "LoincCode" ? n.mk && (n._hv ??= n.nbs.some(([t, m]) => t === "CODED_BY" && m.g === "Lab value"))
+      : n.g === "Lab value" ? n.cur : isEvidence(n) ? n.nbs.some(([t]) => t === "ABOUT") : true,
+    get hint() {
+      const main = RANKED.find(n => n.st.status === "main");
+      return (main ? `Your main risk: ${main.n}, the large red node. ` : "No risk stands out in your recent values. ") +
+        "The six health risks are conditions the knowledge layer tracks for everyone, not diagnoses; nothing links you to one. " +
+        "Each is sized and coloured by your newest values on its markers and the published scores: red your main risk, pink worth watching, grey no sign or data too old. " +
+        "Around them: risk scores (pink), lab markers (grey) and your latest value on each (green; red outside the lab's range). " +
+        "Older values sit further back and are smaller: a value counts half after a year. Your overview is on the right; click a risk for its values.";
+    } },
   { name: "Evidence", groups: ["HealthRisk", "RiskScore", "Study", "Guideline", "Topic"], only: () => true,
-    hint: "All 40 sources behind the graph: studies (coral) and guidelines (amber), clustered around their topics (white). A thin arrow from one source to another means it cites it. Orange arrows: in studies, people who have one condition develop another more often. Click a topic or a source." },
+    get hint() { return `All ${(counts.Study || 0) + (counts.Guideline || 0)} sources behind the graph:` + this.rest; },
+    rest: " studies (coral) and guidelines (amber), clustered around their topics (white). A thin arrow from one source to another means it cites it. Orange arrows: in studies, people who have one condition develop another more often. Click a topic or a source." },
   { name: "Measures", groups: ["HealthRisk", "RiskScore", ...MEASURES], only: () => true, spiral: true,
     hint: "Every lab value (green) and Apple Watch week (blue) on a time spiral: one turn per year, the oldest at the bottom, the newest at the top; a small cluster is one day (one report, one week). Grey LOINC codes tie together the values of one marker; purple: guideline ranges." },
   { name: "Documents", groups: ["HealthRisk", "RiskScore", ...MEASURES, ...DOCS], only: () => true, spiral: true,
@@ -180,11 +238,13 @@ let selected = null, hl = new Set(), hlLinks = new Set();
 const Graph = new ForceGraph3D(document.getElementById("graph"))
   .backgroundColor("#0e1116")
   .nodeId("id")
-  .nodeVal(n => n.g === "Patient" ? 30 : n.g === "Topic" ? 14 : 1 + Math.pow(n.deg, 0.55) + (n.cur ? 3 : 0) + (n.out ? 4 : 0) + (n === selected ? 12 : 0))
+  .nodeVal(n => n.g === "Patient" ? 30 : n.g === "Topic" ? 14
+    : n.g === "HealthRisk" && n.st && !drill.length ? 4 + 6 * Math.min(n.st.E, 3) + (n.st.status === "main" ? 12 : 0)
+    : (1 + Math.pow(n.deg, 0.55) + (n.cur ? 3 : 0) + (n.out ? 4 : 0)) * (0.3 + 0.7 * recency(n)) + (n === selected ? 12 : 0))
   .nodeRelSize(3)
   .nodeOpacity(0.92)
   .nodeResolution(12)
-  .nodeColor(n => n.out ? OUT_COLOR : COLOR[n.g])
+  .nodeColor(n => n.g === "HealthRisk" && n.st ? STATUS[n.st.status].color : fade(n.out ? OUT_COLOR : COLOR[n.g], recency(n)))
   .nodeLabel(n => `<b>${esc(n.n)}</b><br><span style="color:${COLOR[n.g]}">${esc(n.g)}</span>` +
     (n.d.length ? "<br>" + n.d.slice(0, 3).map(esc).join("<br>") : ""))
   .linkColor(l => hlLinks.has(l) ? "#ffffff" : l.t === "RAISES_RISK_OF" ? RISK_LINK : l.t === "CITES" ? CITE_LINK
@@ -209,6 +269,22 @@ Graph.d3Force("center", null);
 // Values pinned on the time spiral push nothing away (712 of them would fling a hub off screen).
 Graph.d3Force("charge").strength(m => m.fx !== undefined && DATED.has(m.g) ? 0 : -28);
 Graph.d3Force("link").distance(l => (l.t === "HAS_OBSERVATION" ? 60 : l.t === "IN_TOPIC" ? 18 : 26));
+// Time as depth: every dated value that is not pinned on the time spiral is pulled
+// back by its age, DEPTH per year, so the newest values are in front. In a
+// drill-down the depth is measured from the node in focus (pinned where you
+// clicked it), so its own report's values stay next to it.
+let timeNodes = [];
+const timeForce = alpha => {
+  const top = drill[drill.length - 1];
+  const z0 = top ? top.z || 0 : 0, a0 = top && top.dt && isDated(top) ? ageY(top.dt) : 0;
+  timeNodes.forEach(n => {
+    if (n.fz !== undefined || !n.dt || !isDated(n)) return;
+    const a = ageY(n.dt);
+    if (!isNaN(a)) n.vz += (z0 - DEPTH * (a - (isNaN(a0) ? 0 : a0)) - (n.z || 0)) * 0.15 * alpha;
+  });
+};
+timeForce.initialize = ns => { timeNodes = ns; };
+Graph.d3Force("time", timeForce);
 
 const shown = n => VISIBLE[n.g] && STAGES[stage].groups.includes(n.g) && STAGES[stage].only(n);
 const short = t => (t = String(t)).length > 26 ? t.slice(0, 25) + "…" : t;
@@ -403,7 +479,7 @@ function goTo(level) {
   Graph.linkOpacity(selected ? 0.55 : stage <= 1 ? 0.6 : 0.22);
   refresh();
   curThumb = v ? v.thumb : null;
-  if (selected) showDetail(selected); else document.getElementById("detail").style.display = "none";
+  if (selected) showDetail(selected); else showOverview();
   renderHistory();
 }
 function back() { if (drill.length) goTo(drill.length - 1); }
@@ -463,34 +539,210 @@ function renderHistory() {
   h.scrollLeft = h.scrollWidth;
 }
 
+// ── Your standing on each risk ────────────────────────────────────────────
 // A risk node is a condition from the knowledge layer, the same for everyone.
-// Say so, then say where this person's own latest values on its markers stand:
-// against the guideline range when one exists in the value's unit, else
-// against the range the lab printed.
-function riskStanding(n) {
-  const rows = markerCodes(n).map(c => {
+// Where this person stands: their newest value on each of its markers (against
+// the guideline range in the value's unit, else the lab's printed range), and the
+// published scores computed from the graph (health_graph/risk.py). Each value
+// outside its range counts by its recency; a score by its light and its age.
+const LIGHT = { green: "#5DCAA5", amber: "#EF9F27", red: "#E24B4A" };
+const COMPOSITE = ["SCORE2", "eGFR", "FIB-4", "TyG", "Triglyceride/HDL", "Remnant"];
+const HABITS = {};  // answers to what the graph cannot know: in this page only, never stored
+let RANKED = [], overviewClosed = false;
+const scoreList = () => ((DATA.scores || {})[HABITS.smoking === "current" ? "smoker" : "nonsmoker"]) || [];
+const component = c => c.n.split(" [")[0];
+const dotHtml = c => `<span class="dot" style="display:inline-block;margin-right:6px;background:${c}"></span>`;
+
+function markerRows(n) {
+  return markerCodes(n).map(c => {
     const s = series(c), last = s.pts[s.pts.length - 1];
     if (!last) return null;
     const b = bandFor(c, s), v = last.v;
     const off = b && ((b.lo != null && v < b.lo) ? "below" : (b.hi != null && v > b.hi) ? "above" : null);
-    return { c, o: last.o, off, ranged: !!b, guide: b && !b.label.startsWith("Range printed") };
+    return { c, o: last.o, off, b, ranged: !!b, guide: b && !b.lab, w: weightOf(last.o.dt) };
   }).filter(Boolean)
-    // One marker can sit on two LOINC codes, one per unit (LDL in mg/dL from
-    // one lab, mmol/L from another): keep the newest value per marker, named by
-    // the LOINC component (the part before " ["), so a 2024 value does not
-    // speak for a marker measured again in 2026.
+    // One marker can sit on two LOINC codes, one per unit (LDL in mg/dL from one
+    // lab, mmol/L from another): keep the newest value per marker, named by the
+    // LOINC component (the part before " ["), so a 2024 value does not speak for
+    // a marker measured again in 2026.
     .sort((a, b) => (b.o.dt || "").localeCompare(a.o.dt || ""))
-    .filter((r, i, all) => all.findIndex(x => x.c.n.split(" [")[0] === r.c.n.split(" [")[0]) === i);
-  const off = rows.filter(r => r.off), unranged = rows.filter(r => !r.ranged).length;
+    .filter((r, i, all) => all.findIndex(x => component(x.c) === component(r.c)) === i);
+}
+
+function computeStandings() {
+  const pts = { red: 1.5, amber: 0.75 };
+  const risks = DATA.nodes.filter(n => n.g === "HealthRisk");
+  risks.forEach(n => {
+    const rows = markerRows(n);
+    const scores = scoreList().filter(x => x.risk === n.rid);
+    const E = rows.filter(r => r.off).reduce((a, r) => a + r.w, 0) +
+      scores.filter(x => x.value != null && COMPOSITE.some(k => x.name.startsWith(k)))
+        .reduce((a, x) => a + (pts[x.light] || 0) * weightOf(x.date), 0);
+    const recent = rows.some(r => ageY(r.o.dt) <= 1.5);
+    n.st = { rows, scores, E, status: !rows.length ? "none" : E >= 0.4 ? "watch" : recent ? "clear" : "old" };
+  });
+  const top = risks.filter(n => n.st.status === "watch").sort((a, b) => b.st.E - a.st.E)[0];
+  if (top && top.st.E >= 1) top.st.status = "main";
+  const order = ["main", "watch", "clear", "old", "none"];
+  RANKED = risks.sort((a, b) => order.indexOf(a.st.status) - order.indexOf(b.st.status) || b.st.E - a.st.E);
+}
+
+const fmtScore = v => Math.abs(v) >= 100 ? v.toFixed(0) : Math.abs(v) >= 10 ? v.toFixed(1) : v.toFixed(2);
+function scoreRow(x) {
+  const tip = [x.source, ...Object.entries(x.inputs || {}).map(([k, v]) => `${k}: ${v}`), x.note || ""].filter(Boolean).join("\n");
+  if (x.value == null) return `<div class="sc" title="${esc(tip)}"><span class="lt" style="background:#444c58"></span><span><b>${esc(x.name)}</b> <span class="age">${esc(x.note || "not computed")}</span></span></div>`;
+  return `<div class="sc" title="${esc(tip)}"><span class="lt" style="background:${LIGHT[x.light] || "#444c58"}"></span>` +
+    `<span><b>${esc(x.name)}</b> ${fmtScore(x.value)}${x.unit ? " " + esc(x.unit) : ""}${x.band ? " · " + esc(x.band) : ""}` +
+    `${x.date ? ` <span class="age">· ${esc(ago(x.date))}</span>` : ""}</span></div>`;
+}
+function offRow(r) {
+  const src = r.b && r.b.y ? `, ${r.b.y}` : "";
+  return `<button class="nb inset" data-id="${r.o.id}" style="opacity:${(0.45 + 0.55 * r.w).toFixed(2)}">${dotHtml(OUT_COLOR)}` +
+    `${esc(short(component(r.c)))}: ${esc(r.o.val || "")} · ${esc(ago(r.o.dt))}, ${r.off} the ${r.guide ? "guideline" : "lab's"} range${esc(src)}</button>`;
+}
+
+// On the risk's own panel.
+function riskStanding(n) {
+  const st = n.st, S = STATUS[st.status];
   let html = `<div class="callout"><b>Not a diagnosis.</b> A condition the knowledge layer tracks for everyone, from guidelines. Nothing in your graph says you have it.</div>`;
-  if (!rows.length) return html + `<div class="hint">None of its markers has a value of yours yet.</div>`;
+  html += `<div class="sc" style="font-size:13px"><span class="lt" style="background:${S.color}"></span><span><b>${S.label}</b> in your graph</span></div>`;
+  if (!st.rows.length) return html + `<div class="hint">None of its markers has a value of yours yet.</div>`;
+  const off = st.rows.filter(r => r.off), unranged = st.rows.filter(r => !r.ranged).length;
   html += `<div class="rel">Your latest values on its markers</div>`;
-  html += `<div class="hint" style="margin-top:0">${rows.length} marker${rows.length > 1 ? "s" : ""} with a value, the newest of each; ` +
-    (off.length ? `${off.length} outside the range` : rows.length > unranged ? "none outside the range" : "no range to compare them with") +
-    (unranged && rows.length > unranged ? ` (${unranged} without a range to compare)` : "") + (off.length ? ":" : ".") + `</div>`;
-  off.forEach(r => html += `<button class="nb inset" data-id="${r.o.id}"><span class="dot" style="display:inline-block;margin-right:6px;background:${OUT_COLOR}"></span>` +
-    `${esc(short(r.c.n))}: ${esc(r.o.val || "")} (${r.o.dt ? r.o.dt.slice(0, 10) : "?"}), ${r.off} the ${r.guide ? "guideline" : "lab's"} range</button>`);
+  html += `<div class="hint" style="margin-top:0">${st.rows.length} marker${st.rows.length > 1 ? "s" : ""} with a value, the newest of each; ` +
+    (off.length ? `${off.length} outside the range` : st.rows.length > unranged ? "none outside the range" : "no range to compare them with") +
+    (unranged && st.rows.length > unranged ? ` (${unranged} without a range to compare)` : "") + (off.length ? ":" : ".") + `</div>`;
+  off.forEach(r => html += offRow(r));
+  html += `<div class="hint" style="margin-top:4px">Older values count less, half after a year, and look fainter.</div>`;
+  if (st.scores.length) html += `<div class="rel">Scores from your values</div>` + st.scores.map(scoreRow).join("");
   return html;
+}
+
+// ── The overview on the right ─────────────────────────────────────────────
+// A newer source for a marker whose range rests on an older one, by LOINC code.
+const NEWER = { "62292-8": "demay-2024-vitd", "68438-1": "demay-2024-vitd", "1989-3": "demay-2024-vitd" };
+const loincOf = c => (c.d[0] || "").replace("LOINC ", "");
+const BEYOND_LDL = ["eas-2017-ldl", "esc-eas-2025-lipids", "sniderman-2019-apob", "mclaughlin-2003-tg-hdl",
+  "assempoor-2025-aip", "balling-2025-remnant", "voight-2012-hdl"];
+const QUESTIONS = [
+  { k: "smoking", q: "Do you smoke?", opts: [["never", "Never"], ["former", "Not any more"], ["current", "Yes"]],
+    note: a => a === "current" ? "SCORE2 above now counts you as a smoker: stopping is the largest single change it knows."
+      : a === "former" ? "SCORE2 counts former smokers as non-smokers; the benefit grows with every year since stopping." : "" },
+  { k: "alcohol", q: "Alcohol per week?", opts: [["0", "None"], ["1-7", "Up to 7 drinks"], ["8-14", "8 to 14"], ["15+", "More than 14"]],
+    note: a => a === "8-14" || a === "15+" ? "Alcohol raises triglycerides, GGT and blood pressure; the ESC 2021 prevention guideline advises at most 100 g of alcohol a week." : "" },
+  { k: "fasting", q: "Was your last blood sample taken fasting?", opts: [["yes", "Yes"], ["no", "No"], ["unsure", "Not sure"]],
+    note: a => a === "no" ? "Lipids need no fasting (EAS/EFLM 2016); non-fasting triglycerides count as raised from 2.0 mmol/L instead of 1.7. The TyG index needs a fasting glucose: read it with care."
+      : a === "unsure" ? "Note it next time: it changes how triglycerides and glucose are read." : "" },
+  { k: "diet", q: "How do you eat, mostly?", opts: [["mixed", "Mixed"], ["med", "Mediterranean"], ["lowcarb", "Low-carb or keto"], ["plant", "Vegetarian or vegan"]],
+    note: a => a === "lowcarb" ? "Low-carb and ketogenic diets often lower triglycerides and raise HDL, and in some people raise LDL cholesterol and ApoB a lot: tell your doctor next to these values."
+      : a === "med" ? "A Mediterranean diet lowered heart attacks and strokes in the PREDIMED trial (NEJM 2018)." : "" },
+  { k: "fastinghabit", q: "Do you fast regularly?", opts: [["no", "No"], ["trf", "Time-restricted eating"], ["long", "Fasts of a day or more"]],
+    note: a => a === "long" ? "Longer fasts can raise LDL cholesterol, bilirubin and uric acid for a while: mention it when a sample falls in such a week."
+      : a === "trf" ? "Note the time of your last meal with each sample; it helps to read glucose and triglycerides." : "" },
+  { k: "activity", q: "Moderate exercise per week (brisk walking counts)?", opts: [["lt150", "Under 150 minutes"], ["150-300", "150 to 300"], ["gt300", "More"]],
+    note: a => a === "lt150" ? "WHO and ESC advise 150 to 300 minutes a week; more fitness goes with fewer heart events (Kodama 2009, in this graph)." : "" },
+  { k: "family", q: "A heart attack or stroke in a parent or sibling at a young age (men under 55, women under 65)?", opts: [["no", "No"], ["yes", "Yes"], ["unsure", "Not sure"]],
+    note: a => a === "yes" ? "A risk modifier in the ESC 2021 prevention guideline; with a raised LDL also a reason to ask about familial hypercholesterolaemia and Lp(a)."
+      : a === "no" ? "Heart disease in parents only at an older age does not count as a family history in the ESC 2021 guideline; it is still worth telling your doctor." : "" },
+  { k: "statin", q: "Do you take, or did you take, a cholesterol-lowering medicine (a statin, for example)?", opts: [["no", "No"], ["now", "Yes, now"], ["before", "Earlier, not now"]],
+    note: a => a === "now" ? "Your recent lipid values then show the treatment, not your untreated level."
+      : a === "before" ? "Values from that time show the medicine's effect, likely your lowest ones; your newest values describe you without it. The graph cannot tell which values those are until the medication and its dates are in it." : "" },
+];
+const codeNode = new Map(DATA.nodes.filter(n => n.g === "LoincCode").map(n => [loincOf(n), n]));
+const KEY_TESTS = [
+  ["ApoB", ["1884-6"], "counts the atherogenic particles"], ["Lp(a)", ["10835-7"], "once in life is enough"],
+  ["Urine albumin/creatinine", ["9318-7", "14959-1"], "KDIGO reads it with eGFR"], ["HbA1c", ["4548-4", "59261-8"], ""],
+  ["Glucose", ["1558-6", "2345-7"], ""], ["Creatinine", ["2160-0"], ""], ["GGT", ["2324-2"], ""], ["Blood pressure", ["8480-6"], ""],
+];
+function gaps() {
+  return KEY_TESTS.map(([name, codes, why]) => {
+    const vs = codes.map(c => codeNode.get(c)).filter(Boolean).flatMap(c => nb(c, ["CODED_BY"]))
+      .filter(o => o.g === "Lab value" && o.dt).sort((a, b) => b.dt.localeCompare(a.dt));
+    if (name === "Lp(a)" && vs.length) return null;  // once in life
+    return !vs.length ? { name, why, text: "not measured yet" } : ageY(vs[0].dt) > 2 ? { name, why, text: `last ${ago(vs[0].dt)}` } : null;
+  }).filter(Boolean);
+}
+function olderSources() {
+  const seen = new Set();
+  return RANKED.flatMap(n => n.st.rows).filter(r => {
+    const b = r.b, k = component(r.c);
+    if (!b || b.lab || seen.has(k) || !((b.y && TODAY_YEAR - b.y >= 10) || b.until)) return false;
+    seen.add(k);
+    return true;
+  });
+}
+
+function showOverview() {
+  const el = document.getElementById("detail");
+  if (overviewClosed) { el.style.display = "none"; return; }
+  const main = RANKED.find(n => n.st.status === "main");
+  let html = `<button class="close" aria-label="Close">×</button><div class="kicker">Your risk overview</div>` +
+    `<h3>${main ? `Main risk: ${esc(main.n)}` : "No risk stands out in your recent values"}</h3>`;
+  if (main) {
+    const drivers = main.st.rows.filter(r => r.off).sort((a, b) => b.w - a.w).slice(0, 4).map(r => short(component(r.c)));
+    if (drivers.length) html += `<div class="hint" style="margin-top:2px">Driven by ${esc(drivers.join(", "))}.</div>`;
+  }
+  html += `<div class="callout"><b>Not a diagnosis.</b> The risks are conditions the knowledge layer tracks for everyone. ` +
+    `This ranks them by your newest values outside their range and by published scores. A value counts half after one year, ` +
+    `so old values weigh less; in the view they sit further back and are smaller. What to do is a question for your doctor.</div>`;
+  RANKED.forEach(n => {
+    const st = n.st, S = STATUS[st.status], off = st.rows.filter(r => r.off);
+    html += `<div class="risk ${st.status}"><button class="head" data-id="${n.id}">${dotHtml(S.color)}${esc(n.n)}<span class="chip ${st.status}">${S.label}</span></button>`;
+    if (st.rows.length) {
+      const newest = st.rows[0].o.dt;
+      html += `<div class="hint" style="margin-top:4px">${st.rows.length} marker${st.rows.length > 1 ? "s" : ""} with a value · ` +
+        `${off.length ? off.length + " outside the range" : "none outside the range"} · newest ${esc(ago(newest))}</div>`;
+      off.sort((a, b) => b.w - a.w).slice(0, st.status === "main" ? 6 : 3).forEach(r => html += offRow(r));
+    } else html += `<div class="hint" style="margin-top:4px">No value of yours on its markers yet.</div>`;
+    st.scores.forEach(x => html += scoreRow(x));
+    html += `</div>`;
+  });
+  if (RANKED.some(n => n.rid === "cardiovascular" && n.st.rows.length)) {
+    html += `<div class="rel">Beyond LDL: what newer studies add</div><div class="hint" style="margin-top:0">` +
+      `LDL cholesterol causes atherosclerosis (EAS consensus 2017) and stays the first target in the ESC/EAS 2025 update. ` +
+      `Newer markers add to it, they do not replace it: ApoB counts the atherogenic particles and says more when triglycerides are high; ` +
+      `the triglyceride/HDL ratio and the atherogenic index of plasma point to insulin resistance; remnant cholesterol to triglyceride-rich particles. ` +
+      `No guideline ranks a ratio of LDL to triglycerides above LDL; the ratio with evidence is triglycerides to HDL. A high HDL is no protection on its own.</div>`;
+    BEYOND_LDL.map(id => studyById.get(id)).filter(Boolean).forEach(st =>
+      html += `<button class="nb inset" data-id="${st.id}">${dotHtml(COLOR[st.g])}${esc(st.n)}</button>`);
+  }
+  const older = olderSources();
+  if (older.length) {
+    html += `<div class="rel">Read critically: older sources behind your values</div>`;
+    older.forEach(r => {
+      const newer = studyById.get(NEWER[loincOf(r.c)]);
+      html += `<div class="hint" style="margin-top:4px"><b>${esc(component(r.c))}</b> (${esc(ago(r.o.dt))}): ${esc(r.b.label)}` +
+        (r.b.y ? `, a source from ${r.b.y}` : "") + `.` +
+        (newer ? ` Newer: ${esc(newer.n)} sets no target level and advises against routine testing in healthy adults under 75.` : "") + `</div>`;
+      if (newer) html += `<button class="nb inset" data-id="${newer.id}">${dotHtml(COLOR[newer.g])}${esc(newer.n)}</button>`;
+    });
+  }
+  html += `<div class="rel">What the graph cannot know</div><div class="hint" style="margin-top:0">` +
+    `Your answers change the scores and the notes here. They stay in this page and are gone when you close it.</div>`;
+  QUESTIONS.forEach(({ k, q, opts, note }) => {
+    html += `<div class="q">${esc(q)}<div class="opts">` + opts.map(([v, l]) =>
+      `<button data-q="${k}" data-v="${v}" aria-pressed="${HABITS[k] === v}">${esc(l)}</button>`).join("") + `</div>` +
+      (HABITS[k] && note(HABITS[k]) ? `<div class="note">${esc(note(HABITS[k]))}</div>` : "") + `</div>`;
+  });
+  const g = gaps();
+  if (g.length) {
+    html += `<div class="rel">Missing or older than two years</div>`;
+    g.forEach(x => html += `<div class="hint" style="margin-top:2px">${esc(x.name)}: ${esc(x.text)}${x.why ? ` <span class="age">(${esc(x.why)})</span>` : ""}</div>`);
+  }
+  html += `<p class="hint">In Claude, with Klarbefund connected: ask “Where are my risks?” or “My cholesterol, with the newer markers”.</p>`;
+  el.innerHTML = html;
+  el.style.display = "block";
+  el.querySelector(".close").onclick = () => { overviewClosed = true; el.style.display = "none"; };
+  el.querySelectorAll(".nb, .risk .head").forEach(b => b.onclick = () => focusNode(nodeById(b.dataset.id)));
+  el.querySelectorAll(".q button").forEach(b => b.onclick = () => {
+    const k = b.dataset.q;
+    HABITS[k] = HABITS[k] === b.dataset.v ? undefined : b.dataset.v;
+    const top = el.scrollTop;
+    computeStandings(); refresh(); buildLabels(Graph.graphData().nodes); updateCaption();
+    if (!drill.length && stage === 0) document.getElementById("stepHint").textContent = STAGES[0].hint;
+    showOverview();
+    el.scrollTop = top;
+  });
 }
 
 function showDetail(n) {
@@ -624,10 +876,10 @@ function bandFor(code, s) {
   // Today's edition first; a superseded range only when nothing replaced it, and then labelled so.
   const current = rs.filter(r => !r.until), pool = current.length ? current : rs;
   const g = pool.find(r => DATA.sex && r.sex === DATA.sex) || pool.find(r => r.sex === "any");
-  if (g) return { lo: g.gl, hi: g.gh, olo: g.ol, ohi: g.oh, fill: BAND,
+  if (g) return { lo: g.gl, hi: g.gh, olo: g.ol, ohi: g.oh, fill: BAND, y: g.y, until: g.until,
     label: (g.until ? `Former guideline range, superseded on ${g.until}` : "Guideline range") + (g.src ? ` (${g.src})` : "") };
   const last = [...s.pts].reverse().find(p => p.o.rl != null || p.o.rh != null);
-  if (last) return { lo: last.o.rl, hi: last.o.rh, label: "Range printed by the lab", fill: LABBAND };
+  if (last) return { lo: last.o.rl, hi: last.o.rh, label: "Range printed by the lab", fill: LABBAND, lab: true };
   return null;
 }
 
@@ -762,10 +1014,16 @@ let labelled = [];
 function buildLabels(nodes) {
   labelsEl.innerHTML = "";
   labelled = [];
-  // The years of the time spiral, always.
+  // The years of the time spiral, always; without a spiral, how far back a value sits.
   spiralMarks.forEach(m => {
     const d = document.createElement("div");
     d.className = "year"; d.textContent = m.label;
+    labelsEl.appendChild(d); labelled.push([m, d]);
+  });
+  makeDepthMarks(nodes);
+  depthMarks.forEach(m => {
+    const d = document.createElement("div");
+    d.className = "depth"; d.textContent = m.label;
     labelsEl.appendChild(d); labelled.push([m, d]);
   });
   if (nodes.length > 200) return;
@@ -778,14 +1036,35 @@ function buildLabels(nodes) {
     if (n.g === "Topic" && !top && stage !== 1) return;
     if (n.g === "Lab value" && !(allValues || n.cur || n.out)) return;
     const d = document.createElement("div");
-    d.textContent = n.g === "Lab value" ? `${n.val || ""}${n.dt ? " · " + n.dt.slice(0, 7) : ""}` : short(n.n);
+    d.textContent = n.g === "Lab value" ? `${n.val || ""}${n.dt ? " · " + n.dt.slice(0, 7) : ""}`
+      : n.g === "HealthRisk" && n.st && !top ? `${short(n.n)} · ${STATUS[n.st.status].short}` : short(n.n);
     if (n.out) d.style.color = "#F7C1C1";
+    if (n.g === "HealthRisk" && n.st && n.st.status === "main" && !top) { d.style.color = "#F7C1C1"; d.style.fontWeight = "600"; d.style.fontSize = "13px"; }
+    if (isDated(n)) d.style.opacity = (0.35 + 0.65 * recency(n)).toFixed(2);
     if (n === top) d.style.fontWeight = "600";
     labelsEl.appendChild(d);
     labelled.push([n, d]);
   });
 }
+// Without a spiral, labels at the depth of now, one year ago, two years ago, left of what is shown.
+let depthMarks = [], frame = 0;
+function makeDepthMarks(nodes) {
+  depthMarks = [];
+  if (spiralMarks.length) return;
+  const ages = nodes.filter(n => isDated(n) && n.dt).map(n => ageY(n.dt)).filter(a => !isNaN(a));
+  if (ages.length < 2) return;
+  const max = Math.min(Math.ceil(Math.max(...ages)), 8);
+  if (drill.length) return;  // in a drill-down the depth is relative to the node in focus: no absolute years
+  for (let k = 0; k <= max; k++) depthMarks.push({ z: -DEPTH * k, label: k === 0 ? "now" : k === 1 ? "1 year ago" : `${k} years ago` });
+}
+function placeDepthMarks() {
+  const ns = Graph.graphData().nodes.filter(n => n.x !== undefined);
+  if (!ns.length || !depthMarks.length) return;
+  const x = Math.min(...ns.map(n => n.x)) - 30, y = Math.max(...ns.map(n => n.y)) + 20;
+  depthMarks.forEach(m => { m.x = x; m.y = y; });
+}
 (function tickLabels() {
+  if (++frame % 15 === 0) placeDepthMarks();
   if (labelled.length) {
     const cam = Graph.camera(), e = cam.matrixWorld.elements, p = cam.position;
     labelled.forEach(([n, d]) => {
@@ -835,7 +1114,7 @@ function setStage(i, fit = true) {
   stage = i;
   drill.forEach(unpin);
   drill = []; views = []; selected = null; hlLinks = new Set();
-  document.getElementById("detail").style.display = "none";
+  showOverview();
   renderHistory();
   Graph.warmupTicks(40).cooldownTicks(220);
   Object.keys(VISIBLE).forEach(g => VISIBLE[g] = true);
@@ -850,6 +1129,7 @@ function setStage(i, fit = true) {
 }
 document.getElementById("next").onclick = () => setStage((stage + 1) % STAGES.length);
 document.getElementById("fit").onclick = () => Graph.zoomToFit(800, 40);
+document.getElementById("ovbtn").onclick = () => { overviewClosed = false; if (drill.length) goTo(0); else showOverview(); };
 
 const q = document.getElementById("q"), hits = document.getElementById("hits");
 q.addEventListener("input", () => {
@@ -867,6 +1147,10 @@ q.addEventListener("input", () => {
   if (!found.length) hits.innerHTML = `<div class="hint">No match.</div>`;
 });
 
+computeStandings();
+// Start a little from the side and above: time runs into the depth, so straight on
+// the years would stack behind each other. Fitting keeps this direction.
+Graph.cameraPosition({ x: 520, y: 300, z: 860 });
 setStage(0);
 // After a layout settles: frame it, then take the thumbnail of where you are.
 Graph.onEngineStop(() => {

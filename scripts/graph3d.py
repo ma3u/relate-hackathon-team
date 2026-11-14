@@ -13,6 +13,7 @@ write it only into the encrypted vault; this script refuses to write into the
 repository.
 """
 import argparse
+import dataclasses
 import json
 import os
 import shutil
@@ -20,6 +21,7 @@ import subprocess
 import sys
 import tempfile
 from collections import Counter
+from datetime import date
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -129,7 +131,9 @@ def build(nodes_in, links_in):
 
     # The first view shows the health risks: the risks and scores, their marker
     # codes, and the latest lab value on each marker.
-    markers = {r["t"] for r in links_in if r["type"] in ("MARKER_OF", "USES")}
+    # (LoincCode)-[:MARKER_OF]->(HealthRisk) and (RiskScore)-[:USES]->(LoincCode): the code is the source of one
+    # and the target of the other.
+    markers = {r["s"] for r in links_in if r["type"] == "MARKER_OF"} | {r["t"] for r in links_in if r["type"] == "USES"}
     latest = {}  # LoincCode id -> newest lab Observation (duplicates count once)
     for r in links_in:
         if r["type"] != "CODED_BY" or r["t"] not in markers:
@@ -173,15 +177,19 @@ def build(nodes_in, links_in):
                     node["rl"] = p["referenceLow"]
                 if p.get("referenceHigh") is not None:
                     node["rh"] = p["referenceHigh"]
+        if r["label"] == "HealthRisk":
+            node["rid"] = p.get("id")
         if r["label"] == "Study":
             node["sid"] = p.get("id")
+            node["year"] = p.get("year")
             node["topics"] = p.get("topics") or []
             node["url"] = p.get("url")
             node["pubmed"] = p.get("pubmedUrl")
         if r["label"] == "ReferenceRange":
             node["r"] = {k: p.get(f) for k, f in (("gl", "guidelineLow"), ("gh", "guidelineHigh"), ("ol", "optimalLow"),
                                                    ("oh", "optimalHigh"), ("u", "ucum"), ("sex", "sex"), ("src", "sourceLabel"),
-                                                   ("from", "validFrom"), ("until", "validUntil"))
+                                                   ("from", "validFrom"), ("until", "validUntil"), ("y", "sourceYear"),
+                                                   ("by", "supersededBy"))
                          if p.get(f) is not None}
         if r["id"] in markers:
             node["mk"] = 1
@@ -206,18 +214,27 @@ def build(nodes_in, links_in):
 
 def seed_knowledge(db):
     """Brings the copy's knowledge layer up to date (studies, risk links), so the view shows the newest
-    facts even before the app that wrote the store has seeded them. Only the copy is written."""
+    facts even before the app that wrote the store has seeded them. Only the copy is written.
+
+    Also computes the published scores (SCORE2, eGFR, FIB-4, TyG, the lipids beyond LDL) with the shared
+    engine in health_graph/risk.py, once for a non-smoker and once for a smoker: the page asks."""
     try:
         sys.path.insert(0, str(ROOT))
-        from health_graph import knowledge, store
+        from health_graph import knowledge, risk, store
     except ImportError as e:  # relate-db not installed for this Python
         print(f"graph3d: knowledge layer left as stored ({e}); run with the repo's .venv to refresh it",
               file=sys.stderr)
-        return
+        return {}
     conn = store.connect(str(db))
     try:
         if counts := knowledge.seed(conn):
             print(f"graph3d: refreshed the knowledge layer in the copy: {counts}", file=sys.stderr)
+        p = next(iter(conn.execute("MATCH (p:Patient) RETURN p.birthYear AS y, p.gender AS g")), None)
+        birth, sex = (p["y"], p["g"]) if p else (None, None)
+        age = risk.TODAY.year - birth if birth else None
+        return {"birthYear": birth, "age": age, "gender": sex, "region": "moderate",
+                "scores": {k: [dataclasses.asdict(x) for x in risk.compute_scores(conn, age, sex, smoker, "moderate")]
+                           for k, smoker in (("nonsmoker", False), ("smoker", True))}}
     finally:
         conn.close()
 
@@ -240,12 +257,15 @@ def main():
         db = Path(tmp) / "store.rl"
         src = Path(a.db).expanduser()
         (shutil.copytree if src.is_dir() else shutil.copy2)(src, db)
-        seed_knowledge(db)
+        personal = seed_knowledge(db)
         nodes = query(a.relate, db, "MATCH (n) RETURN id(n) AS id, labels(n)[0] AS label, properties(n) AS p")
         links = query(a.relate, db, "MATCH (a)-[r]->(b) RETURN id(a) AS s, id(b) AS t, type(r) AS type, "
                                     "CASE WHEN type(r) = 'RAISES_RISK_OF' THEN properties(r) END AS p")
 
     data = build(nodes, links)
+    data.update(personal)
+    data["sex"] = data["sex"] or personal.get("gender")
+    data["today"] = date.today().isoformat()
     page = TEMPLATE.read_text().replace(
         "/*DATA*/null", json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/"))
     out.write_text(page)

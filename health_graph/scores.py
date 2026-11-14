@@ -51,6 +51,8 @@ class Score:
     light: str | None = None    # GREEN / AMBER / RED, from the same published categories
     id: str | None = None       # the RiskScore node it belongs to, when there is one
     observations: list[str] = field(default_factory=list)  # resourceIds of the values used
+    risk: str | None = None     # the HealthRisk it speaks to, when there is one
+    date: str | None = None     # the oldest input's date: how current the result is
 
 
 # ── kidney: CKD-EPI 2021 (race-free) ─────────────────────────────────────────
@@ -216,6 +218,68 @@ def non_hdl_light(mmol: float, goal: float) -> tuple[str, str]:
     if mmol < 5.7:
         return AMBER, f"above the ESC/EAS goal of {goal} mmol/L"
     return RED, "5.7 mmol/L or more (≈ LDL 4.9, high risk on its own, ESC/EAS 2019)"
+
+
+def ldl_goal(score2_band: str | None) -> float:
+    """ESC/EAS 2019 LDL cholesterol goals (mmol/L) by risk category, kept in the 2025 focused update.
+    SCORE2's 'low to moderate' maps to the moderate goal."""
+    return {"very high": 1.4, "high": 1.8}.get(score2_band or "", 2.6)
+
+
+def apob_goal(score2_band: str | None) -> float:
+    """ESC/EAS 2019 ApoB goals (mg/dL) by risk category: 65 very high, 80 high, 100 moderate."""
+    return {"very high": 65.0, "high": 80.0}.get(score2_band or "", 100.0)
+
+
+def goal_light(value: float, goal: float, unit: str, source: str) -> tuple[str, str]:
+    """Green below an ESC/EAS goal, amber at or above it."""
+    if value < goal:
+        return GREEN, f"below the {source} goal of {goal:g} {unit}"
+    return AMBER, f"at or above the {source} goal of {goal:g} {unit}"
+
+
+# ── lipids beyond LDL ────────────────────────────────────────────────────────
+# Computed only from values of one and the same day, in mmol/L.
+def tg_hdl_ratio(tg_mmol: float, hdl_mmol: float) -> float:
+    """Triglycerides over HDL cholesterol, in mmol/L units (multiply by 2.29 for mg/dL units)."""
+    return tg_mmol / hdl_mmol
+
+
+def tg_hdl_light(ratio_mmol: float) -> tuple[str, str]:
+    """McLaughlin et al., Ann Intern Med 2003;139:802: insulin resistance in overweight adults from 3.0 in
+    mg/dL units. The paper also prints 1.8 for SI units, which does not convert to 3.0 (3.0 is 1.31 in mmol/L
+    units): the stricter 3.0 is used. A marker, not a diagnosis; cut-offs differ by sex and group."""
+    mg = ratio_mmol * TG_MG_PER_MMOL / CHOL_MG_PER_MMOL
+    if mg < 3.0:
+        return GREEN, f"{mg:.1f} in mg/dL units, below the 3.0 of McLaughlin 2003"
+    return AMBER, f"{mg:.1f} in mg/dL units, at or above the insulin-resistance cut-off of 3.0 (McLaughlin 2003)"
+
+
+def aip(tg_mmol: float, hdl_mmol: float) -> float:
+    """Atherogenic index of plasma: log10(TG/HDL), both in mmol/L (Dobiášová and Frohlich, 2001)."""
+    return math.log10(tg_mmol / hdl_mmol)
+
+
+def aip_band(value: float) -> str:
+    """No guideline cut-off: 0.11 and 0.21 are the commonly used ones (Dobiášová 2001); a 2025
+    meta-analysis (Assempoor et al.) found the optimal cut-off still open."""
+    if value < 0.11:
+        return "below 0.11 (common cut-off, not a guideline one)"
+    if value <= 0.21:
+        return "0.11 to 0.21 (common cut-offs, not guideline ones)"
+    return "above 0.21 (common cut-off, not a guideline one)"
+
+
+def remnant_cholesterol(tc_mmol: float, ldl_mmol: float, hdl_mmol: float) -> float:
+    """Total minus LDL minus HDL cholesterol, mmol/L: the cholesterol in triglyceride-rich particles."""
+    return tc_mmol - ldl_mmol - hdl_mmol
+
+
+def remnant_light(mmol: float) -> tuple[str, str]:
+    """EAS/EFLM 2016 (Nordestgaard et al.) flags calculated remnant cholesterol from 0.9 mmol/L."""
+    if mmol < 0.9:
+        return GREEN, "below 0.9 mmol/L, the EAS/EFLM 2016 flag"
+    return AMBER, "0.9 mmol/L or more, flagged by EAS/EFLM 2016"
 
 
 def range_light(value: float, low: float | None, high: float | None) -> str | None:

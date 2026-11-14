@@ -3,10 +3,48 @@
 // swiftlint:disable line_length
 
 enum KnowledgeData {
-  static let fingerprint = "8355cefd52d9c2f9"
+  static let fingerprint = "b74725086fbbd061"
   static let rangesSource = "services/epa-ingest/src/reference-ranges.ts (MinimumViableHealthDataspacev2)"
   static let json = #"""
   {
+   "about": [
+    {
+     "risk": "cardiovascular",
+     "study": "esc-eas-2025-lipids"
+    },
+    {
+     "risk": "cardiovascular",
+     "study": "eas-2017-ldl"
+    },
+    {
+     "risk": "cardiovascular",
+     "study": "sniderman-2019-apob"
+    },
+    {
+     "risk": "cardiovascular",
+     "study": "balling-2025-remnant"
+    },
+    {
+     "risk": "cardiovascular",
+     "study": "assempoor-2025-aip"
+    },
+    {
+     "risk": "cardiovascular",
+     "study": "voight-2012-hdl"
+    },
+    {
+     "risk": "bone",
+     "study": "demay-2024-vitd"
+    },
+    {
+     "risk": "diabetes",
+     "study": "mclaughlin-2003-tg-hdl"
+    },
+    {
+     "risk": "cardiovascular",
+     "study": "pmid-27122601"
+    }
+   ],
    "citations": [
     {
      "from": "easl-2024-masld",
@@ -414,6 +452,236 @@ enum KnowledgeData {
      "code": "94122-9",
      "name": null,
      "study": "kodama-2009"
+    },
+    {
+     "code": "22748-8",
+     "name": null,
+     "study": "esc-eas-2025-lipids"
+    },
+    {
+     "code": "13457-7",
+     "name": null,
+     "study": "esc-eas-2025-lipids"
+    },
+    {
+     "code": "18262-6",
+     "name": null,
+     "study": "esc-eas-2025-lipids"
+    },
+    {
+     "code": "2089-1",
+     "name": null,
+     "study": "esc-eas-2025-lipids"
+    },
+    {
+     "code": "70204-3",
+     "name": null,
+     "study": "esc-eas-2025-lipids"
+    },
+    {
+     "code": "43396-1",
+     "name": null,
+     "study": "esc-eas-2025-lipids"
+    },
+    {
+     "code": "1884-6",
+     "name": null,
+     "study": "esc-eas-2025-lipids"
+    },
+    {
+     "code": "10835-7",
+     "name": null,
+     "study": "esc-eas-2025-lipids"
+    },
+    {
+     "code": "14927-8",
+     "name": null,
+     "study": "esc-eas-2025-lipids"
+    },
+    {
+     "code": "2571-8",
+     "name": null,
+     "study": "esc-eas-2025-lipids"
+    },
+    {
+     "code": "22748-8",
+     "name": null,
+     "study": "eas-2017-ldl"
+    },
+    {
+     "code": "13457-7",
+     "name": null,
+     "study": "eas-2017-ldl"
+    },
+    {
+     "code": "18262-6",
+     "name": null,
+     "study": "eas-2017-ldl"
+    },
+    {
+     "code": "2089-1",
+     "name": null,
+     "study": "eas-2017-ldl"
+    },
+    {
+     "code": "1884-6",
+     "name": null,
+     "study": "sniderman-2019-apob"
+    },
+    {
+     "code": "22748-8",
+     "name": null,
+     "study": "sniderman-2019-apob"
+    },
+    {
+     "code": "13457-7",
+     "name": null,
+     "study": "sniderman-2019-apob"
+    },
+    {
+     "code": "18262-6",
+     "name": null,
+     "study": "sniderman-2019-apob"
+    },
+    {
+     "code": "2089-1",
+     "name": null,
+     "study": "sniderman-2019-apob"
+    },
+    {
+     "code": "70204-3",
+     "name": null,
+     "study": "sniderman-2019-apob"
+    },
+    {
+     "code": "43396-1",
+     "name": null,
+     "study": "sniderman-2019-apob"
+    },
+    {
+     "code": "14647-2",
+     "name": null,
+     "study": "balling-2025-remnant"
+    },
+    {
+     "code": "2093-3",
+     "name": null,
+     "study": "balling-2025-remnant"
+    },
+    {
+     "code": "22748-8",
+     "name": null,
+     "study": "balling-2025-remnant"
+    },
+    {
+     "code": "13457-7",
+     "name": null,
+     "study": "balling-2025-remnant"
+    },
+    {
+     "code": "18262-6",
+     "name": null,
+     "study": "balling-2025-remnant"
+    },
+    {
+     "code": "2089-1",
+     "name": null,
+     "study": "balling-2025-remnant"
+    },
+    {
+     "code": "14646-4",
+     "name": null,
+     "study": "balling-2025-remnant"
+    },
+    {
+     "code": "2085-9",
+     "name": null,
+     "study": "balling-2025-remnant"
+    },
+    {
+     "code": "14927-8",
+     "name": null,
+     "study": "balling-2025-remnant"
+    },
+    {
+     "code": "2571-8",
+     "name": null,
+     "study": "balling-2025-remnant"
+    },
+    {
+     "code": "14927-8",
+     "name": null,
+     "study": "assempoor-2025-aip"
+    },
+    {
+     "code": "2571-8",
+     "name": null,
+     "study": "assempoor-2025-aip"
+    },
+    {
+     "code": "14646-4",
+     "name": null,
+     "study": "assempoor-2025-aip"
+    },
+    {
+     "code": "2085-9",
+     "name": null,
+     "study": "assempoor-2025-aip"
+    },
+    {
+     "code": "14927-8",
+     "name": null,
+     "study": "mclaughlin-2003-tg-hdl"
+    },
+    {
+     "code": "2571-8",
+     "name": null,
+     "study": "mclaughlin-2003-tg-hdl"
+    },
+    {
+     "code": "14646-4",
+     "name": null,
+     "study": "mclaughlin-2003-tg-hdl"
+    },
+    {
+     "code": "2085-9",
+     "name": null,
+     "study": "mclaughlin-2003-tg-hdl"
+    },
+    {
+     "code": "2345-7",
+     "name": null,
+     "study": "mclaughlin-2003-tg-hdl"
+    },
+    {
+     "code": "1558-6",
+     "name": null,
+     "study": "mclaughlin-2003-tg-hdl"
+    },
+    {
+     "code": "14646-4",
+     "name": null,
+     "study": "voight-2012-hdl"
+    },
+    {
+     "code": "2085-9",
+     "name": null,
+     "study": "voight-2012-hdl"
+    },
+    {
+     "code": "62292-8",
+     "name": null,
+     "study": "demay-2024-vitd"
+    },
+    {
+     "code": "68438-1",
+     "name": null,
+     "study": "demay-2024-vitd"
+    },
+    {
+     "code": "1989-3",
+     "name": null,
+     "study": "demay-2024-vitd"
     }
    ],
    "informs": [
@@ -5743,6 +6011,120 @@ enum KnowledgeData {
      ],
      "url": "https://doi.org/10.1001/jama.2009.681",
      "year": 2009
+    },
+    {
+     "citation": "Mach et al., Eur Heart J 2025;46:4359",
+     "design": "clinical practice guideline (focused update)",
+     "id": "esc-eas-2025-lipids",
+     "kind": "guideline",
+     "pmid": "40878289",
+     "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/40878289/",
+     "title": "2025 Focused Update of the 2019 ESC/EAS Guidelines for the management of dyslipidaemias",
+     "topics": [
+      "Heart and vessels"
+     ],
+     "url": "https://doi.org/10.1093/eurheartj/ehaf190",
+     "year": 2025
+    },
+    {
+     "citation": "Ference et al., Eur Heart J 2017;38:2459",
+     "design": "consensus statement (European Atherosclerosis Society)",
+     "id": "eas-2017-ldl",
+     "kind": "guideline",
+     "pmid": "28444290",
+     "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/28444290/",
+     "title": "Low-density lipoproteins cause atherosclerotic cardiovascular disease: evidence from genetic, epidemiologic, and clinical studies",
+     "topics": [
+      "Heart and vessels"
+     ],
+     "url": "https://doi.org/10.1093/eurheartj/ehx144",
+     "year": 2017
+    },
+    {
+     "citation": "Sniderman et al., JAMA Cardiol 2019;4:1287",
+     "design": "narrative review",
+     "id": "sniderman-2019-apob",
+     "kind": "study",
+     "pmid": "31642874",
+     "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/31642874/",
+     "title": "Apolipoprotein B particles and cardiovascular disease: a narrative review",
+     "topics": [
+      "Heart and vessels"
+     ],
+     "url": "https://doi.org/10.1001/jamacardio.2019.3780",
+     "year": 2019
+    },
+    {
+     "citation": "Balling et al., Clin Chem 2025;71:451",
+     "design": "review of observational and genetic studies",
+     "id": "balling-2025-remnant",
+     "kind": "study",
+     "pmid": "39723642",
+     "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/39723642/",
+     "title": "Remnant cholesterol: quantification, concentrations by sex and age, and risk of ischemic heart disease",
+     "topics": [
+      "Heart and vessels"
+     ],
+     "url": "https://doi.org/10.1093/clinchem/hvae217",
+     "year": 2025
+    },
+    {
+     "citation": "Assempoor et al., Cardiovasc Diabetol 2025;24:35",
+     "design": "systematic review and meta-analysis, 51 observational studies",
+     "id": "assempoor-2025-aip",
+     "kind": "study",
+     "pmid": "39844262",
+     "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/39844262/",
+     "title": "Atherogenic index of plasma and coronary artery disease: a systematic review and meta-analysis",
+     "topics": [
+      "Heart and vessels",
+      "Metabolism"
+     ],
+     "url": "https://doi.org/10.1186/s12933-025-02582-2",
+     "year": 2025
+    },
+    {
+     "citation": "McLaughlin et al., Ann Intern Med 2003;139:802",
+     "design": "cross-sectional study, 258 overweight adults",
+     "id": "mclaughlin-2003-tg-hdl",
+     "kind": "study",
+     "pmid": "14623617",
+     "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/14623617/",
+     "title": "Use of metabolic markers to identify overweight individuals who are insulin resistant",
+     "topics": [
+      "Metabolism"
+     ],
+     "url": "https://doi.org/10.7326/0003-4819-139-10-200311180-00007",
+     "year": 2003
+    },
+    {
+     "citation": "Voight et al., Lancet 2012;380:572",
+     "design": "Mendelian randomisation study",
+     "id": "voight-2012-hdl",
+     "kind": "study",
+     "pmid": "22607825",
+     "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/22607825/",
+     "title": "Plasma HDL cholesterol and risk of myocardial infarction: a mendelian randomisation study",
+     "topics": [
+      "Heart and vessels"
+     ],
+     "url": "https://doi.org/10.1016/S0140-6736(12)60312-2",
+     "year": 2012
+    },
+    {
+     "citation": "Demay et al., J Clin Endocrinol Metab 2024;109:1907",
+     "design": "clinical practice guideline (Endocrine Society)",
+     "id": "demay-2024-vitd",
+     "kind": "guideline",
+     "pmid": "38828931",
+     "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/38828931/",
+     "title": "Vitamin D for the prevention of disease: an Endocrine Society clinical practice guideline",
+     "topics": [
+      "Vitamins",
+      "Bone"
+     ],
+     "url": "https://doi.org/10.1210/clinem/dgae290",
+     "year": 2024
     }
    ]
   }

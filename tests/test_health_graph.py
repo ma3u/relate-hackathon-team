@@ -301,7 +301,11 @@ def test_risk_links_name_their_studies(db):
     assert counts["studyMarkers"] == len(knowledge._examines_rows()) and counts["studyScores"] == 11
     assert counts["citations"] == len(knowledge.STUDY_CITATIONS)  # every cited id is a Study we seed
     kinds = {r["k"]: r["n"] for r in conn.execute("MATCH (s:Study) RETURN s.kind AS k, count(s) AS n")}
-    assert set(kinds) == {"study", "guideline"} and sum(kinds.values()) == 40
+    sources = {s["id"] for s in knowledge.STUDIES} | {s["id"] for s in knowledge._range_source_rows()}
+    assert set(kinds) == {"study", "guideline"} and sum(kinds.values()) == len(sources) == 48
+    assert counts["studyRisks"] == len(knowledge.STUDY_ABOUT)  # every id there is a Study we seed
+    newer = list(conn.execute("MATCH (s:Study {id: 'esc-eas-2025-lipids'})-[:ABOUT]->(h:HealthRisk) RETURN h.id AS h"))
+    assert [r["h"] for r in newer] == ["cardiovascular"]
     assert conn.execute("MATCH (s:Study) WHERE size(s.topics) = 0 RETURN count(s) AS n").single()["n"] == 0
     hba1c = list(conn.execute(QUERIES["evidence"][1], {"loinc": "4548-4"}))
     assert any(r["study"].startswith("SCORE2-Diabetes") and r["pubmed"].endswith("/37247330/") for r in hba1c)

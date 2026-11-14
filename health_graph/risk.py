@@ -118,7 +118,8 @@ def years_between(a: str, b: dt.date) -> float:
 # ── scores ───────────────────────────────────────────────────────────────────
 def compute_scores(conn, age, sex, smoker, region):
     out = []
-    need = "year of birth and sex (Klarbefund: Export to my Mac, Send year of birth and sex)"
+    need = ("year of birth and sex (Klarbefund build 16 or later: More, Profile; then More, Export to my Mac, "
+            "Send year of birth and sex)")
 
     creat = latest(series(conn, ["2160-0"], lambda r: scores.creatinine_mg_dl(r["value"], r["unit"])))
     if creat and age and sex:
@@ -127,10 +128,11 @@ def compute_scores(conn, age, sex, smoker, region):
                                 "Inker et al., NEJM 2021; KDIGO 2012 categories",
                                 {"creatinine": f"{creat[1]:.2f} mg/dL ({creat[0]})", "age": str(age), "sex": sex},
                                 note="albuminuria not measured; the KDIGO light assumes A1",
-                                light=scores.egfr_light(e), id="egfr", observations=[creat[6]]))
+                                light=scores.egfr_light(e), id="egfr", observations=[creat[6]],
+                                risk="kidney", date=creat[0]))
     else:
         out.append(scores.Score("eGFR (CKD-EPI 2021)", None, "", None, "Inker et al., NEJM 2021",
-                                note="needs creatinine and " + need))
+                                note="needs creatinine and " + need, risk="kidney"))
 
     ast = latest(marker_series(conn, "AST"))
     alt = latest(marker_series(conn, "ALT"))
@@ -142,10 +144,11 @@ def compute_scores(conn, age, sex, smoker, region):
                                 {"AST": f"{ast[1]:.0f} U/L ({ast[0]})", "ALT": f"{alt[1]:.0f} U/L ({alt[0]})",
                                  "platelets": f"{plt[1]:.0f} ×10⁹/L ({plt[0]})", "age": str(age)},
                                 light=scores.fib4_light(scores.fib4_band(f, age)), id="fib4",
-                                observations=[ast[6], alt[6], plt[6]]))
+                                observations=[ast[6], alt[6], plt[6]], risk="liver",
+                                date=min(ast[0], alt[0], plt[0])))
     else:
         out.append(scores.Score("FIB-4 (liver fibrosis)", None, "", None, "Sterling et al., Hepatology 2006",
-                                note="needs AST, ALT, platelets and " + need))
+                                note="needs AST, ALT, platelets and " + need, risk="liver"))
 
     tc = latest(marker_series(conn, "Total cholesterol"))
     hdl = latest(marker_series(conn, "HDL cholesterol"))
@@ -161,13 +164,14 @@ def compute_scores(conn, age, sex, smoker, region):
                                  "smoking": "yes" if smoker else "no", "age": str(age), "sex": sex},
                                 note=f"cholesterol is {stale:.1f} years old" if stale > 1 else None,
                                 light=scores.score2_light(scores.score2_band(r, age)), id="score2",
-                                observations=[tc[6], hdl[6], sbp[6]]))
+                                observations=[tc[6], hdl[6], sbp[6]], risk="cardiovascular",
+                                date=min(tc[0], hdl[0], sbp[0])))
         risk_band = scores.score2_band(r, age)
     else:
         why = "SCORE2 covers ages 40 to 69" if age and not 40 <= age <= 69 else \
             "needs systolic BP, total and HDL cholesterol and " + need
         out.append(scores.Score("SCORE2 (10-year cardiovascular risk)", None, "%", None,
-                                "SCORE2 working group, Eur Heart J 2021", note=why))
+                                "SCORE2 working group, Eur Heart J 2021", note=why, risk="cardiovascular"))
         risk_band = None
 
     tg =latest(marker_series(conn, "Triglycerides"))
@@ -179,30 +183,33 @@ def compute_scores(conn, age, sex, smoker, region):
                                 {"triglycerides": f"{tg[1]:.2f} mmol/L ({tg[0]})",
                                  "fasting glucose": f"{fpg[1]:.0f} mg/dL ({fpg[0]})"},
                                 note="no universal cut-off; around 8.5 to 8.8 is used in several cohorts",
-                                id="tyg", observations=[tg[6], fpg[6]]))
+                                id="tyg", observations=[tg[6], fpg[6]], risk="diabetes",
+                                date=min(tg[0], fpg[0])))
     if tc and hdl:
         goal = scores.non_hdl_goal(risk_band)
         light, band = scores.non_hdl_light(tc[1] - hdl[1], goal)
         out.append(scores.Score("Non-HDL cholesterol", tc[1] - hdl[1], "mmol/L", band,
                                 "ESC/EAS 2019 dyslipidaemia guideline (goal by SCORE2 risk category)",
                                 {"total cholesterol": f"{tc[1]:.2f} ({tc[0]})", "HDL": f"{hdl[1]:.2f} ({hdl[0]})"},
-                                light=light))
+                                light=light, risk="cardiovascular", date=min(tc[0], hdl[0])))
+    out += lipids_beyond_ldl(conn, risk_band)
     lpa = latest(marker_series(conn, "Lp(a)"))
     if lpa:
         light, band = scores.lpa_light(lpa[1])
         out.append(scores.Score("Lp(a)", lpa[1], "mg/dL", band, "EAS consensus statement, Eur Heart J 2022",
                                 {"Lp(a)": f"{lpa[1]:g} mg/dL ({lpa[0]})"},
-                                note="largely inherited; one measurement in life is usually enough", light=light))
+                                note="largely inherited; one measurement in life is usually enough", light=light,
+                                risk="cardiovascular", date=lpa[0]))
     a1c = latest(marker_series(conn, "HbA1c"))
     if a1c:
         light, band = scores.hba1c_light(a1c[1])
         out.append(scores.Score("HbA1c", a1c[1], "%", band, "ADA Standards of Care 2024",
-                                {"HbA1c": f"{a1c[1]:g} % ({a1c[0]})"}, light=light))
+                                {"HbA1c": f"{a1c[1]:g} % ({a1c[0]})"}, light=light, risk="diabetes", date=a1c[0]))
     bmi = latest(series(conn, ["39156-5"]))
     if bmi:
         light, band = scores.bmi_light(bmi[1])
         out.append(scores.Score("BMI", bmi[1], "kg/m²", band, "WHO classification",
-                                {"BMI": f"{bmi[1]:.1f} ({bmi[0]})"}, light=light))
+                                {"BMI": f"{bmi[1]:.1f} ({bmi[0]})"}, light=light, date=bmi[0]))
     dbp = latest(series(conn, ["8462-4"]))
     if sbp:
         light, band = scores.bp_light(sbp[1], dbp[1] if dbp else None)
@@ -210,10 +217,74 @@ def compute_scores(conn, age, sex, smoker, region):
                                 "ESC 2024 guideline on elevated blood pressure and hypertension",
                                 {"systolic": f"{sbp[1]:.0f} mmHg ({sbp[0]})",
                                  **({"diastolic": f"{dbp[1]:.0f} mmHg ({dbp[0]})"} if dbp else {})},
-                                note="office measurement", light=light))
+                                note="office measurement", light=light, risk="cardiovascular", date=sbp[0]))
     return out
 
 
+
+
+def same_day(*serieses):
+    """The newest date on which every series has a value, with those points; None if there is none."""
+    by_date = [{p[0]: p for p in s} for s in serieses]
+    common = set(by_date[0]).intersection(*by_date[1:])
+    if not common:
+        return None
+    d = max(common)
+    return d, [b[d] for b in by_date]
+
+
+def lipids_beyond_ldl(conn, risk_band: str | None) -> list[scores.Score]:
+    """LDL against its goal, and what the newer markers add: ApoB, the TG/HDL ratio, the atherogenic
+    index of plasma and remnant cholesterol. Ratios only from values of one day."""
+    out = []
+    ldl_s, hdl_s = marker_series(conn, "LDL cholesterol"), marker_series(conn, "HDL cholesterol")
+    tg_s, tc_s = marker_series(conn, "Triglycerides"), marker_series(conn, "Total cholesterol")
+    category = f"goal for {'moderate' if risk_band in (None, 'low to moderate') else risk_band} risk"
+    if ldl := latest(ldl_s):
+        goal = scores.ldl_goal(risk_band)
+        light, band = scores.goal_light(ldl[1], goal, "mmol/L", "ESC/EAS")
+        out.append(scores.Score("LDL cholesterol", ldl[1], "mmol/L", band,
+                                f"ESC/EAS 2019 dyslipidaemia guideline and 2025 focused update ({category})",
+                                {"LDL": f"{ldl[1]:.2f} mmol/L ({ldl[0]})"},
+                                note="causal for atherosclerosis (EAS consensus 2017); the goal depends on the "
+                                     "overall risk, so it falls when SCORE2 rises",
+                                light=light, risk="cardiovascular", date=ldl[0], observations=[ldl[6]]))
+    if apob := latest(marker_series(conn, "ApoB")):
+        goal = scores.apob_goal(risk_band)
+        light, band = scores.goal_light(apob[1], goal, "mg/dL", "ESC/EAS")
+        out.append(scores.Score("ApoB", apob[1], "mg/dL", band,
+                                f"ESC/EAS 2019 dyslipidaemia guideline ({category}); Sniderman et al. 2019",
+                                {"ApoB": f"{apob[1]:g} mg/dL ({apob[0]})"},
+                                note="counts the atherogenic particles; the better single measure when "
+                                     "triglycerides are high", light=light, risk="cardiovascular",
+                                date=apob[0], observations=[apob[6]]))
+    if day := same_day(tg_s, hdl_s):
+        d, (tg, hdl) = day
+        ratio = scores.tg_hdl_ratio(tg[1], hdl[1])
+        light, band = scores.tg_hdl_light(ratio)
+        inputs = {"triglycerides": f"{tg[1]:.2f} mmol/L", "HDL": f"{hdl[1]:.2f} mmol/L", "date": d}
+        out.append(scores.Score("Triglyceride/HDL ratio", ratio, "(mmol/L units)", band,
+                                "McLaughlin et al., Ann Intern Med 2003", inputs,
+                                note="a sign of insulin resistance, not a diagnosis; cut-offs differ by sex and "
+                                     "group", light=light, risk="diabetes", date=d, observations=[tg[6], hdl[6]]))
+        value = scores.aip(tg[1], hdl[1])
+        out.append(scores.Score("Atherogenic index of plasma", value, "", scores.aip_band(value),
+                                "Dobiášová and Frohlich 2001; meta-analysis Assempoor et al., Cardiovasc Diabetol 2025",
+                                inputs, note="associated with coronary disease in observational studies; no "
+                                             "guideline cut-off", risk="cardiovascular", date=d,
+                                observations=[tg[6], hdl[6]]))
+    if day := same_day(tc_s, ldl_s, hdl_s):
+        d, (tc, ldl, hdl) = day
+        value = scores.remnant_cholesterol(tc[1], ldl[1], hdl[1])
+        light, band = scores.remnant_light(value)
+        out.append(scores.Score("Remnant cholesterol", value, "mmol/L", band,
+                                "EAS/EFLM 2016 (Nordestgaard et al.); Balling et al., Clin Chem 2025",
+                                {"total": f"{tc[1]:.2f}", "LDL": f"{ldl[1]:.2f}", "HDL": f"{hdl[1]:.2f} mmol/L",
+                                 "date": d},
+                                note="where the lab calculates LDL with the Friedewald formula this is just "
+                                     "triglycerides / 2.2", light=light, risk="cardiovascular", date=d,
+                                observations=[tc[6], ldl[6], hdl[6]]))
+    return out
 
 
 # ── values against the guideline range and the optimal band ─────────────────

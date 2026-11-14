@@ -303,6 +303,14 @@ enum Cypher {
   RETURN count(DISTINCT k) AS riskLinks
   """#
 
+  static let seedStudyRisks = #"""
+  UNWIND $about AS a
+  MATCH (st:Study {id: a.study})
+  MATCH (h:HealthRisk {id: a.risk})
+  MERGE (st)-[k:ABOUT]->(h)
+  RETURN count(k) AS studyRisks
+  """#
+
   static let seedVersion = #"""
   MERGE (k:Knowledge {id: 'health-graph'})
   SET k.fingerprint = $fingerprint, k.rangesSource = $rangesSource

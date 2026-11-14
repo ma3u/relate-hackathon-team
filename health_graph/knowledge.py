@@ -164,6 +164,59 @@ STUDIES = [
               "events in healthy men and women",
      "url": "https://doi.org/10.1001/jama.2009.681",
      "pmid": "19454641", "examines": ["94122-9"], "informs": []},
+    # Newer views on older statements: lipids beyond LDL, and vitamin D. Each speaks to a risk
+    # (STUDY_ABOUT) and carries its topic, as it links no two risks.
+    {"id": "esc-eas-2025-lipids", "year": 2025, "design": "clinical practice guideline (focused update)",
+     "citation": "Mach et al., Eur Heart J 2025;46:4359",
+     "title": "2025 Focused Update of the 2019 ESC/EAS Guidelines for the management of dyslipidaemias",
+     "url": "https://doi.org/10.1093/eurheartj/ehaf190",
+     "pmid": "40878289", "examines": LDL + NON_HDL + ["1884-6", "10835-7"] + TG, "informs": [],
+     "topics": ["Heart and vessels"]},
+    {"id": "eas-2017-ldl", "year": 2017, "design": "consensus statement (European Atherosclerosis Society)",
+     "citation": "Ference et al., Eur Heart J 2017;38:2459",
+     "title": "Low-density lipoproteins cause atherosclerotic cardiovascular disease: evidence from genetic, "
+              "epidemiologic, and clinical studies",
+     "url": "https://doi.org/10.1093/eurheartj/ehx144",
+     "pmid": "28444290", "examines": LDL, "informs": [], "topics": ["Heart and vessels"]},
+    {"id": "sniderman-2019-apob", "year": 2019, "design": "narrative review",
+     "citation": "Sniderman et al., JAMA Cardiol 2019;4:1287",
+     "title": "Apolipoprotein B particles and cardiovascular disease: a narrative review",
+     "url": "https://doi.org/10.1001/jamacardio.2019.3780",
+     "pmid": "31642874", "examines": ["1884-6"] + LDL + NON_HDL, "informs": [], "topics": ["Heart and vessels"]},
+    {"id": "balling-2025-remnant", "year": 2025, "design": "review of observational and genetic studies",
+     "citation": "Balling et al., Clin Chem 2025;71:451",
+     "title": "Remnant cholesterol: quantification, concentrations by sex and age, and risk of ischemic heart disease",
+     "url": "https://doi.org/10.1093/clinchem/hvae217",
+     "pmid": "39723642", "examines": TC + LDL + HDL + TG, "informs": [], "topics": ["Heart and vessels"]},
+    {"id": "assempoor-2025-aip", "year": 2025, "design": "systematic review and meta-analysis, 51 observational studies",
+     "citation": "Assempoor et al., Cardiovasc Diabetol 2025;24:35",
+     "title": "Atherogenic index of plasma and coronary artery disease: a systematic review and meta-analysis",
+     "url": "https://doi.org/10.1186/s12933-025-02582-2",
+     "pmid": "39844262", "examines": TG + HDL, "informs": [], "topics": ["Heart and vessels", "Metabolism"]},
+    {"id": "mclaughlin-2003-tg-hdl", "year": 2003, "design": "cross-sectional study, 258 overweight adults",
+     "citation": "McLaughlin et al., Ann Intern Med 2003;139:802",
+     "title": "Use of metabolic markers to identify overweight individuals who are insulin resistant",
+     "url": "https://doi.org/10.7326/0003-4819-139-10-200311180-00007",
+     "pmid": "14623617", "examines": TG + HDL + GLUCOSE, "informs": [], "topics": ["Metabolism"]},
+    {"id": "voight-2012-hdl", "year": 2012, "design": "Mendelian randomisation study",
+     "citation": "Voight et al., Lancet 2012;380:572",
+     "title": "Plasma HDL cholesterol and risk of myocardial infarction: a mendelian randomisation study",
+     "url": "https://doi.org/10.1016/S0140-6736(12)60312-2",
+     "pmid": "22607825", "examines": HDL, "informs": [], "topics": ["Heart and vessels"]},
+    {"id": "demay-2024-vitd", "year": 2024, "design": "clinical practice guideline (Endocrine Society)",
+     "citation": "Demay et al., J Clin Endocrinol Metab 2024;109:1907",
+     "title": "Vitamin D for the prevention of disease: an Endocrine Society clinical practice guideline",
+     "url": "https://doi.org/10.1210/clinem/dgae290",
+     "pmid": "38828931", "examines": VITAMIN_D, "informs": [], "topics": ["Vitamins", "Bone"]},
+]
+
+# Sources that speak to one risk without linking two (a risk link adds ABOUT on its own). A range
+# source takes part too: EAS/EFLM 2016 (non-fasting lipids, remnant cholesterol).
+STUDY_ABOUT = [  # (study id, risk id)
+    ("esc-eas-2025-lipids", "cardiovascular"), ("eas-2017-ldl", "cardiovascular"),
+    ("sniderman-2019-apob", "cardiovascular"), ("balling-2025-remnant", "cardiovascular"),
+    ("assempoor-2025-aip", "cardiovascular"), ("voight-2012-hdl", "cardiovascular"),
+    ("demay-2024-vitd", "bone"), ("mclaughlin-2003-tg-hdl", "diabetes"), ("pmid-27122601", "cardiovascular"),
 ]
 
 # Which of these sources cite each other: OpenAlex `referenced_works` of every
@@ -297,7 +350,11 @@ def _study_rows() -> list[dict]:
         return list(dict.fromkeys(TOPIC_OF_RISK[r] for r in risks))
     return [{k: v for k, v in st.items() if k not in ("examines", "informs")} |
             {"pubmedUrl": f"https://pubmed.ncbi.nlm.nih.gov/{st['pmid']}/", "kind": _kind(st["design"]),
-             "topics": topics(st["id"])} for st in STUDIES]
+             "topics": list(dict.fromkeys(topics(st["id"]) + st.get("topics", [])))} for st in STUDIES]
+
+
+def _about_rows() -> list[dict]:
+    return [{"study": sid, "risk": risk} for sid, risk in STUDY_ABOUT]
 
 
 def _citation_rows() -> list[dict]:
@@ -320,7 +377,7 @@ def _marker_rows() -> list[dict]:
 def fingerprint() -> str:
     """Changes whenever any seeded fact changes, so seeding runs only then."""
     blob = json.dumps([HEALTH_RISKS, RISK_SCORES, _marker_rows(), _range_rows(), STUDIES, RISK_LINKS, CODE_NAMES,
-                       STUDY_CITATIONS, TOPIC_OF_RISK, TOPIC_OF_GROUP],
+                       STUDY_CITATIONS, TOPIC_OF_RISK, TOPIC_OF_GROUP, STUDY_ABOUT],
                       sort_keys=True)
     return hashlib.sha256(blob.encode()).hexdigest()[:16]
 
@@ -414,6 +471,14 @@ MERGE (st)-[:ABOUT]->(b)
 RETURN count(DISTINCT k) AS riskLinks
 """
 
+SEED_STUDY_RISKS = """
+UNWIND $about AS a
+MATCH (st:Study {id: a.study})
+MATCH (h:HealthRisk {id: a.risk})
+MERGE (st)-[k:ABOUT]->(h)
+RETURN count(k) AS studyRisks
+"""
+
 # A range id the table no longer has (an older key, a removed range) goes, with its links.
 SEED_PRUNE_RANGES = """
 MATCH (rr:ReferenceRange)
@@ -461,6 +526,7 @@ def seed(conn, force: bool = False) -> dict[str, int]:
         counts.update(dict(conn.execute(SEED_STUDY_MARKERS, {"examines": _examines_rows()}).single()))
         counts.update(dict(conn.execute(SEED_STUDY_SCORES, {"informs": _informs_rows()}).single()))
         counts.update(dict(conn.execute(SEED_RISK_LINKS, {"links": RISK_LINKS}).single()))
+        counts.update(dict(conn.execute(SEED_STUDY_RISKS, {"about": _about_rows()}).single()))
         source = json.loads((HERE / "reference_ranges.json").read_text())["source"]
         conn.execute(SEED_VERSION, {"fingerprint": fp, "rangesSource": source})
         conn.commit()
