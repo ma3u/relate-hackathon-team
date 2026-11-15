@@ -442,10 +442,32 @@ function flyTo(n, ms) {
   Graph.cameraPosition({ x: n.x + dx / d * want, y: n.y + dy / d * want, z: n.z + dz / d * want }, { x: n.x, y: n.y, z: n.z }, ms);
 }
 
+// A node whose own view would hold fewer than MIN_DRILL nodes gets no view of its
+// own (a single sphere tells nothing): it is picked out where it is and its details
+// open on the right, while the view you are in stays. Esc or × puts it back.
+const MIN_DRILL = 30;
+let peek = null;
+function peekNode(n) {
+  peek = selected = n;
+  const visible = Graph.graphData().nodes.includes(n) && n.x !== undefined;
+  hlLinks = visible ? linksOf(n) : new Set();
+  refresh();
+  showDetail(n);
+}
+function unpeek() {
+  peek = null;
+  selected = drill[drill.length - 1] || null;
+  hlLinks = selected ? linksOf(selected) : new Set();
+  refresh();
+  if (selected) showDetail(selected); else showOverview();
+}
+
 function focusNode(n) {
   if (busy) return;
   const i = drill.indexOf(n);
   if (i >= 0) return goTo(i + 1);
+  if (drillSet(n).size < MIN_DRILL) return peekNode(n);
+  peek = null;
   views[drill.length] = snapshot();
   views.length = drill.length + 1;
   const visible = Graph.graphData().nodes.includes(n) && n.x !== undefined;
@@ -491,6 +513,7 @@ function goTo(level) {
   drill.forEach(unpin);
   drill = drill.slice(0, level);
   views.length = level;
+  peek = null;
   selected = drill[level - 1] || null;
   if (selected) pin(selected);
   const keep = selected ? drillSet(selected) : new Set(DATA.nodes.filter(shown));
@@ -513,7 +536,8 @@ function goTo(level) {
 function back() { if (drill.length) goTo(drill.length - 1); }
 function clearFocus() { goTo(0); }
 addEventListener("keydown", e => {
-  if ((e.key === "Escape" || (e.key === "Backspace" && e.target === document.body)) && drill.length) { e.preventDefault(); back(); }
+  if (!(e.key === "Escape" || (e.key === "Backspace" && e.target === document.body))) return;
+  if (peek) { e.preventDefault(); unpeek(); } else if (drill.length) { e.preventDefault(); back(); }
 });
 
 // ── "What you see": one short explanation per screen ──────────────────────
@@ -958,8 +982,9 @@ function showDetail(n) {
   const el = document.getElementById("detail");
   const dot = m => `<span class="dot" style="display:inline-block;margin-right:6px;background:${m.out ? OUT_COLOR : COLOR[m.g]}"></span>`;
   const btn = (m, text, cls = "") => `<button class="nb ${cls}" data-id="${m.id}">${dot(m)}${esc(text || m.n)}</button>`;
+  const path = n === peek ? [...drill, n] : drill;
   const trail = [`<a href="#" data-back="-1">${esc(STAGES[stage].name)}</a>`,
-    ...drill.map((m, i) => i === drill.length - 1 ? `<b>${esc(short(m.n))}</b>` : `<a href="#" data-back="${i}">${esc(short(m.n))}</a>`)];
+    ...path.map((m, i) => i === path.length - 1 ? `<b>${esc(short(m.n))}</b>` : `<a href="#" data-back="${i}">${esc(short(m.n))}</a>`)];
   let html = `<button class="close" aria-label="Close">×</button><div class="trail">${trail.join(" › ")}</div>` +
     `<h3>${esc(n.n)}</h3><div class="tag">${dot(n)}${esc(n.g)} · ${n.deg} relationships</div>`;
   if (n.d.length) html += "<ul>" + n.d.map(x => `<li>${esc(x)}</li>`).join("") + "</ul>";
@@ -1048,7 +1073,7 @@ function showDetail(n) {
   el.innerHTML = html;
   el.style.display = "block";
   el.scrollTop = 0;
-  el.querySelector(".close").onclick = clearFocus;
+  el.querySelector(".close").onclick = n === peek ? unpeek : clearFocus;
   el.querySelectorAll(".nb, .chart .hit").forEach(b => b.onclick = () => focusNode(nodeById(b.dataset.id)));
   el.querySelectorAll("[data-back]").forEach(a => a.onclick = e => {
     e.preventDefault();
@@ -1325,7 +1350,7 @@ STAGES.forEach((st, i) => {
 function setStage(i, fit = true) {
   stage = i;
   drill.forEach(unpin);
-  drill = []; views = []; selected = null; hlLinks = new Set();
+  drill = []; views = []; selected = peek = null; hlLinks = new Set();
   showOverview();
   renderHistory();
   Graph.warmupTicks(40).cooldownTicks(220);
