@@ -51,6 +51,7 @@ public enum Protocols {
   public static func score(_ p: JSONObject, _ answers: [String: [String]], sex: String? = nil) -> JSONObject? {
     let method = p.string("method")
     if method == "family" { return familySummary(answers) }
+    if method == "plant" { return plantSummary(answers) }
     let shown = items(p).filter { enabled($0, answers) }
     var result: JSONObject
     switch method {
@@ -150,6 +151,66 @@ public enum Protocols {
     return ["complete": true, "band": "later in life", "flag": false,
             "meaning": "heart disease in the family, but not early: not a risk modifier in ESC 2021",
             "snomed": "266894000", "derived": ["family-cvd": "no"]]
+  }
+
+  static let rare: Set<String> = ["never", "<1/month"]  // AHS-2: less than once a month counts as not eaten
+  static let plantGroups: [String: (String?, String)] = [
+    "vegan": ("1255165006", "no meat, fish, eggs or dairy (AHS-2: each less than once a month)"),
+    "lacto-ovo-vegetarian": ("765023004", "eggs and dairy, no meat or fish"),
+    "lacto-vegetarian": ("765022009", "dairy, no meat, fish or eggs"),
+    "ovo-vegetarian": ("1255167003", "eggs, no meat, fish or dairy"),
+    "pesco-vegetarian": ("1255166007", "fish at least monthly, meat less than monthly"),
+    "semi-vegetarian": (nil, "meat at least monthly, meat and fish each less than weekly"),
+    "non-vegetarian": (nil, "meat or fish weekly or more"),
+  ]
+
+  /// The AHS-2 diet group (Orlich 2013) from four frequencies, with its SNOMED CT concept and the B12 check:
+  /// the same rule as `protocols.plant_summary()`.
+  static func plantSummary(_ answers: [String: [String]]) -> JSONObject? {
+    let one = { (k: String) in answers[k]?.first }
+    guard let meat = one("plant-meat") else { return nil }
+    let fish = one("plant-fish"), eggs = one("plant-eggs"), dairy = one("plant-dairy")
+    let group: String
+    if !rare.contains(meat) {
+      if meat == "1+/week" || fish == "1+/week" {
+        group = "non-vegetarian"
+      } else if fish == nil {
+        return ["complete": false, "band": "not vegetarian", "flag": false,
+                "meaning": "meat at least monthly: the fish question decides semi- or non-vegetarian"]
+      } else {
+        group = "semi-vegetarian"
+      }
+    } else if let fish {
+      if !rare.contains(fish) {
+        group = "pesco-vegetarian"
+      } else if let eggs, let dairy {
+        let e = !rare.contains(eggs), d = !rare.contains(dairy)
+        group = e && d ? "lacto-ovo-vegetarian" : d ? "lacto-vegetarian" : e ? "ovo-vegetarian" : "vegan"
+      } else {
+        return ["complete": false, "band": "vegetarian", "snomed": "765021002", "flag": false,
+                "meaning": "no meat or fish: eggs and dairy decide lacto-ovo, lacto, ovo or vegan"]
+      }
+    } else {
+      return ["complete": false, "band": "vegetarian", "snomed": "765021002", "flag": false,
+              "meaning": "no meat: the fish, egg and dairy questions give the group"]
+    }
+    let (snomed, meaning) = plantGroups[group] ?? (nil, group)
+    var out: JSONObject = ["complete": true, "band": group, "meaning": meaning, "flag": false]
+    if let snomed { out["snomed"] = snomed }
+    if rare.contains(meat) {
+      switch one("plant-b12") {
+      case nil:
+        out["complete"] = false
+        out["meaning"] = meaning + "; how you get vitamin B12 is still open"
+      case "no", "fortified":
+        out["flag"] = true
+        out["meaning"] = meaning + "; no reliable vitamin B12 source: DGE 2024 asks vegans for a supplement, "
+          + "and most vegetarians without one run low too (Herrmann 2003)"
+      default:
+        out["meaning"] = meaning + "; vitamin B12 from a supplement"
+      }
+    }
+    return out
   }
 
   /// One protocol's answers, checked against its questions and ready for the graph.
@@ -290,7 +351,7 @@ extension HealthStore {
       let responseCodes = [p.text("scoreSnomed"), result["snomed"] as? String].compactMap { $0 }
       _ = try c.query(Cypher.protocolStoreResponseLinks, [
         "responseId": .string(responseId), "snomed": JSON.cypher(responseCodes),
-        "risks": flag ? JSON.cypher(p["risks"]) : .list([]),
+        "risks": flag ? JSON.cypher(p["flagRisks"] ?? p["risks"]) : .list([]),
       ])
       if !derived.isEmpty {
         _ = try c.query(Cypher.protocolStoreDerived, [

@@ -3,7 +3,7 @@
 // swiftlint:disable line_length
 
 enum ProtocolData {
-  static let version = "4872b61a3d6298c8"
+  static let version = "a15e874698e9b220"
   static let json = #"""
   {
    "category": {
@@ -1998,6 +1998,477 @@ enum ProtocolData {
      "title": "Eating pattern and fasting, coded with SNOMED CT",
      "why": "The diet changes how lipid, glucose and liver values read: a ketogenic diet lowers triglycerides and raises HDL, and in some people raises LDL cholesterol and ApoB a lot.",
      "year": 2025
+    },
+    {
+     "critical": [
+      "Serum vitamin B12 can stay in the lab's range while the stores run low: holotranscobalamin or methylmalonic acid shows an early deficiency (Herrmann 2003). A high folate, common on a plant-based diet, keeps haemoglobin and MCV normal while B12 runs low; it does not protect the nerves.",
+      "The body stores B12 for years, so a normal value in the first years of a vegan diet says little about later.",
+      "TSH shows thyroid function, not iodine intake; iodine in urine does. Iodine is short in Germany whatever the diet, and shorter in vegan diets (DGE 2024).",
+      "Vegans in EPIC-Oxford had more hip fractures than meat eaters (Tong 2020); calcium, vitamin D and protein explained part of it."
+     ],
+     "doi": "10.1001/jamainternmed.2013.6473",
+     "evidence": [
+      "orlich-2013",
+      "dge-2024",
+      "herrmann-2003",
+      "melina-2016",
+      "tong-2020"
+     ],
+     "flagRisks": [
+      "fitness"
+     ],
+     "id": "plant-based",
+     "items": [
+      {
+       "linkId": "plant-meat",
+       "options": [
+        {
+         "code": "never",
+         "la": null,
+         "label": "Never",
+         "points": null,
+         "riskFactor": false,
+         "snomed": null
+        },
+        {
+         "code": "<1/month",
+         "la": null,
+         "label": "Less than once a month",
+         "points": null,
+         "riskFactor": false,
+         "snomed": null
+        },
+        {
+         "code": "1-3/month",
+         "la": null,
+         "label": "1 to 3 times a month",
+         "points": null,
+         "riskFactor": false,
+         "snomed": null
+        },
+        {
+         "code": "1+/week",
+         "la": null,
+         "label": "Once a week or more",
+         "points": null,
+         "riskFactor": false,
+         "snomed": null
+        }
+       ],
+       "prefill": "diet:meat",
+       "text": "How often do you eat meat or poultry (sausage, ham and meat stock included)?"
+      },
+      {
+       "linkId": "plant-fish",
+       "options": [
+        {
+         "code": "never",
+         "la": null,
+         "label": "Never",
+         "points": null,
+         "riskFactor": false,
+         "snomed": null
+        },
+        {
+         "code": "<1/month",
+         "la": null,
+         "label": "Less than once a month",
+         "points": null,
+         "riskFactor": false,
+         "snomed": null
+        },
+        {
+         "code": "1-3/month",
+         "la": null,
+         "label": "1 to 3 times a month",
+         "points": null,
+         "riskFactor": false,
+         "snomed": null
+        },
+        {
+         "code": "1+/week",
+         "la": null,
+         "label": "Once a week or more",
+         "points": null,
+         "riskFactor": false,
+         "snomed": null
+        }
+       ],
+       "prefill": "diet:fish",
+       "text": "How often do you eat fish or seafood?"
+      },
+      {
+       "linkId": "plant-eggs",
+       "options": [
+        {
+         "code": "never",
+         "la": null,
+         "label": "Never",
+         "points": null,
+         "riskFactor": false,
+         "snomed": null
+        },
+        {
+         "code": "<1/month",
+         "la": null,
+         "label": "Less than once a month",
+         "points": null,
+         "riskFactor": false,
+         "snomed": null
+        },
+        {
+         "code": "1-3/month",
+         "la": null,
+         "label": "1 to 3 times a month",
+         "points": null,
+         "riskFactor": false,
+         "snomed": null
+        },
+        {
+         "code": "1+/week",
+         "la": null,
+         "label": "Once a week or more",
+         "points": null,
+         "riskFactor": false,
+         "snomed": null
+        }
+       ],
+       "prefill": "diet:eggs",
+       "text": "How often do you eat eggs (in baking included)?"
+      },
+      {
+       "linkId": "plant-dairy",
+       "options": [
+        {
+         "code": "never",
+         "la": null,
+         "label": "Never",
+         "points": null,
+         "riskFactor": false,
+         "snomed": null
+        },
+        {
+         "code": "<1/month",
+         "la": null,
+         "label": "Less than once a month",
+         "points": null,
+         "riskFactor": false,
+         "snomed": null
+        },
+        {
+         "code": "1-3/month",
+         "la": null,
+         "label": "1 to 3 times a month",
+         "points": null,
+         "riskFactor": false,
+         "snomed": null
+        },
+        {
+         "code": "1+/week",
+         "la": null,
+         "label": "Once a week or more",
+         "points": null,
+         "riskFactor": false,
+         "snomed": null
+        }
+       ],
+       "prefill": "diet:dairy",
+       "text": "How often do you have milk, yoghurt or cheese?"
+      },
+      {
+       "enableWhen": {
+        "plant-meat": [
+         "never",
+         "<1/month"
+        ]
+       },
+       "linkId": "plant-since",
+       "options": [
+        {
+         "code": "<1y",
+         "la": null,
+         "label": "Less than a year",
+         "points": null,
+         "riskFactor": false,
+         "snomed": null
+        },
+        {
+         "code": "1-3y",
+         "la": null,
+         "label": "1 to 3 years",
+         "points": null,
+         "riskFactor": false,
+         "snomed": null
+        },
+        {
+         "code": "3y+",
+         "la": null,
+         "label": "3 years or more",
+         "points": null,
+         "riskFactor": false,
+         "snomed": null
+        }
+       ],
+       "text": "How long have you eaten without meat?"
+      },
+      {
+       "enableWhen": {
+        "plant-meat": [
+         "never",
+         "<1/month"
+        ]
+       },
+       "linkId": "plant-b12",
+       "options": [
+        {
+         "code": "daily",
+         "la": null,
+         "label": "A tablet or drops, daily or most days",
+         "points": null,
+         "riskFactor": false,
+         "snomed": null
+        },
+        {
+         "code": "weekly",
+         "la": null,
+         "label": "A high dose once or twice a week",
+         "points": null,
+         "riskFactor": false,
+         "snomed": null
+        },
+        {
+         "code": "injection",
+         "la": null,
+         "label": "Injections from the doctor",
+         "points": null,
+         "riskFactor": false,
+         "snomed": null
+        },
+        {
+         "code": "fortified",
+         "la": null,
+         "label": "Only fortified foods or B12 toothpaste",
+         "points": null,
+         "riskFactor": false,
+         "snomed": null
+        },
+        {
+         "code": "no",
+         "la": null,
+         "label": "No",
+         "points": null,
+         "riskFactor": false,
+         "snomed": null
+        }
+       ],
+       "text": "Do you take vitamin B12?"
+      },
+      {
+       "enableWhen": {
+        "plant-meat": [
+         "never",
+         "<1/month"
+        ]
+       },
+       "linkId": "plant-iodine",
+       "options": [
+        {
+         "code": "salt",
+         "la": null,
+         "label": "Iodised salt",
+         "points": null,
+         "riskFactor": false,
+         "snomed": null
+        },
+        {
+         "code": "supplement",
+         "la": null,
+         "label": "An iodine tablet (or both)",
+         "points": null,
+         "riskFactor": false,
+         "snomed": null
+        },
+        {
+         "code": "no",
+         "la": null,
+         "label": "No",
+         "points": null,
+         "riskFactor": false,
+         "snomed": null
+        },
+        {
+         "code": "unknown",
+         "la": null,
+         "label": "Not sure",
+         "points": null,
+         "riskFactor": false,
+         "snomed": null
+        }
+       ],
+       "text": "Do you use iodised salt at home, or take iodine?"
+      },
+      {
+       "enableWhen": {
+        "plant-fish": [
+         "never",
+         "<1/month"
+        ],
+        "plant-meat": [
+         "never",
+         "<1/month"
+        ]
+       },
+       "linkId": "plant-omega3",
+       "options": [
+        {
+         "code": "yes",
+         "la": null,
+         "label": "Yes",
+         "points": null,
+         "riskFactor": false,
+         "snomed": null
+        },
+        {
+         "code": "no",
+         "la": null,
+         "label": "No",
+         "points": null,
+         "riskFactor": false,
+         "snomed": null
+        }
+       ],
+       "text": "Do you take an algae oil with DHA and EPA?"
+      },
+      {
+       "enableWhen": {
+        "plant-dairy": [
+         "never",
+         "<1/month"
+        ]
+       },
+       "linkId": "plant-calcium",
+       "options": [
+        {
+         "code": "yes",
+         "la": null,
+         "label": "Yes, daily",
+         "points": null,
+         "riskFactor": false,
+         "snomed": null
+        },
+        {
+         "code": "sometimes",
+         "la": null,
+         "label": "Some days",
+         "points": null,
+         "riskFactor": false,
+         "snomed": null
+        },
+        {
+         "code": "no",
+         "la": null,
+         "label": "No",
+         "points": null,
+         "riskFactor": false,
+         "snomed": null
+        }
+       ],
+       "text": "Do you have a calcium source every day: plant drinks or yoghurt with added calcium, tofu set with calcium, or a calcium-rich mineral water?"
+      },
+      {
+       "enableWhen": {
+        "plant-meat": [
+         "never",
+         "<1/month"
+        ]
+       },
+       "linkId": "plant-legumes",
+       "options": [
+        {
+         "code": "yes",
+         "la": null,
+         "label": "Yes, daily",
+         "points": null,
+         "riskFactor": false,
+         "snomed": null
+        },
+        {
+         "code": "sometimes",
+         "la": null,
+         "label": "Some days",
+         "points": null,
+         "riskFactor": false,
+         "snomed": null
+        },
+        {
+         "code": "no",
+         "la": null,
+         "label": "Rarely",
+         "points": null,
+         "riskFactor": false,
+         "snomed": null
+        }
+       ],
+       "text": "Do you eat legumes, tofu, tempeh or seitan every day?"
+      },
+      {
+       "linkId": "supplements",
+       "options": [
+        {
+         "code": "none",
+         "la": null,
+         "label": "No",
+         "points": null,
+         "riskFactor": false,
+         "snomed": null
+        },
+        {
+         "code": "vitamin-d",
+         "la": null,
+         "label": "Vitamin D",
+         "points": null,
+         "riskFactor": false,
+         "snomed": null
+        },
+        {
+         "code": "vitamin-d-calcium",
+         "la": null,
+         "label": "Vitamin D and calcium",
+         "points": null,
+         "riskFactor": false,
+         "snomed": null
+        }
+       ],
+       "prefill": "answer:supplements",
+       "text": "Do you take vitamin D or calcium?"
+      }
+     ],
+     "kind": "history",
+     "licence": "Diet groups as defined in AHS-2; questions written here. Codes: SNOMED CT (affiliate licence).",
+     "method": "plant",
+     "name": "Plant-based diet",
+     "pmid": "23836264",
+     "raisedBy": [
+      "vitamin_d"
+     ],
+     "relatedSnomed": [
+      "1255165006",
+      "765023004",
+      "765022009",
+      "1255167003",
+      "1255166007"
+     ],
+     "risks": [
+      "fitness",
+      "bone",
+      "cardiovascular"
+     ],
+     "snomed": "765021002",
+     "source": "Orlich et al., JAMA Intern Med 2013;173:1230 (AHS-2 diet groups); Klug et al., Ernährungs Umschau 2024;71(7):60 (DGE position on vegan diet)",
+     "title": "Vegetarian or vegan: the AHS-2 diet group and the nutrients DGE 2024 names critical",
+     "url": "https://doi.org/10.4455/eu.2024.22",
+     "why": "The follow-up to a vegetarian or vegan answer. Four questions on meat, fish, eggs and dairy give the diet group as the Adventist Health Study 2 defines it; the rest ask how the nutrients a plant-based diet can lack are covered (DGE 2024), and your lab values on them are shown beside the questions.",
+     "year": 2024
     },
     {
      "bands": [
@@ -4710,6 +5181,508 @@ enum ProtocolData {
      "year": 2025
     },
     {
+     "bandFrom": [],
+     "bandLabels": [],
+     "bandMeanings": [],
+     "codes": [],
+     "critical": [
+      "Serum vitamin B12 can stay in the lab's range while the stores run low: holotranscobalamin or methylmalonic acid shows an early deficiency (Herrmann 2003). A high folate, common on a plant-based diet, keeps haemoglobin and MCV normal while B12 runs low; it does not protect the nerves.",
+      "The body stores B12 for years, so a normal value in the first years of a vegan diet says little about later.",
+      "TSH shows thyroid function, not iodine intake; iodine in urine does. Iodine is short in Germany whatever the diet, and shorter in vegan diets (DGE 2024).",
+      "Vegans in EPIC-Oxford had more hip fractures than meat eaters (Tong 2020); calcium, vitamin D and protein explained part of it."
+     ],
+     "doi": "10.1001/jamainternmed.2013.6473",
+     "id": "plant-based",
+     "items": [
+      {
+       "answerCodes": [],
+       "enableWhen": null,
+       "id": "plant-based|plant-meat",
+       "labels": [
+        "Never",
+        "Less than once a month",
+        "1 to 3 times a month",
+        "Once a week or more"
+       ],
+       "linkId": "plant-meat",
+       "loinc": null,
+       "metric": null,
+       "multiple": false,
+       "optionLoinc": [
+        "",
+        "",
+        "",
+        ""
+       ],
+       "optionSnomed": [
+        "",
+        "",
+        "",
+        ""
+       ],
+       "options": [
+        "never",
+        "<1/month",
+        "1-3/month",
+        "1+/week"
+       ],
+       "order": 1,
+       "points": [
+        0,
+        0,
+        0,
+        0
+       ],
+       "prefill": "your answer on how you eat: vegetarian or vegan means no meat",
+       "snomed": null,
+       "text": "How often do you eat meat or poultry (sausage, ham and meat stock included)?",
+       "type": "choice"
+      },
+      {
+       "answerCodes": [],
+       "enableWhen": null,
+       "id": "plant-based|plant-fish",
+       "labels": [
+        "Never",
+        "Less than once a month",
+        "1 to 3 times a month",
+        "Once a week or more"
+       ],
+       "linkId": "plant-fish",
+       "loinc": null,
+       "metric": null,
+       "multiple": false,
+       "optionLoinc": [
+        "",
+        "",
+        "",
+        ""
+       ],
+       "optionSnomed": [
+        "",
+        "",
+        "",
+        ""
+       ],
+       "options": [
+        "never",
+        "<1/month",
+        "1-3/month",
+        "1+/week"
+       ],
+       "order": 2,
+       "points": [
+        0,
+        0,
+        0,
+        0
+       ],
+       "prefill": "your answer on how you eat: vegetarian or vegan means no fish",
+       "snomed": null,
+       "text": "How often do you eat fish or seafood?",
+       "type": "choice"
+      },
+      {
+       "answerCodes": [],
+       "enableWhen": null,
+       "id": "plant-based|plant-eggs",
+       "labels": [
+        "Never",
+        "Less than once a month",
+        "1 to 3 times a month",
+        "Once a week or more"
+       ],
+       "linkId": "plant-eggs",
+       "loinc": null,
+       "metric": null,
+       "multiple": false,
+       "optionLoinc": [
+        "",
+        "",
+        "",
+        ""
+       ],
+       "optionSnomed": [
+        "",
+        "",
+        "",
+        ""
+       ],
+       "options": [
+        "never",
+        "<1/month",
+        "1-3/month",
+        "1+/week"
+       ],
+       "order": 3,
+       "points": [
+        0,
+        0,
+        0,
+        0
+       ],
+       "prefill": "your answer on how you eat: vegan means no eggs",
+       "snomed": null,
+       "text": "How often do you eat eggs (in baking included)?",
+       "type": "choice"
+      },
+      {
+       "answerCodes": [],
+       "enableWhen": null,
+       "id": "plant-based|plant-dairy",
+       "labels": [
+        "Never",
+        "Less than once a month",
+        "1 to 3 times a month",
+        "Once a week or more"
+       ],
+       "linkId": "plant-dairy",
+       "loinc": null,
+       "metric": null,
+       "multiple": false,
+       "optionLoinc": [
+        "",
+        "",
+        "",
+        ""
+       ],
+       "optionSnomed": [
+        "",
+        "",
+        "",
+        ""
+       ],
+       "options": [
+        "never",
+        "<1/month",
+        "1-3/month",
+        "1+/week"
+       ],
+       "order": 4,
+       "points": [
+        0,
+        0,
+        0,
+        0
+       ],
+       "prefill": "your answer on how you eat: vegan means no dairy",
+       "snomed": null,
+       "text": "How often do you have milk, yoghurt or cheese?",
+       "type": "choice"
+      },
+      {
+       "answerCodes": [],
+       "enableWhen": "{\"plant-meat\": [\"never\", \"<1/month\"]}",
+       "id": "plant-based|plant-since",
+       "labels": [
+        "Less than a year",
+        "1 to 3 years",
+        "3 years or more"
+       ],
+       "linkId": "plant-since",
+       "loinc": null,
+       "metric": null,
+       "multiple": false,
+       "optionLoinc": [
+        "",
+        "",
+        ""
+       ],
+       "optionSnomed": [
+        "",
+        "",
+        ""
+       ],
+       "options": [
+        "<1y",
+        "1-3y",
+        "3y+"
+       ],
+       "order": 5,
+       "points": [
+        0,
+        0,
+        0
+       ],
+       "prefill": null,
+       "snomed": null,
+       "text": "How long have you eaten without meat?",
+       "type": "choice"
+      },
+      {
+       "answerCodes": [],
+       "enableWhen": "{\"plant-meat\": [\"never\", \"<1/month\"]}",
+       "id": "plant-based|plant-b12",
+       "labels": [
+        "A tablet or drops, daily or most days",
+        "A high dose once or twice a week",
+        "Injections from the doctor",
+        "Only fortified foods or B12 toothpaste",
+        "No"
+       ],
+       "linkId": "plant-b12",
+       "loinc": null,
+       "metric": null,
+       "multiple": false,
+       "optionLoinc": [
+        "",
+        "",
+        "",
+        "",
+        ""
+       ],
+       "optionSnomed": [
+        "",
+        "",
+        "",
+        "",
+        ""
+       ],
+       "options": [
+        "daily",
+        "weekly",
+        "injection",
+        "fortified",
+        "no"
+       ],
+       "order": 6,
+       "points": [
+        0,
+        0,
+        0,
+        0,
+        0
+       ],
+       "prefill": null,
+       "snomed": null,
+       "text": "Do you take vitamin B12?",
+       "type": "choice"
+      },
+      {
+       "answerCodes": [],
+       "enableWhen": "{\"plant-meat\": [\"never\", \"<1/month\"]}",
+       "id": "plant-based|plant-iodine",
+       "labels": [
+        "Iodised salt",
+        "An iodine tablet (or both)",
+        "No",
+        "Not sure"
+       ],
+       "linkId": "plant-iodine",
+       "loinc": null,
+       "metric": null,
+       "multiple": false,
+       "optionLoinc": [
+        "",
+        "",
+        "",
+        ""
+       ],
+       "optionSnomed": [
+        "",
+        "",
+        "",
+        ""
+       ],
+       "options": [
+        "salt",
+        "supplement",
+        "no",
+        "unknown"
+       ],
+       "order": 7,
+       "points": [
+        0,
+        0,
+        0,
+        0
+       ],
+       "prefill": null,
+       "snomed": null,
+       "text": "Do you use iodised salt at home, or take iodine?",
+       "type": "choice"
+      },
+      {
+       "answerCodes": [],
+       "enableWhen": "{\"plant-fish\": [\"never\", \"<1/month\"], \"plant-meat\": [\"never\", \"<1/month\"]}",
+       "id": "plant-based|plant-omega3",
+       "labels": [
+        "Yes",
+        "No"
+       ],
+       "linkId": "plant-omega3",
+       "loinc": null,
+       "metric": null,
+       "multiple": false,
+       "optionLoinc": [
+        "",
+        ""
+       ],
+       "optionSnomed": [
+        "",
+        ""
+       ],
+       "options": [
+        "yes",
+        "no"
+       ],
+       "order": 8,
+       "points": [
+        0,
+        0
+       ],
+       "prefill": null,
+       "snomed": null,
+       "text": "Do you take an algae oil with DHA and EPA?",
+       "type": "choice"
+      },
+      {
+       "answerCodes": [],
+       "enableWhen": "{\"plant-dairy\": [\"never\", \"<1/month\"]}",
+       "id": "plant-based|plant-calcium",
+       "labels": [
+        "Yes, daily",
+        "Some days",
+        "No"
+       ],
+       "linkId": "plant-calcium",
+       "loinc": null,
+       "metric": null,
+       "multiple": false,
+       "optionLoinc": [
+        "",
+        "",
+        ""
+       ],
+       "optionSnomed": [
+        "",
+        "",
+        ""
+       ],
+       "options": [
+        "yes",
+        "sometimes",
+        "no"
+       ],
+       "order": 9,
+       "points": [
+        0,
+        0,
+        0
+       ],
+       "prefill": null,
+       "snomed": null,
+       "text": "Do you have a calcium source every day: plant drinks or yoghurt with added calcium, tofu set with calcium, or a calcium-rich mineral water?",
+       "type": "choice"
+      },
+      {
+       "answerCodes": [],
+       "enableWhen": "{\"plant-meat\": [\"never\", \"<1/month\"]}",
+       "id": "plant-based|plant-legumes",
+       "labels": [
+        "Yes, daily",
+        "Some days",
+        "Rarely"
+       ],
+       "linkId": "plant-legumes",
+       "loinc": null,
+       "metric": null,
+       "multiple": false,
+       "optionLoinc": [
+        "",
+        "",
+        ""
+       ],
+       "optionSnomed": [
+        "",
+        "",
+        ""
+       ],
+       "options": [
+        "yes",
+        "sometimes",
+        "no"
+       ],
+       "order": 10,
+       "points": [
+        0,
+        0,
+        0
+       ],
+       "prefill": null,
+       "snomed": null,
+       "text": "Do you eat legumes, tofu, tempeh or seitan every day?",
+       "type": "choice"
+      },
+      {
+       "answerCodes": [],
+       "enableWhen": null,
+       "id": "plant-based|supplements",
+       "labels": [
+        "No",
+        "Vitamin D",
+        "Vitamin D and calcium"
+       ],
+       "linkId": "supplements",
+       "loinc": null,
+       "metric": null,
+       "multiple": false,
+       "optionLoinc": [
+        "",
+        "",
+        ""
+       ],
+       "optionSnomed": [
+        "",
+        "",
+        ""
+       ],
+       "options": [
+        "none",
+        "vitamin-d",
+        "vitamin-d-calcium"
+       ],
+       "order": 11,
+       "points": [
+        0,
+        0,
+        0
+       ],
+       "prefill": "your earlier answer",
+       "snomed": null,
+       "text": "Do you take vitamin D or calcium?",
+       "type": "choice"
+      }
+     ],
+     "kind": "history",
+     "licence": "Diet groups as defined in AHS-2; questions written here. Codes: SNOMED CT (affiliate licence).",
+     "method": "plant",
+     "name": "Plant-based diet",
+     "panelLoinc": null,
+     "pmid": "23836264",
+     "risks": [
+      "fitness",
+      "bone",
+      "cardiovascular"
+     ],
+     "scoreLoinc": null,
+     "scoreSnomed": null,
+     "snomed": "765021002",
+     "snomedCodes": [
+      "765021002",
+      "1255165006",
+      "765023004",
+      "765022009",
+      "1255167003",
+      "1255166007"
+     ],
+     "source": "Orlich et al., JAMA Intern Med 2013;173:1230 (AHS-2 diet groups); Klug et al., Ernährungs Umschau 2024;71(7):60 (DGE position on vegan diet)",
+     "title": "Vegetarian or vegan: the AHS-2 diet group and the nutrients DGE 2024 names critical",
+     "url": "https://doi.org/10.4455/eu.2024.22",
+     "why": "The follow-up to a vegetarian or vegan answer. Four questions on meat, fish, eggs and dairy give the diet group as the Adventist Health Study 2 defines it; the rest ask how the nutrients a plant-based diet can lack are covered (DGE 2024), and your lab values on them are shown beside the questions.",
+     "year": 2024
+    },
+    {
      "bandFrom": [
       0,
       3
@@ -5107,6 +6080,26 @@ enum ProtocolData {
      "tag": "regime/therapy"
     },
     {
+     "code": "765023004",
+     "display": "Lacto-ovo-vegetarian diet",
+     "tag": "regime/therapy"
+    },
+    {
+     "code": "765022009",
+     "display": "Lacto-vegetarian diet",
+     "tag": "regime/therapy"
+    },
+    {
+     "code": "1255167003",
+     "display": "Ovo vegetarian diet",
+     "tag": "regime/therapy"
+    },
+    {
+     "code": "1255166007",
+     "display": "Pescovegetarian diet",
+     "tag": "regime/therapy"
+    },
+    {
      "code": "1362129009",
      "display": "Intermittent fasting",
      "tag": "finding"
@@ -5117,7 +6110,7 @@ enum ProtocolData {
      "tag": "finding"
     }
    ],
-   "version": "4872b61a3d6298c8"
+   "version": "a15e874698e9b220"
   }
   """#
 }

@@ -250,7 +250,9 @@ let tools: [[String: Any]] = [
     "title": "Anamnesis protocols",
     "description": "The validated questionnaires in the graph's own category: Life's Essential 8, FINDRISC, "
       + "AUDIT-C, MEDAS-14, PHQ-2, and structured history (tobacco as the Patient Summary codes it, family "
-      + "history read by the ESC 2021 rule, lipid-lowering medication with dates, eating pattern and fasting). "
+      + "history read by the ESC 2021 rule, lipid-lowering medication with dates, eating pattern and fasting, and for a vegetarian or vegan "
+      + "diet the plant-based follow-up: the AHS-2 diet group and how B12, iodine, omega-3 and calcium are "
+      + "covered). "
       + "Each question with its LOINC code, options with points and the SNOMED CT concept each asserts, what "
       + "in the graph can prefill it, the bands, why it matters and a critical note; plus what the user "
       + "stored before.",

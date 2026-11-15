@@ -696,6 +696,7 @@ PLAN.protocols.forEach(p => {
     PSRC[p.id][it.linkId] = pre;
   });
 });
+followDiet();
 HABITS.smoking = ((PANS.tobacco || {}).smoking || [])[0];  // SCORE2 shows the smoker's or the non-smoker's value
 let openProto = null;
 const LIPID_CODES = new Set(["2093-3", "14647-2", "2089-1", "13457-7", "18262-6", "22748-8", "43396-1", "70204-3", "1884-6"]);
@@ -715,6 +716,7 @@ const flagged = (p, v, i) => p.cutOff ? i === 1 : p.flagFrom != null ? v >= p.fl
 // The same rules as protocols.score() in Python: sums, the LE8 average, the ESC family rule.
 function pscore(p, ans) {
   if (p.method === "family") return familySummary(ans);
+  if (p.method === "plant") return plantSummary(ans);
   if (!p.method) return null;
   const items = p.items.filter(it => enabledItem(it, ans));
   let r;
@@ -765,6 +767,53 @@ function familySummary(ans) {
   if (unknown || (who.size === 1 && who.has("unknown"))) return { band: "age unknown", complete: false, meaning: "the age at the first event decides whether it counts", snomed: "266894000" };
   return { band: "later in life", complete: true, meaning: "heart disease in the family, but not early: not a risk modifier in ESC 2021", snomed: "266894000" };
 }
+// The AHS-2 diet group (Orlich 2013), as protocols.plant_summary() in Python.
+const RARE = ["never", "<1/month"];
+const PLANT_GROUPS = {
+  "vegan": ["1255165006", "no meat, fish, eggs or dairy (AHS-2: each less than once a month)"],
+  "lacto-ovo-vegetarian": ["765023004", "eggs and dairy, no meat or fish"],
+  "lacto-vegetarian": ["765022009", "dairy, no meat, fish or eggs"],
+  "ovo-vegetarian": ["1255167003", "eggs, no meat, fish or dairy"],
+  "pesco-vegetarian": ["1255166007", "fish at least monthly, meat less than monthly"],
+  "semi-vegetarian": [null, "meat at least monthly, meat and fish each less than weekly"],
+  "non-vegetarian": [null, "meat or fish weekly or more"],
+};
+function plantSummary(ans) {
+  const one = k => (ans[k] || [])[0], meat = one("plant-meat"), fish = one("plant-fish"), eggs = one("plant-eggs"), dairy = one("plant-dairy");
+  if (meat == null) return null;
+  let group;
+  if (!RARE.includes(meat)) {
+    if (meat === "1+/week" || fish === "1+/week") group = "non-vegetarian";
+    else if (fish == null) return { complete: false, band: "not vegetarian", meaning: "meat at least monthly: the fish question decides semi- or non-vegetarian" };
+    else group = "semi-vegetarian";
+  } else if (fish == null) return { complete: false, band: "vegetarian", snomed: "765021002", meaning: "no meat: the fish, egg and dairy questions give the group" };
+  else if (!RARE.includes(fish)) group = "pesco-vegetarian";
+  else if (eggs == null || dairy == null) return { complete: false, band: "vegetarian", snomed: "765021002", meaning: "no meat or fish: eggs and dairy decide lacto-ovo, lacto, ovo or vegan" };
+  else {
+    const e = !RARE.includes(eggs), d = !RARE.includes(dairy);
+    group = e && d ? "lacto-ovo-vegetarian" : d ? "lacto-vegetarian" : e ? "ovo-vegetarian" : "vegan";
+  }
+  const [snomed, meaning] = PLANT_GROUPS[group], r = { complete: true, band: group, meaning, snomed, flag: false };
+  if (RARE.includes(meat)) {
+    const b12 = one("plant-b12");
+    if (b12 == null) { r.complete = false; r.meaning += "; how you get vitamin B12 is still open"; }
+    else if (b12 === "no" || b12 === "fortified") { r.flag = true; r.meaning += "; no reliable vitamin B12 source: DGE 2024 asks vegans for a supplement, and most vegetarians without one run low too (Herrmann 2003)"; }
+    else r.meaning += "; vitamin B12 from a supplement";
+  }
+  return r;
+}
+// A vegetarian or vegan answer fills the follow-up's food questions you have not answered yet.
+function followDiet() {
+  const d = ((PANS["diet-pattern"] || {})["diet-pattern"] || [])[0], plant = PANS["plant-based"];
+  if (!plant || !["vegetarian", "vegan"].includes(d)) return;
+  const foods = d === "vegan" ? ["meat", "fish", "eggs", "dairy"] : ["meat", "fish"];
+  foods.forEach(f => {
+    const k = `plant-${f}`;
+    if (plant[k]) return;
+    plant[k] = ["never"];
+    PSRC["plant-based"][k] = { text: `you chose ${d} under "How do you eat, mostly?"` };
+  });
+}
 // Your lab values on a lipid marker measured between the months you gave.
 function treatedLive() {
   const med = (PANS["lipid-therapy"] || {})["lipid-medication"], from = (PTEXT["lipid-therapy"] || {})["lipid-from"];
@@ -788,6 +837,16 @@ const PNOTE = {
     if (d === "mediterranean") out.push("The Mediterranean pattern lowered heart attacks and strokes in PREDIMED (Estruch 2018); MEDAS-14 measures how close you are.");
     if (f === "long") out.push("Fasts of a day or more raise LDL cholesterol, bilirubin and uric acid for a while: note it when a sample falls in such a week.");
     if (f === "time-restricted") out.push("Note the time of your last meal with each sample; it helps to read glucose and triglycerides.");
+    if (d === "vegetarian" || d === "vegan") out.push("Plant-based diet, further down, asks the follow-up questions: the diet group, vitamin B12, iodine, omega-3, calcium and protein, beside your lab values on them.");
+    return out;
+  },
+  "plant-based": a => {
+    const one = k => (a[k] || [])[0], out = [];
+    if (one("plant-since") === "<1y") out.push("B12 stores last years: a normal B12 now says little about later. Measure again after a year or two.");
+    if (one("plant-iodine") === "no" || one("plant-iodine") === "unknown") out.push("Iodine is short in Germany whatever the diet (DGE 2024); iodised salt is the simplest source.");
+    if (one("plant-omega3") === "no") out.push("Without fish, the long-chain omega-3 fats DHA and EPA come only from algae oil; DGE 2024 counts them as potentially critical.");
+    if (one("plant-calcium") === "no") out.push("Without dairy, calcium needs a fortified source; vegans in EPIC-Oxford had more hip fractures (Tong 2020).");
+    if (one("plant-legumes") === "no") out.push("Legumes, tofu, tempeh or seitan daily cover protein and its essential amino acids on a plant-based diet.");
     return out;
   },
 };
@@ -801,7 +860,7 @@ function scoreChip(p, sc) {
 function scoreBlock(p, sc) {
   if (!sc) return "";
   let h = `<div class="scorebox">`;
-  if (p.method === "family") h += `<b>${esc(sc.band)}</b>: ${esc(sc.meaning)}`;
+  if (p.method === "family" || p.method === "plant") h += `<b>${esc(sc.band)}</b>: ${esc(sc.meaning)}`;
   else if (sc.complete && sc.band) h += `<b>${p.method === "le8" ? "Cardiovascular health" : "Score"} ${sc.value}</b> · ${esc(sc.band)}: ${esc(sc.meaning)}`;
   else if (sc.value != null) h += `So far <b>${sc.value}</b>; with the ${sc.missing.length} open ${p.method === "le8" ? "metrics" : "questions"} it lands between ${sc.min} and ${sc.max}.`;
   if (p.method === "le8" && sc.metrics && Object.keys(sc.metrics).length)
@@ -818,6 +877,13 @@ function protoCard(p) {
   const pre = p.items.filter(it => PSRC[p.id][it.linkId]).length;
   if (pre) h += `<div class="hint" style="margin-top:4px;color:#9AD0EC">${pre} answer${pre > 1 ? "s" : ""} prefilled from your data: check ${pre > 1 ? "them" : "it"}, change what is wrong.</div>`;
   if (p.lastAnswered) h += `<div class="hint" style="margin-top:4px">Stored in your graph on ${esc(p.lastAnswered.authored.slice(0, 10))}.</div>`;
+  if (p.labs) {
+    h += `<div class="hint" style="margin-top:8px"><b>Your values on these nutrients</b></div>`;
+    h += p.labs.values.length ? `<div class="codes">` + p.labs.values.map(v => `${esc(v.name)} ${esc(String(v.value))} ${esc(v.unit || "")} · ${esc((v.date || "").slice(0, 10))} · ${esc(v.status)}`).join("<br>") + `</div>`
+      : `<div class="hint">None of them measured yet.</div>`;
+    p.labs.notes.forEach(t => h += `<div class="note" style="font-size:11px;margin-top:4px">${esc(t)}</div>`);
+    if (p.labs.missing.length) h += `<div class="hint" style="margin-top:4px"><b>To ask your doctor about:</b> ${p.labs.missing.map(esc).join("; ")}.</div>`;
+  }
   p.items.forEach(it => {
     if (!enabledItem(it, ans)) return;
     const cur = ans[it.linkId] || [];
@@ -967,6 +1033,7 @@ function showOverview() {
     if (!ans[it.linkId].length) delete ans[it.linkId];
     delete PSRC[p.id][it.linkId];  // changed by you: no longer "from your data"
     delete SAVED[p.id];
+    if (it.linkId === "diet-pattern") followDiet();
     rerender();
   });
   el.querySelectorAll(".q input[type=month]").forEach(i => i.onchange = () => {

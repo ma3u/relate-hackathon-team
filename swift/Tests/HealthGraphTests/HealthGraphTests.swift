@@ -546,10 +546,30 @@ struct ProtocolsTests {
 
   @Test func theCategorySeedsLikePython() throws {
     let store = try Self.store()
-    #expect(try store.seedProtocols() == ["protocols": 9, "items": 52, "snomedCodes": 54, "riskLinks": 19, "answerCodes": 63])
+    #expect(try store.seedProtocols() == ["protocols": 10, "items": 63, "snomedCodes": 58, "riskLinks": 22, "answerCodes": 63])
     #expect(try store.seedProtocols().isEmpty)  // current: nothing to do
     let never = try store.rows(cypher: "MATCH (:ProtocolItem {linkId: 'smoking'})-[r:ANSWER_CODE]->(s:SnomedCode) WHERE r.option = 'never' RETURN s.code AS c")
     #expect(never.first?["c"] == "266919005")
+  }
+
+  @Test func thePlantBasedDietGroupFollowsAHS2() throws {
+    func g(_ a: [String: String]) -> JSONObject? {
+      Protocols.plantSummary(Dictionary(uniqueKeysWithValues: a.map { ("plant-\($0.key)", [$0.value]) }))
+    }
+    #expect(g(["meat": "never", "fish": "never", "eggs": "never", "dairy": "<1/month"])?.string("snomed") == "1255165006")
+    #expect(g(["meat": "never", "fish": "never", "eggs": "1-3/month", "dairy": "1+/week"])?.string("band") == "lacto-ovo-vegetarian")
+    #expect(g(["meat": "<1/month", "fish": "1+/week"])?.string("band") == "pesco-vegetarian")
+    #expect(g(["meat": "1-3/month", "fish": "1-3/month"])?.string("band") == "semi-vegetarian")
+    #expect(g(["meat": "1+/week"])?.string("band") == "non-vegetarian")
+    let noB12 = try #require(g(["meat": "never", "fish": "never", "eggs": "never", "dairy": "never", "b12": "no"]))
+    #expect(noB12["flag"] as? Bool == true && noB12["complete"] as? Bool == true)
+    #expect(g(["meat": "never"])?["complete"] as? Bool == false)
+    let store = try Self.store()
+    let r = try store.storeProtocol("plant-based", ["plant-meat": "never", "plant-fish": "never", "plant-eggs": "never",
+                                                    "plant-dairy": "never", "plant-b12": "no"])
+    #expect(r.string("band") == "vegan")
+    let risks = try store.rows(cypher: "MATCH (:QuestionnaireResponse {protocol: 'plant-based'})-[:RISK_FACTOR_FOR]->(h) RETURN h.id AS h")
+    #expect(risks.map { $0["h"] } == ["fitness"])
   }
 
   @Test func scoresFollowThePublishedPoints() throws {

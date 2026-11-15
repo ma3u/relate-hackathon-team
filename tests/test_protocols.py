@@ -46,7 +46,7 @@ def test_every_code_is_declared_and_every_protocol_is_well_formed():
         if p.get("method") in ("sum", "le8"):
             assert all(o["points"] is not None for it in p["items"] for o in it["options"]), p["id"]
     # A question shared with the data-driven anamnesis keeps its answer codes, so both read one answer.
-    for link in ("smoking", "lipid-medication", "family-lipids"):
+    for link in ("smoking", "lipid-medication", "family-lipids", "supplements"):
         mine = next(i for p in protocols.PROTOCOLS for i in p["items"] if i["linkId"] == link)
         assert [o["code"] for o in mine["options"]] == [c for c, _, _ in anamnesis.ITEM[link]["options"]], link
 
@@ -137,3 +137,51 @@ def test_lipid_values_under_a_statin_are_marked(db):
     assert {t["date"] for t in treated} == {"2026-03-12", "2026-06-10"}  # not the September value
     with pytest.raises(ValueError):
         protocols.store_response(conn, pid, "lipid-therapy", {"lipid-from": {"text": "spring"}})
+
+
+def test_the_plant_based_diet_group_follows_ahs2():
+    g = lambda **a: protocols.plant_summary({f"plant-{k}": [v] for k, v in a.items()})
+    rare, monthly, weekly = "never", "1-3/month", "1+/week"
+    assert g(meat=rare, fish=rare, eggs=rare, dairy="<1/month")["snomed"] == "1255165006"  # vegan
+    assert g(meat=rare, fish=rare, eggs=monthly, dairy=weekly)["band"] == "lacto-ovo-vegetarian"
+    assert g(meat=rare, fish=rare, eggs=rare, dairy=weekly)["snomed"] == "765022009"
+    assert g(meat=rare, fish=rare, eggs=weekly, dairy=rare)["snomed"] == "1255167003"
+    assert g(meat="<1/month", fish=weekly)["band"] == "pesco-vegetarian"
+    assert g(meat=monthly, fish=monthly)["band"] == "semi-vegetarian"
+    assert g(meat=monthly, fish=weekly)["band"] == "non-vegetarian" and g(meat=weekly)["band"] == "non-vegetarian"
+    open_ = g(meat=rare)
+    assert open_["band"] == "vegetarian" and not open_["complete"] and open_["snomed"] == "765021002"
+    no_b12 = g(meat=rare, fish=rare, eggs=rare, dairy=rare, b12="no")
+    assert no_b12["flag"] and no_b12["complete"]
+    assert not g(meat=rare, fish=rare, eggs=rare, dairy=rare, b12="daily")["flag"]
+    assert not g(meat=rare, fish=rare, eggs=rare, dairy=rare)["complete"]  # the B12 question is open
+    assert protocols.plant_summary({}) is None
+
+
+def test_a_vegetarian_answer_opens_the_follow_up_with_the_lab_values(db):
+    conn, pid = db
+    protocols.store_response(conn, pid, "diet-pattern", {"diet-pattern": "vegan"}, authored="2026-11-15T09:00:00+00:00")
+    by_id = {p["id"]: p for p in protocols.plan(conn, today=TODAY)["protocols"]}
+    plant = by_id["plant-based"]
+    assert plant["forYou"][0].startswith("you said you eat vegan")
+    pre = {i["linkId"]: (i["prefilled"] or {}).get("code") for i in plant["items"]}
+    assert pre["plant-meat"] == pre["plant-fish"] == pre["plant-eggs"] == pre["plant-dairy"] == "never"
+    assert all(i["enabled"] for i in plant["items"] if i["linkId"] in ("plant-b12", "plant-iodine", "plant-calcium"))
+    assert plant["score"]["band"] == "vegan" and not plant["score"]["complete"]  # B12 still to answer
+    labs = plant["labs"]
+    assert [v["id"] for v in labs["values"]] == ["ferritin"]  # the fixtures measure ferritin, not B12
+    assert labs["values"][0]["date"] == "2026-09-04" and labs["values"][0]["status"]
+    assert any(m.startswith("Vitamin B12") for m in labs["missing"])
+    assert any(m.startswith("Holotranscobalamin") for m in labs["missing"])
+    # Stored: the response carries the diet group's SNOMED concept; a missing B12 source is a risk factor.
+    counts = protocols.store_response(conn, pid, "plant-based", {
+        "plant-meat": "never", "plant-fish": "never", "plant-eggs": "never", "plant-dairy": "never",
+        "plant-b12": "no"}, authored="2026-11-15T09:05:00+00:00")
+    assert counts["band"] == "vegan" and counts["flag"]
+    assert rows(conn, "MATCH (r:QuestionnaireResponse {protocol: 'plant-based'})-[:CODED_BY]->(s) RETURN s.code AS c") \
+        == [{"c": "1255165006"}]
+    assert rows(conn, "MATCH (r:QuestionnaireResponse {protocol: 'plant-based'})-[:RISK_FACTOR_FOR]->(h) "
+                      "RETURN h.id AS h") == [{"h": "fitness"}]
+    # The vegetarian answer in the graph links to the protocol that follows it up.
+    assert rows(conn, "MATCH (:AnamnesisProtocol {id: 'plant-based'})-[:CODED_BY]->(s:SnomedCode {code: '765021002'}) "
+                      "RETURN count(s) AS n") == [{"n": 1}]

@@ -16,6 +16,9 @@ Structured history (coded as FHIR does, no score):
   Family history of heart disease the ESC 2021 rule: premature means men before 55, women before 65
   Lipid-lowering medication       with dates, so values measured under it are read as treated
   Eating pattern and fasting      keto, low-carb, Mediterranean, plant-based, fasting
+  Plant-based diet                the follow-up to vegetarian or vegan: the AHS-2 diet group (Orlich 2013) and
+                                  how B12, iodine, omega-3, calcium and protein are covered (DGE 2024), beside
+                                  the person's own B12, folate, ferritin, vitamin D and TSH values
 
 Every item carries its LOINC question code where one exists and every answer the
 SNOMED CT concept it asserts (verified on tx.fhir.org and the CSIRO Ontoserver,
@@ -114,6 +117,10 @@ SNOMED = {
     "765060000": ("Ketogenic diet", "regime/therapy"),
     "765021002": ("Vegetarian diet", "regime/therapy"),
     "1255165006": ("Vegan diet", "regime/therapy"),
+    "765023004": ("Lacto-ovo-vegetarian diet", "regime/therapy"),
+    "765022009": ("Lacto-vegetarian diet", "regime/therapy"),
+    "1255167003": ("Ovo vegetarian diet", "regime/therapy"),
+    "1255166007": ("Pescovegetarian diet", "regime/therapy"),
     "1362129009": ("Intermittent fasting", "finding"),
     "16985007": ("Fasting", "finding"),
 }
@@ -136,6 +143,27 @@ EVIDENCE = {
                  "pmid": "34458905", "doi": "10.1093/eurheartj/ehab484",
                  "finding": "Family history counts as a risk modifier only when heart disease started early in a "
                             "first-degree relative: men before 55, women before 65."},
+    "orlich-2013": {"citation": "Orlich et al., JAMA Intern Med 2013;173:1230 (Adventist Health Study 2)",
+                    "pmid": "23836264", "doi": "10.1001/jamainternmed.2013.6473",
+                    "finding": "Five diet groups by how often meat, fish, eggs and dairy are eaten (vegan, lacto-ovo, "
+                               "pesco, semi-vegetarian, non-vegetarian); vegetarians had 12 % lower mortality."},
+    "melina-2016": {"citation": "Melina et al., J Acad Nutr Diet 2016;116:1970 (Academy of Nutrition and Dietetics)",
+                    "pmid": "27886704", "doi": "10.1016/j.jand.2016.09.025",
+                    "finding": "Well-planned vegetarian and vegan diets are adequate and lower LDL cholesterol; vegans "
+                               "need a reliable B12 source, fortified foods or a supplement."},
+    "dge-2024": {"citation": "Klug et al., Ernährungs Umschau 2024;71(7):60 (DGE position on vegan diet)",
+                 "doi": "10.4455/eu.2024.22",
+                 "finding": "A vegan diet can be health-promoting for healthy adults if B12 is supplemented; iodine is "
+                            "critical too, and protein, long-chain omega-3, vitamin D, B2, calcium, iron, zinc and "
+                            "selenium potentially."},
+    "herrmann-2003": {"citation": "Herrmann et al., Am J Clin Nutr 2003;78:131", "pmid": "12816782",
+                      "doi": "10.1093/ajcn/78.1.131",
+                      "finding": "Without supplements, 77 % of lacto-ovo vegetarians and 92 % of vegans had a low "
+                                 "holotranscobalamin; serum B12 alone tracked it poorly in the low range."},
+    "tong-2020": {"citation": "Tong et al., BMC Med 2020;18:353 (EPIC-Oxford)", "pmid": "33222682",
+                  "doi": "10.1186/s12916-020-01815-3",
+                  "finding": "Vegans had 2.3 times the risk of hip fracture of meat eaters over 18 years; calcium and "
+                             "protein explained part of it."},
     "who-2020-activity": {"citation": "Bull et al., Br J Sports Med 2020;54:1451 (WHO guidelines)",
                           "pmid": "33239350", "doi": "10.1136/bjsports-2020-102955",
                           "finding": "Adults: 150 to 300 minutes of moderate or 75 to 150 of vigorous activity a week, "
@@ -450,6 +478,69 @@ PROTOCOLS = [
                       o("long", "Fasts of a day or more", None, "16985007")]},
      ]},
 
+    {"id": "plant-based", "name": "Plant-based diet", "kind": "history", "year": 2024,
+     "title": "Vegetarian or vegan: the AHS-2 diet group and the nutrients DGE 2024 names critical",
+     "source": "Orlich et al., JAMA Intern Med 2013;173:1230 (AHS-2 diet groups); Klug et al., Ernährungs Umschau "
+               "2024;71(7):60 (DGE position on vegan diet)", "pmid": "23836264",
+     "doi": "10.1001/jamainternmed.2013.6473", "url": "https://doi.org/10.4455/eu.2024.22",
+     "licence": "Diet groups as defined in AHS-2; questions written here. Codes: SNOMED CT (affiliate licence).",
+     "snomed": "765021002", "relatedSnomed": ["1255165006", "765023004", "765022009", "1255167003", "1255166007"],
+     "risks": ["fitness", "bone", "cardiovascular"], "flagRisks": ["fitness"], "method": "plant",
+     "raisedBy": ["vitamin_d"],
+     "why": "The follow-up to a vegetarian or vegan answer. Four questions on meat, fish, eggs and dairy give the diet "
+            "group as the Adventist Health Study 2 defines it; the rest ask how the nutrients a plant-based diet can "
+            "lack are covered (DGE 2024), and your lab values on them are shown beside the questions.",
+     "critical": ["Serum vitamin B12 can stay in the lab's range while the stores run low: holotranscobalamin or "
+                  "methylmalonic acid shows an early deficiency (Herrmann 2003). A high folate, common on a "
+                  "plant-based diet, keeps haemoglobin and MCV normal while B12 runs low; it does not protect "
+                  "the nerves.",
+                  "The body stores B12 for years, so a normal value in the first years of a vegan diet says "
+                  "little about later.",
+                  "TSH shows thyroid function, not iodine intake; iodine in urine does. Iodine is short in Germany "
+                  "whatever the diet, and shorter in vegan diets (DGE 2024).",
+                  "Vegans in EPIC-Oxford had more hip fractures than meat eaters (Tong 2020); calcium, vitamin D and "
+                  "protein explained part of it."],
+     "evidence": ["orlich-2013", "dge-2024", "herrmann-2003", "melina-2016", "tong-2020"],
+     "items": [
+         {"linkId": "plant-meat", "prefill": "diet:meat",
+          "text": "How often do you eat meat or poultry (sausage, ham and meat stock included)?",
+          "options": [o("never", "Never"), o("<1/month", "Less than once a month"),
+                      o("1-3/month", "1 to 3 times a month"), o("1+/week", "Once a week or more")]},
+         {"linkId": "plant-fish", "prefill": "diet:fish", "text": "How often do you eat fish or seafood?",
+          "options": [o("never", "Never"), o("<1/month", "Less than once a month"),
+                      o("1-3/month", "1 to 3 times a month"), o("1+/week", "Once a week or more")]},
+         {"linkId": "plant-eggs", "prefill": "diet:eggs", "text": "How often do you eat eggs (in baking included)?",
+          "options": [o("never", "Never"), o("<1/month", "Less than once a month"),
+                      o("1-3/month", "1 to 3 times a month"), o("1+/week", "Once a week or more")]},
+         {"linkId": "plant-dairy", "prefill": "diet:dairy",
+          "text": "How often do you have milk, yoghurt or cheese?", "options": [o("never", "Never"), o("<1/month", "Less than once a month"),
+                      o("1-3/month", "1 to 3 times a month"), o("1+/week", "Once a week or more")]},
+         {"linkId": "plant-since", "enableWhen": {"plant-meat": ["never", "<1/month"]},
+          "text": "How long have you eaten without meat?",
+          "options": [o("<1y", "Less than a year"), o("1-3y", "1 to 3 years"), o("3y+", "3 years or more")]},
+         {"linkId": "plant-b12", "enableWhen": {"plant-meat": ["never", "<1/month"]},
+          "text": "Do you take vitamin B12?",
+          "options": [o("daily", "A tablet or drops, daily or most days"), o("weekly", "A high dose once or twice a week"),
+                      o("injection", "Injections from the doctor"), o("fortified", "Only fortified foods or B12 toothpaste"),
+                      o("no", "No")]},
+         {"linkId": "plant-iodine", "enableWhen": {"plant-meat": ["never", "<1/month"]},
+          "text": "Do you use iodised salt at home, or take iodine?",
+          "options": [o("salt", "Iodised salt"), o("supplement", "An iodine tablet (or both)"), o("no", "No"),
+                      o("unknown", "Not sure")]},
+         {"linkId": "plant-omega3", "enableWhen": {"plant-meat": ["never", "<1/month"], "plant-fish": ["never", "<1/month"]},
+          "text": "Do you take an algae oil with DHA and EPA?",
+          "options": [o("yes", "Yes"), o("no", "No")]},
+         {"linkId": "plant-calcium", "enableWhen": {"plant-dairy": ["never", "<1/month"]},
+          "text": "Do you have a calcium source every day: plant drinks or yoghurt with added calcium, tofu set with "
+                  "calcium, or a calcium-rich mineral water?",
+          "options": [o("yes", "Yes, daily"), o("sometimes", "Some days"), o("no", "No")]},
+         {"linkId": "plant-legumes", "enableWhen": {"plant-meat": ["never", "<1/month"]},
+          "text": "Do you eat legumes, tofu, tempeh or seitan every day?",
+          "options": [o("yes", "Yes, daily"), o("sometimes", "Some days"), o("no", "Rarely")]},
+         {"linkId": "supplements", "prefill": "answer:supplements", "text": "Do you take vitamin D or calcium?",
+          "options": [o("none", "No"), o("vitamin-d", "Vitamin D"), o("vitamin-d-calcium", "Vitamin D and calcium")]},
+     ]},
+
     {"id": "phq-2", "name": "PHQ-2", "kind": "score", "year": 2003,
      "title": "Patient Health Questionnaire, two questions", "source": "Kroenke et al., Med Care 2003;41:1284",
      "pmid": "14583691", "url": "https://pubmed.ncbi.nlm.nih.gov/14583691/",
@@ -496,6 +587,10 @@ PREFILL = {
     "family_diabetes": "your anamnesis answer about diabetes in parents and siblings",
     "alcohol_none": "your anamnesis answer about alcohol",
     "wine_week": "your anamnesis answer about alcohol",
+    "diet:meat": "your answer on how you eat: vegetarian or vegan means no meat",
+    "diet:fish": "your answer on how you eat: vegetarian or vegan means no fish",
+    "diet:eggs": "your answer on how you eat: vegan means no eggs",
+    "diet:dairy": "your answer on how you eat: vegan means no dairy",
 }
 
 # ── reading the person's data ────────────────────────────────────────────────
@@ -744,6 +839,12 @@ def prefill_value(name: str, protocol: dict, item: dict, f: dict) -> dict | None
         if c and c[0] == "yes":
             return out("close", said("family-diabetes"))
         return None  # "no" covers parents and siblings only; grandparents, aunts and cousins count too
+    if name.startswith("diet:"):
+        d = _answer(f, "diet-pattern")
+        food = name.split(":", 1)[1]
+        if d and (d[0] == "vegan" or (d[0] == "vegetarian" and food in ("meat", "fish"))):
+            return out("never", said("diet-pattern"))
+        return None
     if name == "alcohol_none":
         c = _answer(f, "alcohol")
         return out("never", said("alcohol")) if c and c[0] == "none" else None
@@ -783,6 +884,8 @@ def band_of(protocol: dict, value: float, sex: str | None = None) -> tuple[int, 
 def score(protocol: dict, answers: dict[str, list[str]], sex: str | None = None) -> dict | None:
     """The score so far, the range it can still reach, and its band once complete."""
     method = protocol.get("method")
+    if method == "plant":
+        return plant_summary(answers)
     if method in (None, "family"):
         return family_summary(answers) if method == "family" else None
     items = [i for i in protocol["items"] if enabled(i, answers)]
@@ -878,6 +981,131 @@ def family_summary(answers: dict[str, list[str]]) -> dict | None:
             "snomed": "266894000", "derived": {"family-cvd": "no"}}
 
 
+RARE = ("never", "<1/month")  # AHS-2: "less than once a month" counts as not eaten
+PLANT_GROUPS = {  # band: (SNOMED CT, meaning)
+    "vegan": ("1255165006", "no meat, fish, eggs or dairy (AHS-2: each less than once a month)"),
+    "lacto-ovo-vegetarian": ("765023004", "eggs and dairy, no meat or fish"),
+    "lacto-vegetarian": ("765022009", "dairy, no meat, fish or eggs"),
+    "ovo-vegetarian": ("1255167003", "eggs, no meat, fish or dairy"),
+    "pesco-vegetarian": ("1255166007", "fish at least monthly, meat less than monthly"),
+    "semi-vegetarian": (None, "meat at least monthly, meat and fish each less than weekly"),
+    "non-vegetarian": (None, "meat or fish weekly or more"),
+}
+
+
+def plant_summary(answers: dict[str, list[str]]) -> dict | None:
+    """The AHS-2 diet group (Orlich 2013) from four frequencies, with its SNOMED concept, and the B12 check."""
+    one = lambda k: (answers.get(k) or [None])[0]
+    meat, fish, eggs, dairy = one("plant-meat"), one("plant-fish"), one("plant-eggs"), one("plant-dairy")
+    if meat is None:
+        return None
+    if meat not in RARE:
+        if "1+/week" in (meat, fish):
+            group = "non-vegetarian"
+        elif fish is None:
+            return {"value": None, "complete": False, "band": "not vegetarian", "flag": False,
+                    "meaning": "meat at least monthly: the fish question decides semi- or non-vegetarian"}
+        else:
+            group = "semi-vegetarian"
+    elif fish is None:
+        return {"value": None, "complete": False, "band": "vegetarian", "snomed": "765021002", "flag": False,
+                "meaning": "no meat: the fish, egg and dairy questions give the group"}
+    elif fish not in RARE:
+        group = "pesco-vegetarian"
+    elif eggs is None or dairy is None:
+        return {"value": None, "complete": False, "band": "vegetarian", "snomed": "765021002", "flag": False,
+                "meaning": "no meat or fish: eggs and dairy decide lacto-ovo, lacto, ovo or vegan"}
+    else:
+        e, d = eggs not in RARE, dairy not in RARE
+        group = ("lacto-ovo-vegetarian" if e and d else "lacto-vegetarian" if d else "ovo-vegetarian" if e
+                 else "vegan")
+    snomed, meaning = PLANT_GROUPS[group]
+    out = {"value": None, "complete": True, "band": group, "meaning": meaning, "snomed": snomed, "flag": False}
+    if meat in RARE:
+        b12 = one("plant-b12")
+        if b12 is None:
+            out["complete"] = False
+            out["meaning"] += "; how you get vitamin B12 is still open"
+        elif b12 in ("no", "fortified"):
+            out["flag"] = True
+            out["meaning"] += ("; no reliable vitamin B12 source: DGE 2024 asks vegans for a supplement, and most "
+                               "vegetarians without one run low too (Herrmann 2003)")
+        else:
+            out["meaning"] += "; vitamin B12 from a supplement"
+    return out
+
+
+# Lab values that show how the nutrients of a plant-based diet are covered (newest of each, with the lab's range).
+NUTRIENT_LABS = [
+    {"id": "b12", "name": "Vitamin B12", "codes": ["2132-9"], "nutrient": "B12"},
+    {"id": "holotc", "name": "Holotranscobalamin", "codes": ["72160-5"], "nutrient": "B12"},
+    {"id": "mma", "name": "Methylmalonic acid", "codes": ["13964-2"], "nutrient": "B12"},
+    {"id": "homocysteine", "name": "Homocysteine", "codes": ["13965-9"], "nutrient": "B12"},
+    {"id": "folate", "name": "Folate", "codes": ["2284-8"], "nutrient": "folate"},
+    {"id": "hb", "name": "Haemoglobin", "codes": ["718-7"], "nutrient": "iron, B12"},
+    {"id": "mcv", "name": "MCV", "codes": ["787-2"], "nutrient": "B12, iron"},
+    {"id": "ferritin", "name": "Ferritin", "codes": ["2276-4"], "nutrient": "iron"},
+    {"id": "tsat", "name": "Transferrin saturation", "codes": ["2502-3"], "nutrient": "iron"},
+    {"id": "vitd", "name": "Vitamin D (25-OH)", "codes": ["62292-8", "68438-1", "1989-3"], "nutrient": "vitamin D"},
+    {"id": "iodine", "name": "Iodine in urine", "codes": ["2495-0", "53872-8"], "nutrient": "iodine"},
+    {"id": "tsh", "name": "TSH", "codes": ["3016-3"], "nutrient": "thyroid"},
+    {"id": "zinc", "name": "Zinc", "codes": ["14955-9"], "nutrient": "zinc"},
+    {"id": "selenium", "name": "Selenium", "codes": ["25521-6"], "nutrient": "selenium"},
+    {"id": "protein", "name": "Total protein", "codes": ["2885-2"], "nutrient": "protein"},
+]
+
+NUTRIENT_NEWEST = """
+MATCH (p:Patient)-[:HAS_OBSERVATION]->(o:Observation)-[:CODED_BY]->(c:LoincCode)
+WHERE c.code IN $codes AND o.duplicateOf IS NULL AND o.valueQuantity IS NOT NULL
+RETURN o.resourceId AS id, c.code AS code, o.valueQuantity AS value, o.unit AS unit, o.effectiveDate AS date,
+       o.referenceLow AS low, o.referenceHigh AS high
+ORDER BY o.effectiveDate DESC
+"""
+
+
+def nutrient_labs(conn) -> dict:
+    """Your newest value on each nutrient marker, against the lab's own range, and what that means here."""
+    values = []
+    for g in NUTRIENT_LABS:
+        r = next(iter(_rows(conn, NUTRIENT_NEWEST, {"codes": g["codes"]})), None)
+        if not r:
+            continue
+        lo, hi, v = r.get("low"), r.get("high"), r["value"]
+        status = ("below the lab's range" if lo is not None and v < lo else
+                  "above the lab's range" if hi is not None and v > hi else
+                  "within the lab's range" if lo is not None or hi is not None else "no range printed")
+        values.append({"id": g["id"], "name": g["name"], "nutrient": g["nutrient"], "observation": r["id"],
+                       "code": r["code"], "value": v, "unit": r["unit"], "date": r["date"], "low": lo, "high": hi,
+                       "status": status})
+    have = {v["id"]: v for v in values}
+    notes, missing = [], []
+    text = lambda v: f"{v['name']} {v['value']:g} {v['unit'] or ''} on {(v['date'] or '')[:10]}".replace("  ", " ")
+    if "b12" in have:
+        b = have["b12"]
+        if b["status"].startswith("below"):
+            notes.append(f"{text(b)} is below the lab's range: on a plant-based diet the B12 source comes first.")
+        elif not ({"holotc", "mma"} & have.keys()):
+            notes.append(f"{text(b)} is {b['status']}, but serum B12 can miss low stores "
+                         "(Herrmann 2003); holotranscobalamin or methylmalonic acid shows them.")
+    if "folate" in have and have["folate"]["status"].startswith("above"):
+        notes.append(f"{text(have['folate'])} is above the lab's range: a high folate keeps haemoglobin and MCV "
+                     "normal while B12 runs low, so read B12 on its own.")
+    if "ferritin" in have and have["ferritin"]["status"].startswith("below"):
+        notes.append(f"{text(have['ferritin'])} is below the lab's range: the iron stores are low, and iron from "
+                     "plants is absorbed less well than from meat.")
+    if "vitd" in have and have["vitd"]["status"].startswith("below"):
+        notes.append(f"{text(have['vitd'])} is below the lab's range.")
+    if "tsh" in have and "iodine" not in have:
+        notes.append(f"{text(have['tsh'])} shows thyroid function, not iodine intake (DGE 2024 names iodine critical).")
+    if not ({"holotc", "mma"} & have.keys()):
+        missing.append("Holotranscobalamin or methylmalonic acid: they show low B12 stores before serum B12 does")
+    if "iodine" not in have:
+        missing.append("Iodine in urine, if your iodine intake is unclear")
+    if "b12" not in have:
+        missing.append("Vitamin B12, the one nutrient a vegan diet cannot cover without a supplement")
+    return {"values": values, "notes": notes, "missing": missing}
+
+
 # ── the personal plan ────────────────────────────────────────────────────────
 
 def _findings(conn, today: str) -> list[dict]:
@@ -939,6 +1167,16 @@ def plan(conn, today: str | None = None) -> dict:
         if p["id"] == "findrisc" and f.get("glucose_ever_high", {}).get("value"):
             relevance += 2
             why.insert(0, f"{f['glucose_ever_high']['text']}: high blood glucose in FINDRISC (5 points)")
+        labs = None
+        if p["id"] == "plant-based":
+            labs = nutrient_labs(conn)
+            diet = (prior.get("diet-pattern") or [None])[0]
+            if diet in ("vegetarian", "vegan"):
+                relevance += 4
+                why.insert(0, f"you said you eat {diet}: these are the follow-up questions")
+            off = [v for v in labs["values"] if not v["status"].startswith(("within", "no range"))]
+            relevance += min(len(off), 3) * 0.5 + (0.5 if labs["values"] else 0)
+            why += [f"{v['name']} {v['status']} on {(v['date'] or '')[:10]}" for v in off][:2]
         last = done.get(p["id"])
         if last and last["authored"] and (dt.date.fromisoformat(today) -
                                           dt.date.fromisoformat(last["authored"][:10])).days <= 365:
@@ -953,7 +1191,7 @@ def plan(conn, today: str | None = None) -> dict:
                     "method": p.get("method"), "bands": p.get("bands"), "cutOff": p.get("cutOff"),
                     "flagFrom": p.get("flagFrom"), "flagBelow": p.get("flagBelow"), "bandSnomed": p.get("bandSnomed"),
                     "items": items, "prefilled": sum(1 for i in items if i["prefilled"]),
-                    "score": score(p, answers, sex), "lastAnswered": last})
+                    "score": score(p, answers, sex), "lastAnswered": last, "labs": labs})
     out.sort(key=lambda x: -x["relevance"])
     treated = treated_values(conn, f)
     return {"asOf": today, "sex": sex, "birthYear": f["person"].get("birthYear"),
@@ -990,7 +1228,8 @@ def _protocol_rows() -> list[dict]:
             "bandFrom": [b[0] for b in p.get("bands", [])], "bandLabels": [b[1] for b in p.get("bands", [])],
             "bandMeanings": [b[2] for b in p.get("bands", [])],
             "codes": [c for c in (p.get("loinc"), p.get("scoreLoinc")) if c],
-            "snomedCodes": [c for c in (p.get("snomed"), p.get("scoreSnomed")) if c] + list(p.get("bandSnomed", [])),
+            "snomedCodes": [c for c in (p.get("snomed"), p.get("scoreSnomed")) if c] + list(p.get("bandSnomed", []))
+                           + list(p.get("relatedSnomed", [])),
             "items": [{
                 "id": f"{p['id']}|{i['linkId']}", "linkId": i["linkId"], "order": n, "text": i["text"],
                 "type": i.get("type", "choice"), "multiple": bool(i.get("multiple")), "loinc": i.get("loinc"),
@@ -1247,7 +1486,7 @@ def store_response(conn, patient_id: str, protocol_id: str, answers: dict, sourc
         conn.execute(STORE_PREFILLED_FROM, {"responseId": response_id, "rows": pre})
     response_codes = [c for c in (p.get("scoreSnomed"), result.get("snomed")) if c]
     conn.execute(STORE_RESPONSE_LINKS, {"responseId": response_id, "snomed": response_codes,
-                                        "risks": p["risks"] if result.get("flag") else []})
+                                        "risks": p.get("flagRisks", p["risks"]) if result.get("flag") else []})
     derived = []
     for link, code in (result.get("derived") or {}).items():
         derived.append({"linkId": link, "codes": [code], "labels": ["Yes" if code == "yes" else "No"],

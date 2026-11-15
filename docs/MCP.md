@@ -162,7 +162,7 @@ The rules, questions and queries live in [`health_graph/anamnesis.py`](../health
 
 ## The anamnesis protocols
 
-Some questions are best asked the way doctors and studies ask them, so an answer means the same here as in a guideline or a Patient Summary. The graph holds them as their own category (`AnamnesisCategory`, see [SCHEMA.md](SCHEMA.md)): nine protocols, 52 questions, 54 SNOMED CT concepts.
+Some questions are best asked the way doctors and studies ask them, so an answer means the same here as in a guideline or a Patient Summary. The graph holds them as their own category (`AnamnesisCategory`, see [SCHEMA.md](SCHEMA.md)): ten protocols, 63 questions, 58 SNOMED CT concepts.
 
 | Protocol | Year | What it gives | Prefilled from |
 |---|---|---|---|
@@ -175,6 +175,7 @@ Some questions are best asked the way doctors and studies ask them, so an answer
 | Family history of heart disease (ESC 2021) | 2021 | premature (men before 55, women before 65), later in life, or none | earlier answers |
 | Lipid-lowering medication | | statin or combination, and the months taken | marks the lipid values measured under it as treated |
 | Eating pattern and fasting | | Mediterranean, low-carb, ketogenic, vegetarian, vegan; time-restricted eating, longer fasts | — |
+| Plant-based diet (AHS-2, DGE 2024) | 2024 | the follow-up to vegetarian or vegan: the diet group as the Adventist Health Study 2 defines it (vegan, lacto-ovo, lacto, ovo, pesco, semi-vegetarian), each with its SNOMED CT concept, and how vitamin B12, iodine, omega-3, calcium and protein are covered; flags a diet without a reliable B12 source | the eating-pattern answer, the vitamin D answer; beside it the newest B12, folate, ferritin, haemoglobin, MCV, vitamin D, TSH values against the lab's range, and the tests not done yet (holotranscobalamin or MMA, iodine in urine) |
 
 `anamnesis_protocols` returns them with their codes, points, bands, what can prefill each question and a critical note where newer evidence disagrees: MEDAS-14 gives a point for wine, which newer cohort analyses do not support; SCORE2 counts any current smoking, and one cigarette a day already carries about half the heart risk of 20; a family history that began at 70 is not a risk modifier. The `anamnesis_protocols` prompt prefills what the graph can answer, asks the rest, gives the score and stores the confirmed answers with `save_protocol_answers`, which hands them to Klarbefund for Mac through the app-group Inbox. The app checks, scores and stores them, and links each answer to its SNOMED CT concept and, when it was prefilled, to the value it came from. The 3D view asks the same protocols, and served from the vault it hands the answers over the same way.
 

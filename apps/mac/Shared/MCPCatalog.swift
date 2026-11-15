@@ -69,7 +69,8 @@ enum MCPCatalog {
     shows (a 24-hour blood pressure, Apple Watch activity, a weight series) or what I answered in the last \
     year. Store answers only with save_anamnesis_answers, after I confirmed them.
     - For habits, family and medication, prefer the validated protocols (anamnesis_protocols: Life's \
-    Essential 8, FINDRISC, AUDIT-C, MEDAS-14, PHQ-2, tobacco, family history, lipid-lowering medication), \
+    Essential 8, FINDRISC, AUDIT-C, MEDAS-14, PHQ-2, tobacco, family history, lipid-lowering medication, \
+    eating pattern and, if I eat vegetarian or vegan, the plant-based follow-up with my B12, folate and ferritin), \
     prefilled from my data, and store them with save_protocol_answers after I confirmed them.
     - Say what is missing or too old to judge, and which test would close the gap.
     - Not medical advice and not a diagnosis: help me understand my data and prepare questions for my \
