@@ -434,6 +434,105 @@ const pin = n => { n.fx = n.x; n.fy = n.y; n.fz = n.z; };
 const unpin = n => { delete n.fx; delete n.fy; delete n.fz; };
 const linksOf = n => new Set(Graph.graphData().links.filter(l => endId(l.source) === n.id || endId(l.target) === n.id));
 
+// The part of the window no panel covers: the graph is centred and sized to it, not to the
+// whole canvas (on a wide screen the panels take the sides, the caption the top).
+function freeArea() {
+  const W = innerWidth, H = innerHeight, box = id => {
+    const el = document.getElementById(id);
+    return el && el.offsetParent !== null && getComputedStyle(el).display !== "none" ? el.getBoundingClientRect() : null;
+  };
+  const side = box("side"), det = box("detail"), cap = box("caption"), hist = box("history");
+  let L = side ? side.right + 12 : 12, R = det ? det.left - 12 : W - 12;
+  if (R - L < W * 0.3) { L = 12; R = W - 12; }  // a narrow window: panels float over the graph
+  const T = cap && cap.bottom < H * 0.35 ? cap.bottom + 8 : 12, B = (hist ? hist.top : H) - 20;
+  return { L, R, T, B: Math.max(B, T + 100) };
+}
+// Shift the projection so the camera looks at the centre of the free area; orbiting
+// then turns the graph about its own centre, where you see it.
+function centreOnFreeArea() {
+  const f = freeArea(), cam = Graph.camera(), W = innerWidth, H = innerHeight;
+  cam.setViewOffset(W, H, W / 2 - (f.L + f.R) / 2, H / 2 - (f.T + f.B) / 2, W, H);
+  cam.updateProjectionMatrix();
+  return f;
+}
+// Frame what is shown so it fills the free area, keeping the viewing direction. Measured
+// on screen, so the long time axis into the depth does not shrink the graph the way
+// zoomToFit's bounding box did. On the health-risk overview your main risk is the centre:
+// the view and the opening turn are about it, and everything else fits around it.
+function fitView(ms = 900) {
+  const main = !drill.length && stage === 0 ? RANKED.find(n => n.st.status === "main" && n.x !== undefined) : null;
+  const nodes = Graph.graphData().nodes.filter(n => n.x !== undefined);
+  if (!nodes.length) return;
+  const f = centreOnFreeArea(), W = innerWidth, H = innerHeight;
+  const cam = Graph.camera(), V = cam.position.constructor, probe = cam.clone();
+  const lo = [Infinity, Infinity, Infinity], hi = [-Infinity, -Infinity, -Infinity];
+  nodes.forEach(n => [n.x, n.y, n.z].forEach((v, k) => { lo[k] = Math.min(lo[k], v); hi[k] = Math.max(hi[k], v); }));
+  const c = main ? new V(main.x, main.y, main.z) : new V((lo[0] + hi[0]) / 2, (lo[1] + hi[1]) / 2, (lo[2] + hi[2]) / 2);
+  const dir = cam.position.clone().sub(Graph.controls().target).normalize();
+  const d0 = Math.max(50, Math.hypot(hi[0] - lo[0], hi[1] - lo[1], hi[2] - lo[2]));
+  const aw = (f.R - f.L) * 0.9, ah = (f.B - f.T) * 0.9, p = new V();
+  // While the view turns about the main risk, it must fit at every angle of the turn, not just this one.
+  const dirs = main && spinning ? Array.from({ length: 12 }, (_, k) => dir.clone().applyAxisAngle(cam.up, k * Math.PI / 6)) : [dir];
+  const d = Math.max(...dirs.map(u => solve(u)));
+  function solve(dir) {
+  let d = d0;
+  for (let k = 0; k < 6; k++) {
+    probe.position.copy(c).addScaledVector(dir, d);
+    probe.lookAt(c);
+    probe.updateMatrixWorld();
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity, behind = false;
+    nodes.forEach(n => {
+      p.set(n.x, n.y, n.z).project(probe);
+      if (p.z > 1) { behind = true; return; }
+      const x = (p.x + 1) / 2 * W, y = (1 - p.y) / 2 * H;
+      x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y);
+    });
+    if (behind) { d *= 1.6; continue; }
+    const cx = (f.L + f.R) / 2, cy = (f.T + f.B) / 2;
+    let s;
+    if (main) {  // the main risk stays in the middle: the farthest node on each side decides the zoom
+      s = Math.min(aw / 2 / Math.max(cx - x0, x1 - cx, 1), ah / 2 / Math.max(cy - y0, y1 - cy, 1));
+    } else {  // move the centre so the drawing sits in the middle of the free area, then scale
+      const fov = probe.fov * Math.PI / 180, perPx = 2 * d * Math.tan(fov / 2) / H;
+      const right = new V().setFromMatrixColumn(probe.matrixWorld, 0), up = new V().setFromMatrixColumn(probe.matrixWorld, 1);
+      c.addScaledVector(right, ((x0 + x1) / 2 - cx) * perPx).addScaledVector(up, -((y0 + y1) / 2 - cy) * perPx);
+      s = Math.min(aw / Math.max(x1 - x0, 1), ah / Math.max(y1 - y0, 1));
+    }
+    d = Math.max(30, d / Math.min(Math.max(s, 0.25), 4));
+  }
+  return d;
+  }
+  const pos = c.clone().addScaledVector(dir, d);
+  spinHold = performance.now() + ms + 50;
+  Graph.cameraPosition({ x: pos.x, y: pos.y, z: pos.z }, { x: c.x, y: c.y, z: c.z }, ms);
+}
+
+// On opening, the graph turns slowly for 30 seconds, so the depth (time runs into it) reads as
+// 3D. It stops by itself, or at once when you click, scroll, drag or press a key.
+const SPIN_MS = 30000, SPIN_TURN_MS = 40000;  // one full turn in 40 s: three quarters before it stops
+let spinning = false, spinHold = 0;
+function startSpin() {
+  const stopOn = ["pointerdown", "wheel", "keydown", "touchstart"];
+  const stop = () => { spinning = false; stopOn.forEach(e => removeEventListener(e, stop, true)); };
+  stopOn.forEach(e => addEventListener(e, stop, true));
+  spinning = true;
+  const end = performance.now() + SPIN_MS;
+  let last = performance.now();
+  requestAnimationFrame(function step(now) {
+    if (!spinning) return;
+    if (now >= end) { stop(); return; }
+    const dt = Math.min(now - last, 100);
+    last = now;
+    if (now >= spinHold) {  // not while a fit is flying the camera
+      const cam = Graph.camera(), t = Graph.controls().target;
+      const off = cam.position.clone().sub(t).applyAxisAngle(cam.up, 2 * Math.PI * dt / SPIN_TURN_MS);
+      cam.position.copy(t).add(off);
+      cam.lookAt(t);
+    }
+    requestAnimationFrame(step);
+  });
+}
+
 // Keep the current viewing direction and move closer to the node.
 function flyTo(n, ms) {
   const c = Graph.camera().position;
@@ -569,7 +668,9 @@ const EXPLAIN = {
 function updateCaption() {
   const el = document.getElementById("caption"), top = drill[drill.length - 1];
   const kind = top ? `What you see · ${top.g}` : `What you see · step ${stage + 1}, ${STAGES[stage].name}`;
-  const text = top ? (EXPLAIN[top.g] ? EXPLAIN[top.g](top) : `${top.n} and what it is connected to.`) : STAGES[stage].hint;
+  // A step's full text is in the left panel already: up here its first sentence, so the graph keeps the height.
+  const lead = t => (t.match(/^.+?[.!?](?=\s+[A-Z(])/) || [t])[0];
+  const text = top ? (EXPLAIN[top.g] ? EXPLAIN[top.g](top) : `${top.n} and what it is connected to.`) : lead(STAGES[stage].hint);
   el.innerHTML = `<div class="k">${esc(kind)}</div><div class="t">${esc(text)}</div>`;
 }
 
@@ -1432,7 +1533,7 @@ function setStage(i, fit = true) {
   refresh();
 }
 document.getElementById("next").onclick = () => setStage((stage + 1) % STAGES.length);
-document.getElementById("fit").onclick = () => Graph.zoomToFit(800, 40);
+document.getElementById("fit").onclick = () => fitView(800);
 document.getElementById("ovbtn").onclick = () => { overviewClosed = false; if (drill.length) goTo(0); else showOverview(); };
 
 const q = document.getElementById("q"), hits = document.getElementById("hits");
@@ -1456,14 +1557,15 @@ computeStandings();
 // the years would stack behind each other. Fitting keeps this direction.
 Graph.cameraPosition({ x: 520, y: 300, z: 860 });
 setStage(0);
+startSpin();
 // After a layout settles: frame it, then take the thumbnail of where you are.
 Graph.onEngineStop(() => {
   if (Graph._fitted) return;
   Graph._fitted = true;
-  Graph.zoomToFit(900, 60);
+  fitView(900);
   if (drill.length) setTimeout(() => { if (!busy) { curThumb = snapshot().thumb; renderHistory(); } }, 1000);
 });
-window.addEventListener("resize", () => Graph.width(innerWidth).height(innerHeight));
+window.addEventListener("resize", () => { Graph.width(innerWidth).height(innerHeight); centreOnFreeArea(); });
 </script>
 </body>
 </html>
