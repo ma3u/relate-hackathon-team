@@ -796,7 +796,9 @@ const BEYOND_LDL = ["eas-2017-ldl", "esc-eas-2025-lipids", "sniderman-2019-apob"
 // The answers live in this page; with the vault's server (scripts/graph3d_serve.py)
 // "Save to my graph" stores one protocol at a time, coded with SNOMED CT.
 const PLAN = DATA.protocols || { protocols: [], snomed: {}, treatedLipids: [] };
-const SAVE = window.GRAPH3D_SAVE || null;   // {url, token}: injected by the vault's server only
+// {url, token}: injected by the vault's server; {native: true}: inside Klarbefund for Mac, which stores
+// the answers itself (window.webkit.messageHandlers.klarbefund). Opened as a file: answers stay in the page.
+const SAVE = window.GRAPH3D_SAVE || null;
 const PANS = {}, PSRC = {}, PTEXT = {}, SAVED = {};
 PLAN.protocols.forEach(p => {
   PANS[p.id] = {}; PSRC[p.id] = {}; PTEXT[p.id] = {};
@@ -1032,10 +1034,15 @@ async function saveProtocol(id) {
   });
   SAVED[id] = "saving"; showOverview();
   try {
-    const r = await fetch(SAVE.url, { method: "POST", headers: { "Content-Type": "application/json", "X-Graph3d-Token": SAVE.token },
-      body: JSON.stringify({ protocol: id, answers }) });
-    const j = await r.json();
-    SAVED[id] = r.ok ? j.message : `Not stored: ${j.error || r.status}`;
+    if (SAVE.native) {
+      const j = await window.webkit.messageHandlers.klarbefund.postMessage({ protocol: id, answers });
+      SAVED[id] = j && j.ok ? j.message : `Not stored: ${(j && j.error) || "no answer from Klarbefund"}`;
+    } else {
+      const r = await fetch(SAVE.url, { method: "POST", headers: { "Content-Type": "application/json", "X-Graph3d-Token": SAVE.token },
+        body: JSON.stringify({ protocol: id, answers }) });
+      const j = await r.json();
+      SAVED[id] = r.ok ? j.message : `Not stored: ${j.error || r.status}`;
+    }
   } catch (e) { SAVED[id] = `Not stored: ${e.message}`; }
   showOverview();
 }
@@ -1112,7 +1119,8 @@ function showOverview() {
     html += `<div class="rel">Anamnesis protocols, prefilled from your data</div><div class="hint" style="margin-top:0">` +
       `What the graph cannot know, asked the way doctors and studies ask it: validated questionnaires, each answer coded with SNOMED CT. ` +
       `Ranked by your own findings; what your data already says is filled in for you to check. ` +
-      (SAVE ? `“Save to my graph” stores one protocol in your encrypted vault.` : `Your answers stay in this page and are gone when you close it.`) + `</div>`;
+      (SAVE ? (SAVE.native ? `“Save to my graph” stores one protocol in your health graph in Klarbefund.` : `“Save to my graph” stores one protocol in your encrypted vault.`)
+        : `Your answers stay in this page and are gone when you close it.`) + `</div>`;
     PLAN.protocols.forEach(p => html += protoCard(p));
   }
   const g = gaps();

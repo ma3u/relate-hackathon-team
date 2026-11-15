@@ -18,7 +18,7 @@ settings:
     DEVELOPMENT_TEAM: 38R8Z4P7S8
     CODE_SIGN_STYLE: Automatic
     MARKETING_VERSION: "1.0"
-    CURRENT_PROJECT_VERSION: "8"
+    CURRENT_PROJECT_VERSION: "9"
     ENABLE_HARDENED_RUNTIME: YES
     SWIFT_VERSION: "5.0"
 targets:
@@ -31,6 +31,9 @@ targets:
       # The anamnesis skill (method only, no data), saved as a zip for Claude's Skills.
       - path: ../../plugins/klarbefund/skills/klarbefund-anamnesis
         type: folder
+        buildPhase: resources
+      # The 3D view's page (the vault's terminal script uses the same file).
+      - path: ../../scripts/graph3d.html
         buildPhase: resources
     dependencies:
       - package: HealthGraph

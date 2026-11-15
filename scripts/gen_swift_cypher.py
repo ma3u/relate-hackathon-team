@@ -67,6 +67,8 @@ PROTOCOLS = [
     ("protocolStorePrefilledFrom", "STORE_PREFILLED_FROM"),
     ("protocolStoreResponseLinks", "STORE_RESPONSE_LINKS"),
     ("protocolStoreDerived", "STORE_DERIVED"),
+    ("protocolLatestAnswers", "LATEST_ANSWERS"),
+    ("protocolResponses", "RESPONSES"),
 ]
 
 # Swift name -> assessment.py constant: what a reading concluded, linked to its values.

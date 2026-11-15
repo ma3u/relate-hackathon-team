@@ -606,6 +606,21 @@ enum Cypher {
   RETURN count(*) AS answers
   """#
 
+  static let protocolLatestAnswers = #"""
+  MATCH (:Patient)-[:HAS_RESPONSE]->(:QuestionnaireResponse)-[:HAS_ANSWER]->(a:Answer)
+  WITH a.linkId AS linkId, a ORDER BY a.authored DESC
+  WITH linkId, collect(a)[0] AS a
+  RETURN linkId, a.codes AS codes, a.labels AS labels, a.text AS text, a.authored AS authored
+  """#
+
+  static let protocolResponses = #"""
+  MATCH (:Patient)-[:HAS_RESPONSE]->(r:QuestionnaireResponse)
+  WHERE r.protocol IS NOT NULL
+  WITH r.protocol AS protocol, r ORDER BY r.authored DESC
+  WITH protocol, collect(r)[0] AS r
+  RETURN protocol, r.authored AS authored, r.score AS score, r.band AS band
+  """#
+
   static let assessmentStore = #"""
   MATCH (p:Patient {id: $patientId})
   MERGE (a:Assessment {id: $assessmentId})

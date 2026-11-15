@@ -1328,7 +1328,7 @@ def version() -> str:
 def swift_data() -> dict:
     """What the Swift library needs: the rows it seeds and the definitions it checks and scores answers with."""
     return {"category": CATEGORY, "version": version(), "snomed": _snomed_rows(), "rows": _protocol_rows(),
-            "protocols": PROTOCOLS}
+            "protocols": PROTOCOLS, "evidence": EVIDENCE, "prefillText": PREFILL}
 
 
 def seed(conn) -> dict[str, int]:

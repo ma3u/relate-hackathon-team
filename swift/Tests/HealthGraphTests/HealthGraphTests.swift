@@ -650,4 +650,37 @@ struct ProtocolsTests {
       try store.storeAssessment(["title": "x", "findings": [["kind": "risk", "title": "y", "risks": ["cancer"]]]])
     }
   }
+
+  @Test func theThreeDViewHasEveryNodeAndTheProtocols() throws {
+    let store = try Self.store()
+    try store.seedProtocols()
+    try store.storeProtocol("tobacco", ["smoking": "current", "tobacco-amount": "occasional"], authored: "2026-11-15T10:00:00Z")
+    let data = try store.graph3DData(today: "2026-11-15")
+    let nodes = data["nodes"] as? [JSONObject] ?? [], links = data["links"] as? [JSONObject] ?? []
+    #expect(nodes.count == Int(try store.rows(cypher: "MATCH (n) RETURN count(n) AS n").first?["n"] ?? "") ?? -1)
+    #expect(links.count == Int(try store.rows(cypher: "MATCH ()-[r]->() RETURN count(r) AS n").first?["n"] ?? "") ?? -1)
+    let groups = Set(nodes.compactMap { $0["g"] as? String })
+    #expect(groups.isSuperset(of: ["Lab value", "LoincCode", "HealthRisk", "Anamnesis protocol", "Protocol question", "Your answer"]))
+    let plan = data["protocols"] as? JSONObject ?? [:]
+    let protocols = plan["protocols"] as? [JSONObject] ?? []
+    #expect(protocols.count == Protocols.ids.count)
+    // Answered today: last in the list, its answers prefilled; LE8 takes the smoking answer.
+    #expect(protocols.last?["id"] as? String == "tobacco")
+    let le8 = try #require(protocols.first { $0["id"] as? String == "le8" })
+    let nicotine = (le8["items"] as? [JSONObject] ?? []).first { $0["linkId"] as? String == "le8-nicotine" }
+    #expect((nicotine?["prefilled"] as? JSONObject)?["code"] as? String == "current")
+    let page = try store.graph3DPage(template: "<script>const DATA = /*DATA*/null;</script>", today: "2026-11-15")
+    #expect(page.hasPrefix("<script>const DATA = {") && !page.contains("/*DATA*/"))
+  }
+
+  /// With GRAPH3D_PARITY_DB set: writes the page data of that store to GRAPH3D_PARITY_OUT, for
+  /// tests/graph3d_parity.py to compare with scripts/graph3d.py.
+  @Test func writeThreeDDataForParity() throws {
+    let env = ProcessInfo.processInfo.environment
+    guard let db = env["GRAPH3D_PARITY_DB"], let out = env["GRAPH3D_PARITY_OUT"] else { return }
+    let store = try HealthStore(path: db, readOnly: true)
+    let data = try store.graph3DData(today: "2026-11-15")
+    try JSONSerialization.data(withJSONObject: data, options: [.sortedKeys]).write(to: URL(fileURLWithPath: out))
+  }
 }
+

@@ -11,6 +11,7 @@ struct ContentView: View {
   @State private var showManual = false
   @State private var showCapabilities = false
   @State private var skillMessage: String?
+  @Environment(\.openWindow) private var openWindow
 
   var body: some View {
     VStack(alignment: .leading, spacing: 18) {
@@ -76,6 +77,14 @@ struct ContentView: View {
       .font(.callout)
     Label("Neo4j Relate, one file, inside this app's sandbox. Nothing is uploaded.", systemImage: "internaldrive")
       .font(.callout)
+    if !renderingForDocs {
+      Button { openWindow(id: "graph3d") } label: {
+        Label("Open 3D view", systemImage: "cube.transparent").frame(maxWidth: .infinity)
+      }
+      .controlSize(.large)
+      .disabled(model.counts.values == 0 && model.counts.weeks == 0)
+      .help("Your risks, values, evidence and anamnesis as an interactive 3D graph, on this Mac.")
+    }
     if !model.activity.isEmpty {
       DisclosureGroup("Activity") {
         ScrollView {

@@ -75,6 +75,10 @@ struct KlarbefundApp: App {
         .onAppear { AppModel.shared.start() }
     }
     .windowResizability(.contentMinSize)
+    Window("Health graph in 3D", id: "graph3d") {
+      Graph3DView().frame(minWidth: 900, minHeight: 600)
+    }
+    .defaultSize(width: 1440, height: 900)
   }
 }
 

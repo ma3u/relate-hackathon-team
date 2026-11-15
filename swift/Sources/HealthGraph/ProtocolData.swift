@@ -11,6 +11,90 @@ enum ProtocolData {
     "id": "anamnesis-protocols",
     "name": "Anamnesis protocols"
    },
+   "evidence": {
+    "dge-2024": {
+     "citation": "Klug et al., Ernährungs Umschau 2024;71(7):60 (DGE position on vegan diet)",
+     "doi": "10.4455/eu.2024.22",
+     "finding": "A vegan diet can be health-promoting for healthy adults if B12 is supplemented; iodine is critical too, and protein, long-chain omega-3, vitamin D, B2, calcium, iron, zinc and selenium potentially."
+    },
+    "esc-2021": {
+     "citation": "Visseren et al., Eur Heart J 2021;42:3227 (ESC prevention guideline)",
+     "doi": "10.1093/eurheartj/ehab484",
+     "finding": "Family history counts as a risk modifier only when heart disease started early in a first-degree relative: men before 55, women before 65.",
+     "pmid": "34458905"
+    },
+    "estruch-2018": {
+     "citation": "Estruch et al., N Engl J Med 2018;378:e34 (PREDIMED, republished)",
+     "doi": "10.1056/NEJMoa1800389",
+     "finding": "A Mediterranean diet with extra olive oil or nuts lowered heart attacks, strokes and cardiovascular deaths by about 30 % against a low-fat diet.",
+     "pmid": "29897866"
+    },
+    "hackshaw-2018": {
+     "citation": "Hackshaw et al., BMJ 2018;360:j5855",
+     "doi": "10.1136/bmj.j5855",
+     "finding": "One cigarette a day carries about half the excess risk of coronary heart disease and stroke of 20 a day (141 cohort studies).",
+     "pmid": "29367388"
+    },
+    "herrmann-2003": {
+     "citation": "Herrmann et al., Am J Clin Nutr 2003;78:131",
+     "doi": "10.1093/ajcn/78.1.131",
+     "finding": "Without supplements, 77 % of lacto-ovo vegetarians and 92 % of vegans had a low holotranscobalamin; serum B12 alone tracked it poorly in the low range.",
+     "pmid": "12816782"
+    },
+    "melina-2016": {
+     "citation": "Melina et al., J Acad Nutr Diet 2016;116:1970 (Academy of Nutrition and Dietetics)",
+     "doi": "10.1016/j.jand.2016.09.025",
+     "finding": "Well-planned vegetarian and vegan diets are adequate and lower LDL cholesterol; vegans need a reliable B12 source, fortified foods or a supplement.",
+     "pmid": "27886704"
+    },
+    "orlich-2013": {
+     "citation": "Orlich et al., JAMA Intern Med 2013;173:1230 (Adventist Health Study 2)",
+     "doi": "10.1001/jamainternmed.2013.6473",
+     "finding": "Five diet groups by how often meat, fish, eggs and dairy are eaten (vegan, lacto-ovo, pesco, semi-vegetarian, non-vegetarian); vegetarians had 12 % lower mortality.",
+     "pmid": "23836264"
+    },
+    "tong-2020": {
+     "citation": "Tong et al., BMC Med 2020;18:353 (EPIC-Oxford)",
+     "doi": "10.1186/s12916-020-01815-3",
+     "finding": "Vegans had 2.3 times the risk of hip fracture of meat eaters over 18 years; calcium and protein explained part of it.",
+     "pmid": "33222682"
+    },
+    "who-2020-activity": {
+     "citation": "Bull et al., Br J Sports Med 2020;54:1451 (WHO guidelines)",
+     "doi": "10.1136/bjsports-2020-102955",
+     "finding": "Adults: 150 to 300 minutes of moderate or 75 to 150 of vigorous activity a week, and muscle strengthening on two or more days.",
+     "pmid": "33239350"
+    },
+    "zhao-2023": {
+     "citation": "Zhao et al., JAMA Netw Open 2023;6:e236185",
+     "doi": "10.1001/jamanetworkopen.2023.6185",
+     "finding": "Occasional and low-volume drinkers did not live longer than lifetime non-drinkers once the studies' biases were controlled (107 cohorts).",
+     "pmid": "37000449"
+    }
+   },
+   "prefillText": {
+    "age": "your age, from the year of birth you shared",
+    "alcohol_none": "your anamnesis answer about alcohol",
+    "bmi": "your newest body mass index, else your newest weight and height",
+    "bp": "your newest blood pressure reading",
+    "bp_drug": "your anamnesis answer about blood pressure treatment",
+    "diet:dairy": "your answer on how you eat: vegan means no dairy",
+    "diet:eggs": "your answer on how you eat: vegan means no eggs",
+    "diet:fish": "your answer on how you eat: vegetarian or vegan means no fish",
+    "diet:meat": "your answer on how you eat: vegetarian or vegan means no meat",
+    "family_diabetes": "your anamnesis answer about diabetes in parents and siblings",
+    "glucose": "your newest HbA1c, else fasting glucose",
+    "glucose_ever_high": "every HbA1c and glucose value: yes when one reached 5.7 % or 100 mg/dL",
+    "home_smoke": "your answer about smoking at home",
+    "lipid_drug": "your answer about cholesterol-lowering medicine",
+    "nonhdl": "your newest non-HDL cholesterol, else total minus HDL cholesterol of one day",
+    "tobacco": "your smoking answers",
+    "waist": "your newest waist circumference",
+    "watch_daily30": "Apple Watch exercise minutes: yes when the 12-week mean is 30 minutes a day or more",
+    "watch_minutes": "Apple Watch exercise minutes, the mean of the last 12 weeks",
+    "watch_sleep": "Apple Watch sleep, the mean of the last 12 weeks",
+    "wine_week": "your anamnesis answer about alcohol"
+   },
    "protocols": [
     {
      "bands": [

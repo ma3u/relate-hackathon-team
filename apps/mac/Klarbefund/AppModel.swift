@@ -102,6 +102,21 @@ final class AppModel: ObservableObject {
     }
   }
 
+  /// Stores one protocol's answers given in the 3D view, then refreshes the snapshot. Returns what the
+  /// page shows: {ok, message} or {ok: false, error}.
+  func storeFromView(_ protocolId: String, _ answers: [String: Any]) -> [String: Any] {
+    do {
+      let store = try HealthStore(path: Paths.store.path)
+      let counts = try store.storeProtocol(protocolId, answers, source: "graph3d")
+      let n = counts["answers"] as? Int ?? 0
+      let band = (counts["band"] as? String).map { ", \($0)" } ?? ""
+      received("\(counts["name"] as? String ?? protocolId): \(n) answers stored from the 3D view\(band)")
+      return ["ok": true, "message": "Stored in your health graph: \(n) answers\(band), coded with SNOMED CT."]
+    } catch {
+      return ["ok": false, "error": "\(error)"]
+    }
+  }
+
   /// Stops receiving, removes Claude's snapshot and seals the graph.
   func stop() {
     inboxTimer?.invalidate()
