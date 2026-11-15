@@ -12,10 +12,13 @@ public enum AnamnesisInbox {
   public static let suffix = ".anamnesis.json"
   /// One anamnesis protocol's answers (Protocols): from Claude, or from the 3D view's server.
   public static let protocolSuffix = ".protocol.json"
+  /// What a reading concluded (Assessments): findings linked to the values, risks and responses they rest on.
+  public static let assessmentSuffix = ".assessment.json"
+  static var suffixes: [String] { [suffix, protocolSuffix, assessmentSuffix] }
 
   /// Whether a folder listing holds a request the app should store.
   public static func waiting(_ names: [String]) -> Bool {
-    names.contains { $0.hasSuffix(suffix) || $0.hasSuffix(protocolSuffix) }
+    names.contains { name in suffixes.contains { name.hasSuffix($0) } }
   }
 
   /// Checks the answers and writes one request into `directory`. Returns the file and the answer count.
@@ -50,6 +53,17 @@ public enum AnamnesisInbox {
     return (try write(request, suffix: protocolSuffix, into: directory, now: now), checked.count)
   }
 
+  /// Checks an assessment and writes one request into `directory`. Returns the file and the finding count.
+  @discardableResult
+  public static func submitAssessment(_ assessment: JSONObject, source: String, into directory: URL,
+                                      now: Date = Date()) throws -> (file: URL, findings: Int)
+  {
+    let checked = try Assessments.validate(assessment)
+    let request: JSONObject = ["assessment": assessment, "source": source,
+                               "authored": ISO8601DateFormatter().string(from: now)]
+    return (try write(request, suffix: assessmentSuffix, into: directory, now: now), checked.objects("findings").count)
+  }
+
   private static func write(_ request: JSONObject, suffix: String, into directory: URL, now: Date) throws -> URL {
     try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
     let data = try JSONSerialization.data(withJSONObject: request, options: [.sortedKeys])
@@ -66,12 +80,23 @@ public enum AnamnesisInbox {
   public static func apply(from directory: URL, to store: HealthStore) -> [String] {
     let fm = FileManager.default
     let files = ((try? fm.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)) ?? [])
-      .filter { $0.lastPathComponent.hasSuffix(suffix) || $0.lastPathComponent.hasSuffix(protocolSuffix) }
+      .filter { file in suffixes.contains { file.lastPathComponent.hasSuffix($0) } }
       .sorted { $0.lastPathComponent < $1.lastPathComponent }
     var log: [String] = []
     for file in files {
       do {
         let request = try JSON.object(Data(contentsOf: file))
+        if file.lastPathComponent.hasSuffix(assessmentSuffix) {
+          guard let assessment = request["assessment"] as? JSONObject else {
+            throw HealthGraphError.invalid("a request without an assessment")
+          }
+          let counts = try store.storeAssessment(assessment, source: request["source"] as? String ?? "claude",
+                                                 authored: request["authored"] as? String)
+          try fm.removeItem(at: file)
+          log.append("Assessment: \(counts["findings"] as? Int ?? 0) findings stored, "
+            + "\(counts["observations"] as? Int ?? 0) linked to values")
+          continue
+        }
         guard let answers = request["answers"] as? JSONObject else {
           throw HealthGraphError.invalid("a request without answers")
         }
@@ -92,7 +117,7 @@ public enum AnamnesisInbox {
         try? fm.removeItem(at: rejected)
         try? fm.moveItem(at: file, to: rejected)
         try? Data("\(error)".utf8).write(to: rejected.appendingPathExtension("reason"))
-        log.append("Anamnesis answers refused: \(error)")
+        log.append("Request refused: \(error)")
       }
     }
     return log

@@ -176,8 +176,14 @@ func anamnesisProtocols() throws -> String {
     RETURN r.protocol AS protocol, r.authored AS authored, r.score AS score, r.band AS band,
            a.linkId AS linkId, a.codes AS codes, a.text AS text ORDER BY r.authored DESC
     """)) ?? []
+  let assessments = (try? openGraph().rows(cypher: """
+    MATCH (:Patient)-[:HAS_ASSESSMENT]->(a:Assessment)-[:HAS_FINDING]->(f:Finding)
+    RETURN a.authored AS authored, a.title AS assessment, f.order AS n, f.kind AS kind, f.severity AS severity,
+           f.title AS finding ORDER BY a.authored DESC, f.order LIMIT 60
+    """)) ?? []
   let body: [String: Any] = [
-    "protocols": Protocols.catalog(), "stored": stored,
+    "protocols": Protocols.catalog(), "stored": stored, "assessments": assessments,
+    "findingKinds": AssessmentRules.kinds,
     "prefill": "Each question's prefill says what in the graph can answer it (a LOINC code, Apple Watch weekly "
       + "means, an earlier answer). Read those values with read_cypher, choose the option they fall in, and "
       + "show the person the value, its date and the option, to confirm or change. Never prefill what only "
@@ -194,6 +200,15 @@ func saveProtocol(_ id: String, _ answers: [String: Any]) throws -> String {
   let sent = try AnamnesisInbox.submitProtocol(id, answers, source: "claude", into: inbox)
   return "Handed \(sent.answers) answers of \(id) to Klarbefund for Mac, which scores them and stores them, "
     + "coded with SNOMED CT, within a few seconds."
+}
+
+func saveAssessment(_ assessment: [String: Any]) throws -> String {
+  guard snapshot.map({ FileManager.default.fileExists(atPath: $0.path) }) == true, let inbox else {
+    throw GraphError.closed
+  }
+  let sent = try AnamnesisInbox.submitAssessment(assessment, source: "claude", into: inbox)
+  return "Handed \(sent.findings) findings to Klarbefund for Mac, which stores them with links to their values, "
+    + "risks and protocol answers within a few seconds."
 }
 
 let tools: [[String: Any]] = [
@@ -275,6 +290,41 @@ let tools: [[String: Any]] = [
         "answers": ["type": "object", "description": "linkId -> answer, as described."],
       ],
       "required": ["protocol", "answers"],
+    ],
+    "annotations": handsOver,
+  ],
+  [
+    "name": "save_assessment",
+    "title": "Store what this reading concluded",
+    "description": "Hands an assessment to Klarbefund for Mac, which stores it in the health graph: what you "
+      + "concluded from the values and answers, each finding linked to the values (Observation resourceId from "
+      + "read_cypher), the health risks (ids: cardiovascular, diabetes, kidney, liver, bone, fitness) and the "
+      + "protocols it rests on. Only after the user has seen and confirmed the findings. Never a diagnosis: say "
+      + "what the data shows and what to ask. kind: risk (what it means for a risk), treated (measured under a "
+      + "medicine or diet), data-quality (looks misread: check the paper), discrepancy (data and answer "
+      + "disagree), habit, ask-doctor, test. severity: info, watch, high.",
+    "inputSchema": [
+      "type": "object",
+      "properties": [
+        "title": ["type": "string", "description": "e.g. Anamnesis 2026-11-15"],
+        "summary": ["type": "string", "description": "Two to five sentences: the main risk and what moves it."],
+        "protocols": ["type": "array", "items": ["type": "string"], "description": "Protocol ids read, e.g. le8, tobacco."],
+        "findings": [
+          "type": "array", "minItems": 1, "maxItems": 30,
+          "items": [
+            "type": "object",
+            "properties": [
+              "kind": ["type": "string", "enum": AssessmentRules.kindOrder],
+              "severity": ["type": "string", "enum": AssessmentRules.severities],
+              "title": ["type": "string"], "text": ["type": "string"],
+              "observations": ["type": "array", "items": ["type": "string"]],
+              "risks": ["type": "array", "items": ["type": "string"]],
+            ],
+            "required": ["kind", "title"],
+          ],
+        ],
+      ],
+      "required": ["title", "findings"],
     ],
     "annotations": handsOver,
   ],
@@ -414,6 +464,8 @@ while let line = readLine(strippingNewline: true) {
         guard let id = args["protocol"] as? String, let answers = args["answers"] as? [String: Any], !answers.isEmpty
         else { reply(text("save_protocol_answers needs a protocol and answers", error: true)); break }
         do { reply(text(try saveProtocol(id, answers))) } catch { reply(text("\(error)", error: true)) }
+      case "save_assessment":
+        do { reply(text(try saveAssessment(args))) } catch { reply(text("\(error)", error: true)) }
       case "save_anamnesis_answers":
         guard let answers = args["answers"] as? [String: Any], !answers.isEmpty else {
           reply(text("save_anamnesis_answers needs answers", error: true)); break

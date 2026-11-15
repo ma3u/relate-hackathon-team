@@ -1,0 +1,19 @@
+{
+  "name": "klarbefund",
+  "version": "7.0.0",
+  "description": "Personal anamnesis from your own health graph in Klarbefund for Mac: validated questionnaires prefilled from your lab values and Apple Watch data, scored, coded with SNOMED CT and stored on your Mac. The method only; your data stays in the app.",
+  "author": {
+    "name": "Matthias Buchhorn"
+  },
+  "homepage": "https://github.com/ma3u/relate-hackathon-team/blob/main/docs/MAC.md",
+  "repository": "https://github.com/ma3u/relate-hackathon-team",
+  "license": "Apache-2.0",
+  "keywords": [
+    "health",
+    "anamnesis",
+    "fhir",
+    "snomed-ct",
+    "loinc",
+    "neo4j-relate"
+  ]
+}

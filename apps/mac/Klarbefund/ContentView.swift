@@ -10,6 +10,7 @@ struct ContentView: View {
   @ObservedObject var model: AppModel
   @State private var showManual = false
   @State private var showCapabilities = false
+  @State private var skillMessage: String?
 
   var body: some View {
     VStack(alignment: .leading, spacing: 18) {
@@ -109,6 +110,16 @@ struct ContentView: View {
       Button { showCapabilities = true } label: { catalog }
         .buttonStyle(.link).font(.callout)
         .sheet(isPresented: $showCapabilities) { MCPCapabilitiesView() }
+    }
+    if !renderingForDocs {
+      Button { skillMessage = SkillExport.save() } label: {
+        Label("Add the Klarbefund skill to Claude", systemImage: "square.and.arrow.down")
+      }
+      .buttonStyle(.link).font(.callout)
+      .help("Saves the anamnesis method as a skill (no health data) for Claude's Customize → Skills → Upload.")
+      if let skillMessage, !skillMessage.isEmpty {
+        Text(skillMessage).font(.caption).foregroundStyle(.secondary).textSelection(.enabled)
+      }
     }
     DisclosureGroup("Set it up by hand", isExpanded: $showManual) {
       Text("Claude Desktop → Settings → Developer → Edit Config, add:").font(.caption)

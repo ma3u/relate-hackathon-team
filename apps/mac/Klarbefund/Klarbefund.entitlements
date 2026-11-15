@@ -8,6 +8,8 @@
 	<array>
 		<string>38R8Z4P7S8.red.mabu.meinbefund</string>
 	</array>
+	<key>com.apple.security.files.user-selected.read-write</key>
+	<true/>
 	<key>com.apple.security.network.client</key>
 	<true/>
 	<key>com.apple.security.network.server</key>

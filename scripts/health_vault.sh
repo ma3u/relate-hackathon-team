@@ -127,8 +127,14 @@ case "${1:-status}" in
     # receiver could not store anything while a Claude session was open
     # (Nov 12, 2026). The copy stays inside the encrypted vault; reconnecting
     # the MCP server (or a new session) takes a fresh one.
+    # Newest graph wins, as for graph3d: Klarbefund for Mac's snapshot (where the app stores answers and
+    # assessments) or the receiver's store. Before Nov 15, 2026 this read only the receiver's store and
+    # missed everything stored through the app.
     snap="$MOUNT/claude-snapshot.rl"
-    [ -f "$MOUNT/health.rl" ] && cp -f "$MOUNT/health.rl" "$snap.tmp" && mv -f "$snap.tmp" "$snap" && chmod 600 "$snap"
+    src="$MOUNT/health.rl"
+    app="$HOME/Library/Group Containers/38R8Z4P7S8.red.mabu.meinbefund/Snapshot/health.rl"
+    [ -e "$app" ] && { [ ! -e "$src" ] || [ "$app" -nt "$src" ]; } && src="$app"
+    [ -e "$src" ] && rm -rf "$snap.tmp" && cp -Rf "$src" "$snap.tmp" && rm -rf "$snap" && mv -f "$snap.tmp" "$snap" && chmod -R go-rwx "$snap"
     exec "$RELATE" serve --mcp stdio --database "$snap" --read-only
     ;;
   graph3d)

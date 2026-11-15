@@ -14,7 +14,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from health_graph import anamnesis, knowledge, protocols, store  # noqa: E402
+from health_graph import anamnesis, assessment, knowledge, protocols, store  # noqa: E402
 from health_graph.queries import QUERIES  # noqa: E402
 
 OUT = ROOT / "swift/Sources/HealthGraph/Cypher.swift"
@@ -69,6 +69,15 @@ PROTOCOLS = [
     ("protocolStoreDerived", "STORE_DERIVED"),
 ]
 
+# Swift name -> assessment.py constant: what a reading concluded, linked to its values.
+ASSESSMENT = [
+    ("assessmentStore", "STORE_ASSESSMENT"),
+    ("assessmentStoreAbout", "STORE_FINDING_ABOUT"),
+    ("assessmentStoreRisks", "STORE_FINDING_RISKS"),
+    ("assessmentStoreBasedOn", "STORE_ASSESSMENT_BASED_ON"),
+    ("assessmentList", "ASSESSMENTS"),
+]
+
 # Swift name -> store.py constant, in the order they run.
 STATEMENTS = [
     ("deleteReport", "DELETE_REPORT"),
@@ -116,6 +125,23 @@ def render() -> str:
     for swift, py in PROTOCOLS:
         text = textwrap.dedent(getattr(protocols, py)).strip()
         out += ["", f"  static let {swift} = {raw(text, 2)}"]
+    for swift, py in ASSESSMENT:
+        text = textwrap.dedent(getattr(assessment, py)).strip()
+        out += ["", f"  static let {swift} = {raw(text, 2)}"]
+    kinds = ", ".join(f"{swift_string(k)}: {swift_string(v)}" for k, v in assessment.KINDS.items())
+    out += [
+        "}",
+        "",
+        "/// The rules an assessment follows (assessment.py): its finding kinds, severities and limits.",
+        "public enum AssessmentRules {",
+        f"  public static let kinds: [String: String] = [{kinds}]",
+        f"  public static let kindOrder: [String] = [{', '.join(swift_string(k) for k in assessment.KINDS)}]",
+        f"  public static let severities: [String] = [{', '.join(swift_string(x) for x in assessment.SEVERITIES)}]",
+        f"  public static let maxFindings = {assessment.MAX_FINDINGS}",
+        f"  public static let maxTitle = {assessment.MAX_TITLE}",
+        f"  public static let maxText = {assessment.MAX_TEXT}",
+        f"  public static let maxSummary = {assessment.MAX_SUMMARY}",
+    ]
     out += [
         "}",
         "",

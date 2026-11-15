@@ -44,3 +44,6 @@ CREATE CONSTRAINT anamnesis_category_id IF NOT EXISTS FOR (n:AnamnesisCategory) 
 CREATE CONSTRAINT anamnesis_protocol_id IF NOT EXISTS FOR (n:AnamnesisProtocol) REQUIRE n.id IS UNIQUE;
 CREATE CONSTRAINT protocol_item_id IF NOT EXISTS FOR (n:ProtocolItem) REQUIRE n.id IS UNIQUE;
 CREATE CONSTRAINT snomed_code IF NOT EXISTS FOR (n:SnomedCode) REQUIRE n.code IS UNIQUE;
+// Assessments (health_graph/assessment.py): what a reading concluded, each finding linked to its values.
+CREATE CONSTRAINT assessment_id IF NOT EXISTS FOR (n:Assessment) REQUIRE n.id IS UNIQUE;
+CREATE CONSTRAINT finding_id IF NOT EXISTS FOR (n:Finding) REQUIRE n.id IS UNIQUE;

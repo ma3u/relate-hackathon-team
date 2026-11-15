@@ -1,0 +1,14 @@
+{
+  "name": "klarbefund",
+  "owner": { "name": "Matthias Buchhorn" },
+  "metadata": {
+    "description": "Skills for Klarbefund for Mac: a Claude-based reading of your own health graph. They hold the method, never health data."
+  },
+  "plugins": [
+    {
+      "name": "klarbefund",
+      "source": "./plugins/klarbefund",
+      "description": "Personal anamnesis from your health graph: questionnaires prefilled from your values, findings stored with what they rest on."
+    }
+  ]
+}

@@ -65,6 +65,8 @@ The project runs on **your own devices**, with your own (or synthetic) health da
 No iPhone? The sample graph above runs anywhere Relate runs, and Klarbefund has a demo mode with fictional data in the iOS Simulator (Mac with Xcode).
 
 
+**Claude skill.** The personal anamnesis is also a Claude skill, the method without any data: [`plugins/klarbefund`](plugins/klarbefund). In Claude Code: `/plugin install klarbefund --marketplace ma3u/relate-hackathon-team`. In Claude Desktop: Klarbefund for Mac saves it as a zip (step 3, *Add the Klarbefund skill to Claude*) for Customize → Skills → Upload. See [docs/MCP.md](docs/MCP.md#the-klarbefund-skill-and-assessments).
+
 ## Built with, and what was built during the hackathon
 
 **Relate capabilities used:** the embedded engine in Swift on iOS and macOS (through `RelateFFI.xcframework`, our `HealthGraph` Swift package), the Python library (`relate-db`, the reference implementation in `health_graph/`), the `relate` CLI, single-file `.rl` stores, and `relate serve --mcp --read-only` for Claude.
@@ -99,3 +101,7 @@ Relate is an **open-source, embedded graph database for AI agents** and the engi
 - 💻 Source: <https://github.com/relatedb/relate>
 - 💡 Idea list: <https://github.com/jexp/relate-ideas>
 - 🏆 Devpost: <https://relate.devpost.com/> · [Rules](https://relate.devpost.com/rules) · [Schedule](https://relate.devpost.com/details/dates)
+
+## License
+
+Apache License 2.0, see [LICENSE](LICENSE). Code systems keep their own terms: LOINC (Regenstrief), UCUM, SNOMED CT (affiliate licence).

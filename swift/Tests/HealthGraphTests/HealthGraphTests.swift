@@ -618,4 +618,36 @@ struct ProtocolsTests {
     #expect(!findings.contains("smoking_unknown") && !keys.contains("family-cvd"))
     #expect(throws: (any Error).self) { try store.storeProtocol("lipid-therapy", ["lipid-from": ["text": "spring"]]) }
   }
+
+  @Test func anAssessmentIsStoredWithItsValuesRisksAndAnswers() throws {
+    let store = try Self.store()
+    try store.storeProtocol("tobacco", ["smoking": "current", "tobacco-amount": "occasional"],
+                            authored: "2026-11-15T10:00:00Z")
+    let ferritin = try store.rows(cypher: "MATCH (o:Observation)-[:CODED_BY]->(:LoincCode {code: '2276-4'}) RETURN o.resourceId AS id ORDER BY id")
+      .compactMap { $0["id"] }
+    #expect(throws: (any Error).self) {
+      try Assessments.validate(["title": "x", "findings": [["kind": "diagnosis", "title": "y"]]])
+    }
+    #expect(throws: (any Error).self) { try Assessments.validate(["title": "x", "findings": [Any]()]) }
+    let inbox = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    try AnamnesisInbox.submitAssessment([
+      "title": "Anamnesis 2026-11-15", "summary": "Main risk cardiovascular.", "protocols": ["tobacco", "le8"],
+      "findings": [
+        ["kind": "risk", "severity": "watch", "title": "Smoking, even occasionally", "risks": ["cardiovascular"]],
+        ["kind": "data-quality", "title": "Check a value", "observations": Array(ferritin.prefix(2)) + ["no-such-value"]],
+      ],
+    ], source: "claude", into: inbox)
+    #expect(AnamnesisInbox.waiting(try FileManager.default.contentsOfDirectory(atPath: inbox.path)))
+    #expect(AnamnesisInbox.apply(from: inbox, to: store) == ["Assessment: 2 findings stored, 2 linked to values"])
+    let links = try store.rows(cypher: """
+      MATCH (a:Assessment)-[:HAS_FINDING]->(f:Finding) OPTIONAL MATCH (f)-[:ABOUT]->(o) OPTIONAL MATCH (f)-[:CONCERNS]->(h)
+      RETURN f.order AS n, count(DISTINCT o) AS values, count(DISTINCT h) AS risks ORDER BY n
+      """)
+    #expect(links.map { [$0["values"] ?? "", $0["risks"] ?? ""] } == [["0", "1"], ["2", "0"]])
+    let based = try store.rows(cypher: "MATCH (:Assessment)-[:BASED_ON]->(r:QuestionnaireResponse) RETURN r.protocol AS p")
+    #expect(based.map { $0["p"] ?? "" } == ["tobacco"])
+    #expect(throws: (any Error).self) {
+      try store.storeAssessment(["title": "x", "findings": [["kind": "risk", "title": "y", "risks": ["cancer"]]]])
+    }
+  }
 }

@@ -72,6 +72,9 @@ enum MCPCatalog {
     Essential 8, FINDRISC, AUDIT-C, MEDAS-14, PHQ-2, tobacco, family history, lipid-lowering medication, \
     eating pattern and, if I eat vegetarian or vegan, the plant-based follow-up with my B12, folate and ferritin), \
     prefilled from my data, and store them with save_protocol_answers after I confirmed them.
+    - When a reading concludes something (values measured under a medicine or a diet, a value that looks \
+    misread, a watch value my answer contradicts, a question for my doctor), show me the findings and, \
+    when I confirm, store them with save_assessment, each linked to its values and risks.
     - Say what is missing or too old to judge, and which test would close the gap.
     - Not medical advice and not a diagnosis: help me understand my data and prepare questions for my \
     doctor. Anything urgent (chest pain, shortness of breath, fainting, signs of a stroke) belongs with a \
@@ -310,6 +313,27 @@ enum MCPCatalog {
         that started late), say so. \
         4. Read my answers back. When I confirm, store them with save_protocol_answers, prefilled ones with \
         where they came from. Then offer the next protocol.
+        """),
+    Prompt(
+      name: "personal_anamnesis", title: "My personal anamnesis, from my risk profile",
+      description: "The whole reading: your main risk from your values, the protocols that matter for it "
+        + "(prefilled, the rest asked), the scores, and what it all means, stored in your graph.",
+      group: .habits,
+      arguments: [],
+      template: """
+        Take my personal anamnesis, ranked by my own risk profile. \
+        1. Call get_schema, anamnesis_protocols and anamnesis_plan. Name my main risk and the values that \
+        drive it (newest first, with date and lab), and which protocols matter for it, in a short table. \
+        2. Go through those protocols, most relevant first: show what my data already answers (value, date, \
+        option) and ask only the rest, four questions at a time. Check the data while you go: values measured \
+        under a medicine or diet I name, values of one day that do not fit together, watch values my answers \
+        contradict. \
+        3. Store each protocol with save_protocol_answers when I confirm it. \
+        4. Give the result as one table (protocol, score and band, what it means for me) and the findings \
+        (treated values, data to check on the paper, discrepancies, questions for my doctor, tests that \
+        would close a gap). When I confirm the findings, store them with save_assessment: title, two to five \
+        sentences of summary, the protocols read, each finding with its kind, severity, the Observation \
+        resourceIds and the risk ids it is about. No diagnosis; anything urgent belongs with a doctor now.
         """),
     Prompt(
       name: "doctor_brief", title: "Write a doctor's brief",
@@ -614,7 +638,8 @@ enum MCPCatalog {
           which owns your graph, stores them and deletes the request; it refuses an answer that is not one of \
           the question's options. save_protocol_answers does the same for one anamnesis protocol (FINDRISC, \
           AUDIT-C, ...): checked against its options, scored and stored by the app with SNOMED CT codes. \
-          Nothing else can be written this way.
+          save_assessment hands over what a reading concluded, the findings you confirmed, which the app \
+          stores linked to the values, risks and answers they rest on. Nothing else can be written this way.
           - Claude Desktop asks before a tool runs, unless you allowed it.
 
           ## Protocol and authorization

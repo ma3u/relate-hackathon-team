@@ -51,6 +51,9 @@ enum Cypher {
   CREATE CONSTRAINT anamnesis_protocol_id IF NOT EXISTS FOR (n:AnamnesisProtocol) REQUIRE n.id IS UNIQUE;
   CREATE CONSTRAINT protocol_item_id IF NOT EXISTS FOR (n:ProtocolItem) REQUIRE n.id IS UNIQUE;
   CREATE CONSTRAINT snomed_code IF NOT EXISTS FOR (n:SnomedCode) REQUIRE n.code IS UNIQUE;
+  // Assessments (health_graph/assessment.py): what a reading concluded, each finding linked to its values.
+  CREATE CONSTRAINT assessment_id IF NOT EXISTS FOR (n:Assessment) REQUIRE n.id IS UNIQUE;
+  CREATE CONSTRAINT finding_id IF NOT EXISTS FOR (n:Finding) REQUIRE n.id IS UNIQUE;
   """#
 
   static let omop = #"""
@@ -602,6 +605,69 @@ enum Cypher {
   MERGE (r)-[:HAS_ANSWER]->(ans)
   RETURN count(*) AS answers
   """#
+
+  static let assessmentStore = #"""
+  MATCH (p:Patient {id: $patientId})
+  MERGE (a:Assessment {id: $assessmentId})
+  SET a.authored = $authored, a.source = $source, a.title = $title, a.summary = $summary,
+      a.findings = size($findings)
+  MERGE (p)-[:HAS_ASSESSMENT]->(a)
+  WITH a
+  UNWIND $findings AS f
+  MERGE (n:Finding {id: $assessmentId + '|' + toString(f.order)})
+  SET n.order = f.order, n.kind = f.kind, n.severity = f.severity, n.title = f.title, n.text = f.text
+  MERGE (a)-[:HAS_FINDING]->(n)
+  RETURN count(n) AS findings
+  """#
+
+  static let assessmentStoreAbout = #"""
+  UNWIND $findings AS f
+  MATCH (n:Finding {id: $assessmentId + '|' + toString(f.order)})
+  UNWIND f.observations AS obsId
+  MATCH (o:Observation {resourceId: obsId})
+  MERGE (n)-[:ABOUT]->(o)
+  RETURN count(*) AS links
+  """#
+
+  static let assessmentStoreRisks = #"""
+  UNWIND $findings AS f
+  MATCH (n:Finding {id: $assessmentId + '|' + toString(f.order)})
+  UNWIND f.risks AS riskId
+  MATCH (h:HealthRisk {id: riskId})
+  MERGE (n)-[:CONCERNS]->(h)
+  RETURN count(*) AS links
+  """#
+
+  static let assessmentStoreBasedOn = #"""
+  MATCH (a:Assessment {id: $assessmentId})<-[:HAS_ASSESSMENT]-(p:Patient)
+  UNWIND $protocols AS protocolId
+  MATCH (p)-[:HAS_RESPONSE]->(r:QuestionnaireResponse {protocol: protocolId})
+  WITH a, protocolId, r ORDER BY r.authored DESC
+  WITH a, protocolId, collect(r)[0] AS newest
+  MERGE (a)-[:BASED_ON]->(newest)
+  RETURN count(*) AS links
+  """#
+
+  static let assessmentList = #"""
+  MATCH (:Patient)-[:HAS_ASSESSMENT]->(a:Assessment)-[:HAS_FINDING]->(f:Finding)
+  OPTIONAL MATCH (f)-[:ABOUT]->(o:Observation)
+  OPTIONAL MATCH (f)-[:CONCERNS]->(h:HealthRisk)
+  RETURN a.id AS id, a.authored AS authored, a.title AS title, a.summary AS summary, f.order AS order,
+         f.kind AS kind, f.severity AS severity, f.title AS finding, f.text AS text,
+         collect(DISTINCT o.resourceId) AS observations, collect(DISTINCT h.id) AS risks
+  ORDER BY authored DESC, order
+  """#
+}
+
+/// The rules an assessment follows (assessment.py): its finding kinds, severities and limits.
+public enum AssessmentRules {
+  public static let kinds: [String: String] = ["risk": "what the values and answers mean for a health risk", "treated": "values measured under a medicine or a diet that changes them", "data-quality": "a value that looks misread, duplicated or implausible: check it on the paper", "discrepancy": "the data and an answer disagree", "habit": "a habit that moves a risk", "ask-doctor": "a question to take to the doctor", "test": "a test that would close a gap"]
+  public static let kindOrder: [String] = ["risk", "treated", "data-quality", "discrepancy", "habit", "ask-doctor", "test"]
+  public static let severities: [String] = ["info", "watch", "high"]
+  public static let maxFindings = 30
+  public static let maxTitle = 200
+  public static let maxText = 2000
+  public static let maxSummary = 4000
 }
 
 /// Named read-only queries (CLI, tests, the app). Same as health_graph/queries.py.
