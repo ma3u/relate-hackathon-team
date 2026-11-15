@@ -158,10 +158,23 @@ final class AppModel: ObservableObject {
     }
   }
 
+  static let connectedVersionKey = "claudeExtensionVersion"
+
+  /// Set when Claude Desktop runs an extension older than this build (or one connected before build 8,
+  /// which recorded no version): the extension carries its own copy of the helper, so new tools reach
+  /// Claude only when it is installed again.
+  var extensionOutdated: Bool {
+    UserDefaults.standard.string(forKey: Self.connectedVersionKey) != ClaudeConnect.extensionVersion
+  }
+
   func connectClaude() {
     do {
       try ClaudeConnect.install()
-      claudeMessage = "Claude Desktop is asking to install “Klarbefund Health Graph”. Click Install, then start a new chat."
+      UserDefaults.standard.set(ClaudeConnect.extensionVersion, forKey: Self.connectedVersionKey)
+      objectWillChange.send()
+      claudeMessage = "Claude Desktop is asking to install “Klarbefund Health Graph” \(ClaudeConnect.extensionVersion). "
+        + "Click Install, then start a new chat. If Claude says it is already installed, uninstall it under "
+        + "Settings → Extensions and click Connect again: your health graph is not affected."
     } catch {
       claudeMessage = "\(error)"
     }

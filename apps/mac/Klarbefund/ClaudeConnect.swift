@@ -9,6 +9,14 @@ enum ClaudeConnect {
   static var claudeApp: URL? { NSWorkspace.shared.urlForApplication(withBundleIdentifier: claudeBundleID) }
   static var helper: URL { Bundle.main.bundleURL.appendingPathComponent("Contents/Helpers/klarbefund-mcp") }
 
+  /// The extension's version: the app's version and build (1.0.8), so Claude Desktop sees a new build as
+  /// an update. Until build 8 every build said 1.0.0, and Claude kept running the helper it installed first.
+  static var extensionVersion: String {
+    let short = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0"
+    let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "0"
+    return "\(short).\(build)"
+  }
+
   enum Failure: Error, CustomStringConvertible {
     case noClaude, noHelper, zip(Int32)
     var description: String {
@@ -40,12 +48,11 @@ enum ClaudeConnect {
     if let icon = NSApp.applicationIconImage?.pngData(size: 512) {
       try icon.write(to: root.appendingPathComponent("icon.png"))
     }
-    let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0"
     let manifest: [String: Any] = [
       "manifest_version": "0.2",
       "name": MCPCatalog.serverName,
       "display_name": MCPCatalog.serverTitle,
-      "version": version + ".0",
+      "version": extensionVersion,
       "description": "Your lab reports and Apple Watch data from Klarbefund, as a local Neo4j Relate graph. Read-only, on this Mac.",
       "long_description": "Klarbefund for Mac keeps your health graph on your own Mac. This extension lets Claude read it, read-only, while Klarbefund for Mac is open. Nothing is uploaded to a cloud by Klarbefund; only the rows Claude asks for go into your conversation.",
       "author": ["name": "Matthias Buchhorn", "url": "https://github.com/ma3u/relate-hackathon-team"],
@@ -56,10 +63,7 @@ enum ClaudeConnect {
         "entry_point": "server/klarbefund-mcp",
         "mcp_config": ["command": "${__dirname}/server/klarbefund-mcp", "args": [String](), "env": [String: String]()],
       ],
-      "tools": [
-        ["name": "get_schema", "description": "Labels and relationships in your health graph, with counts."],
-        ["name": "read_cypher", "description": "One read-only Cypher query against your health graph."],
-      ],
+      "tools": MCPCatalog.tools.map { ["name": $0.name, "description": $0.summary] },
       // The same catalog the helper serves through prompts/list and prompts/get.
       "prompts": MCPCatalog.prompts.map { p -> [String: Any] in
         [
@@ -69,7 +73,7 @@ enum ClaudeConnect {
         ]
       },
       "keywords": ["health", "neo4j", "relate", "graph", "fhir", "loinc"],
-      "license": "MIT",
+      "license": "Apache-2.0",
       "compatibility": ["platforms": ["darwin"]],
     ]
     let data = try JSONSerialization.data(withJSONObject: manifest, options: [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes])

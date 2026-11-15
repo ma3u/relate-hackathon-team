@@ -10,6 +10,18 @@ enum MCPCatalog {
   static let serverName = "klarbefund-health"
   static let serverTitle = "Klarbefund Health Graph"
 
+  /// The helper's tools, as the extension manifest lists them for Claude Desktop's settings. The
+  /// helper (klarbefund-mcp) asserts at start that its tools/list has these names in this order.
+  static let tools: [(name: String, summary: String)] = [
+    ("get_schema", "Labels and relationships in your health graph, with counts."),
+    ("read_cypher", "One read-only Cypher query against your health graph."),
+    ("anamnesis_plan", "Findings in your data and the anamnesis questions they leave."),
+    ("save_anamnesis_answers", "Hands your confirmed anamnesis answers to Klarbefund for Mac to store."),
+    ("anamnesis_protocols", "The validated questionnaires (Life's Essential 8, FINDRISC, ...) and your earlier answers."),
+    ("save_protocol_answers", "Hands one questionnaire's confirmed answers to Klarbefund for Mac to score and store."),
+    ("save_assessment", "Hands the findings of a reading you confirmed to Klarbefund for Mac, linked to their values."),
+  ]
+
   /// The MCP revisions the server speaks. 2026-07-28 is stateless (server/discover,
   /// the version in each request's _meta); the older ones start with initialize.
   static let modernVersions = ["2026-07-28"]

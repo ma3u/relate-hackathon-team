@@ -330,6 +330,11 @@ let tools: [[String: Any]] = [
   ],
 ]
 
+// The extension manifest lists the tools from MCPCatalog.tools: keep both in step (checked in debug builds,
+// which scripts/mcp_capabilities.sh runs).
+assert(tools.compactMap { $0["name"] as? String } == MCPCatalog.tools.map(\.name),
+       "MCPCatalog.tools is out of step with the helper's tools")
+
 // ── the catalog: prompts and guides (MCPCatalog, shared with Klarbefund for Mac) ──
 struct RPCError: Error {
   let code: Int, message: String

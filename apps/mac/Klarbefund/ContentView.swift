@@ -96,6 +96,12 @@ struct ContentView: View {
       Label("Connect Claude Desktop", systemImage: "link").frame(maxWidth: .infinity)
     }
     .controlSize(.large).buttonStyle(.borderedProminent)
+    if model.claudeMessage == nil && model.extensionOutdated && !renderingForDocs {
+      Label("Klarbefund was updated. If you connected Claude before, click Connect again so Claude gets the new "
+        + "tools (version \(ClaudeConnect.extensionVersion)). Your health graph is not affected.",
+        systemImage: "arrow.triangle.2.circlepath")
+        .font(.callout).foregroundStyle(.secondary)
+    }
     if let msg = model.claudeMessage {
       Text(msg).font(.callout).foregroundStyle(.secondary).textSelection(.enabled)
     }
