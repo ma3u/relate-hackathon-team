@@ -274,6 +274,7 @@ const Graph = new ForceGraph3D(document.getElementById("graph"))
   .nodeResolution(12)
   .nodeColor(n => n.g === "HealthRisk" && n.st ? STATUS[n.st.status].color : fade(n.out ? OUT_COLOR : COLOR[n.g], recency(n)))
   .nodeLabel(n => `<b>${esc(n.n)}</b><br><span style="color:${COLOR[n.g]}">${esc(n.g)}</span>` +
+    (answersOf(n).length ? `<br><b>Your answer:</b> ${esc(answersOf(n)[0].text)} · ${esc(answersOf(n)[0].date)}` : "") +
     (n.d.length ? "<br>" + n.d.slice(0, 3).map(esc).join("<br>") : ""))
   .linkColor(l => hlLinks.has(l) ? "#ffffff" : l.t === "RAISES_RISK_OF" ? RISK_LINK : l.t === "CITES" ? CITE_LINK
     : l.t === "IN_TOPIC" ? "#EEEDFE" : (COLOR[l.source.g || nodeById(l.source).g] || "#555"))
@@ -317,6 +318,14 @@ Graph.d3Force("time", timeForce);
 const shown = n => VISIBLE[n.g] && STAGES[stage].groups.includes(n.g) && STAGES[stage].only(n);
 const short = t => (t = String(t)).length > 26 ? t.slice(0, 25) + "…" : t;
 const nb = (n, types) => n.nbs.filter(([t]) => !types || types.includes(t)).map(x => x[1]);
+// A question's answers, newest first: "No · 2026-11-14". A question you answered shows your answer,
+// so it never reads as if it were still asking you.
+function answersOf(q) {
+  if (q.g !== "Protocol question") return [];
+  return nb(q, ["ANSWERS"]).filter(m => m.g === "Your answer")
+    .map(m => ({ text: m.n.replace(/^[^:]+:\s*/, "") || "answered", date: (m.d[1] || "").slice(0, 10) }))
+    .sort((a, b) => b.date.localeCompare(a.date));
+}
 const HUB = new Set(["Patient", "OMOPPerson", "Knowledge", "Organization", "LoincCode"]);
 let drill = [];   // the drill-down trail; the last node is in focus
 
@@ -661,7 +670,9 @@ const EXPLAIN = {
   NcbiTaxon: () => `An organism from a microbiome report, and your values on it.`,
   Knowledge: () => `The version of the knowledge layer: a fingerprint of every seeded fact.`,
   "Anamnesis protocol": n => `The protocol "${n.n}": its questions, the LOINC and SNOMED CT codes they carry, the health risks it informs and your stored answers. The overview on the right asks it, prefilled from your data.`,
-  "Protocol question": n => `One question: "${n.n}". Its LOINC code, the SNOMED CT concept each answer stands for, and your answers to it.`,
+  "Protocol question": n => answersOf(n).length
+    ? `One question: "${n.n}". You answered ${answersOf(n)[0].text} on ${answersOf(n)[0].date}; around it its LOINC code and the SNOMED CT concept each answer stands for.`
+    : `One question: "${n.n}", not answered yet. Its LOINC code and the SNOMED CT concept each answer stands for.`,
   "SNOMED code": n => `The SNOMED CT concept "${n.n}": the answers that mean it, in every protocol. SNOMED CT is the clinical terminology of the EHDS Patient Summary.`,
   "Your answer": n => `${n.n}: stored in your graph, with the SNOMED CT concept it asserts and, when it was prefilled, the value it was read from.`,
 };
@@ -1155,6 +1166,14 @@ function showDetail(n) {
     ...path.map((m, i) => i === path.length - 1 ? `<b>${esc(short(m.n))}</b>` : `<a href="#" data-back="${i}">${esc(short(m.n))}</a>`)];
   let html = `<button class="close" aria-label="Close">×</button><div class="trail">${trail.join(" › ")}</div>` +
     `<h3>${esc(n.n)}</h3><div class="tag">${dot(n)}${esc(n.g)} · ${n.deg} relationships</div>`;
+  if (n.g === "Protocol question") {
+    const a = answersOf(n);
+    html += a.length
+      ? `<div class="callout"><b>Your answer: ${esc(a[0].text)}</b>, on ${esc(a[0].date)}.` +
+        (a.length > 1 ? ` Earlier: ${a.slice(1).map(x => `${esc(x.text)} (${esc(x.date)})`).join(", ")}.` : "") +
+        ` Answered within a year, it is not asked again.</div>`
+      : `<div class="callout">Not answered yet.</div>`;
+  }
   if (n.d.length) html += "<ul>" + n.d.map(x => `<li>${esc(x)}</li>`).join("") + "</ul>";
 
   if (n.g === "LoincCode") html += chartsFor(n);
