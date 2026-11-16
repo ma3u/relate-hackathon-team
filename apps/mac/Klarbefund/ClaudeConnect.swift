@@ -28,24 +28,37 @@ enum ClaudeConnect {
     }
   }
 
-  static func install() throws {
+  static func install() throws { try open(try makeExtension()) }
+
+  /// Hands a finished extension file to Claude Desktop, which asks the person to install it.
+  static func open(_ mcpb: URL) throws {
     guard let claude = claudeApp else { throw Failure.noClaude }
-    let mcpb = try makeExtension()
     let config = NSWorkspace.OpenConfiguration()
     config.activates = true
     NSWorkspace.shared.open([mcpb], withApplicationAt: claude, configuration: config)
   }
 
   /// The extension: manifest.json, the helper binary and an icon, zipped with the
-  /// manifest at the root.
-  static func makeExtension() throws -> URL {
+  /// manifest at the root. Each call writes its own file, complete before Claude sees it, and never
+  /// touches one handed over before: on Nov 16, 2026 a second click rewrote the file while Claude
+  /// read the first ("truncated"), then deleted it ("Extension file not found"). Files older than an
+  /// hour are cleared.
+  static func makeExtension(icon: Data? = nil) throws -> URL {
     let fm = FileManager.default
     guard fm.isExecutableFile(atPath: helper.path) else { throw Failure.noHelper }
-    let root = fm.temporaryDirectory.appendingPathComponent("klarbefund-health", isDirectory: true)
-    try? fm.removeItem(at: root)
+    let base = fm.temporaryDirectory.appendingPathComponent("claude-extension", isDirectory: true)
+    try fm.createDirectory(at: base, withIntermediateDirectories: true)
+    for old in (try? fm.contentsOfDirectory(at: base, includingPropertiesForKeys: [.contentModificationDateKey])) ?? [] {
+      let when = (try? old.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate ?? .distantPast
+      if Date().timeIntervalSince(when) > 3600 { try? fm.removeItem(at: old) }
+    }
+    try? fm.removeItem(at: fm.temporaryDirectory.appendingPathComponent("Klarbefund Health Graph.mcpb"))  // before build 10
+    let run = base.appendingPathComponent("\(Int(Date().timeIntervalSince1970))-\(UUID().uuidString.prefix(8))", isDirectory: true)
+    let root = run.appendingPathComponent("klarbefund-health", isDirectory: true)
     try fm.createDirectory(at: root.appendingPathComponent("server"), withIntermediateDirectories: true)
     try fm.copyItem(at: helper, to: root.appendingPathComponent("server/klarbefund-mcp"))
-    if let icon = NSApp.applicationIconImage?.pngData(size: 512) {
+    // The icon is drawn on the main thread (AppKit); off it, the caller passes it in.
+    if let icon = icon ?? (Thread.isMainThread ? MainActor.assumeIsolated { NSApp.applicationIconImage?.pngData(size: 512) } : nil) {
       try icon.write(to: root.appendingPathComponent("icon.png"))
     }
     let manifest: [String: Any] = [
@@ -79,14 +92,16 @@ enum ClaudeConnect {
     let data = try JSONSerialization.data(withJSONObject: manifest, options: [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes])
     try data.write(to: root.appendingPathComponent("manifest.json"))
 
-    let out = fm.temporaryDirectory.appendingPathComponent("Klarbefund Health Graph.mcpb")
-    try? fm.removeItem(at: out)
+    let out = run.appendingPathComponent("Klarbefund Health Graph.mcpb")
+    let partial = run.appendingPathComponent("extension.partial")
     let ditto = Process()
     ditto.executableURL = URL(fileURLWithPath: "/usr/bin/ditto")
-    ditto.arguments = ["-c", "-k", "--norsrc", "--noextattr", "--noqtn", root.path, out.path]
+    ditto.arguments = ["-c", "-k", "--norsrc", "--noextattr", "--noqtn", root.path, partial.path]
     try ditto.run()
     ditto.waitUntilExit()
     guard ditto.terminationStatus == 0 else { throw Failure.zip(ditto.terminationStatus) }
+    try fm.moveItem(at: partial, to: out)  // whole, in one step
+    try? fm.removeItem(at: root)
     return out
   }
 

@@ -33,7 +33,7 @@ flowchart LR
 
 Install **Klarbefund for Mac** from the [TestFlight link](https://testflight.apple.com/join/ssADSXX6) (macOS 14 or later) and open it. Its window has three steps: a QR code to pair the iPhone, the counts of your health graph, and **Connect Claude Desktop**. No terminal, no scripts. Details: [MAC.md](MAC.md).
 
-<img src="img/mac/klarbefund-mac.png" width="720" alt="Klarbefund for Mac: 1 Pair your iPhone with a QR code, 2 Your health graph with its counts, 3 Ask Claude with Connect Claude Desktop (fictional demo data)">
+<img src="img/mac/klarbefund-mac.png" width="720" alt="Klarbefund for Mac: 1 Pair your iPhone with a QR code, 2 Your health graph with its counts and Open 3D view, 3 Ask Claude with Connect Claude Desktop and the Klarbefund skill (fictional demo data)">
 
 ### For developers: the command-line receiver
 
@@ -47,7 +47,7 @@ scripts/health_vault.sh receive    # unlock it, then start the receiver
 
 `receive` builds and runs the **Swift** receiver ([SWIFT.md](SWIFT.md)) as `health-graph receive --db ~/RelateHealth/health.rl --require-mount` (`HEALTH_GRAPH_RECEIVER=python` runs the Python one, same contract and same pairing): the receiver refuses to start unless the encrypted image is open, so no unencrypted store can ever be created. `scripts/health_vault.sh unmount` locks it again; `status` shows whether it's open. (Already have a plaintext `~/RelateHealth/health.rl`? `scripts/health_vault.sh migrate` moves it into a new vault, checks the copy byte for byte, then deletes the plaintext file.)
 
-To look at your graph in 3D, run `scripts/health_vault.sh graph3d`. It unlocks the vault and takes the newest graph: Klarbefund for Mac's snapshot or the receiver's store. It builds `~/RelateHealth/graph3d/index.html` and serves it on `http://127.0.0.1:8799` (or the next free port) for this Mac only. The page holds your values, so it never leaves the vault, and `scripts/graph3d.py` refuses to write into the repository. The page opens on the health risks the knowledge layer tracks (conditions, not diagnoses), ranked by your newest values, with your risk overview on the right: scores, the lipid markers beyond LDL, older sources read critically, and questions about your habits that stay in the page. Older values sit further back and count half after a year. Then the evidence, the measures, the documents.
+To look at your graph in 3D, click **Open 3D view** in Klarbefund for Mac (build 9 or later), or run `scripts/health_vault.sh graph3d`. It unlocks the vault and takes the newest graph: Klarbefund for Mac's snapshot or the receiver's store. It builds `~/RelateHealth/graph3d/index.html` and serves it on `http://127.0.0.1:8799` (or the next free port) for this Mac only. The page holds your values, so it never leaves the vault, and `scripts/graph3d.py` refuses to write into the repository. The page opens on the health risks the knowledge layer tracks (conditions, not diagnoses), ranked by your newest values, with your risk overview on the right: scores, the lipid markers beyond LDL, older sources read critically, and questions about your habits that stay in the page. Older values sit further back and count half after a year. Then the evidence, the measures, the documents.
 
 Klarbefund for Mac shows its QR code in the window; `receive` prints one in the terminal:
 

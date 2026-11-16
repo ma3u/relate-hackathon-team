@@ -4,10 +4,12 @@ Klarbefund for Mac brings its own [Model Context Protocol](https://modelcontextp
 
 What it offers:
 
-- **4 tools**: `get_schema` (labels and relationship types with counts), `read_cypher` (one `MATCH ... RETURN` query, at most 500 rows), `anamnesis_plan` (what stands out in your own values, what your data already answers, and only the questions left), all three read-only; and `save_anamnesis_answers`, which hands the answers you confirmed to Klarbefund for Mac to store. See [The anamnesis skill](#the-anamnesis-skill).
-- **25 prompts**, the use cases you pick from Claude's **+** menu: risks and what to improve, values and trends, the doctor's visit, habits and Apple Watch, the graph and the evidence, setup and privacy. Each prompt carries Klarbefund's rules: dates and the age of every value, newer evidence before older, ask about habits the graph cannot know, not medical advice.
+- **7 tools**: `get_schema` (labels and relationship types with counts), `read_cypher` (one `MATCH ... RETURN` query, at most 500 rows), `anamnesis_plan` (what stands out in your own values, what your data already answers, and only the questions left) and `anamnesis_protocols` (the validated questionnaires, your earlier answers and assessments), all read-only; and three that hand what you confirmed to Klarbefund for Mac to store: `save_anamnesis_answers`, `save_protocol_answers` (one questionnaire, scored, coded with SNOMED CT) and `save_assessment` (the findings of a reading, linked to their values). See [The anamnesis skill](#the-anamnesis-skill) and [The Klarbefund skill and assessments](#the-klarbefund-skill-and-assessments).
+- **27 prompts**, the use cases you pick from Claude's **+** menu: risks and what to improve, values and trends, the doctor's visit, habits and Apple Watch (with the validated protocols and the personal anamnesis), the graph and the evidence, setup and privacy. Each prompt carries Klarbefund's rules: dates and the age of every value, newer evidence before older, ask about habits the graph cannot know, not medical advice.
 - **8 guides** as MCP resources (`klarbefund://guide/...`, Markdown) that Claude can read: start, install, pairing, usage, the graph and the 3D view, how evidence is weighed, security, and the list of prompts.
 - **Instructions** that describe the graph's schema and the same rules, sent when a client connects.
+
+The extension's version is the app's version and build (1.0.9 for build 9), so Claude Desktop tells builds apart; it runs its own copy of the helper, so a new build's tools reach Claude when the extension is installed again (see [MAC.md](MAC.md), Updating).
 
 Prompts, guides and rules live in one file, [`apps/mac/Shared/MCPCatalog.swift`](../apps/mac/Shared/MCPCatalog.swift). The helper serves it, the app's "What Claude can do here" sheet shows it, and the Claude Desktop extension's manifest lists it. No health data is in it: these are texts, the same for everyone.
 

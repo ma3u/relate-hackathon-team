@@ -182,9 +182,24 @@ final class AppModel: ObservableObject {
     UserDefaults.standard.string(forKey: Self.connectedVersionKey) != ClaudeConnect.extensionVersion
   }
 
+  /// While the extension is packed (about two seconds for the helper): the button waits.
+  @Published var connecting = false
+
   func connectClaude() {
+    guard !connecting else { return }
+    connecting = true
+    claudeMessage = "Preparing the extension for Claude Desktop…"
+    let icon = NSApp.applicationIconImage?.pngData(size: 512)
+    Task.detached(priority: .userInitiated) {
+      let result = Result { try ClaudeConnect.makeExtension(icon: icon) }
+      await MainActor.run { AppModel.shared.handOver(result) }
+    }
+  }
+
+  private func handOver(_ result: Result<URL, Error>) {
+    defer { connecting = false }
     do {
-      try ClaudeConnect.install()
+      try ClaudeConnect.open(try result.get())
       UserDefaults.standard.set(ClaudeConnect.extensionVersion, forKey: Self.connectedVersionKey)
       objectWillChange.send()
       claudeMessage = "Claude Desktop is asking to install “Klarbefund Health Graph” \(ClaudeConnect.extensionVersion). "

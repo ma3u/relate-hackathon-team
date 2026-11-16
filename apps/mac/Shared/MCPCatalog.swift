@@ -528,6 +528,14 @@ enum MCPCatalog {
           "Connect Claude Desktop". Klarbefund builds a Claude Desktop extension (.mcpb) around its MCP \
           helper and hands it to Claude, which asks you to install it.
           5. Test: ask Claude "What is in my health graph?". Claude calls get_schema and shows the counts.
+          6. Optional: "Add the Klarbefund skill to Claude" in step 3 saves the anamnesis method as a zip, no \
+          data in it; add it in Claude under Customize, Skills, Upload a skill.
+
+          ## Updating
+          TestFlight updates the app; the graph is not inside it and stays. Quit Klarbefund and open it \
+          again (About Klarbefund shows the build). Claude runs its own copy of the extension: when step 3 \
+          says "Klarbefund was updated", click Connect again; if Claude says it is already installed, \
+          uninstall it under Settings, Extensions first. That never touches the health graph.
 
           ## Manual setup
           Claude Desktop, Settings, Developer, Edit Config, then add under "mcpServers" an entry \
@@ -538,6 +546,10 @@ enum MCPCatalog {
           - "the health graph is sealed": open Klarbefund for Mac. Claude can read the graph only while it is open.
           - The graph is empty: pair the iPhone and tap "Send everything now".
           - Claude does not list Klarbefund: restart Claude Desktop, then check Settings, Extensions.
+          - Claude lacks a tool the app lists (save_assessment, save_protocol_answers): the extension is \
+          older than the app; see Updating.
+          - Two Klarbefund apps in Applications: keep the newer one (About Klarbefund), move the other to \
+          the Trash. They share one graph.
           """),
       Guide(
         uri: "klarbefund://guide/pairing", name: "pairing", title: "Pair your iPhone with your Mac",
@@ -598,7 +610,8 @@ enum MCPCatalog {
           links you to one. Your values on its markers say where you stand.
 
           ## The 3D view
-          Step 1 shows the health risks with your standing: the risks your recent values point to are \
+          Open it in Klarbefund for Mac, step 2, "Open 3D view" (or scripts/health_vault.sh graph3d from \
+          the repository). It opens on your main risk, turning for 30 seconds. Step 1 shows the health risks with your standing: the risks your recent values point to are \
           large and bright, the others small and dim, and the panel on the right ranks them. Older values \
           sit further back and are smaller: a value counts half after one year. Red: outside the range. \
           Orange arrows: in studies, people who have one condition develop another more often.

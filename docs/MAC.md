@@ -2,21 +2,27 @@
 
 Klarbefund for Mac is the no-scripts way to keep your health graph on your Mac and ask Claude about it. It pairs with Klarbefund on the iPhone, keeps the Neo4j Relate graph sealed in its own sandbox, and connects Claude Desktop with one click. It ships under the same TestFlight link as the iPhone app.
 
-> **Status, Nov 13, 2026:** Mac build 4 is in TestFlight: its knowledge layer adds how the health risks raise each other, from 13 studies (each with its DOI and PubMed link, the markers it examines and the scores it informs), so Claude can follow a value to its evidence. Both apps stay in TestFlight while in development and testing; neither is submitted to the App Store. The public TestFlight link offers the Mac build once Apple's Beta App Review passes (iPhone build 15 is already live there). Claude Desktop answers through the "Klarbefund Health Graph" extension while the app is open.
+> **Status, Nov 16, 2026:** Mac build 9 is in TestFlight. It opens your graph in 3D inside the app (*Open 3D view*), asks the validated anamnesis protocols (Life's Essential 8, FINDRISC, AUDIT-C, MEDAS-14, PHQ-2, tobacco, family history, statin months, diet and the plant-based follow-up), stores what a reading concluded (findings linked to the values they are about), and brings the Klarbefund skill for Claude. The Claude extension now carries the build number (1.0.9) and lists its seven tools. Both apps stay in TestFlight while in development and testing; neither is submitted to the App Store. The public TestFlight link offers the Mac build once Apple's Beta App Review passes (iPhone build 15 is already live there). Claude Desktop answers through the "Klarbefund Health Graph" extension while the app is open.
 
-![Klarbefund for Mac: pair your iPhone, your health graph, ask Claude](img/mac/klarbefund-mac.png)
+![Klarbefund for Mac with fictional data: pair your iPhone, your health graph with Open 3D view, ask Claude with the Klarbefund skill](img/mac/klarbefund-mac.png)
 
 ## For people
 
 1. **Install** Klarbefund for Mac from TestFlight: [testflight.apple.com/join/ssADSXX6](https://testflight.apple.com/join/ssADSXX6) (open the link on the Mac, or in the TestFlight app on the Mac).
 2. **Pair your iPhone.** Open Klarbefund for Mac. On the iPhone open Klarbefund → More (…) → **Export to my Mac (Relate)** and scan the QR code the Mac shows. Then tap **Send everything now**. Mac and iPhone need the same Wi-Fi; the connection is encrypted and pinned to this Mac.
-3. **See your graph.** The middle card counts your lab reports, lab values, Apple Watch weeks, LOINC codes and the 173 reference ranges the app brings along.
+3. **See your graph.** The middle card counts your lab reports, lab values, Apple Watch weeks, LOINC codes and the 173 reference ranges the app brings along. **Open 3D view** shows all of it as an interactive 3D graph in its own window: your main risk in the middle, turning for 30 seconds, then the evidence, the anamnesis, your values and documents. Questionnaires you answer there are stored in your graph with *Save to my graph*. The window builds its page on this Mac; only the 3D library is loaded from jsDelivr, none of your data.
 4. **Connect Claude.** Install [Claude Desktop](https://claude.ai/download), then click **Connect Claude Desktop**. Claude asks to install "Klarbefund Health Graph": click **Install**, start a new chat, and ask, for example:
    - "Where are my risks?"
    - "What should I improve first?"
    - "I always feel tired: what should I measure?"
 
-   These and 21 more are in Claude's **+** menu as prompts of the extension; **What Claude can do here** in step 3 lists them all, with the guides Claude can read. What the server offers and how it is secured: [MCP.md](MCP.md).
+   These and 24 more are in Claude's **+** menu as prompts of the extension; **What Claude can do here** in step 3 lists them all, with the guides Claude can read. "My personal anamnesis, from my risk profile" takes the whole reading: your main risk, the questionnaires that matter for it (prefilled from your data, the rest asked), the scores, and the findings, stored in your graph once you confirm them. What the server offers and how it is secured: [MCP.md](MCP.md).
+5. **Add the skill (optional).** **Add the Klarbefund skill to Claude** in step 3 saves `klarbefund-anamnesis.zip`, the method without any data. In Claude: Customize → Skills → + → Upload a skill. Claude then takes the anamnesis the same way whenever your question fits, without picking a prompt.
+
+**Updating.** TestFlight updates the app in `/Applications`; your graph is not inside the app and stays. Then:
+- Quit Klarbefund (⌘Q) and open it again. Klarbefund → About Klarbefund shows the build; step 3 lists the prompts (27 in build 9).
+- Claude runs its own copy of the extension, so new tools arrive only when it is installed again. When step 3 says "Klarbefund was updated", click **Connect Claude Desktop**. If Claude says the extension is already installed, uninstall it under Settings → Extensions and click Connect again. Uninstalling the extension never touches your health graph.
+- Two Klarbefund apps in `/Applications` (TestFlight may add "Klarbefund 2" next to an older copy): keep the newer one and move the other to the Trash. All copies share one sealed graph, so nothing is lost.
 
 **What stays private:** the graph is one file inside the app's sandbox. While Klarbefund for Mac is closed it exists only sealed with AES-256-GCM; the key stays in this Mac's keychain. Claude reads a read-only copy, and only while the app is open: closing the window seals the graph and ends Claude's access. Only the rows Claude asks for go into your conversation.
 
@@ -31,6 +37,8 @@ cd apps/mac
 xcodegen generate
 open Klarbefund.xcodeproj      # or: xcodebuild -scheme Klarbefund build
 ```
+
+Keep archives in `apps/mac/build/archives.noindex/`: Spotlight skips a `.noindex` folder, so macOS never launches an archived build instead of the TestFlight app (on Nov 16, 2026 it opened a build 5 archive, and Claude got its old extension).
 
 | Part | Where | What it does |
 | --- | --- | --- |

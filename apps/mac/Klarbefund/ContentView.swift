@@ -77,7 +77,10 @@ struct ContentView: View {
       .font(.callout)
     Label("Neo4j Relate, one file, inside this app's sandbox. Nothing is uploaded.", systemImage: "internaldrive")
       .font(.callout)
-    if !renderingForDocs {
+    if renderingForDocs {  // ImageRenderer draws no AppKit button: the same look, drawn
+      Label("Open 3D view", systemImage: "cube.transparent").frame(maxWidth: .infinity)
+        .padding(.vertical, 7).background(.quaternary, in: RoundedRectangle(cornerRadius: 7))
+    } else {
       Button { openWindow(id: "graph3d") } label: {
         Label("Open 3D view", systemImage: "cube.transparent").frame(maxWidth: .infinity)
       }
@@ -102,9 +105,11 @@ struct ContentView: View {
     Button {
       model.connectClaude()
     } label: {
-      Label("Connect Claude Desktop", systemImage: "link").frame(maxWidth: .infinity)
+      Label(model.connecting ? "Preparing the extension…" : "Connect Claude Desktop",
+            systemImage: model.connecting ? "hourglass" : "link").frame(maxWidth: .infinity)
     }
     .controlSize(.large).buttonStyle(.borderedProminent)
+    .disabled(model.connecting)
     if model.claudeMessage == nil && model.extensionOutdated && !renderingForDocs {
       Label("Klarbefund was updated. If you connected Claude before, click Connect again so Claude gets the new "
         + "tools (version \(ClaudeConnect.extensionVersion)). Your health graph is not affected.",
@@ -126,7 +131,10 @@ struct ContentView: View {
         .buttonStyle(.link).font(.callout)
         .sheet(isPresented: $showCapabilities) { MCPCapabilitiesView() }
     }
-    if !renderingForDocs {
+    if renderingForDocs {
+      Label("Add the Klarbefund skill to Claude", systemImage: "square.and.arrow.down")
+        .font(.callout).foregroundStyle(Color.accentColor)
+    } else {
       Button { skillMessage = SkillExport.save() } label: {
         Label("Add the Klarbefund skill to Claude", systemImage: "square.and.arrow.down")
       }
