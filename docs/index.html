@@ -207,7 +207,74 @@ pre{font:17px/1.5 var(--mono);background:#0a0e14;border:1px solid var(--line);bo
   </div>
 </section>
 
-<!-- 10 try -->
+<!-- 10 research: why -->
+<section class="slide" data-title="For research: why">
+  <p class="kicker">For research</p>
+  <h2>The data stays. The analysis comes to it.</h2>
+  <div style="display:grid;grid-template-columns:1fr 90px 1fr;gap:20px;align-items:stretch;margin-top:26px">
+    <div class="card" style="padding:28px">
+      <h3>Primary use · this app</h3>
+      <div class="big" style="font-size:34px;font-weight:800;margin:4px 0 12px">My graph, not the cloud's</div>
+      <p style="font-size:21px;color:#c7cdd6;line-height:1.45;margin:0">One person, their own data, on their own iPhone and Mac. Claude reads it read-only, for their own doctor's visit.</p>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:center;font-size:54px;color:var(--accent)" aria-hidden="true">→</div>
+    <div class="card" style="padding:28px;border-color:#2b5d94">
+      <h3>Secondary use · research</h3>
+      <div class="big" style="font-size:34px;font-weight:800;margin:4px 0 12px">A Trusted Research Environment</div>
+      <p style="font-size:21px;color:#c7cdd6;line-height:1.45;margin:0">Many people's graphs, for a researcher. The rows never travel to them: the work happens inside a sealed workspace. Under the EHDS, that's the secure processing environment (Art. 73).</p>
+    </div>
+  </div>
+  <p style="font-size:22px;color:#c7cdd6;margin:34px 0 14px">How a TRE earns trust: the <b>Five Safes</b></p>
+  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:16px">
+    <div class="card" style="padding:18px 20px"><h3 style="font-size:19px">Safe projects</h3><p style="font-size:18px;color:#c7cdd6;margin:0;line-height:1.4">A permit for one purpose</p></div>
+    <div class="card" style="padding:18px 20px"><h3 style="font-size:19px">Safe people</h3><p style="font-size:18px;color:#c7cdd6;margin:0;line-height:1.4">Named in the permit, second factor</p></div>
+    <div class="card" style="padding:18px 20px"><h3 style="font-size:19px">Safe settings</h3><p style="font-size:18px;color:#c7cdd6;margin:0;line-height:1.4">Confidential container, attested, no internet</p></div>
+    <div class="card" style="padding:18px 20px"><h3 style="font-size:19px">Safe data</h3><p style="font-size:18px;color:#c7cdd6;margin:0;line-height:1.4">Pseudonymised, opt-outs removed</p></div>
+    <div class="card" style="padding:18px 20px"><h3 style="font-size:19px">Safe outputs</h3><p style="font-size:18px;color:#c7cdd6;margin:0;line-height:1.4">Only reviewed aggregates leave</p></div>
+  </div>
+</section>
+
+<!-- 11 research: how -->
+<section class="slide" data-title="For research: how">
+  <p class="kicker">For research</p>
+  <h2>Klarbefund's graph in a researcher's remote desktop</h2>
+  <svg viewBox="0 0 1420 330" style="width:100%;height:330px;margin-top:10px" role="img" aria-label="The person's Klarbefund shares data with the hub; the access body issues a permit; inside an attested workspace the researcher's remote desktop runs Relate, health_graph, the 3D view and the read-only MCP server; only results that pass the airlock leave.">
+    <defs><marker id="tra" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="#7d8796"/></marker></defs>
+    <rect x="0" y="95" width="220" height="140" rx="16" fill="#0d1117" stroke="#3d9bff" stroke-width="3"/>
+    <text x="110" y="140" text-anchor="middle" font-size="22" font-weight="750" fill="#fff">The person</text>
+    <text x="110" y="172" text-anchor="middle" font-size="17" fill="#aab1bc">Klarbefund on</text>
+    <text x="110" y="196" text-anchor="middle" font-size="17" fill="#aab1bc">iPhone and Mac</text>
+    <line x1="222" y1="165" x2="290" y2="165" stroke="#7d8796" stroke-width="2.5" marker-end="url(#tra)"/>
+    <text x="256" y="150" text-anchor="middle" font-size="14" fill="#9aa3af">shares</text>
+    <rect x="296" y="95" width="230" height="140" rx="16" fill="#0d1117" stroke="#1baf7a" stroke-width="3"/>
+    <text x="411" y="140" text-anchor="middle" font-size="22" font-weight="750" fill="#fff">Access body</text>
+    <text x="411" y="172" text-anchor="middle" font-size="17" fill="#aab1bc">permit: purpose,</text>
+    <text x="411" y="196" text-anchor="middle" font-size="17" fill="#aab1bc">people, datasets</text>
+    <line x1="528" y1="165" x2="596" y2="165" stroke="#7d8796" stroke-width="2.5" marker-end="url(#tra)"/>
+    <text x="562" y="150" text-anchor="middle" font-size="14" fill="#9aa3af">sealed</text>
+    <rect x="602" y="10" width="520" height="310" rx="20" fill="#0a1420" stroke="#f7b500" stroke-width="3" stroke-dasharray="10 7"/>
+    <text x="862" y="44" text-anchor="middle" font-size="19" font-weight="750" fill="#f7b500">Attested workspace · no internet</text>
+    <rect x="630" y="64" width="464" height="234" rx="14" fill="#0d1117" stroke="#2c3644" stroke-width="2"/>
+    <text x="862" y="98" text-anchor="middle" font-size="20" font-weight="750" fill="#fff">Researcher's remote desktop (Linux)</text>
+    <text x="656" y="140" font-size="18" fill="#c7cdd6">● Relate: one .rl per pseudonymised person</text>
+    <text x="656" y="174" font-size="18" fill="#c7cdd6">● health_graph: knowledge, scores, anamnesis</text>
+    <text x="656" y="208" font-size="18" fill="#c7cdd6">● the 3D view, served inside</text>
+    <text x="656" y="242" font-size="18" fill="#c7cdd6">● relate serve --mcp --read-only</text>
+    <text x="656" y="276" font-size="16" fill="#9aa4b2">same code as on the Mac</text>
+    <line x1="1124" y1="165" x2="1192" y2="165" stroke="#7d8796" stroke-width="2.5" marker-end="url(#tra)"/>
+    <text x="1158" y="150" text-anchor="middle" font-size="14" fill="#9aa3af">airlock</text>
+    <rect x="1198" y="95" width="222" height="140" rx="16" fill="#0d1117" stroke="#6250d6" stroke-width="3"/>
+    <text x="1309" y="140" text-anchor="middle" font-size="22" font-weight="750" fill="#fff">Researcher</text>
+    <text x="1309" y="172" text-anchor="middle" font-size="17" fill="#aab1bc">reviewed</text>
+    <text x="1309" y="196" text-anchor="middle" font-size="17" fill="#aab1bc">aggregates only</text>
+  </svg>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:22px">
+    <div class="card"><h3>Checked on Linux</h3><p style="font-size:20px;color:#c7cdd6;margin:0;line-height:1.45">Relate 1.0.1 for Linux in a container: all 67 tests pass, and the anamnesis plan, the 3D view and the read-only MCP server run, on the synthetic sample graph.</p></div>
+    <div class="card"><h3>Planned, not built</h3><p style="font-size:20px;color:#c7cdd6;margin:0;line-height:1.45">A workspace per permit (<a href="https://github.com/ma3u/MinimumViableHealthDataspacev2/issues/1132" style="color:#9ccaff">#1132</a>) and an airlock reviewed by the access body (<a href="https://github.com/ma3u/MinimumViableHealthDataspacev2/issues/1133" style="color:#9ccaff">#1133</a>). Claude only through a model endpoint the access body approves.</p></div>
+  </div>
+</section>
+
+<!-- 12 try -->
 <section class="slide" data-title="Try it">
   <div class="cols" style="grid-template-columns:1fr 360px">
     <div>

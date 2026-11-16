@@ -10,6 +10,7 @@ Our submission to the **[Relate by Neo4j Hackathon](https://relate.devpost.com/)
 | 🖥️ **Interactive presentation** | [ma3u.github.io/relate-hackathon-team](https://ma3u.github.io/relate-hackathon-team/) |
 | 🏆 **Devpost** | [MyHealthCoach on Devpost](https://devpost.com/software/myhealthcoach-my-local-health-graph-not-the-cloud-s) |
 | 📱💻 **iPhone and Mac apps (TestFlight)** | [testflight.apple.com/join/ssADSXX6](https://testflight.apple.com/join/ssADSXX6): one link for Klarbefund on iPhone and [Klarbefund for Mac](docs/MAC.md) (pair, seal, connect Claude with one click, no scripts). Both are in development and testing, so TestFlight only, not on the App Store |
+| 🔬 **For research** | [Klarbefund's graph in a Trusted Research Environment](#for-research-klarbefund-in-a-trusted-research-environment): why the analysis goes to the data, and how |
 | 🧪 **Sample graph** | [`examples/health-graph/health.rl`](examples/health-graph/health.rl), synthetic, no real person |
 
 [![The interactive presentation: MyHealthCoach, my local health graph, not the cloud's](docs/img/presentation-cover.png)](https://ma3u.github.io/relate-hackathon-team/)
@@ -66,6 +67,64 @@ No iPhone? The sample graph above runs anywhere Relate runs, and Klarbefund has 
 
 
 **Claude skill.** The personal anamnesis is also a Claude skill, the method without any data: [`plugins/klarbefund`](plugins/klarbefund). In Claude Code: `/plugin install klarbefund --marketplace ma3u/relate-hackathon-team`. In Claude Desktop: Klarbefund for Mac saves it as a zip (step 3, *Add the Klarbefund skill to Claude*) for Customize → Skills → Upload. See [docs/MCP.md](docs/MCP.md#the-klarbefund-skill-and-assessments).
+
+## For research: Klarbefund in a Trusted Research Environment
+
+**Yes, Klarbefund's graph can run in a researcher's remote desktop.** The part that runs there is the graph, not the apps: the Relate store, the `health_graph` package (import, knowledge layer, risk scores, anamnesis rules), the 3D view and the read-only MCP server. The iPhone and Mac apps stay with the person they belong to.
+
+### Why
+
+MyHealthCoach is **primary use**: one person, their own data, on their own devices. Research on many people's graphs is **secondary use**, and there the rule turns around. The data must not travel to the researcher, so the researcher's analysis travels to the data. Under the European Health Data Space this happens in a **secure processing environment** ([Regulation (EU) 2025/327, Art. 73](https://eur-lex.europa.eu/eli/reg/2025/327/oj/eng#art_73)), which research infrastructure calls a **Trusted Research Environment** (TRE). For an operating example, see QCIF's [KeyPoint](https://www.qcif.edu.au/products/keypoint) in Australia, ISO/IEC 27001 certified since February 2026. KeyPoint gives each project a ring-fenced "Vault" with remote desktops, and a data steward approves every file that goes in or out.
+
+The idea is the same as on the iPhone, one level up: on the phone, *my graph, not the cloud's*; in the TRE, *the data stays where it is, the analysis comes to it*.
+
+### How
+
+A TRE is usually judged by the **Five Safes**. Here is how each one is met, in this repo and in the EHDS reference hub ([MinimumViableHealthDataspacev2](https://github.com/ma3u/MinimumViableHealthDataspacev2)) that Klarbefund came from:
+
+| Safe | What it means | How | Status |
+|---|---|---|---|
+| **Safe projects** | Only an approved purpose | The health data access body issues a permit for one purpose and named datasets | Built in the hub |
+| **Safe people** | Only named, verified researchers | The permit names each person, who signs in with a second factor | Planned ([#1030](https://github.com/ma3u/MinimumViableHealthDataspacev2/issues/1030)) |
+| **Safe settings** | A workspace nobody else can look into, not even the operator | A confidential container (AMD SEV-SNP). The data key is released only to hardware that proves it runs exactly the tools the permit names. No internet; one workspace per permit | Two attested workspaces built; per-permit workspace with a remote desktop planned ([#1132](https://github.com/ma3u/MinimumViableHealthDataspacev2/issues/1132)) |
+| **Safe data** | Only what the purpose needs, pseudonymised | The permit's datasets only, research pseudonyms, persons who opted out removed. Relate's one file per person fits this: each pseudonymised person is one `.rl` file | Partly built |
+| **Safe outputs** | Only results that can't identify anyone | Groups under five suppressed automatically (built). An airlock where the access body reviews every file before it leaves, with each file's SHA-256 on the audit chain | Airlock planned ([#1133](https://github.com/ma3u/MinimumViableHealthDataspacev2/issues/1133)) |
+
+**The path:**
+1. The person shares their Klarbefund data with the hub, or doesn't opt out of research use (Art. 71).
+2. A researcher applies, and the access body issues a permit.
+3. The permit's extract is pseudonymised and sealed, and opens only inside the attested workspace.
+4. In the researcher's remote desktop, the same code as on the Mac builds one Relate graph per person and adds the knowledge layer: reference ranges, risks, risk scores, the study evidence. The anamnesis rules then answer cohort questions, such as how many people have an LDL above the guideline target and no lipid-lowering medication.
+5. Results leave only through the airlock.
+
+**What runs where**
+
+| Component | Person's iPhone / Mac | Researcher's remote desktop (Linux, in the TRE) |
+|---|---|---|
+| Klarbefund on iPhone, Klarbefund for Mac | ✅ | – (iOS and macOS apps, and they hold one person's own data) |
+| Relate store and `relate` CLI | ✅ | ✅ Relate ships Linux builds (CLI, Python wheels, FFI) |
+| `health_graph`: import, knowledge, scores, anamnesis plan | ✅ | ✅ |
+| 3D view (`scripts/graph3d.py`) | ✅ | ✅ served inside the workspace |
+| `relate serve --mcp --read-only` | ✅ | ✅ |
+| Claude | Claude Desktop on the Mac | Only with a model endpoint the access body approves, since a TRE has no internet. Everything sent to the model counts as processing under the permit. Not decided |
+
+**Checked on Linux (2026-11-16).** In a `python:3.12-slim` container (Linux, ARM64) with Relate 1.0.1's Linux binary and the `relate-db` wheel, using the synthetic sample graph:
+- All 67 tests pass.
+- The anamnesis plan runs.
+- The 3D view builds (582 nodes, 974 relationships).
+- The read-only MCP server answers.
+
+```bash
+docker run --rm -it -v "$PWD":/w:ro -w /w python:3.12-slim bash
+pip install relate-db segno pytest   # then put relate-linux-arm64 (or -amd64) from github.com/relatedb/relate/releases on the PATH
+python -m pytest -q tests
+python -m health_graph anamnesis --plan --db examples/health-graph/health.rl
+```
+
+**Open:**
+- Per-permit workspaces and the airlock are plans, not code ([#716](https://github.com/ma3u/MinimumViableHealthDataspacev2/issues/716)).
+- `health_graph`'s command line expects one person per store, so a cohort runner over many `.rl` files is still to write.
+- Today the hub leaves Klarbefund data out of research extracts; sharing it for research needs the person's decision in the app first.
 
 ## Built with, and what was built during the hackathon
 
