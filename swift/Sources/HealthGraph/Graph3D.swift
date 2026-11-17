@@ -267,7 +267,8 @@ public enum Graph3D {
 }
 
 extension HealthStore {
-  /// The page data of the 3D view: the graph, the person and the anamnesis protocols.
+  /// The page data of the 3D view: the graph, the person, the anamnesis protocols and the anamnesis plan
+  /// (findings and the tests to ask the doctor for).
   public func graph3DData(today: String) throws -> JSONObject {
     let nodes = try objects("MATCH (n) RETURN id(n) AS id, labels(n)[0] AS label, properties(n) AS p")
     let links = try objects("""
@@ -284,6 +285,7 @@ extension HealthStore {
     data["region"] = "moderate"
     if data["sex"] is NSNull { data["sex"] = gender ?? NSNull() }
     data["protocols"] = try protocolPlan(today: today, birthYear: birth, sex: gender)
+    data["anamnesis"] = try anamnesisPlan(today: today)
     data["today"] = today
     return data
   }

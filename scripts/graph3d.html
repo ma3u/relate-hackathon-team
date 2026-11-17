@@ -34,6 +34,11 @@
   #detail .rel { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin: 10px 0 2px; }
   .close { float: right; background: none; border: 0; color: var(--muted); font-size: 18px; cursor: pointer; }
   .hint { color: var(--muted); font-size: 12px; margin-top: 12px; }
+  .finding { border-left: 3px solid var(--line); padding: 1px 0 1px 9px; margin: 8px 0 4px; font-size: 12px; line-height: 1.45; }
+  .finding ul { margin: 3px 0 0; padding-left: 16px; }
+  .finding li { margin: 2px 0; }
+  .finding details { color: var(--muted); margin-top: 2px; }
+  .finding summary { cursor: pointer; }
   .callout { border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 8px; padding: 7px 10px; margin: 8px 0 4px; font-size: 12px; line-height: 1.45; }
   .steps { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 12px; }
   .steps button { text-align: left; background: #1b2029; color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; font: inherit; font-size: 12px; cursor: pointer; }
@@ -812,6 +817,42 @@ const BEYOND_LDL = ["eas-2017-ldl", "esc-eas-2025-lipids", "sniderman-2019-apob"
 // The answers live in this page; with the vault's server (scripts/graph3d_serve.py)
 // "Save to my graph" stores one protocol at a time, coded with SNOMED CT.
 const PLAN = DATA.protocols || { protocols: [], snomed: {}, treatedLipids: [] };
+// The anamnesis plan (health_graph/anamnesis.py, Anamnesis.swift): findings in the newest values, the tests
+// to ask the doctor for (each only while the graph has no value for it) and the questions still open.
+const ANAM = DATA.anamnesis || { findings: [], questions: [], rechecks: [] };
+const TRIGGER = { high: "above the guideline", low: "below the guideline", at_limit: "at the limit",
+  lab_high: "above the lab's range" };
+function findingText(f) {
+  const n = v => typeof v === "number" ? (+v.toPrecision(3)).toString() : String(v);
+  const u = x => String(x || "").replace("mm[Hg]", "mmHg").replace("{1.73_m2}", "1.73 m²");
+  if (f.values && f.values.length) return f.values.map(v => {
+    const c = codeNode.get(v.code), e = c && explainedBy(c, v.date);  // creatine and creatinine, exercise and NT-proBNP
+    return `${v.name} ${n(v.value)} ${u(v.unit)} (${ago(v.date)}, ${TRIGGER[v.trigger] || v.trigger}` +
+      (e ? `; explained by your answer: ${e.n}` : "") + `)`;
+  }).join("; ");
+  const d = f.detail || {};
+  if (d.limit != null) return `${n(d.value)} ${u(d.unit)} at peak exercise (${ago(d.date)}); from ${d.limit} counts as exaggerated`;
+  if (d.lowWeeks != null) return `${d.lowWeeks} of ${d.weeks} weeks below 95 %, lowest ${n(d.lowest)} %`;
+  if (d.missing) return "An answer only you can give";
+  if (d.value != null) return `FIB-4 ${n(d.value)} (${ago(d.date)})`;
+  return "";
+}
+function doctorSection() {
+  if (!ANAM.findings.length) return "";
+  let html = `<div class="rel">For your doctor: findings and tests</div><div class="hint" style="margin-top:0">` +
+    `What the anamnesis finds in your newest values, and the tests to ask about. A test leaves this list once its value is in your graph.</div>`;
+  ANAM.findings.forEach(f => {
+    html += `<div class="finding"><b>${esc(f.title)}</b><div class="hint" style="margin-top:1px">${esc(findingText(f))}</div>`;
+    if (f.tests && f.tests.length) html += `<ul>${f.tests.map(t => `<li>${esc(t)}</li>`).join("")}</ul>`;
+    if (f.why) html += `<details><summary>Why</summary>${esc(f.why)}</details>`;
+    html += `</div>`;
+  });
+  const open = (ANAM.questions || []).length;
+  html += `<div class="hint">` + (open
+    ? `${open} anamnesis question${open > 1 ? "s" : ""} still open. In Claude, with Klarbefund connected: “Run the anamnesis for my family doctor”.`
+    : `Every question these findings raise is answered.`) + `</div>`;
+  return html;
+}
 // {url, token}: injected by the vault's server; {native: true}: inside Klarbefund for Mac, which stores
 // the answers itself (window.webkit.messageHandlers.klarbefund). Opened as a file: answers stay in the page.
 const SAVE = window.GRAPH3D_SAVE || null;
@@ -1112,6 +1153,7 @@ function showOverview() {
     st.scores.forEach(x => html += scoreRow(x));
     html += `</div>`;
   });
+  html += doctorSection();
   if (RANKED.some(n => n.rid === "cardiovascular" && n.st.rows.length)) {
     html += `<div class="rel">Beyond LDL: what newer studies add</div><div class="hint" style="margin-top:0">` +
       `LDL cholesterol causes atherosclerosis (EAS consensus 2017) and stays the first target in the ESC/EAS 2025 update. ` +

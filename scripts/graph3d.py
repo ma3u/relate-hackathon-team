@@ -256,7 +256,7 @@ def seed_knowledge(db):
     engine in health_graph/risk.py, once for a non-smoker and once for a smoker: the page asks."""
     try:
         sys.path.insert(0, str(ROOT))
-        from health_graph import knowledge, protocols, risk, store
+        from health_graph import anamnesis, knowledge, protocols, risk, store
     except ImportError as e:  # relate-db not installed for this Python
         print(f"graph3d: knowledge layer left as stored ({e}); run with the repo's .venv to refresh it",
               file=sys.stderr)
@@ -271,6 +271,7 @@ def seed_knowledge(db):
         age = risk.TODAY.year - birth if birth else None
         return {"birthYear": birth, "age": age, "gender": sex, "region": "moderate",
                 "protocols": protocols.plan(conn, today=date.today().isoformat()),
+                "anamnesis": anamnesis.plan(conn, today=date.today().isoformat()),
                 "scores": {k: [dataclasses.asdict(x) for x in risk.compute_scores(conn, age, sex, smoker, "moderate")]
                            for k, smoker in (("nonsmoker", False), ("smoker", True))}}
     finally:

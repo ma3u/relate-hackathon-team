@@ -158,3 +158,21 @@ def test_a_suggested_test_leaves_the_plan_once_its_value_is_in_the_graph(db):
     kidney = anamnesis.RULE["kidney"]["ifMissing"]
     assert set(kidney) == {"uacr", "cystatin"} and anamnesis.GROUP["cystatin"]["codes"] == ["33863-2"]
     assert {"1754-1", "9318-7"} <= set(anamnesis.GROUP["uacr"]["codes"])  # a pair or the lab's ratio
+
+
+def test_the_3d_view_gets_the_findings_and_the_doctors_tests(tmp_path):
+    """scripts/graph3d.py puts the anamnesis plan into the page (Graph3D.swift does the same, see
+    tests/graph3d_parity.py); the overview lists each finding with its tests."""
+    import sys
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import graph3d
+    path = tmp_path / "health.rl"
+    conn = store.connect(path)
+    store.init_schema(conn)
+    for b in BUNDLES:
+        store.import_report(conn, fhir.parse_bundle(fhir.load_bundle(b)))
+    conn.close()
+    plan = graph3d.seed_knowledge(path)["anamnesis"]
+    lipids = next(f for f in plan["findings"] if f["id"] == "lipids")
+    assert any("calcium score" in t for t in lipids["tests"])
+    assert "doctorSection()" in (ROOT / "scripts" / "graph3d.html").read_text()

@@ -513,8 +513,8 @@ def plan(conn, today: str | None = None) -> dict:
                 detail = {"missing": rule["answer"]}
         if not hits and detail is None:
             continue
-        missing = [{"group": gid, "test": text} for gid, text in rule.get("ifMissing", {}).items()
-                   if gid not in values]
+        missing = [{"group": gid, "test": text} for gid, text in sorted(rule.get("ifMissing", {}).items())
+                   if gid not in values]  # sorted by group, as the Swift finder lists them
         findings.append({"id": rule["id"], "title": rule["title"], "why": rule["why"], "risks": rule["risks"],
                          "values": [h for h in hits if "group" in h], "detail": detail,
                          "codes": sorted({h["code"] for h in hits}),

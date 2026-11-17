@@ -14,8 +14,18 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 import graph3d  # noqa: E402
 
+TODAY = "2026-11-15"  # the Swift writer's date
+
+
+def anamnesis_digest(plan: dict) -> dict:
+    """What the page shows of the anamnesis plan: findings, their values and tests, the open questions."""
+    return {"findings": [(f["id"], [(v["name"], v["value"], v["trigger"]) for v in f.get("values") or []],
+                          list(f.get("tests") or [])) for f in plan.get("findings", [])],
+            "questions": [q["key"] for q in plan.get("questions", [])]}
+
 
 def main(db: str) -> int:
+    db = str(Path(db).resolve())  # Swift runs from swift/, so a relative path would point elsewhere
     relate = os.environ.get("RELATE_BIN") or "relate"
     nodes = graph3d.query(relate, db, "MATCH (n) RETURN id(n) AS id, labels(n)[0] AS label, properties(n) AS p")
     links = graph3d.query(relate, db, "MATCH (a)-[r]->(b) RETURN id(a) AS s, id(b) AS t, type(r) AS type, "
@@ -39,10 +49,23 @@ def main(db: str) -> int:
     lb = sorted((l["source"], l["target"], l["t"]) for l in sw["links"])
     print(f"nodes: python {len(a)}, swift {len(b)}; links: python {len(la)}, swift {len(lb)}, same {la == lb}; "
           f"sex: {py['sex']} / {sw['sex']}")
+    sys.path.insert(0, str(ROOT))
+    from health_graph import anamnesis, store
+    conn = store.connect(db, read_only=True)
+    try:
+        plan_py = anamnesis_digest(anamnesis.plan(conn, today=TODAY))
+    finally:
+        conn.close()
+    plan_sw = anamnesis_digest(sw.get("anamnesis") or {})
+    same_plan = json.loads(json.dumps(plan_py)) == json.loads(json.dumps(plan_sw))
+    print(f"anamnesis: python {len(plan_py['findings'])} findings, swift {len(plan_sw['findings'])}, same {same_plan}")
+    if not same_plan:
+        print("   python:", plan_py)
+        print("   swift: ", plan_sw)
     print(f"field differences: {len(diffs)}")
     for d in diffs[:15]:
         print("  ", d[0], d[1], "| python:", str(d[2])[:70], "| swift:", str(d[3])[:70])
-    return 1 if diffs or la != lb or len(a) != len(b) else 0
+    return 1 if diffs or la != lb or len(a) != len(b) or not same_plan else 0
 
 
 if __name__ == "__main__":
