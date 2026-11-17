@@ -101,7 +101,7 @@ def responses(rows: list[dict]) -> list[Response]:
 class Plan:
     to_vault: list[Response]
     to_app: list[Response]
-    differ: list[str]             # ids on both sides whose answers differ: reported, never moved
+    differ: list[str]             # ids on both sides whose answers differ and still matter: reported, never moved
 
 
 def plan(app: list[Response], vault: list[Response]) -> Plan:
@@ -109,20 +109,46 @@ def plan(app: list[Response], vault: list[Response]) -> Plan:
 
     One id on both sides is one response, even if an answer was edited on one side since: it is
     reported, not copied, because a copy would be a second, newer response with the same answers.
+    Once a later answer settles it (both sides' newest answer to that question agree), it is not.
     """
     app_ids, vault_ids = {r.id: r for r in app}, {r.id: r for r in vault}
+    newest_app, newest_vault = _newest(app), _newest(vault)
     differ = sorted(i for i in app_ids.keys() & vault_ids.keys()
-                    if app_ids[i].fingerprint() != vault_ids[i].fingerprint())
+                    if any(newest_app.get((app_ids[i].questionnaire, k)) != newest_vault.get((app_ids[i].questionnaire, k))
+                           for k in _differing(app_ids[i], vault_ids[i])))
     in_app, in_vault = {r.fingerprint() for r in app}, {r.fingerprint() for r in vault}
     to_vault = [r for r in app if r.id not in vault_ids and r.fingerprint() not in in_vault]
     to_app = [_newer_only(r, app) for r in vault if r.id not in app_ids and r.fingerprint() not in in_app]
     return Plan(to_vault, [r for r in to_app if r.own_answers()], differ)
 
 
+def _when(authored: str) -> str:
+    """One spelling for UTC: the app writes ...Z, Python ...+00:00."""
+    return authored.replace("+00:00", "Z")
+
+
+def _answer_set(r: Response) -> dict[str, tuple]:
+    return {_key(a): (tuple(sorted(a.get("codes") or [])), (a.get("text") or "").strip()) for a in r.own_answers()}
+
+
+def _differing(a: Response, b: Response) -> set[str]:
+    x, y = _answer_set(a), _answer_set(b)
+    return {k for k in x.keys() | y.keys() if x.get(k) != y.get(k)}
+
+
+def _newest(side: list[Response]) -> dict[tuple, tuple]:
+    """(questionnaire, question key) -> the newest answer on this side."""
+    out: dict[tuple, tuple] = {}
+    for r in sorted(side, key=lambda r: _when(r.authored)):
+        for k, v in _answer_set(r).items():
+            out[(r.questionnaire, k)] = v
+    return out
+
+
 def _newer_only(r: Response, app: list[Response]) -> Response:
     """The app stamps what it stores with the time it stores it, so an answer it holds from later than
     r would be outranked by r's older one. Such answers stay out of what is sent."""
-    later = {_key(a) for x in app if x.questionnaire == r.questionnaire and x.authored > r.authored
+    later = {_key(a) for x in app if x.questionnaire == r.questionnaire and _when(x.authored) > _when(r.authored)
              for a in x.own_answers()}
     return Response(r.id, r.authored, r.source, r.questionnaire, [a for a in r.answers if _key(a) not in later])
 

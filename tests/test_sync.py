@@ -98,3 +98,19 @@ def test_one_response_edited_on_one_side_is_reported_not_copied(stores):
     anamnesis.store_response(vault, pid, {"liver-imaging": {"codes": [], "text": "short, and more"}}, authored=at)
     todo = sync.plan(read(app), read(vault))
     assert not todo.to_vault and not todo.to_app and len(todo.differ) == 1
+
+
+def test_a_later_answer_on_both_sides_settles_an_edit(stores):
+    app, vault, pid = stores
+    at = "2026-11-14T14:09:51+00:00"
+    anamnesis.store_response(app, pid, {"home-bp": "no", "liver-imaging": {"codes": [], "text": "short"}}, authored=at)
+    anamnesis.store_response(vault, pid, {"home-bp": "no", "liver-imaging": {"codes": [], "text": "short, and more"}},
+                             authored=at)
+    # the vault's text handed to the app, which stamps it with its own time (and spells UTC as Z)
+    anamnesis.store_response(app, pid, {"liver-imaging": {"codes": [], "text": "short, and more"}},
+                             source="claude", authored="2026-11-17T20:06:44Z")
+    todo = sync.plan(read(app), read(vault))
+    assert [r.authored for r in todo.to_vault] == ["2026-11-17T20:06:44Z"] and not todo.differ
+    sync.store_in_vault(vault, pid, todo.to_vault)
+    again = sync.plan(read(app), read(vault))
+    assert not again.to_vault and not again.to_app and not again.differ
