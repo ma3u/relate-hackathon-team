@@ -68,6 +68,8 @@ No iPhone? The sample graph above runs anywhere Relate runs, and Klarbefund has 
 
 **Claude skill.** The personal anamnesis is also a Claude skill, the method without any data: [`plugins/klarbefund`](plugins/klarbefund). In Claude Code: `/plugin install klarbefund --marketplace ma3u/relate-hackathon-team`. In Claude Desktop: Klarbefund for Mac saves it as a zip (step 3, *Add the Klarbefund skill to Claude*) for Customize → Skills → Upload. See [docs/MCP.md](docs/MCP.md#the-klarbefund-skill-and-assessments).
 
+**Answers in both places.** Claude Desktop stores anamnesis answers in Klarbefund for Mac; Claude Code and the scripts store them in the vault. `scripts/health_vault.sh sync` (or `python -m health_graph sync --db …`) brings each side what the other has, through the app's own MCP helper, the one program allowed to read the app's graph. It only adds: a response keeps its time and source, a second run moves nothing, and a response edited on one side since is reported, not copied. The anamnesis plan also lists the tests to ask the doctor for (a coronary calcium score while a lipid decision is open, cystatin C when creatinine may mislead, Lp(a) for relatives), each only until its value is in the graph.
+
 ## For research: Klarbefund in a Trusted Research Environment
 
 **Yes, Klarbefund's graph can run in a researcher's remote desktop.** The part that runs there is the graph, not the apps: the Relate store, the `health_graph` package (import, knowledge layer, risk scores, anamnesis rules), the 3D view and the read-only MCP server. The iPhone and Mac apps stay with the person they belong to.

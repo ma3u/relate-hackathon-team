@@ -11,6 +11,7 @@
   python -m health_graph anamnesis --questions       # every question and its answer codes
   python -m health_graph protocols --db health.rl --plan      # LE8, FINDRISC, AUDIT-C, ... prefilled from the data
   python -m health_graph protocols --db health.rl --protocol findrisc --answers a.json   # store one protocol
+  python -m health_graph sync --db health.rl       # anamnesis answers both ways with Klarbefund for Mac
 """
 import argparse
 import sys
@@ -81,8 +82,42 @@ def main(argv=None) -> int:
     pr.add_argument("--answers", help='JSON {linkId: code | [codes] | {"codes", "text", "observation"}}, - = stdin')
     pr.add_argument("--seed", action="store_true", help="write the protocols, items and SNOMED codes into the graph")
 
+    sy = sub.add_parser("sync", help="anamnesis answers both ways between the vault and Klarbefund for Mac")
+    sy.add_argument("--db", required=True, help="the vault's store")
+    sy.add_argument("--helper", help="Klarbefund for Mac's MCP helper (default: in /Applications, or $KLARBEFUND_MCP)")
+    sy.add_argument("--dry-run", action="store_true", help="say what would move, move nothing")
+    sy.add_argument("--pull-only", action="store_true", help="only from the app into the vault")
+
     sub.add_parser("list", help="list the named queries")
     args = ap.parse_args(argv)
+
+    if args.cmd == "sync":
+        from . import sync
+        helper = sync.AppHelper(args.helper or sync.HELPER)
+        try:
+            in_app = helper.responses()
+            conn = store.connect(args.db, read_only=args.dry_run)
+            in_vault = sync.responses([dict(r) for r in conn.execute(sync.RESPONSES)])
+            todo = sync.plan(in_app, in_vault)
+            to_vault, to_app = todo.to_vault, [] if args.pull_only else todo.to_app
+            print(f"app {len(in_app)} responses, vault {len(in_vault)}: "
+                  f"{len(to_vault)} to the vault, {len(to_app)} to the app")
+            for rid in todo.differ:
+                print(f"differs   {rid.split('|')[-2]:22} {rid.split('|')[-1]}  same response, an answer differs; left as is")
+            if args.dry_run:
+                for r in to_vault:
+                    print(f"would     to vault {r.questionnaire:22} {r.authored}  {len(r.own_answers())} answers")
+                for r in to_app:
+                    print(f"would     to app   {r.questionnaire:22} {r.authored}  {len(r.own_answers())} answers")
+            else:
+                for line in sync.store_in_vault(conn, store.single_patient(conn), to_vault):
+                    print(line)
+                for line in sync.send_to_app(helper, to_app):
+                    print(line)
+            conn.close()
+        finally:
+            helper.close()
+        return 0
 
     if args.cmd == "list":
         for name, (desc, _) in sorted(QUERIES.items()):
@@ -168,6 +203,8 @@ def main(argv=None) -> int:
                 vals = "; ".join(f"{v['name']} {v['value']} {v['unit']} ({v['date']}, {v['trigger']})"
                                  for v in f["values"]) or json.dumps(f["detail"], ensure_ascii=False)
                 print(f"finding  {f['id']:16} {vals}")
+                for test in f["tests"]:
+                    print(f"test     {f['id']:16} {test}")
             for k in plan["known"]:
                 print(f"known    {k['fact']:16} {k['detail']}")
             for r in plan["rechecks"]:

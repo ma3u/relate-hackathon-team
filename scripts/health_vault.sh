@@ -17,6 +17,7 @@
 #   scripts/health_vault.sh usb       # mount, then fetch from Klarbefund over the USB cable (no Wi-Fi)
 #   scripts/health_vault.sh mcp       # mount, then serve the graph read-only over MCP (for Claude)
 #   scripts/health_vault.sh graph3d   # mount, build the 3D view into the vault, serve it on 127.0.0.1
+#   scripts/health_vault.sh sync      # mount, then swap anamnesis answers with Klarbefund for Mac (both ways)
 set -euo pipefail
 
 VAULT="${RELATE_HEALTH_VAULT:-$HOME/RelateHealthVault.sparsebundle}"
@@ -119,6 +120,12 @@ case "${1:-status}" in
     fi
     exec "$bin" "$1" \
       --db "$MOUNT/health.rl" --require-mount "${@:2}"
+    ;;
+  sync)
+    do_mount >/dev/null 2>&1 || do_mount
+    # Answers Claude stored in the app reach the vault, the vault's reach the app (through its helper,
+    # which may read the app's group container; a shell may not). Only adds; see health_graph/sync.py.
+    cd "$REPO" && exec .venv/bin/python -m health_graph sync --db "$MOUNT/health.rl" "${@:2}"
     ;;
   mcp)
     do_mount >/dev/null 2>&1 || do_mount

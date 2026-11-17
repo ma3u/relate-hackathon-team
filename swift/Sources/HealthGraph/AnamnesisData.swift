@@ -120,10 +120,27 @@ enum AnamnesisData {
     {
      "codes": [
       "9318-7",
-      "14959-1"
+      "14959-1",
+      "1754-1",
+      "14957-5"
      ],
      "id": "uacr",
      "name": "Urine albumin/creatinine"
+    },
+    {
+     "codes": [
+      "33863-2"
+     ],
+     "id": "cystatin",
+     "name": "Cystatin C"
+    },
+    {
+     "codes": [
+      "79087-3",
+      "36934-8"
+     ],
+     "id": "cac",
+     "name": "Coronary calcium score"
     },
     {
      "codes": [
@@ -1488,6 +1505,7 @@ enum AnamnesisData {
      "id": "lipids",
      "ifMissing": {
       "apob": "ApoB, the better single measure when triglycerides are high (ESC/EAS 2019)",
+      "cac": "A coronary calcium score (CT, no contrast), if the decision about lipid-lowering treatment is still open: it can move the risk up or down (ESC 2021 prevention, class IIb)",
       "lpa": "Lp(a), once in every adult's life (ESC/EAS 2025)"
      },
      "questions": [
@@ -1517,6 +1535,9 @@ enum AnamnesisData {
      ],
      "risks": [
       "cardiovascular"
+     ],
+     "tests": [
+      "Lp(a) for parents, siblings and children: it is inherited, one measurement each is enough (EAS consensus 2022)"
      ],
      "title": "Lp(a) raised or above the lab's limit",
      "when": [
@@ -1638,6 +1659,7 @@ enum AnamnesisData {
      ],
      "id": "kidney",
      "ifMissing": {
+      "cystatin": "Cystatin C, for an eGFR from creatinine and cystatin C together: creatine, muscle and a high-protein diet raise creatinine but not cystatin C (KDIGO 2024)",
       "uacr": "Urine albumin-to-creatinine ratio: KDIGO stages kidney disease by eGFR and albumin"
      },
      "questions": [
@@ -1647,9 +1669,6 @@ enum AnamnesisData {
      ],
      "risks": [
       "kidney"
-     ],
-     "tests": [
-      "Cystatin C, when creatinine may mislead (KDIGO 2024)"
      ],
      "title": "Creatinine above the guideline or eGFR below 60",
      "when": [

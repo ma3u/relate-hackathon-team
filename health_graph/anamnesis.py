@@ -64,7 +64,10 @@ GROUPS = [
     {"id": "ggt", "name": "GGT", "codes": ["2324-2"]},
     {"id": "creatinine", "name": "Creatinine", "codes": ["2160-0"]},
     {"id": "egfr", "name": "eGFR (lab)", "codes": ["62238-1", "98979-8", "33914-3", "48642-3"]},
-    {"id": "uacr", "name": "Urine albumin/creatinine", "codes": ["9318-7", "14959-1"]},
+    # the lab's ratio, or urine albumin, which risk.py pairs with urine creatinine from the same day
+    {"id": "uacr", "name": "Urine albumin/creatinine", "codes": ["9318-7", "14959-1", "1754-1", "14957-5"]},
+    {"id": "cystatin", "name": "Cystatin C", "codes": ["33863-2"]},
+    {"id": "cac", "name": "Coronary calcium score", "codes": ["79087-3", "36934-8"]},
     {"id": "crp", "name": "hs-CRP", "codes": ["30522-7"]},
     {"id": "ferritin", "name": "Ferritin", "codes": ["2276-4"]},
     {"id": "tsh", "name": "TSH", "codes": ["3016-3"]},
@@ -218,12 +221,16 @@ RULES = [
             "depends on the whole risk (ESC/EAS 2019 and the 2025 focused update).",
      "questions": ["lipid-medication", "diet-fat", "family-lipids", "family-cvd"],
      "ifMissing": {"apob": "ApoB, the better single measure when triglycerides are high (ESC/EAS 2019)",
-                   "lpa": "Lp(a), once in every adult's life (ESC/EAS 2025)"}},
+                   "lpa": "Lp(a), once in every adult's life (ESC/EAS 2025)",
+                   "cac": "A coronary calcium score (CT, no contrast), if the decision about lipid-lowering "
+                          "treatment is still open: it can move the risk up or down (ESC 2021 prevention, class IIb)"}},
     {"id": "lpa", "title": "Lp(a) raised or above the lab's limit",
      "groups": ["lpa"], "when": ["high", "at_limit", "lab_high"], "risks": ["cardiovascular"],
      "why": "Lp(a) is mostly inherited and changes little over life; raised Lp(a) adds to the risk from "
             "LDL, and close relatives should be tested (ESC/EAS 2025; EAS consensus 2022).",
-     "questions": ["family-cvd", "family-lipids", "relatives-lpa"]},
+     "questions": ["family-cvd", "family-lipids", "relatives-lpa"],
+     "tests": ["Lp(a) for parents, siblings and children: it is inherited, one measurement each is enough "
+               "(EAS consensus 2022)"]},
     {"id": "triglycerides", "title": "Triglycerides above the guideline",
      "groups": ["tg"], "when": ["high", "at_limit"], "risks": ["cardiovascular", "diabetes", "liver"],
      "why": "Triglycerides rise after a meal, with alcohol and sugar, and with insulin resistance.",
@@ -252,8 +259,9 @@ RULES = [
      "why": "Creatinine also rises with muscle mass, creatine, a high-protein diet and hard exercise "
             "before the sample; CKD needs a finding that lasts three months (KDIGO 2024).",
      "questions": ["painkillers", "creatine-protein", "exercise-before-sample"],
-     "tests": ["Cystatin C, when creatinine may mislead (KDIGO 2024)"],
-     "ifMissing": {"uacr": "Urine albumin-to-creatinine ratio: KDIGO stages kidney disease by eGFR and albumin"}},
+     "ifMissing": {"uacr": "Urine albumin-to-creatinine ratio: KDIGO stages kidney disease by eGFR and albumin",
+                   "cystatin": "Cystatin C, for an eGFR from creatinine and cystatin C together: creatine, muscle "
+                               "and a high-protein diet raise creatinine but not cystatin C (KDIGO 2024)"}},
     {"id": "vitamin_d", "title": "Vitamin D below the range", "groups": ["vitd"], "when": ["low"],
      "risks": ["bone"],
      "why": "The 30 ng/mL threshold is the Endocrine Society's 2011 range; its 2024 guideline sets no target.",

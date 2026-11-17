@@ -143,3 +143,18 @@ def test_an_answer_that_explains_a_value_is_marked_and_noted(db):
                                           unit: 'mg/dL'})-[:CODED_BY]->(lc)""")
     egfr = next(s for s in risk.compute_scores(conn, 55, "male", False, "moderate") if s.id == "egfr")
     assert "5 to 10 g a day" in egfr.note and "cystatin C" in egfr.note
+
+
+def test_a_suggested_test_leaves_the_plan_once_its_value_is_in_the_graph(db):
+    """Tests for the doctor (calcium score, cystatin C, uACR) are asked for only while the graph has no value."""
+    conn, _, _ = db
+    lipids = next(f for f in anamnesis.plan(conn, today=TODAY)["findings"] if f["id"] == "lipids")
+    assert any("calcium score" in t for t in lipids["tests"])
+    conn.execute("""MATCH (p:Patient) MERGE (lc:LoincCode {code: '79087-3'})
+                    CREATE (p)-[:HAS_OBSERVATION]->(:Observation {resourceId: 't-cac', effectiveDate: '2026-10-01',
+                            valueQuantity: 0, unit: '{Agatston}'})-[:CODED_BY]->(lc)""")
+    lipids = next(f for f in anamnesis.plan(conn, today=TODAY)["findings"] if f["id"] == "lipids")
+    assert not any("calcium score" in t for t in lipids["tests"])
+    kidney = anamnesis.RULE["kidney"]["ifMissing"]
+    assert set(kidney) == {"uacr", "cystatin"} and anamnesis.GROUP["cystatin"]["codes"] == ["33863-2"]
+    assert {"1754-1", "9318-7"} <= set(anamnesis.GROUP["uacr"]["codes"])  # a pair or the lab's ratio
