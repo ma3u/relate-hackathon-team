@@ -4,7 +4,7 @@ Klarbefund for Mac is the no-scripts way to keep your health graph on your Mac a
 
 > **Status, Nov 16, 2026:** Mac build 9 is in TestFlight. It opens your graph in 3D inside the app (*Open 3D view*), asks the validated anamnesis protocols (Life's Essential 8, FINDRISC, AUDIT-C, MEDAS-14, PHQ-2, tobacco, family history, statin months, diet and the plant-based follow-up), stores what a reading concluded (findings linked to the values they are about), and brings the Klarbefund skill for Claude. The Claude extension now carries the build number (1.0.9) and lists its seven tools. Both apps stay in TestFlight while in development and testing; neither is submitted to the App Store. The public TestFlight link offers the Mac build once Apple's Beta App Review passes (iPhone build 15 is already live there). Claude Desktop answers through the "Klarbefund Health Graph" extension while the app is open.
 
-![Klarbefund for Mac with fictional data: pair your iPhone, your health graph with Open 3D view, ask Claude with the Klarbefund skill](img/mac/klarbefund-mac.png)
+![Klarbefund for Mac with fictional data: pair your iPhone, your health graph with Open 3D view, ask your AI: Claude, ChatGPT, Gemini or a local model](img/mac/klarbefund-mac.png)
 
 ## For people
 
@@ -18,6 +18,12 @@ Klarbefund for Mac is the no-scripts way to keep your health graph on your Mac a
 
    These and 24 more are in Claude's **+** menu as prompts of the extension; **What Claude can do here** in step 3 lists them all, with the guides Claude can read. "My personal anamnesis, from my risk profile" takes the whole reading: your main risk, the questionnaires that matter for it (prefilled from your data, the rest asked), the scores, and the findings, stored in your graph once you confirm them. What the server offers and how it is secured: [MCP.md](MCP.md).
 5. **Add the skill (optional).** **Add the Klarbefund skill to Claude** in step 3 saves `klarbefund-anamnesis.zip`, the method without any data. In Claude: Customize → Skills → + → Upload a skill. Claude then takes the anamnesis the same way whenever your question fits, without picking a prompt.
+6. **Or another AI.** Step 3 is *Ask your AI*: Claude, ChatGPT, Gemini or a local model. Each starts the same helper inside Klarbefund for Mac (`/Applications/Klarbefund.app/Contents/Helpers/klarbefund-mcp`), read-only. The app shows each setup with the path filled in and a copy button:
+   - **ChatGPT:** the ChatGPT app for Mac and Codex CLI share one setup (`~/.codex/config.toml`). In ChatGPT: Settings → MCP servers → Add server → STDIO, name `klarbefund-health`, the helper as command; save, then restart. In Terminal: `codex mcp add klarbefund-health -- '<helper>'`. ChatGPT in the browser cannot reach a server on your Mac.
+   - **Gemini:** Gemini CLI, `gemini mcp add -s user klarbefund-health '<helper>'`, then start `gemini` in a folder you trust (in an untrusted folder it switches MCP servers off) and type `/mcp`. Checked with Gemini CLI 0.66.0: *klarbefund-health … Connected*.
+   - **Local model:** *Add to LM Studio* (LM Studio 0.3.17 or later) hands LM Studio the server entry; pick a model that supports tool use. The model then runs on your Mac and nothing from the graph leaves it. Ollama has no MCP support of its own; an MCP client in front of it takes the same `mcpServers` JSON.
+
+   Where the rows go depends on the AI, and step 3 says it under each setup: Claude, ChatGPT and Gemini run in their makers' clouds, so the rows the model reads go into your conversation there; a local model keeps everything on the Mac.
 
 **Updating.** TestFlight updates the app in `/Applications`; your graph is not inside the app and stays. Then:
 - Quit Klarbefund (⌘Q) and open it again. Klarbefund → About Klarbefund shows the build; step 3 lists the prompts (27 in build 9).

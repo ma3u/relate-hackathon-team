@@ -52,9 +52,11 @@ struct KlarbefundApp: App {
       if args.contains("--claude") {
         demo.claudeMessage = "Claude Desktop is asking to install “Klarbefund Health Graph”. Click Install, then start a new chat."
       }
+      // `--ai chatgpt|gemini|local`: step 3 with that AI's setup instead of Claude's.
+      let ai = args.firstIndex(of: "--ai").flatMap { $0 + 1 < args.count ? AIClient(rawValue: args[$0 + 1]) : nil } ?? .claude
       // `--capabilities`: the "What Claude can do here" sheet instead (no data at all).
       let screen = args.contains("--capabilities")
-        ? AnyView(MCPCapabilitiesView(scrolls: false)) : AnyView(ContentView(model: demo).frame(width: w, height: h))
+        ? AnyView(MCPCapabilitiesView(scrolls: false)) : AnyView(ContentView(model: demo, client: ai).frame(width: w, height: h))
       let view = screen
         .background(Color(nsColor: .windowBackgroundColor))
         .environment(\.colorScheme, args.contains("--light") ? .light : .dark)

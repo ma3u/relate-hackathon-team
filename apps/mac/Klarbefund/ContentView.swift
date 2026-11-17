@@ -5,12 +5,19 @@ import SwiftUI
 /// controls, so small buttons and links are drawn as plain images and text then.
 @MainActor var renderingForDocs = false
 
-/// One window, three steps: pair the iPhone, see the graph, connect Claude.
+/// One window, three steps: pair the iPhone, see the graph, connect an AI (Claude, ChatGPT, Gemini or a local model).
 struct ContentView: View {
   @ObservedObject var model: AppModel
   @State private var showManual = false
   @State private var showCapabilities = false
   @State private var skillMessage: String?
+  @State private var client: AIClient
+
+  init(model: AppModel, client: AIClient = .claude) {
+    self.model = model
+    _client = State(initialValue: client)
+  }
+  @State private var localMessage: String?
   @Environment(\.openWindow) private var openWindow
 
   var body: some View {
@@ -23,7 +30,7 @@ struct ContentView: View {
       HStack(alignment: .top, spacing: 18) {
         Step(number: 1, title: "Pair your iPhone", symbol: "iphone.gen3") { pairing }
         Step(number: 2, title: "Your health graph", symbol: "point.3.connected.trianglepath.dotted") { graph }
-        Step(number: 3, title: "Ask Claude", symbol: "bubble.left.and.text.bubble.right") { claude }
+        Step(number: 3, title: "Ask your AI", symbol: "bubble.left.and.text.bubble.right") { ai }
       }
       footer
     }
@@ -100,6 +107,98 @@ struct ContentView: View {
   }
 
   // ── 3 ──
+  private var setup: AISetup { AISetup(helper: ClaudeConnect.helper.path) }
+
+  /// Step 3 scrolls: ChatGPT's and Gemini's setups are taller than Claude's one button. ImageRenderer
+  /// draws no scroll view, so the docs render lays the content out directly.
+  @ViewBuilder private var ai: some View {
+    if renderingForDocs {
+      aiContent
+    } else {
+      ScrollView(.vertical) {
+        VStack(alignment: .leading, spacing: 12) { aiContent }.frame(maxWidth: .infinity, alignment: .leading)
+      }
+    }
+  }
+
+  @ViewBuilder private var aiContent: some View {
+    if renderingForDocs {  // ImageRenderer draws no segmented control
+      Text(AIClient.allCases.map(\.title).joined(separator: " · ")).font(.callout.weight(.semibold))
+    } else {
+      Picker("AI", selection: $client) {
+        ForEach(AIClient.allCases) { Text($0.title).tag($0) }
+      }
+      .pickerStyle(.segmented).labelsHidden()
+    }
+    switch client {
+    case .claude: claude
+    case .chatgpt: chatgpt
+    case .gemini: gemini
+    case .local: local
+    }
+    Label(client.privacy, systemImage: client == .local ? "lock.laptopcomputer" : "cloud")
+      .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+    Text("Then ask, for example:").font(.callout.weight(.semibold)).padding(.top, 4)
+    ForEach(MCPCatalog.prompts.filter { $0.group == .risks }.prefix(3), id: \.name) { Ask($0.ask) }
+    let catalog = Label(
+      "What it can do here (\(MCPCatalog.prompts.count) prompts, \(MCPCatalog.guides.count) guides)",
+      systemImage: "list.bullet.rectangle")
+    if renderingForDocs {
+      catalog.font(.callout).foregroundStyle(Color.accentColor)
+    } else {
+      Button { showCapabilities = true } label: { catalog }
+        .buttonStyle(.link).font(.callout)
+        .sheet(isPresented: $showCapabilities) { MCPCapabilitiesView() }
+    }
+  }
+
+  @ViewBuilder private var chatgpt: some View {
+    Text("ChatGPT for Mac and Codex CLI share one setup. ChatGPT in the browser cannot reach your Mac.")
+    Numbered(items: [
+      "ChatGPT → **Settings → MCP servers → Add server**.",
+      "Choose **STDIO**, name it **\(AISetup.serverName)**, command:",
+    ])
+    Code(setup.helper)
+    Text("Save, then Restart ChatGPT. Or in Terminal, for Codex CLI:").font(.callout)
+    Code(setup.codexCommand)
+    DisclosureGroup("In ~/.codex/config.toml") { Code(setup.codexToml) }.font(.callout)
+  }
+
+  @ViewBuilder private var gemini: some View {
+    Text("Gemini CLI, in Terminal:")
+    Code(setup.geminiCommand)
+    Numbered(items: [
+      "Start **gemini** in a folder you trust: in an untrusted folder Gemini CLI switches MCP servers off.",
+      "Type **/mcp**: \(AISetup.serverName) shows as connected.",
+    ])
+    DisclosureGroup("In ~/.gemini/settings.json") { Code(setup.mcpServersJson) }.font(.callout)
+  }
+
+  @ViewBuilder private var local: some View {
+    Text("LM Studio (0.3.17 or later) runs the model on this Mac. Pick a model that supports tool use.")
+    if renderingForDocs {
+      Label("Add to LM Studio", systemImage: "plus.app").frame(maxWidth: .infinity)
+        .padding(.vertical, 7).background(.quaternary, in: RoundedRectangle(cornerRadius: 7))
+    } else {
+      Button {
+        guard let link = setup.lmStudioLink, NSWorkspace.shared.urlForApplication(toOpen: link) != nil else {
+          localMessage = "LM Studio is not installed. Get it at lmstudio.ai, open it once, then click again."
+          return
+        }
+        localMessage = "LM Studio asks to add \(AISetup.serverName): confirm, then start a chat with a tool-use model."
+        NSWorkspace.shared.open(link)
+      } label: {
+        Label("Add to LM Studio", systemImage: "plus.app").frame(maxWidth: .infinity)
+      }
+      .controlSize(.large)
+    }
+    if let localMessage { Text(localMessage).font(.callout).foregroundStyle(.secondary) }
+    DisclosureGroup("By hand: LM Studio → Program → Install → Edit mcp.json") { Code(setup.mcpServersJson) }
+      .font(.callout)
+    Text("Ollama has no MCP support of its own: an MCP client in front of it takes the same JSON.")
+      .font(.caption).foregroundStyle(.secondary)
+  }
+
   @ViewBuilder private var claude: some View {
     Text("Claude Desktop can read your graph, read-only, while Klarbefund is open.")
     Button {
@@ -118,18 +217,6 @@ struct ContentView: View {
     }
     if let msg = model.claudeMessage {
       Text(msg).font(.callout).foregroundStyle(.secondary).textSelection(.enabled)
-    }
-    Text("Then ask Claude, for example:").font(.callout.weight(.semibold)).padding(.top, 4)
-    ForEach(MCPCatalog.prompts.filter { $0.group == .risks }.prefix(3), id: \.name) { Ask($0.ask) }
-    let catalog = Label(
-      "What Claude can do here (\(MCPCatalog.prompts.count) prompts, \(MCPCatalog.guides.count) guides)",
-      systemImage: "list.bullet.rectangle")
-    if renderingForDocs {
-      catalog.font(.callout).foregroundStyle(Color.accentColor)
-    } else {
-      Button { showCapabilities = true } label: { catalog }
-        .buttonStyle(.link).font(.callout)
-        .sheet(isPresented: $showCapabilities) { MCPCapabilitiesView() }
     }
     if renderingForDocs {
       Label("Add the Klarbefund skill to Claude", systemImage: "square.and.arrow.down")
@@ -192,7 +279,7 @@ private struct Numbered: View {
       ForEach(Array(items.enumerated()), id: \.offset) { i, s in
         HStack(alignment: .firstTextBaseline, spacing: 6) {
           Text("\(i + 1).").foregroundStyle(.secondary)
-          Text(LocalizedStringKey(s))
+          Text(LocalizedStringKey(s)).fixedSize(horizontal: false, vertical: true)  // wraps, never "…"
         }
       }
     }
@@ -206,6 +293,24 @@ private struct CountRow: View {
       Text(value.formatted()).font(.title2.bold().monospacedDigit()).gridColumnAlignment(.trailing)
       Text(label).foregroundStyle(.secondary)
     }
+  }
+}
+
+/// A command or config to copy: monospaced, selectable, with a copy button.
+private struct Code: View {
+  let text: String
+  init(_ text: String) { self.text = text }
+  var body: some View {
+    HStack(alignment: .top, spacing: 6) {
+      Text(text).font(.caption.monospaced()).textSelection(.enabled)
+        .fixedSize(horizontal: false, vertical: true)
+        .frame(maxWidth: .infinity, alignment: .leading)
+      if !renderingForDocs {
+        Button { copy(text) } label: { Image(systemName: "doc.on.doc") }
+          .buttonStyle(.borderless).help("Copy")
+      }
+    }
+    .padding(6).background(.quaternary, in: RoundedRectangle(cornerRadius: 6))
   }
 }
 
