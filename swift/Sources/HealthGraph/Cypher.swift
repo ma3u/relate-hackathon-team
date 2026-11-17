@@ -422,7 +422,7 @@ enum Cypher {
   UNWIND $items AS it
   MERGE (i:QuestionnaireItem {id: $id + '|' + it.linkId})
   SET i.linkId = it.linkId, i.text = it.text, i.multiple = it.multiple, i.options = it.options,
-      i.labels = it.labels, i.riskFactors = it.riskFactors
+      i.labels = it.labels, i.riskFactors = it.riskFactors, i.explains = it.explains
   MERGE (q)-[:HAS_ITEM]->(i)
   WITH i, it
   OPTIONAL MATCH (i)-[old:INFORMS]->()

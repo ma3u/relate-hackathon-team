@@ -721,13 +721,26 @@ const scoreList = () => ((DATA.scores || {})[HABITS.smoking === "current" ? "smo
 const component = c => c.n.split(" [")[0];
 const dotHtml = c => `<span class="dot" style="display:inline-block;margin-right:6px;background:${c}"></span>`;
 
+// Your answer that explains a value: the newest answer to each question about this code (and,
+// for a dated question, about this sample) whose choice the question lists as an explanation,
+// such as creatine for creatinine or hard exercise in the 48 hours before the sample.
+function explainedBy(c, dt) {
+  const day = (dt || "").slice(0, 10), newest = {};
+  nb(c, ["BASED_ON"]).filter(m => m.g === "Your answer" && (!m.ctx || m.ctx === day)).forEach(m => {
+    const k = m.lk + "@" + m.ctx;
+    if (!newest[k] || (m.au || "") > (newest[k].au || "")) newest[k] = m;
+  });
+  return Object.values(newest).find(m => m.ex) || null;
+}
+
 function markerRows(n) {
   return markerCodes(n).map(c => {
     const s = series(c), last = s.pts[s.pts.length - 1];
     if (!last) return null;
     const b = bandFor(c, s), v = last.v;
     const off = b && ((b.lo != null && v < b.lo) ? "below" : (b.hi != null && v > b.hi) ? "above" : null);
-    return { c, o: last.o, off, b, ranged: !!b, guide: b && !b.lab, w: weightOf(last.o.dt) };
+    const expl = off ? explainedBy(c, last.o.dt) : null;
+    return { c, o: last.o, off, expl, b, ranged: !!b, guide: b && !b.lab, w: weightOf(last.o.dt) };
   }).filter(Boolean)
     // One marker can sit on two LOINC codes, one per unit (LDL in mg/dL from one
     // lab, mmol/L from another): keep the newest value per marker, named by the
@@ -743,7 +756,7 @@ function computeStandings() {
   risks.forEach(n => {
     const rows = markerRows(n);
     const scores = scoreList().filter(x => x.risk === n.rid);
-    const E = rows.filter(r => r.off).reduce((a, r) => a + r.w, 0) +
+    const E = rows.filter(r => r.off && !r.expl).reduce((a, r) => a + r.w, 0) +  // an explained value raises nothing
       scores.filter(x => x.value != null && COMPOSITE.some(k => x.name.startsWith(k)))
         .reduce((a, x) => a + (pts[x.light] || 0) * weightOf(x.date), 0);
     const recent = rows.some(r => ageY(r.o.dt) <= 1.5);
@@ -766,7 +779,8 @@ function scoreRow(x) {
 function offRow(r) {
   const src = r.b && r.b.y ? `, ${r.b.y}` : "";
   return `<button class="nb inset" data-id="${r.o.id}" style="opacity:${(0.45 + 0.55 * r.w).toFixed(2)}">${dotHtml(OUT_COLOR)}` +
-    `${esc(short(component(r.c)))}: ${esc(r.o.val || "")} · ${esc(ago(r.o.dt))}, ${r.off} the ${r.guide ? "guideline" : "lab's"} range${esc(src)}</button>`;
+    `${esc(short(component(r.c)))}: ${esc(r.o.val || "")} · ${esc(ago(r.o.dt))}, ${r.off} the ${r.guide ? "guideline" : "lab's"} range${esc(src)}` +
+    (r.expl ? `<span class="age"> · explained by your answer ${esc(r.expl.n)}</span>` : "") + `</button>`;
 }
 
 // On the risk's own panel.
@@ -775,10 +789,12 @@ function riskStanding(n) {
   let html = `<div class="callout"><b>Not a diagnosis.</b> A condition the knowledge layer tracks for everyone, from guidelines. Nothing in your graph says you have it.</div>`;
   html += `<div class="sc" style="font-size:13px"><span class="lt" style="background:${S.color}"></span><span><b>${S.label}</b> in your graph</span></div>`;
   if (!st.rows.length) return html + `<div class="hint">None of its markers has a value of yours yet.</div>`;
-  const off = st.rows.filter(r => r.off), unranged = st.rows.filter(r => !r.ranged).length;
+  const off = st.rows.filter(r => r.off), unranged = st.rows.filter(r => !r.ranged).length,
+    explained = off.filter(r => r.expl).length;
   html += `<div class="rel">Your latest values on its markers</div>`;
   html += `<div class="hint" style="margin-top:0">${st.rows.length} marker${st.rows.length > 1 ? "s" : ""} with a value, the newest of each; ` +
-    (off.length ? `${off.length} outside the range` : st.rows.length > unranged ? "none outside the range" : "no range to compare them with") +
+    (off.length ? `${off.length} outside the range${explained ? `, ${explained} explained by your answers` : ""}` :
+      st.rows.length > unranged ? "none outside the range" : "no range to compare them with") +
     (unranged && st.rows.length > unranged ? ` (${unranged} without a range to compare)` : "") + (off.length ? ":" : ".") + `</div>`;
   off.forEach(r => html += offRow(r));
   html += `<div class="hint" style="margin-top:4px">Older values count less, half after a year, and look fainter.</div>`;
@@ -1077,7 +1093,7 @@ function showOverview() {
   let html = `<button class="close" aria-label="Close">×</button><div class="kicker">Your risk overview</div>` +
     `<h3>${main ? `Main risk: ${esc(main.n)}` : "No risk stands out in your recent values"}</h3>`;
   if (main) {
-    const drivers = main.st.rows.filter(r => r.off).sort((a, b) => b.w - a.w).slice(0, 4).map(r => short(component(r.c)));
+    const drivers = main.st.rows.filter(r => r.off && !r.expl).sort((a, b) => b.w - a.w).slice(0, 4).map(r => short(component(r.c)));
     if (drivers.length) html += `<div class="hint" style="margin-top:2px">Driven by ${esc(drivers.join(", "))}.</div>`;
   }
   html += `<div class="callout"><b>Not a diagnosis.</b> The risks are conditions the knowledge layer tracks for everyone. ` +
@@ -1089,7 +1105,8 @@ function showOverview() {
     if (st.rows.length) {
       const newest = st.rows[0].o.dt;
       html += `<div class="hint" style="margin-top:4px">${st.rows.length} marker${st.rows.length > 1 ? "s" : ""} with a value · ` +
-        `${off.length ? off.length + " outside the range" : "none outside the range"} · newest ${esc(ago(newest))}</div>`;
+        `${off.length ? off.length + " outside the range" : "none outside the range"}` +
+        `${off.some(r => r.expl) ? `, ${off.filter(r => r.expl).length} explained by your answers` : ""} · newest ${esc(ago(newest))}</div>`;
       off.sort((a, b) => b.w - a.w).slice(0, st.status === "main" ? 6 : 3).forEach(r => html += offRow(r));
     } else html += `<div class="hint" style="margin-top:4px">No value of yours on its markers yet.</div>`;
     st.scores.forEach(x => html += scoreRow(x));

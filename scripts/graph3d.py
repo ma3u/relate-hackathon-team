@@ -120,6 +120,11 @@ def describe(label, p):
     if label == "Answer":
         return "Your answer", f"{p.get('linkId')}: {', '.join(p.get('labels') or []) or p.get('text') or ''}", [
             p.get("question") or "", p.get("authored") or "", f"Prefilled from {p['prefilled']}" if p.get("prefilled") else ""]
+    if label == "ScoreResult":  # your value of a risk score; the score itself is the RiskScore it hangs on
+        v = p.get("value")
+        shown = num(round(float(v), 2)) if isinstance(v, (int, float)) else ""
+        return label, f"Your result: {shown}" if shown else "Your result", [
+            p.get("band") or "", p.get("note") or "", p.get("computedAt") or ""]
     if label == "OMOPPerson":
         return label, "OMOP person", []
     if label == "OMOPMeasurement":
@@ -176,6 +181,11 @@ def build(nodes_in, links_in):
         if r["label"] == "OMOPPerson":
             sex = {8507: "male", 8532: "female"}.get(r["p"].get("genderConceptId"))
 
+    # An answer can explain a value (creatine for creatinine, hard exercise before a sample):
+    # the question lists the choices that do (anamnesis ITEMS "explains").
+    item_of = {r["s"]: by_id[r["t"]]["p"] for r in links_in
+               if r["type"] == "ANSWERS" and by_id[r["t"]]["label"] == "QuestionnaireItem"}
+
     nodes = []
     for r in nodes_in:
         group, name, lines = describe(r["label"], r["p"])
@@ -199,6 +209,12 @@ def build(nodes_in, links_in):
                     node["rh"] = p["referenceHigh"]
         if r["label"] == "HealthRisk":
             node["rid"] = p.get("id")
+        if r["label"] == "Answer":
+            node["lk"] = p.get("linkId") or ""
+            node["ctx"] = p.get("context") or ""
+            node["au"] = p.get("authored") or ""
+            if set(p.get("codes") or []) & set(item_of.get(r["id"], {}).get("explains") or []):
+                node["ex"] = 1
         if r["label"] == "Study":
             node["sid"] = p.get("id")
             node["year"] = p.get("year")

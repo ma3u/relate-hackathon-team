@@ -3,7 +3,7 @@
 // swiftlint:disable line_length
 
 enum KnowledgeData {
-  static let fingerprint = "b74725086fbbd061"
+  static let fingerprint = "cb8ef333dc95bc2b"
   static let rangesSource = "services/epa-ingest/src/reference-ranges.ts (MinimumViableHealthDataspacev2)"
   static let json = #"""
   {
@@ -43,6 +43,22 @@ enum KnowledgeData {
     {
      "risk": "cardiovascular",
      "study": "pmid-27122601"
+    },
+    {
+     "risk": "diabetes",
+     "study": "kjaergaard-2026-proteomics"
+    },
+    {
+     "risk": "liver",
+     "study": "kjaergaard-2026-proteomics"
+    },
+    {
+     "risk": "kidney",
+     "study": "kjaergaard-2026-proteomics"
+    },
+    {
+     "risk": "cardiovascular",
+     "study": "kjaergaard-2026-proteomics"
     }
    ],
    "citations": [
@@ -659,6 +675,36 @@ enum KnowledgeData {
      "study": "mclaughlin-2003-tg-hdl"
     },
     {
+     "code": "4548-4",
+     "name": null,
+     "study": "kjaergaard-2026-proteomics"
+    },
+    {
+     "code": "59261-8",
+     "name": null,
+     "study": "kjaergaard-2026-proteomics"
+    },
+    {
+     "code": "14927-8",
+     "name": null,
+     "study": "kjaergaard-2026-proteomics"
+    },
+    {
+     "code": "2571-8",
+     "name": null,
+     "study": "kjaergaard-2026-proteomics"
+    },
+    {
+     "code": "14646-4",
+     "name": null,
+     "study": "kjaergaard-2026-proteomics"
+    },
+    {
+     "code": "2085-9",
+     "name": null,
+     "study": "kjaergaard-2026-proteomics"
+    },
+    {
      "code": "14646-4",
      "name": null,
      "study": "voight-2012-hdl"
@@ -728,6 +774,14 @@ enum KnowledgeData {
     {
      "score": "egfr",
      "study": "kdigo-2017-mbd"
+    },
+    {
+     "score": "tg-hdl",
+     "study": "mclaughlin-2003-tg-hdl"
+    },
+    {
+     "score": "tg-hdl",
+     "study": "kjaergaard-2026-proteomics"
     }
    ],
    "links": [
@@ -5813,6 +5867,34 @@ enum KnowledgeData {
       "2571-8",
       "1558-6"
      ]
+    },
+    {
+     "demographics": "",
+     "estimates": "diabetes",
+     "id": "tg-hdl",
+     "name": "TG/HDL ratio",
+     "source": "McLaughlin et al., Ann Intern Med 2003;139:802",
+     "unit": "(mmol/L units)",
+     "uses": [
+      "14927-8",
+      "2571-8",
+      "14646-4",
+      "2085-9"
+     ]
+    },
+    {
+     "demographics": "",
+     "estimates": "kidney",
+     "id": "uacr",
+     "name": "Urine albumin/creatinine ratio",
+     "source": "KDIGO 2024 clinical practice guideline for chronic kidney disease",
+     "unit": "mg/mmol",
+     "uses": [
+      "1754-1",
+      "14683-7",
+      "9318-7",
+      "14959-1"
+     ]
     }
    ],
    "studies": [
@@ -6096,6 +6178,20 @@ enum KnowledgeData {
      ],
      "url": "https://doi.org/10.7326/0003-4819-139-10-200311180-00007",
      "year": 2003
+    },
+    {
+     "citation": "Kjærgaard et al., Nat Metab 2026",
+     "design": "proteomics study, 161 adults with clamp-measured insulin sensitivity; validated in about 20,000 UK Biobank and 1,700 Inter99 participants",
+     "id": "kjaergaard-2026-proteomics",
+     "kind": "study",
+     "pmid": null,
+     "pubmedUrl": null,
+     "title": "Plasma proteomics identifies insulin resistance signatures predictive of cardiometabolic disease risk",
+     "topics": [
+      "Metabolism"
+     ],
+     "url": "https://doi.org/10.1038/s42255-026-01662-1",
+     "year": 2026
     },
     {
      "citation": "Voight et al., Lancet 2012;380:572",

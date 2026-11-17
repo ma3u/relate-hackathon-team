@@ -442,22 +442,22 @@ struct PatientAttributeTests {
 
 @Suite("Knowledge layer", .serialized)
 struct KnowledgeTests {
-  /// Same counts as the Python seed: 6 risks, 4 scores, 55 marker links, 173 ranges,
-  /// 48 studies (21 seeded with the risk links and newer views, 27 range sources), 10 risk links.
+  /// Same counts as the Python seed: 6 risks, 6 scores, 55 marker links, 173 ranges,
+  /// 49 studies (22 seeded with the risk links and newer views, 27 range sources), 10 risk links.
   @Test func seedsTheSameKnowledgeAsPython() throws {
     let store = try HealthStore(path: Fixtures.tempStore())
     try store.initSchema()
     try store.seedKnowledge()
     #expect(try store.count("HealthRisk") == 6)
-    #expect(try store.count("RiskScore") == 4)
+    #expect(try store.count("RiskScore") == 6)
     #expect(try store.count("ReferenceRange") == 173)
     let markers = try store.rows(cypher: "MATCH (:LoincCode)-[k:MARKER_OF]->(:HealthRisk) RETURN count(k) AS n")
     #expect(markers.first?["n"] == "55")
-    #expect(try store.count("Study") == 48)  // 21 for risk links and newer views, 27 behind the ranges
+    #expect(try store.count("Study") == 49)  // 22 for risk links and newer views, 27 behind the ranges
     let links = try store.rows(cypher: "MATCH (:HealthRisk)-[k:RAISES_RISK_OF]->(:HealthRisk) RETURN count(k) AS n")
     #expect(links.first?["n"] == "10")
     let examines = try store.rows(cypher: "MATCH (:Study)-[k:EXAMINES]->(:LoincCode) RETURN count(k) AS n")
-    #expect(examines.first?["n"] == "115")
+    #expect(examines.first?["n"] == "121")
     let about = try store.rows(cypher: "MATCH (:Study {id: 'esc-eas-2025-lipids'})-[k:ABOUT]->(:HealthRisk) RETURN count(k) AS n")
     #expect(about.first?["n"] == "1")
     let sourced = try store.rows(cypher: "MATCH (:ReferenceRange)-[k:SOURCED_FROM]->(:Study) RETURN count(k) AS n")

@@ -75,7 +75,7 @@ flowchart LR
 | L5 Ontology | `LoincCode` | `code` | `display` |
 | | `NcbiTaxon` | `code` | `display` (microbiome organisms; LOINC has no term for them) |
 | Knowledge | `HealthRisk` | `id` | cardiovascular, diabetes, kidney, liver, bone (osteoporosis), fitness |
-| | `RiskScore` | `id` | SCORE2, eGFR (CKD-EPI 2021), FIB-4, TyG; `source`, `demographics`; `USES` the LOINC codes of its inputs |
+| | `RiskScore` | `id` | SCORE2, eGFR (CKD-EPI 2021), FIB-4, TyG, TG/HDL ratio, urine albumin/creatinine ratio (uACR); `source`, `demographics`; `USES` the LOINC codes of its inputs |
 | | `ReferenceRange` | `analyteKey\|ucum\|sex\|validFrom` | `guidelineLow/High` (official), `optimalLow/High` (lowest-risk band), `basis` (guideline, consensus, cohort), `summary`, `sourceLabel/Url/Year/Pmid/Doi`, `validFrom`, `validUntil`, `supersededBy`; `SOURCED_FROM` its `Study`; from Klarbefund's `reference-ranges.ts`, quoted unchanged |
 | | `Study` | `id` | `citation`, `title`, `year`, `design`, `url` (DOI), `pmid`, `pubmedUrl`; the evidence behind a `RAISES_RISK_OF` link, `ABOUT` both risks it connects, `EXAMINES` the markers it measured or recommends, `INFORMS` the risk scores it bears on; `kind` (study or guideline), `topics` (Liver, Kidney, Heart and vessels …); `CITES` the other sources it cites (OpenAlex) |
 | | `ScoreResult` | `<patient>-<score>` | `value`, `band`, `light`, `computedAt`, `demographics`; `FROM` the exact Observations it used |

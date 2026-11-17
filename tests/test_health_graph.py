@@ -251,7 +251,7 @@ def test_knowledge_is_seeded_once_and_links_ranges_to_loinc(db):
     conn, _ = db
     counts = knowledge.seed(conn)
     assert counts["ranges"] == len([r for r in knowledge.reference_ranges() if r["loinc"]])
-    assert counts["risks"] == 6 and counts["scores"] == 4
+    assert counts["risks"] == 6 and counts["scores"] == 6
     assert knowledge.seed(conn) == {}  # already current: nothing written
     ldl = conn.execute("""MATCH (rr:ReferenceRange {analyteKey: 'cholesterol-ldl', ucum: 'mmol/L'})
                           -[:APPLIES_TO]->(lc:LoincCode) RETURN rr.guidelineHigh AS g, rr.optimalHigh AS o,
@@ -298,11 +298,11 @@ def test_risk_links_name_their_studies(db):
     liver = next(r for r in rows if r["risk"] == "Liver fibrosis" and r["raisesRiskOf"] == "Type 2 diabetes")
     assert liver["estimate"] == 2.19 and liver["studies"] and all(liver["studies"])
     assert all(r["studies"] for r in rows)  # every link reaches at least one Study
-    assert counts["studyMarkers"] == len(knowledge._examines_rows()) and counts["studyScores"] == 11
+    assert counts["studyMarkers"] == len(knowledge._examines_rows()) and counts["studyScores"] == 13
     assert counts["citations"] == len(knowledge.STUDY_CITATIONS)  # every cited id is a Study we seed
     kinds = {r["k"]: r["n"] for r in conn.execute("MATCH (s:Study) RETURN s.kind AS k, count(s) AS n")}
     sources = {s["id"] for s in knowledge.STUDIES} | {s["id"] for s in knowledge._range_source_rows()}
-    assert set(kinds) == {"study", "guideline"} and sum(kinds.values()) == len(sources) == 48
+    assert set(kinds) == {"study", "guideline"} and sum(kinds.values()) == len(sources) == 49
     assert counts["studyRisks"] == len(knowledge.STUDY_ABOUT)  # every id there is a Study we seed
     newer = list(conn.execute("MATCH (s:Study {id: 'esc-eas-2025-lipids'})-[:ABOUT]->(h:HealthRisk) RETURN h.id AS h"))
     assert [r["h"] for r in newer] == ["cardiovascular"]
@@ -341,3 +341,23 @@ def test_lights_use_the_guideline_range_and_the_optimal_band():
     # no reference range: the range the laboratory printed decides, inside or outside
     lab = ("2026-01-01", 7.0, "", "", 1.0, 5.0, "r2", "9999-9")
     assert risk.lab_light(ranges, lab, "mg/L", None)[0] == scores.RED
+
+
+def test_tg_hdl_and_uacr_come_from_one_sample(db):
+    """TG/HDL takes both lipids of one day; uACR takes albumin and creatinine of one urine sample."""
+    from health_graph import knowledge, risk, scores
+    conn, _ = db
+    knowledge.seed(conn)
+    for rid, code, value, unit in [("t-tg", "14927-8", 1.2, "mmol/L"), ("t-hdl", "14646-4", 1.5, "mmol/L"),
+                                   ("t-alb", "1754-1", 20.0, "mg/L"), ("t-cre", "14683-7", 5.0, "mmol/L")]:
+        conn.execute("""MERGE (lc:LoincCode {code: $code})
+                        CREATE (o:Observation {resourceId: $rid, effectiveDate: '2026-10-01', valueQuantity: $v,
+                                               unit: $unit})-[:CODED_BY]->(lc)""",
+                     {"rid": rid, "code": code, "v": value, "unit": unit})
+    got = {s.id: s for s in risk.compute_scores(conn, 55, "male", False, "moderate") if s.id}
+    assert got["tg-hdl"].value == pytest.approx(0.8)
+    assert got["tg-hdl"].observations == ["t-tg", "t-hdl"] and got["tg-hdl"].light == scores.GREEN
+    assert got["uacr"].value == pytest.approx(4.0) and got["uacr"].light == scores.AMBER  # KDIGO A2
+    assert got["uacr"].observations == ["t-alb", "t-cre"]
+    if "egfr" in got:  # with albuminuria measured, the eGFR light no longer assumes A1
+        assert got["egfr"].note is None

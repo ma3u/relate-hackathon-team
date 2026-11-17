@@ -117,3 +117,29 @@ def test_scores_take_smoking_from_the_anamnesis(db, capsys):
     assert "smoking: yes (from the anamnesis)" in capsys.readouterr().out
     assert cli.main(["scores", "--db", str(path), "--smoker", "no"]) == 0  # the switch still wins
     assert "from the anamnesis" not in capsys.readouterr().out
+
+
+def test_an_answer_that_explains_a_value_is_marked_and_noted(db):
+    """Creatine explains creatinine; a "yes" to hard exercise explains that sample. The 3D view marks such
+    answers (it then leaves the value out of the risk ranking) and the eGFR score names the supplement."""
+    import sys
+    from health_graph import risk
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import graph3d
+    conn, _, pid = db
+    anamnesis.store_response(conn, pid, {
+        "creatine-protein": {"codes": ["creatine"], "text": "5 to 10 g a day", "basedOn": ["2160-0"]},
+        "exercise-before-sample@2026-09-04": {"codes": ["no"], "basedOn": ["33762-6"]},
+    }, authored="2026-11-15T09:00:00+00:00")
+    nodes = [dict(r) for r in conn.execute("MATCH (n) RETURN id(n) AS id, labels(n)[0] AS label, properties(n) AS p")]
+    links = [dict(r) for r in conn.execute(
+        "MATCH (a)-[r]->(b) RETURN id(a) AS s, id(b) AS t, type(r) AS type, properties(r) AS p")]
+    answers = {n["lk"]: n for n in graph3d.build(nodes, links)["nodes"] if n.get("lk")}
+    assert answers["creatine-protein"].get("ex") == 1
+    assert "ex" not in answers["exercise-before-sample"] and answers["exercise-before-sample"]["ctx"] == "2026-09-04"
+    assert anamnesis.ITEM["exercise-before-sample"]["explains"] == ["yes"]
+    conn.execute("""MERGE (lc:LoincCode {code: '2160-0'})
+                    CREATE (:Observation {resourceId: 't-cr', effectiveDate: '2026-09-04', valueQuantity: 1.2,
+                                          unit: 'mg/dL'})-[:CODED_BY]->(lc)""")
+    egfr = next(s for s in risk.compute_scores(conn, 55, "male", False, "moderate") if s.id == "egfr")
+    assert "5 to 10 g a day" in egfr.note and "cystatin C" in egfr.note

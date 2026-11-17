@@ -68,6 +68,12 @@ RISK_SCORES = [
     {"id": "tyg", "name": "TyG index", "estimates": "diabetes", "unit": "",
      "uses": TG + ["1558-6"], "demographics": "",
      "source": "Simental-Mendía et al., Metab Syndr Relat Disord 2008;6:299"},
+    {"id": "tg-hdl", "name": "TG/HDL ratio", "estimates": "diabetes", "unit": "(mmol/L units)",
+     "uses": TG + HDL, "demographics": "",
+     "source": "McLaughlin et al., Ann Intern Med 2003;139:802"},
+    {"id": "uacr", "name": "Urine albumin/creatinine ratio", "estimates": "kidney", "unit": "mg/mmol",
+     "uses": ["1754-1", "14683-7"] + UACR, "demographics": "",  # risk.py also reads 14957-5 and 2161-8
+     "source": "KDIGO 2024 clinical practice guideline for chronic kidney disease"},
 ]
 
 ESC_LIPIDS = "ESC/EAS 2019 dyslipidaemia guideline"
@@ -197,7 +203,14 @@ STUDIES = [
      "citation": "McLaughlin et al., Ann Intern Med 2003;139:802",
      "title": "Use of metabolic markers to identify overweight individuals who are insulin resistant",
      "url": "https://doi.org/10.7326/0003-4819-139-10-200311180-00007",
-     "pmid": "14623617", "examines": TG + HDL + GLUCOSE, "informs": [], "topics": ["Metabolism"]},
+     "pmid": "14623617", "examines": TG + HDL + GLUCOSE, "informs": ["tg-hdl"], "topics": ["Metabolism"]},
+    {"id": "kjaergaard-2026-proteomics", "year": 2026,
+     "design": "proteomics study, 161 adults with clamp-measured insulin sensitivity; "
+               "validated in about 20,000 UK Biobank and 1,700 Inter99 participants",
+     "citation": "Kjærgaard et al., Nat Metab 2026",
+     "title": "Plasma proteomics identifies insulin resistance signatures predictive of cardiometabolic disease risk",
+     "url": "https://doi.org/10.1038/s42255-026-01662-1",
+     "pmid": None, "examines": HBA1C + TG + HDL, "informs": ["tg-hdl"], "topics": ["Metabolism"]},
     {"id": "voight-2012-hdl", "year": 2012, "design": "Mendelian randomisation study",
      "citation": "Voight et al., Lancet 2012;380:572",
      "title": "Plasma HDL cholesterol and risk of myocardial infarction: a mendelian randomisation study",
@@ -217,6 +230,9 @@ STUDY_ABOUT = [  # (study id, risk id)
     ("sniderman-2019-apob", "cardiovascular"), ("balling-2025-remnant", "cardiovascular"),
     ("assempoor-2025-aip", "cardiovascular"), ("voight-2012-hdl", "cardiovascular"),
     ("demay-2024-vitd", "bone"), ("mclaughlin-2003-tg-hdl", "diabetes"), ("pmid-27122601", "cardiovascular"),
+    # Insulin resistance predicted diabetes, fatty liver, kidney disease and heart disease in the UK Biobank.
+    ("kjaergaard-2026-proteomics", "diabetes"), ("kjaergaard-2026-proteomics", "liver"),
+    ("kjaergaard-2026-proteomics", "kidney"), ("kjaergaard-2026-proteomics", "cardiovascular"),
 ]
 
 # Which of these sources cite each other: OpenAlex `referenced_works` of every
@@ -349,7 +365,8 @@ def _study_rows() -> list[dict]:
         risks = [r for link in RISK_LINKS if sid in link["studies"] for r in (link["from"], link["to"])]
         return list(dict.fromkeys(TOPIC_OF_RISK[r] for r in risks))
     return [{k: v for k, v in st.items() if k not in ("examines", "informs")} |
-            {"pubmedUrl": f"https://pubmed.ncbi.nlm.nih.gov/{st['pmid']}/", "kind": _kind(st["design"]),
+            {"pubmedUrl": f"https://pubmed.ncbi.nlm.nih.gov/{st['pmid']}/" if st.get("pmid") else None,
+             "kind": _kind(st["design"]),
              "topics": list(dict.fromkeys(topics(st["id"]) + st.get("topics", [])))} for st in STUDIES]
 
 

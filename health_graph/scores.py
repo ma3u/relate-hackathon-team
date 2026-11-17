@@ -144,6 +144,11 @@ def tyg(triglycerides_mg_dl: float, fasting_glucose_mg_dl: float) -> float:
     return math.log(triglycerides_mg_dl * fasting_glucose_mg_dl / 2)
 
 
+def uacr_mg_mmol(urine_albumin_mg_l: float, urine_creatinine_mmol_l: float) -> float:
+    """Urine albumin-to-creatinine ratio in mg/mmol (mg/g = mg/mmol x 8.84). KDIGO 2024."""
+    return urine_albumin_mg_l / urine_creatinine_mmol_l
+
+
 # ── traffic lights ───────────────────────────────────────────────────────────
 # Each light follows the published categories of the score or guideline it
 # names; a light is never shown without its label. GREEN / AMBER / RED.
@@ -181,6 +186,15 @@ def hba1c_light(percent: float) -> tuple[str, str]:
     if percent < 6.5:
         return AMBER, "5.7 to 6.4 %, the ADA prediabetes range"
     return RED, "6.5 % or more, the ADA diabetes range"
+
+
+def uacr_light(mg_mmol: float) -> tuple[str, str]:
+    """KDIGO 2024 albuminuria categories: A1 <3, A2 3-30, A3 >30 mg/mmol."""
+    if mg_mmol < 3:
+        return GREEN, "A1, below 3 mg/mmol: normal to mildly increased (KDIGO 2024)"
+    if mg_mmol <= 30:
+        return AMBER, "A2, 3 to 30 mg/mmol: moderately increased (KDIGO 2024)"
+    return RED, "A3, above 30 mg/mmol: severely increased (KDIGO 2024)"
 
 
 def bmi_light(bmi: float) -> tuple[str, str]:

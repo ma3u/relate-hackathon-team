@@ -158,6 +158,7 @@ enum AnamnesisData {
    ],
    "itemRows": [
     {
+     "explains": [],
      "labels": [
       "Yes",
       "No",
@@ -179,6 +180,7 @@ enum AnamnesisData {
      "text": "Did a parent or sibling have a heart attack, stroke or bypass/stent early (men before 55, women before 65)?"
     },
     {
+     "explains": [],
      "labels": [
       "Yes",
       "No",
@@ -200,6 +202,7 @@ enum AnamnesisData {
      "text": "Is high cholesterol or high Lp(a) known in your family (familial hypercholesterolaemia)?"
     },
     {
+     "explains": [],
      "labels": [
       "Yes, it was high",
       "Yes, it was normal",
@@ -223,6 +226,7 @@ enum AnamnesisData {
      "text": "Has anyone in your close family (parents, siblings, children) had Lp(a) measured?"
     },
     {
+     "explains": [],
      "labels": [
       "Never",
       "Former smoker",
@@ -247,6 +251,7 @@ enum AnamnesisData {
      "text": "Do you smoke, or did you?"
     },
     {
+     "explains": [],
      "labels": [
       "No",
       "Yes, and I take medication",
@@ -272,6 +277,7 @@ enum AnamnesisData {
      "text": "Has a doctor ever told you that your blood pressure is high?"
     },
     {
+     "explains": [],
      "labels": [
       "I don't measure it",
       "Yes, usually below 135/85",
@@ -293,6 +299,7 @@ enum AnamnesisData {
      "text": "Do you measure your blood pressure at home, and what do you usually see?"
     },
     {
+     "explains": [],
      "labels": [
       "Yes",
       "No",
@@ -314,6 +321,7 @@ enum AnamnesisData {
      "text": "Does a parent or sibling have high blood pressure?"
     },
     {
+     "explains": [],
      "labels": [
       "Never",
       "A statin",
@@ -335,6 +343,7 @@ enum AnamnesisData {
      "text": "Do you take, or did you take, medication to lower cholesterol?"
     },
     {
+     "explains": [],
      "labels": [
       "Every day",
       "A few times a week",
@@ -356,6 +365,7 @@ enum AnamnesisData {
      "text": "How often do you eat fatty meat, sausage, butter, cheese or pastries?"
     },
     {
+     "explains": [],
      "labels": [
       "Yes, fasting",
       "No, I had eaten",
@@ -376,6 +386,9 @@ enum AnamnesisData {
      "text": "Was the blood sample on {date} taken fasting (nothing but water for 8 hours or more)?"
     },
     {
+     "explains": [
+      "yes"
+     ],
      "labels": [
       "Yes",
       "No",
@@ -396,6 +409,7 @@ enum AnamnesisData {
      "text": "Did you do hard endurance exercise or HIIT in the 48 hours before the blood sample on {date}?"
     },
     {
+     "explains": [],
      "labels": [
       "None of these",
       "Chest pressure or pain on exertion",
@@ -425,6 +439,7 @@ enum AnamnesisData {
      "text": "Do you notice any of these?"
     },
     {
+     "explains": [],
      "labels": [
       "None",
       "1 to 7",
@@ -451,6 +466,7 @@ enum AnamnesisData {
      "text": "How many alcoholic drinks do you have in a typical week (one drink = a small beer or glass of wine)?"
     },
     {
+     "explains": [],
      "labels": [
       "Every day",
       "A few times a week",
@@ -473,6 +489,7 @@ enum AnamnesisData {
      "text": "How often do you have sweets, sugary drinks or juice?"
     },
     {
+     "explains": [],
      "labels": [
       "Never",
       "Yes, it was normal",
@@ -496,6 +513,7 @@ enum AnamnesisData {
      "text": "Has your liver ever been examined by ultrasound or elastography (FibroScan)?"
     },
     {
+     "explains": [],
      "labels": [
       "None",
       "Some (please name them)"
@@ -514,6 +532,7 @@ enum AnamnesisData {
      "text": "Which medication and supplements do you take regularly (including herbal ones)?"
     },
     {
+     "explains": [],
      "labels": [
       "Yes",
       "No",
@@ -535,6 +554,7 @@ enum AnamnesisData {
      "text": "Does a parent or sibling have type 2 diabetes?"
     },
     {
+     "explains": [],
      "labels": [
       "Stable",
       "Gained more than 5 kg",
@@ -560,6 +580,7 @@ enum AnamnesisData {
      "text": "How has your weight changed over the last two years?"
     },
     {
+     "explains": [],
      "labels": [
       "Less than 1 hour",
       "1 to 2.5 hours",
@@ -585,6 +606,7 @@ enum AnamnesisData {
      "text": "How much exercise that makes you breathe harder do you get in a typical week?"
     },
     {
+     "explains": [],
      "labels": [
       "Rarely or never",
       "A few times a month",
@@ -609,6 +631,11 @@ enum AnamnesisData {
      "text": "How often do you take painkillers such as ibuprofen, diclofenac or naproxen?"
     },
     {
+     "explains": [
+      "creatine",
+      "protein",
+      "both"
+     ],
      "labels": [
       "Creatine",
       "A lot of protein",
@@ -630,6 +657,7 @@ enum AnamnesisData {
      "text": "Do you take creatine, or eat a lot of protein (shakes, more than about 1.6 g per kg a day)?"
     },
     {
+     "explains": [],
      "labels": [
       "No",
       "Yes, a fracture",
@@ -652,6 +680,7 @@ enum AnamnesisData {
      "text": "Have you broken a bone after age 40 from a minor fall, or lost height?"
     },
     {
+     "explains": [],
      "labels": [
       "No",
       "Vitamin D",
@@ -671,6 +700,7 @@ enum AnamnesisData {
      "text": "Do you take vitamin D or calcium?"
     },
     {
+     "explains": [],
      "labels": [
       "No",
       "Loud snoring",
@@ -697,6 +727,7 @@ enum AnamnesisData {
      "text": "Do you snore loudly, or has someone seen you stop breathing in your sleep?"
     },
     {
+     "explains": [],
      "labels": [
       "No treatment",
       "CPAP",
@@ -992,6 +1023,9 @@ enum AnamnesisData {
      "text": "Was the blood sample on {date} taken fasting (nothing but water for 8 hours or more)?"
     },
     {
+     "explains": [
+      "yes"
+     ],
      "linkId": "exercise-before-sample",
      "multiple": false,
      "options": [
@@ -1284,6 +1318,11 @@ enum AnamnesisData {
      "text": "How often do you take painkillers such as ibuprofen, diclofenac or naproxen?"
     },
     {
+     "explains": [
+      "creatine",
+      "protein",
+      "both"
+     ],
      "linkId": "creatine-protein",
      "multiple": false,
      "options": [

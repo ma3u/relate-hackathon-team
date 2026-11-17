@@ -126,7 +126,9 @@ ITEMS = [
     {"linkId": "exercise-before-sample",
      "text": "Did you do hard endurance exercise or HIIT in the 48 hours before the blood sample on {date}?",
      "risks": ["cardiovascular", "kidney"], "multiple": False,
-     "options": [("yes", "Yes", False), ("no", "No", False), ("unknown", "Not sure", False)]},
+     "options": [("yes", "Yes", False), ("no", "No", False), ("unknown", "Not sure", False)],
+     # Hard exercise raises NT-proBNP and creatinine for a day or two: a "yes" explains that sample's values.
+     "explains": ["yes"]},
     {"linkId": "cardiac-symptoms",
      "text": "Do you notice any of these?",
      "risks": ["cardiovascular", "fitness"], "multiple": True,
@@ -179,7 +181,9 @@ ITEMS = [
      "text": "Do you take creatine, or eat a lot of protein (shakes, more than about 1.6 g per kg a day)?",
      "risks": ["kidney"], "multiple": False,
      "options": [("creatine", "Creatine", False), ("protein", "A lot of protein", False),
-                 ("both", "Both", False), ("neither", "Neither", False)]},
+                 ("both", "Both", False), ("neither", "Neither", False)],
+     # Creatine and a high protein intake raise serum creatinine without a loss of kidney function (KDIGO 2024).
+     "explains": ["creatine", "protein", "both"]},
     {"linkId": "fracture",
      "text": "Have you broken a bone after age 40 from a minor fall, or lost height?",
      "risks": ["bone"], "multiple": False, "knownBy": "bone_density",
@@ -551,7 +555,8 @@ def _item_rows() -> list[dict]:
     return [{"linkId": i["linkId"], "text": i["text"], "multiple": i["multiple"], "risks": i["risks"],
              "options": [code for code, _, _ in i["options"]],
              "labels": [label for _, label, _ in i["options"]],
-             "riskFactors": [code for code, _, factor in i["options"] if factor]}
+             "riskFactors": [code for code, _, factor in i["options"] if factor],
+             "explains": i.get("explains", [])}
             for i in ITEMS]
 
 
@@ -562,7 +567,7 @@ WITH q
 UNWIND $items AS it
 MERGE (i:QuestionnaireItem {id: $id + '|' + it.linkId})
 SET i.linkId = it.linkId, i.text = it.text, i.multiple = it.multiple, i.options = it.options,
-    i.labels = it.labels, i.riskFactors = it.riskFactors
+    i.labels = it.labels, i.riskFactors = it.riskFactors, i.explains = it.explains
 MERGE (q)-[:HAS_ITEM]->(i)
 WITH i, it
 OPTIONAL MATCH (i)-[old:INFORMS]->()

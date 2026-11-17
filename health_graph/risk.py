@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import datetime as dt
 
-from . import scores
+from . import anamnesis, scores
 
 TODAY = dt.date.today()
 
@@ -121,13 +121,27 @@ def compute_scores(conn, age, sex, smoker, region):
     need = ("year of birth and sex (Klarbefund build 16 or later: More, Profile; then More, Export to my Mac, "
             "Send year of birth and sex)")
 
+    uacr = urine_albumin_creatinine(conn)
+    if uacr:
+        light, band = scores.uacr_light(uacr["value"])
+        out.append(scores.Score("Urine albumin/creatinine ratio", uacr["value"], "mg/mmol", band,
+                                "KDIGO 2024 CKD guideline (albuminuria categories A1 to A3)", uacr["inputs"],
+                                note="one sample; KDIGO confirms a raised ratio in 2 of 3 samples over 3 to 6 months",
+                                light=light, id="uacr", observations=uacr["observations"], risk="kidney",
+                                date=uacr["date"]))
+
     creat = latest(series(conn, ["2160-0"], lambda r: scores.creatinine_mg_dl(r["value"], r["unit"])))
+    supplement = creatine_answer(conn)
     if creat and age and sex:
         e = scores.egfr_ckd_epi_2021(creat[1], age, sex)
         out.append(scores.Score("eGFR (CKD-EPI 2021)", e, "mL/min/1.73 m²", scores.egfr_stage(e),
                                 "Inker et al., NEJM 2021; KDIGO 2012 categories",
                                 {"creatinine": f"{creat[1]:.2f} mg/dL ({creat[0]})", "age": str(age), "sex": sex},
-                                note="albuminuria not measured; the KDIGO light assumes A1",
+                                note="; ".join(filter(None, [
+                                    None if uacr else "albuminuria not measured; the KDIGO light assumes A1",
+                                    f"your anamnesis: {supplement}, which raises creatinine without a loss of kidney "
+                                    "function, so this eGFR may read low; cystatin C settles it (KDIGO 2024)"
+                                    if supplement else None])) or None,
                                 light=scores.egfr_light(e), id="egfr", observations=[creat[6]],
                                 risk="kidney", date=creat[0]))
     else:
@@ -234,6 +248,53 @@ def compute_scores(conn, age, sex, smoker, region):
 
 
 
+CREATINE_ANSWER = """
+MATCH (:Patient)-[:HAS_RESPONSE]->(:QuestionnaireResponse)-[:HAS_ANSWER]->(a:Answer {linkId: 'creatine-protein'})
+RETURN a.codes AS codes, a.labels AS labels, a.text AS text ORDER BY a.authored DESC LIMIT 1
+"""
+
+
+def creatine_answer(conn) -> str | None:
+    """Your newest answer on creatine or protein, when it is one that raises creatinine (anamnesis ITEMS)."""
+    rows = list(conn.execute(CREATINE_ANSWER))
+    if not rows or not set(rows[0]["codes"] or []) & set(anamnesis.ITEM["creatine-protein"]["explains"]):
+        return None
+    return rows[0]["text"] or ", ".join(rows[0]["labels"] or [])
+
+
+URINE_ALBUMIN = ["1754-1", "14957-5"]      # albumin, microalbumin in urine
+URINE_CREATININE = ["14683-7", "2161-8"]   # creatinine in urine, molar and mass
+UACR_DIRECT = ["9318-7", "14959-1"]        # the ratio as the lab reports it, mg/g
+
+
+def _mg_l(r):
+    u = (r["unit"] or "").lower().replace("µ", "u")
+    factor = {"mg/l": 1, "ug/ml": 1, "mg/dl": 10, "g/l": 1000}.get(u)
+    return r["value"] * factor if factor else None
+
+
+def _mmol_l(r):
+    u = (r["unit"] or "").lower().replace("µ", "u")
+    factor = {"mmol/l": 1, "umol/l": 0.001, "mg/dl": 0.0884, "g/l": 8.84}.get(u)
+    return r["value"] * factor if factor else None
+
+
+def urine_albumin_creatinine(conn) -> dict | None:
+    """The newest uACR in mg/mmol: the lab's own ratio, or albumin and creatinine of one urine sample."""
+    direct = latest(series(conn, UACR_DIRECT, lambda r: r["value"] / 8.84
+                           if (r["unit"] or "").lower() in ("mg/g", "mg/g{creat}") else None))
+    pair = same_day(series(conn, URINE_ALBUMIN, _mg_l), series(conn, URINE_CREATININE, _mmol_l))
+    if pair and (not direct or pair[0] >= direct[0]):
+        day, (alb, cre) = pair
+        return {"value": scores.uacr_mg_mmol(alb[1], cre[1]), "date": day, "observations": [alb[6], cre[6]],
+                "inputs": {"urine albumin": f"{alb[1]:g} mg/L ({day})",
+                           "urine creatinine": f"{cre[1]:g} mmol/L ({day})"}}
+    if direct:
+        return {"value": direct[1], "date": direct[0], "observations": [direct[6]],
+                "inputs": {"ratio as reported": f"{direct[1] * 8.84:g} mg/g ({direct[0]})"}}
+    return None
+
+
 def same_day(*serieses):
     """The newest date on which every series has a value, with those points; None if there is none."""
     by_date = [{p[0]: p for p in s} for s in serieses]
@@ -275,9 +336,10 @@ def lipids_beyond_ldl(conn, risk_band: str | None) -> list[scores.Score]:
         light, band = scores.tg_hdl_light(ratio)
         inputs = {"triglycerides": f"{tg[1]:.2f} mmol/L", "HDL": f"{hdl[1]:.2f} mmol/L", "date": d}
         out.append(scores.Score("Triglyceride/HDL ratio", ratio, "(mmol/L units)", band,
-                                "McLaughlin et al., Ann Intern Med 2003", inputs,
+                                "McLaughlin et al., Ann Intern Med 2003; Kjærgaard et al., Nat Metab 2026", inputs,
                                 note="a sign of insulin resistance, not a diagnosis; cut-offs differ by sex and "
-                                     "group", light=light, risk="diabetes", date=d, observations=[tg[6], hdl[6]]))
+                                     "group", light=light, id="tg-hdl", risk="diabetes", date=d,
+                                observations=[tg[6], hdl[6]]))
         value = scores.aip(tg[1], hdl[1])
         out.append(scores.Score("Atherogenic index of plasma", value, "", scores.aip_band(value),
                                 "Dobiášová and Frohlich 2001; meta-analysis Assempoor et al., Cardiovasc Diabetol 2025",

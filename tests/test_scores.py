@@ -49,6 +49,16 @@ def test_tyg_and_units():
     assert scores.to_mg_dl(5.0, "furlongs", 1) is None
 
 
+def test_tg_hdl_and_uacr_follow_their_cut_offs():
+    # McLaughlin 2003: 3.0 in mg/dL units, which is 1.31 in mmol/L units.
+    assert scores.tg_hdl_ratio(1.5, 1.0) == 1.5 and scores.tg_hdl_light(1.5)[0] == scores.AMBER
+    assert scores.tg_hdl_light(1.30)[0] == scores.GREEN
+    # KDIGO 2024: A1 < 3, A2 3 to 30, A3 > 30 mg/mmol (30 mg/g = 3.4 mg/mmol).
+    assert scores.uacr_mg_mmol(30, 10) == pytest.approx(3.0)
+    assert [scores.uacr_light(v)[0] for v in (2.9, 3.0, 30, 30.1)] == \
+        [scores.GREEN, scores.AMBER, scores.AMBER, scores.RED]
+
+
 def test_traffic_lights_follow_the_published_categories():
     G, A, R = scores.GREEN, scores.AMBER, scores.RED
     assert [scores.score2_light(b) for b in ("low to moderate", "high", "very high")] == [G, A, R]

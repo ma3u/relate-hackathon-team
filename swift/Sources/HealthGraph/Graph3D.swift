@@ -109,6 +109,11 @@ public enum Graph3D {
       return ("Your answer", "\(num(p["linkId"])): \(labels.isEmpty ? (str(p, "text") ?? "") : labels)", [
         str(p, "question") ?? "", str(p, "authored") ?? "", str(p, "prefilled").map { "Prefilled from \($0)" } ?? "",
       ])
+    case "ScoreResult":  // your value of a risk score; the score itself is the RiskScore it hangs on
+      let shown = (p["value"] as? Double).map { num(($0 * 100).rounded() / 100) } ?? num(p["value"])
+      return (label, shown.isEmpty ? "Your result" : "Your result: \(shown)", [
+        str(p, "band") ?? "", str(p, "note") ?? "", str(p, "computedAt") ?? "",
+      ])
     case "OMOPPerson":
       return (label, "OMOP person", [])
     case "OMOPMeasurement":
@@ -185,6 +190,11 @@ public enum Graph3D {
       }
     }
 
+    // An answer can explain a value (creatine for creatinine, hard exercise before a sample):
+    // the question lists the choices that do (anamnesis ITEMS "explains").
+    var itemOf: [Int: JSONObject] = [:]
+    for l in links where l.type == "ANSWERS" && label(l.t) == "QuestionnaireItem" { itemOf[l.s] = props(l.t) }
+
     var nodes: [JSONObject] = []
     for r in rows {
       guard let id = r["id"] as? Int else { continue }
@@ -207,6 +217,13 @@ public enum Graph3D {
         }
       }
       if lab == "HealthRisk" { node["rid"] = p["id"] ?? NSNull() }
+      if lab == "Answer" {
+        node["lk"] = str(p, "linkId") ?? ""
+        node["ctx"] = str(p, "context") ?? ""
+        node["au"] = str(p, "authored") ?? ""
+        let codes = Set(p["codes"] as? [String] ?? []), explains = Set(itemOf[id]?["explains"] as? [String] ?? [])
+        if !codes.isDisjoint(with: explains) { node["ex"] = 1 }
+      }
       if lab == "Study" {
         node["sid"] = p["id"] ?? NSNull()
         node["year"] = p["year"] ?? NSNull()
