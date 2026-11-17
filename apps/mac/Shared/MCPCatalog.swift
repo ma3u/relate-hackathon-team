@@ -15,7 +15,7 @@ enum MCPCatalog {
   static let tools: [(name: String, summary: String)] = [
     ("get_schema", "Labels and relationships in your health graph, with counts."),
     ("read_cypher", "One read-only Cypher query against your health graph."),
-    ("anamnesis_plan", "Findings in your data and the anamnesis questions they leave."),
+    ("anamnesis_plan", "Findings in your data, the anamnesis questions they leave and the tests to ask your doctor for."),
     ("save_anamnesis_answers", "Hands your confirmed anamnesis answers to Klarbefund for Mac to store."),
     ("anamnesis_protocols", "The validated questionnaires (Life's Essential 8, FINDRISC, ...) and your earlier answers."),
     ("save_protocol_answers", "Hands one questionnaire's confirmed answers to Klarbefund for Mac to score and store."),

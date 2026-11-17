@@ -240,7 +240,9 @@ let tools: [[String: Any]] = [
       + "or at a limit; FIB-4; exercise test; blood oxygen; a score input only the user knows), what the graph "
       + "already answers (known, and questions answered in the last 12 months under skipped), values too old "
       + "to judge (rechecks), and only the questions left, each with its options, the findings that raise it "
-      + "and the LOINC codes it is about. Ask these questions; do not ask what known or skipped already answers.",
+      + "and the LOINC codes it is about. Each finding lists tests to ask the doctor for (for example cystatin C, "
+      + "a coronary calcium score, Lp(a) for relatives), each only while the graph has no value for it. "
+      + "Ask these questions; do not ask what known or skipped already answers.",
     "inputSchema": ["type": "object", "properties": [String: Any]()],
     "annotations": readOnly,
   ],
