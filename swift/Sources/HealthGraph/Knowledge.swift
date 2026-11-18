@@ -24,7 +24,7 @@ extension HealthStore {
     ]
     for (cypher, key) in steps {
       let rows = try connection.query(cypher, [key: JSON.cypher(data[key])]).records
-      for (k, v) in rows.first ?? [:] { counts[k] = Int(v.intValue ?? 0) }
+      for (k, v) in rows.first?.dictionary ?? [:] { counts[k] = Int(v.intValue ?? 0) }
     }
     _ = try connection.query(
       Cypher.seedVersion,
