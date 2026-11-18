@@ -109,7 +109,7 @@ func foundation(_ v: CypherValue) -> Any {
 
 extension HealthStore {
   func objects(_ cypher: String, _ parameters: [String: CypherValue] = [:]) throws -> [JSONObject] {
-    try connection.query(cypher, parameters).records.map { $0.mapValues(foundation) }
+    try connection.query(cypher, parameters).records.map { $0.dictionary.mapValues(foundation) }
   }
 
   /// Findings in the person's data, what the graph already answers, and the questions to ask.

@@ -9,7 +9,7 @@ let package = Package(
   name: "HealthGraph",
   platforms: [.iOS(.v16), .macOS(.v13)],
   products: [.library(name: "HealthGraph", targets: ["HealthGraph"])],
-  dependencies: [.package(url: "https://github.com/relatedb/relate", from: "1.0.0")],
+  dependencies: [.package(url: "https://github.com/relatedb/relate", .upToNextMinor(from: "1.1.0"))],
   targets: [
     .target(
       name: "HealthGraph",

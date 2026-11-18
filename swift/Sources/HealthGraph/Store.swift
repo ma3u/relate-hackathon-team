@@ -98,7 +98,7 @@ public final class HealthStore {
   public func omopTransform() throws -> [String: Int] {
     var counts: [String: Int] = [:]
     for statement in Self.statements(Cypher.omop) {
-      for (key, value) in try connection.query(statement).records.first ?? [:] {
+      for (key, value) in try connection.query(statement).records.first?.dictionary ?? [:] {
         counts[key] = Int(value.intValue ?? 0)
       }
     }
@@ -112,7 +112,7 @@ public final class HealthStore {
     guard let query = Queries.all[name] else {
       throw HealthGraphError.invalid("unknown query \(name)")
     }
-    return try connection.query(query.cypher, parameters).records
+    return try connection.query(query.cypher, parameters).records.map(\.dictionary)
   }
 
   /// Rows as plain text (strings unquoted, null empty), for app screens and
@@ -125,7 +125,7 @@ public final class HealthStore {
 
   public func rows(cypher: String, _ parameters: [String: String] = [:]) throws -> [[String: String]] {
     try connection.query(cypher, parameters.mapValues(CypherValue.string)).records
-      .map { $0.mapValues(\.plain) }
+      .map { $0.dictionary.mapValues(\.plain) }
   }
 
   /// Node count for one label (labels are fixed identifiers, never user input).
