@@ -3,7 +3,7 @@
 // swiftlint:disable line_length
 
 enum KnowledgeData {
-  static let fingerprint = "43f56e30692f03c1"
+  static let fingerprint = "1f28200ab43a57ea"
   static let rangesSource = "services/epa-ingest/src/reference-ranges.ts (MinimumViableHealthDataspacev2)"
   static let json = #"""
   {
@@ -123,18 +123,6 @@ enum KnowledgeData {
      "summary": "Published six months after the guideline was adopted. It agrees with the guideline that muscle pain on a statin is mostly not caused by it, and adds that liver test changes are real in the first months.",
      "to": "degam-053-024",
      "topic": "Statin side effects"
-    },
-    {
-     "from": "whs-lpa-2026",
-     "summary": "Published after the guideline: higher risk above 30 mg/dL in women, from thresholds chosen after the data. It reports relative risks, not how much Lp(a) improves a risk estimate, the question the guideline asked.",
-     "to": "degam-053-024",
-     "topic": "Lipoprotein(a)"
-    },
-    {
-     "from": "telaviv-lpa-2026",
-     "summary": "Published after the guideline: a risk threshold near 50 mg/dL in one selected cohort.",
-     "to": "degam-053-024",
-     "topic": "Lipoprotein(a)"
     },
     {
      "from": "lpa-horizon-2026",
@@ -6700,7 +6688,7 @@ enum KnowledgeData {
      "currency": [
       "Lipoprotein(a): advises against routine measurement on one 2012 meta-analysis (ERFC, c-statistic +0.0016, retrieved September 2023); its search update found nothing newer. Six societies (DGK, DGIM, DDG, DHL, DGSP, DGPR) dissent and favour one measurement in adulthood.",
       "Not cited although published before adoption: EPIC-Norfolk 2025 (Lp(a), LDL and hsCRP once, 20 years).",
-      "After adoption: CTT 2026 (statin side effects in product labels), WHS 2026 (Lp(a) thresholds), Lp(a)HORIZON 2026 (lowering Lp(a) with pelacarsen did not reduce events).",
+      "After adoption and through the quality gate: CTT 2026 (statin side effects in product labels), Lp(a)HORIZON 2026 (lowering Lp(a) with pelacarsen did not reduce events). Context only, below the gate: WHS 2026 (thresholds chosen after the data) and the Tel Aviv cohort 2026 (retrospective).",
       "Statins as a fixed moderate dose by absolute risk; the ESC/EAS 2025 update sets LDL targets instead."
      ],
      "design": "clinical practice guideline (S3, DEGAM)",
@@ -6885,6 +6873,11 @@ enum KnowledgeData {
      "certainty": "none (retracted)",
      "citation": "KETO-CTA, Soto-Mota et al., JACC Adv 2025;4:101686, retracted",
      "design": "observational cohort, 100 people, one year, no comparison group",
+     "gatePassed": false,
+     "gateReasons": [
+      "publication status: retracted",
+      "design: cohort"
+     ],
      "id": "keto-cta-2025",
      "kind": "study",
      "pmid": "40192608",
@@ -6916,6 +6909,8 @@ enum KnowledgeData {
      "certainty": "moderate",
      "citation": "CTT Collaboration, Lancet 2026;407:689",
      "design": "individual-participant meta-analysis, 19 placebo-controlled statin trials, 123,940 people",
+     "gatePassed": true,
+     "gateReasons": [],
      "id": "ctt-2026-labels",
      "kind": "study",
      "pmid": "41655587",
@@ -6946,6 +6941,10 @@ enum KnowledgeData {
      "certainty": "moderate for the direction, low for the size",
      "citation": "Tasdighi et al., PLoS Med 2025;22:e1004561",
      "design": "pooled analysis of 22 prospective cohorts, 323,826 adults",
+     "gatePassed": false,
+     "gateReasons": [
+      "design: pooled cohorts"
+     ],
      "id": "ccc-smoking-2025",
      "kind": "study",
      "pmid": "41252354",
@@ -6977,6 +6976,8 @@ enum KnowledgeData {
      "certainty": "high for this drug in its trial population; very low for any benefit at 30 mg/dL",
      "citation": "Lp(a)HORIZON, Cho et al., N Engl J Med 2026",
      "design": "randomised placebo-controlled trial, 8,323 people with cardiovascular disease and Lp(a) of at least 70 mg/dL, median 4.7 years",
+     "gatePassed": true,
+     "gateReasons": [],
      "id": "lpa-horizon-2026",
      "kind": "study",
      "pmid": "43001734",
@@ -7009,6 +7010,10 @@ enum KnowledgeData {
      "certainty": "low for a meaningful increase at 30 mg/dL",
      "citation": "EPIC-Norfolk, Kraaijenhof et al., Eur Heart J 2025;46:3875",
      "design": "prospective cohort, 17,087 European adults without cardiovascular disease, 20 years",
+     "gatePassed": false,
+     "gateReasons": [
+      "observational, analysis not registered and prespecified"
+     ],
      "id": "epic-norfolk-lpa-2025",
      "kind": "study",
      "pmid": "40167249",
@@ -7039,6 +7044,10 @@ enum KnowledgeData {
      "certainty": "low (women only, post hoc thresholds)",
      "citation": "Women's Health Study, Nordestgaard et al., JAMA Cardiol 2026;11:175",
      "design": "prospective cohort, 27,748 US women, 30 years",
+     "gatePassed": false,
+     "gateReasons": [
+      "observational, analysis not registered and prespecified"
+     ],
      "id": "whs-lpa-2026",
      "kind": "study",
      "pmid": "41499112",
@@ -7068,6 +7077,10 @@ enum KnowledgeData {
      "certainty": "very low for this person",
      "citation": "Tel Aviv cohort, Golan et al., Clin Res Cardiol 2026;115:357",
      "design": "retrospective single-centre cohort, 3,052 adults in a screening programme, median 6.4 years",
+     "gatePassed": false,
+     "gateReasons": [
+      "design: retrospective cohort"
+     ],
      "id": "telaviv-lpa-2026",
      "kind": "study",
      "pmid": "41400669",

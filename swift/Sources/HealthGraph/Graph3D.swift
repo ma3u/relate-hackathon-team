@@ -148,6 +148,10 @@ public enum Graph3D {
       lines.append((status == "ok" ? "Status: no retraction, correction or concern" : "Status: \(status.uppercased())")
         + " (PubMed, checked \(str(p, "statusCheckedAt") ?? ""))")
     }
+    if let passed = p["gatePassed"] as? Bool {
+      lines.append(passed ? "Quality gate: passed, may be set against a guideline"
+        : "Quality gate: not passed (" + list("gateReasons").joined(separator: "; ") + "), context only")
+    }
     if let verdict = str(p, "appraisalVerdict") {
       lines += ["Question: \(str(p, "appraisalQuestion") ?? "")", "Verdict: \(verdict)",
                 "Certainty: \(str(p, "certainty") ?? "")",

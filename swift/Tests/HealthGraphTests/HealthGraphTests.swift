@@ -462,7 +462,7 @@ struct KnowledgeTests {
     let dissent = try store.rows(cypher: "MATCH (:Study {id: 'degam-053-024'})-[k:DISAGREES_WITH]->(:Study) RETURN count(k) AS n")
     #expect(dissent.first?["n"] == "2")
     let later = try store.rows(cypher: "MATCH (:Study)-[k:AFTER_CUTOFF_OF]->(:Study {id: 'degam-053-024'}) RETURN count(k) AS n")
-    #expect(later.first?["n"] == "4")
+    #expect(later.first?["n"] == "2")  // CTT and Lp(a)HORIZON pass the gate; WHS and Tel Aviv do not
     let retracted = try store.rows(cypher: "MATCH (s:Study {publicationStatus: 'retracted'}) RETURN s.pmid AS p")
     #expect(retracted.first?["p"] == "40192608")
     let about = try store.rows(cypher: "MATCH (:Study {id: 'esc-eas-2025-lipids'})-[k:ABOUT]->(:HealthRisk) RETURN count(k) AS n")
