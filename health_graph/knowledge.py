@@ -26,6 +26,8 @@ import hashlib
 import json
 from pathlib import Path
 
+from health_graph import evidence
+
 HERE = Path(__file__).parent
 
 LDL = ["22748-8", "13457-7", "18262-6", "2089-1"]
@@ -223,6 +225,9 @@ STUDIES = [
      "pmid": "38828931", "examines": VITAMIN_D, "informs": [], "topics": ["Vitamins", "Bone"]},
 ]
 
+# The German guidelines and the appraised studies (evidence.py) are sources like the others.
+STUDIES += evidence.studies()
+
 # Sources that speak to one risk without linking two (a risk link adds ABOUT on its own). A range
 # source takes part too: EAS/EFLM 2016 (non-fasting lipids, remnant cholesterol).
 STUDY_ABOUT = [  # (study id, risk id)
@@ -234,6 +239,8 @@ STUDY_ABOUT = [  # (study id, risk id)
     ("kjaergaard-2026-proteomics", "diabetes"), ("kjaergaard-2026-proteomics", "liver"),
     ("kjaergaard-2026-proteomics", "kidney"), ("kjaergaard-2026-proteomics", "cardiovascular"),
 ]
+
+STUDY_ABOUT += evidence.about()
 
 # Which of these sources cite each other: OpenAlex `referenced_works` of every
 # source with a DOI (33 of 40), intersected with this list; retrieved 2026-11-13.
@@ -375,7 +382,8 @@ def _about_rows() -> list[dict]:
 
 
 def _citation_rows() -> list[dict]:
-    return [{"from": a, "to": b} for a, b in STUDY_CITATIONS]
+    return [{"from": a, "to": b, "source": "OpenAlex referenced_works"} for a, b in STUDY_CITATIONS] + \
+        [{"from": a, "to": b, "source": "reference list"} for a, b in evidence.GUIDELINE_CITES]
 
 
 def _examines_rows() -> list[dict]:
@@ -394,7 +402,8 @@ def _marker_rows() -> list[dict]:
 def fingerprint() -> str:
     """Changes whenever any seeded fact changes, so seeding runs only then."""
     blob = json.dumps([HEALTH_RISKS, RISK_SCORES, _marker_rows(), _range_rows(), STUDIES, RISK_LINKS, CODE_NAMES,
-                       STUDY_CITATIONS, TOPIC_OF_RISK, TOPIC_OF_GROUP, STUDY_ABOUT],
+                       STUDY_CITATIONS, TOPIC_OF_RISK, TOPIC_OF_GROUP, STUDY_ABOUT, evidence.GUIDELINE_CITES,
+                       evidence.AFTER_CUTOFF, evidence.DISAGREES],
                       sort_keys=True)
     return hashlib.sha256(blob.encode()).hexdigest()[:16]
 
@@ -442,8 +451,7 @@ RETURN count(rr) AS ranges
 SEED_STUDIES = """
 UNWIND $studies AS s
 MERGE (st:Study {id: s.id})
-SET st.citation = s.citation, st.title = s.title, st.year = s.year, st.design = s.design, st.url = s.url,
-    st.pmid = s.pmid, st.pubmedUrl = s.pubmedUrl, st.kind = s.kind, st.topics = s.topics
+SET st += s
 RETURN count(st) AS studies
 """
 
@@ -452,7 +460,7 @@ UNWIND $citations AS c
 MATCH (a:Study {id: c.from})
 MATCH (b:Study {id: c.to})
 MERGE (a)-[k:CITES]->(b)
-SET k.source = 'OpenAlex referenced_works'
+SET k.source = c.source
 RETURN count(k) AS citations
 """
 
@@ -516,6 +524,9 @@ MERGE (rr)-[:SOURCED_FROM]->(st)
 RETURN count(DISTINCT st) AS rangeSources
 """
 
+SEED_STUDY_AFTER_CUTOFF = evidence.SEED_STUDY_AFTER_CUTOFF
+SEED_STUDY_DISAGREES = evidence.SEED_STUDY_DISAGREES
+
 SEED_VERSION = """
 MERGE (k:Knowledge {id: 'health-graph'})
 SET k.fingerprint = $fingerprint, k.rangesSource = $rangesSource
@@ -544,6 +555,8 @@ def seed(conn, force: bool = False) -> dict[str, int]:
         counts.update(dict(conn.execute(SEED_STUDY_SCORES, {"informs": _informs_rows()}).single()))
         counts.update(dict(conn.execute(SEED_RISK_LINKS, {"links": RISK_LINKS}).single()))
         counts.update(dict(conn.execute(SEED_STUDY_RISKS, {"about": _about_rows()}).single()))
+        counts.update(dict(conn.execute(SEED_STUDY_AFTER_CUTOFF, {"afterCutoff": evidence.after_cutoff_rows()}).single()))
+        counts.update(dict(conn.execute(SEED_STUDY_DISAGREES, {"disagrees": evidence.disagree_rows()}).single()))
         source = json.loads((HERE / "reference_ranges.json").read_text())["source"]
         conn.execute(SEED_VERSION, {"fingerprint": fp, "rangesSource": source})
         conn.commit()

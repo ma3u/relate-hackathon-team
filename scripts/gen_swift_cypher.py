@@ -36,6 +36,8 @@ KNOWLEDGE = [
     ("seedStudyScores", "SEED_STUDY_SCORES"),
     ("seedRiskLinks", "SEED_RISK_LINKS"),
     ("seedStudyRisks", "SEED_STUDY_RISKS"),
+    ("seedStudyAfterCutoff", "SEED_STUDY_AFTER_CUTOFF"),
+    ("seedStudyDisagrees", "SEED_STUDY_DISAGREES"),
     ("seedVersion", "SEED_VERSION"),
 ]
 
@@ -177,6 +179,8 @@ def render_knowledge() -> str:
         "informs": knowledge._informs_rows(),
         "about": knowledge._about_rows(),
         "links": knowledge.RISK_LINKS,
+        "afterCutoff": knowledge.evidence.after_cutoff_rows(),
+        "disagrees": knowledge.evidence.disagree_rows(),
     }
     source = json.loads((ROOT / "health_graph/reference_ranges.json").read_text())["source"]
     blob = json.dumps(data, ensure_ascii=False, sort_keys=True, indent=1)

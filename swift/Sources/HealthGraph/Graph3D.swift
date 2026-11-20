@@ -86,7 +86,7 @@ public enum Graph3D {
         str(p, "title") ?? "", cit, str(p, "design") ?? "",
         topics.isEmpty ? "" : "Topics: " + topics.joined(separator: ", "),
         str(p, "pmid").map { "PubMed \($0)" } ?? "",
-      ])
+      ] + evidenceLines(p))
     case "AnamnesisCategory", "AnamnesisProtocol", "Questionnaire":
       return ("Anamnesis protocol", str(p, "name") ?? str(p, "title") ?? label, [
         str(p, "title") ?? "", str(p, "source") ?? "", str(p, "why") ?? str(p, "description") ?? "",
@@ -126,6 +126,37 @@ public enum Graph3D {
 
   static func isNumber(_ v: Any?) -> Bool { v is Int || v is Double }
   static func double(_ v: Any?) -> Double? { (v as? Double) ?? (v as? Int).map(Double.init) }
+
+  /// `evidence_lines()` in scripts/graph3d.py: a German guideline's validity and where it is behind,
+  /// a study's publication status and appraisal (health_graph/evidence.py).
+  static func evidenceLines(_ p: JSONObject) -> [String] {
+    var lines: [String] = []
+    func list(_ k: String) -> [String] { (p[k] as? [String]) ?? [] }
+    if let adopted = str(p, "adoptedDate") {
+      lines.append("\(str(p, "publisher") ?? "") \(str(p, "guidelineClass") ?? ""), version \(str(p, "version") ?? "")"
+        .trimmingCharacters(in: .whitespaces))
+      var valid = "Adopted \(adopted), valid until \(str(p, "validUntil") ?? "?")"
+      if str(p, "validity") == "partly-expired" { valid += "; parts expired on \(str(p, "earliestValidUntil") ?? "")" }
+      lines.append(valid)
+      if p["evidenceMedianAge"] != nil && !(p["evidenceMedianAge"] is NSNull) {
+        lines.append("Cited evidence: median \(num(p["evidenceMedianAge"])) years old on adoption, newest from "
+          + "\(num(p["newestCitedYear"])), \(num(p["referencesCount"])) references")
+      }
+      lines += list("currency").map { "Behind: \($0)" }
+    }
+    if let status = str(p, "publicationStatus") {
+      lines.append((status == "ok" ? "Status: no retraction, correction or concern" : "Status: \(status.uppercased())")
+        + " (PubMed, checked \(str(p, "statusCheckedAt") ?? ""))")
+    }
+    if let verdict = str(p, "appraisalVerdict") {
+      lines += ["Question: \(str(p, "appraisalQuestion") ?? "")", "Verdict: \(verdict)",
+                "Certainty: \(str(p, "certainty") ?? "")",
+                "Checked by code: " + list("appraisalChecked").joined(separator: "; "),
+                "Left to a person: " + list("appraisalOpen").joined(separator: "; "),
+                "Appraised \(str(p, "appraisedAt") ?? ""): \(str(p, "appraisalSource") ?? "")"]
+    }
+    return lines
+  }
 
   /// `build()` in scripts/graph3d.py: the nodes and links of the page.
   static func build(nodes rows: [JSONObject], links linkRows: [JSONObject]) -> JSONObject {
@@ -230,6 +261,8 @@ public enum Graph3D {
         node["topics"] = p["topics"] ?? [String]()
         node["url"] = p["url"] ?? NSNull()
         node["pubmed"] = p["pubmedUrl"] ?? NSNull()
+        if let s = str(p, "publicationStatus") { node["ps"] = s }
+        if let v = str(p, "validity") { node["gv"] = v }
       }
       if lab == "ReferenceRange" {
         var rr: JSONObject = [:]
@@ -273,7 +306,7 @@ extension HealthStore {
     let nodes = try objects("MATCH (n) RETURN id(n) AS id, labels(n)[0] AS label, properties(n) AS p")
     let links = try objects("""
       MATCH (a)-[r]->(b) RETURN id(a) AS s, id(b) AS t, type(r) AS type,
-             CASE WHEN type(r) = 'RAISES_RISK_OF' THEN properties(r) END AS p
+             CASE WHEN type(r) IN ['RAISES_RISK_OF', 'DISAGREES_WITH', 'AFTER_CUTOFF_OF'] THEN properties(r) END AS p
       """)
     var data = Graph3D.build(nodes: nodes, links: links)
     let person = try objects("MATCH (p:Patient) RETURN p.birthYear AS y, p.gender AS g").first ?? [:]

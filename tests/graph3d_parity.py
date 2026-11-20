@@ -29,7 +29,7 @@ def main(db: str) -> int:
     relate = os.environ.get("RELATE_BIN") or "relate"
     nodes = graph3d.query(relate, db, "MATCH (n) RETURN id(n) AS id, labels(n)[0] AS label, properties(n) AS p")
     links = graph3d.query(relate, db, "MATCH (a)-[r]->(b) RETURN id(a) AS s, id(b) AS t, type(r) AS type, "
-                                      "CASE WHEN type(r) = 'RAISES_RISK_OF' THEN properties(r) END AS p")
+                                      "CASE WHEN type(r) IN ['RAISES_RISK_OF', 'DISAGREES_WITH', 'AFTER_CUTOFF_OF'] THEN properties(r) END AS p")
     py = graph3d.build(nodes, links)
     with tempfile.TemporaryDirectory() as tmp:
         out = Path(tmp) / "swift.json"

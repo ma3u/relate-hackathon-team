@@ -99,7 +99,7 @@ def describe(label, p):
         return ("Guideline" if p.get("kind") == "guideline" else "Study"), name, [
             p.get("title") or "", p.get("citation") or "", p.get("design") or "",
             "Topics: " + ", ".join(p["topics"]) if p.get("topics") else "",
-            f"PubMed {p['pmid']}" if p.get("pmid") else ""]
+            f"PubMed {p['pmid']}" if p.get("pmid") else ""] + evidence_lines(p)
     # The anamnesis: protocols (validated questionnaires), their questions, SNOMED CT codes, your answers.
     if label in ("AnamnesisCategory", "AnamnesisProtocol", "Questionnaire"):
         return "Anamnesis protocol", p.get("name") or p.get("title") or label, [
@@ -131,6 +131,32 @@ def describe(label, p):
         value = f"{num(p.get('valueAsNumber'))} {p.get('unitSourceValue') or ''}".strip()
         return label, p.get("measurementSourceValue") or "OMOP measurement", [value, p.get("measurementDate") or ""]
     return label, label, []
+
+
+def evidence_lines(p):
+    """A German guideline's validity and where it is behind; a study's status and appraisal (health_graph/evidence.py)."""
+    lines = []
+    if p.get("adoptedDate"):
+        lines.append(f"{p.get('publisher') or ''} {p.get('guidelineClass') or ''}, version {p.get('version') or ''}".strip())
+        valid = f"Adopted {p['adoptedDate']}, valid until {p.get('validUntil') or '?'}"
+        if p.get("validity") == "partly-expired":
+            valid += f"; parts expired on {p.get('earliestValidUntil')}"
+        lines.append(valid)
+        if p.get("evidenceMedianAge") is not None:
+            lines.append(f"Cited evidence: median {num(p['evidenceMedianAge'])} years old on adoption, newest from "
+                         f"{num(p.get('newestCitedYear'))}, {num(p.get('referencesCount'))} references")
+        lines += [f"Behind: {c}" for c in p.get("currency") or []]
+    if p.get("publicationStatus"):
+        status = p["publicationStatus"]
+        lines.append(("Status: no retraction, correction or concern" if status == "ok" else f"Status: {status.upper()}")
+                     + f" (PubMed, checked {p.get('statusCheckedAt')})")
+    if p.get("appraisalVerdict"):
+        lines += [f"Question: {p.get('appraisalQuestion')}", f"Verdict: {p['appraisalVerdict']}",
+                  f"Certainty: {p.get('certainty')}",
+                  "Checked by code: " + "; ".join(p.get("appraisalChecked") or []),
+                  "Left to a person: " + "; ".join(p.get("appraisalOpen") or []),
+                  f"Appraised {p.get('appraisedAt')}: {p.get('appraisalSource')}"]
+    return lines
 
 
 def build(nodes_in, links_in):
@@ -221,6 +247,10 @@ def build(nodes_in, links_in):
             node["topics"] = p.get("topics") or []
             node["url"] = p.get("url")
             node["pubmed"] = p.get("pubmedUrl")
+            if p.get("publicationStatus"):
+                node["ps"] = p["publicationStatus"]
+            if p.get("validity"):
+                node["gv"] = p["validity"]
         if r["label"] == "ReferenceRange":
             node["r"] = {k: p.get(f) for k, f in (("gl", "guidelineLow"), ("gh", "guidelineHigh"), ("ol", "optimalLow"),
                                                    ("oh", "optimalHigh"), ("u", "ucum"), ("sex", "sex"), ("src", "sourceLabel"),
@@ -299,7 +329,7 @@ def main():
         personal = seed_knowledge(db)
         nodes = query(a.relate, db, "MATCH (n) RETURN id(n) AS id, labels(n)[0] AS label, properties(n) AS p")
         links = query(a.relate, db, "MATCH (a)-[r]->(b) RETURN id(a) AS s, id(b) AS t, type(r) AS type, "
-                                    "CASE WHEN type(r) = 'RAISES_RISK_OF' THEN properties(r) END AS p")
+                                    "CASE WHEN type(r) IN ['RAISES_RISK_OF', 'DISAGREES_WITH', 'AFTER_CUTOFF_OF'] THEN properties(r) END AS p")
 
     data = build(nodes, links)
     data.update(personal)

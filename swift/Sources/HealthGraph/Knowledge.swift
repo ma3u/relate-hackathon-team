@@ -21,6 +21,7 @@ extension HealthStore {
       (Cypher.seedRangeSources, "rangeSources"),
       (Cypher.seedStudies, "studies"), (Cypher.seedStudyCitations, "citations"), (Cypher.seedStudyMarkers, "examines"),
       (Cypher.seedStudyScores, "informs"), (Cypher.seedRiskLinks, "links"), (Cypher.seedStudyRisks, "about"),
+      (Cypher.seedStudyAfterCutoff, "afterCutoff"), (Cypher.seedStudyDisagrees, "disagrees"),
     ]
     for (cypher, key) in steps {
       let rows = try connection.query(cypher, [key: JSON.cypher(data[key])]).records
