@@ -348,6 +348,15 @@ def test_german_guidelines_and_appraised_studies(db):
     assert later and all(str(r["y"]) >= r["a"][:4] for r in later)
     both = list(conn.execute("""MATCH (a:Study)-[k:DISAGREES_WITH]->(b:Study) RETURN k.topic AS t"""))
     assert {"Lipoprotein(a)", "LDL cholesterol"} <= {r["t"] for r in both}
+    # registered is not enough: small trials and meta-analyses of small trials stay context
+    gated = {r["id"]: r["why"] for r in conn.execute(
+        "MATCH (s:Study) WHERE s.id IN $ids RETURN s.id AS id, s.gateReasons AS why",
+        {"ids": ["samson-2020", "clear-outcomes-2023", "q10-qu-2018", "q10-kennedy-2020", "q10-kovacic-2025"]})}
+    assert gated["clear-outcomes-2023"] == []
+    assert all(any(w.startswith("too small") for w in gated[i])
+               for i in ["samson-2020", "q10-qu-2018", "q10-kennedy-2020", "q10-kovacic-2025"])
+    assert "not registered before it started" in gated["q10-qu-2018"]
+    assert "registration not found (full text not read)" in gated["q10-kennedy-2020"]
     cites = conn.execute("""MATCH (:Study {id: 'degam-053-024'})-[k:CITES {source: 'reference list'}]->(s)
                             RETURN count(s) AS n""").single()["n"]
     assert cites == sum(1 for a, _ in evidence.GUIDELINE_CITES if a == "degam-053-024")
