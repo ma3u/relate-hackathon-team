@@ -316,7 +316,18 @@ def test_german_guidelines_and_appraised_studies(db):
     from health_graph import evidence, knowledge
     conn, _ = db
     counts = knowledge.seed(conn)
-    assert counts["afterCutoff"] == len(evidence.AFTER_CUTOFF) and counts["disagreements"] == len(evidence.DISAGREES)
+    assert counts["afterCutoff"] == len(evidence.after_cutoff_rows()) and counts["disagreements"] == len(evidence.DISAGREES)
+    # the gate: only peer-reviewed, unretracted, registered trials or meta-analyses are set against a guideline
+    linked = {r["s"] for r in conn.execute("MATCH (s:Study)-[:AFTER_CUTOFF_OF]->() RETURN s.id AS s")}
+    assert linked == {"ctt-2026-labels", "lpa-horizon-2026"}
+    held = conn.execute("""MATCH (s:Study {id: 'whs-lpa-2026'}) RETURN s.gatePassed AS p, s.gateReasons AS r""").single()
+    assert held["p"] is False and any("prespecified" in r for r in held["r"])
+    conn.execute("""MATCH (s:Study {id: 'whs-lpa-2026'}), (g:Study {id: 'degam-053-024'})
+                    CREATE (s)-[:AFTER_CUTOFF_OF {topic: 'from an older seed'}]->(g)""")
+    knowledge.seed(conn, force=True)  # an older link of a study below the gate is removed
+    assert {r["s"] for r in conn.execute("MATCH (s:Study)-[:AFTER_CUTOFF_OF]->() RETURN s.id AS s")} == linked
+    keto = conn.execute("MATCH (s:Study {id: 'keto-cta-2025'}) RETURN s.gateReasons AS r").single()["r"]
+    assert any("retracted" in r for r in keto)  # peer review alone is not enough
     g = conn.execute("""MATCH (g:Study {id: 'degam-053-024'}) RETURN g.kind AS kind, g.guidelineClass AS cls,
                         g.adoptedDate AS adopted, g.validUntil AS until, size(g.currency) AS notes""").single()
     assert (g["kind"], g["cls"], g["adopted"], g["until"]) == ("guideline", "S3", "2025-08-01", "2029-11-30")
@@ -337,6 +348,15 @@ def test_german_guidelines_and_appraised_studies(db):
     assert later and all(str(r["y"]) >= r["a"][:4] for r in later)
     both = list(conn.execute("""MATCH (a:Study)-[k:DISAGREES_WITH]->(b:Study) RETURN k.topic AS t"""))
     assert {"Lipoprotein(a)", "LDL cholesterol"} <= {r["t"] for r in both}
+    # registered is not enough: small trials and meta-analyses of small trials stay context
+    gated = {r["id"]: r["why"] for r in conn.execute(
+        "MATCH (s:Study) WHERE s.id IN $ids RETURN s.id AS id, s.gateReasons AS why",
+        {"ids": ["samson-2020", "clear-outcomes-2023", "q10-qu-2018", "q10-kennedy-2020", "q10-kovacic-2025"]})}
+    assert gated["clear-outcomes-2023"] == []
+    assert all(any(w.startswith("too small") for w in gated[i])
+               for i in ["samson-2020", "q10-qu-2018", "q10-kennedy-2020", "q10-kovacic-2025"])
+    assert "not registered before it started" in gated["q10-qu-2018"]
+    assert "registration not found (full text not read)" in gated["q10-kennedy-2020"]
     cites = conn.execute("""MATCH (:Study {id: 'degam-053-024'})-[k:CITES {source: 'reference list'}]->(s)
                             RETURN count(s) AS n""").single()["n"]
     assert cites == sum(1 for a, _ in evidence.GUIDELINE_CITES if a == "degam-053-024")

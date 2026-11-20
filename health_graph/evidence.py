@@ -18,9 +18,10 @@ Extends the knowledge layer (knowledge.py) with
         judgement items left open for a person (Woelfle et al., J Clin Epidemiol 2024)
     (:Study)-[:CITES {source: 'reference list'}]->(:Study)
         a German guideline cites a study in this graph (its printed reference list)
-    (:Study)-[:AFTER_CUTOFF_OF {topic, summary}]->(:Study {kind: 'guideline'})
-        published after the guideline was adopted, about one of its recommendations:
-        flagged, never applied in the guideline's place
+    (:Study {gatePassed, gateReasons})-[:AFTER_CUTOFF_OF {topic, summary}]->(:Study {kind: 'guideline'})
+        published after the guideline was adopted, about one of its recommendations, and
+        through the quality gate (gate() below): flagged, never applied in the
+        guideline's place
     (:Study)-[:DISAGREES_WITH {topic, summary}]->(:Study)
         two guidelines, or a guideline and its dissenting societies, answer one
         question differently: show both, never pick one silently
@@ -57,8 +58,9 @@ GUIDELINES = [
          "+0.0016, retrieved September 2023); its search update found nothing newer. Six societies (DGK, DGIM, "
          "DDG, DHL, DGSP, DGPR) dissent and favour one measurement in adulthood.",
          "Not cited although published before adoption: EPIC-Norfolk 2025 (Lp(a), LDL and hsCRP once, 20 years).",
-         "After adoption: CTT 2026 (statin side effects in product labels), WHS 2026 (Lp(a) thresholds), "
-         "Lp(a)HORIZON 2026 (lowering Lp(a) with pelacarsen did not reduce events).",
+         "After adoption and through the quality gate: CTT 2026 (statin side effects in product labels), "
+         "Lp(a)HORIZON 2026 (lowering Lp(a) with pelacarsen did not reduce events). Context only, below the gate: "
+         "WHS 2026 (thresholds chosen after the data) and the Tel Aviv cohort 2026 (retrospective).",
          "Statins as a fixed moderate dose by absolute risk; the ESC/EAS 2025 update sets LDL targets instead.",
      ],
      "examines": LDL + APOB + LPA + BP + EGFR + UACR, "informs": ["score2"],
@@ -242,6 +244,94 @@ LPA_STUDIES = [
      "examines": ["10835-7"], "informs": ["score2"], "topics": ["Heart and vessels"]},
 ]
 
+# ── example 3, a statin that makes a person tired: appraised on CHECKED ──────
+STATIN = ("https://github.com/ma3u/relate-hackathon-team/blob/main/docs/evidence/"
+          "statin-tolerance-appraisal-2026-11-20.md")
+STATIN_QUESTION = ("A statin makes me tired. Is it the statin, does coenzyme Q10 help, and what else lowers "
+                   "LDL if I cannot take one?")
+STATIN_STUDIES = [
+    {"id": "samson-2020", "year": 2020,
+     "design": "randomised n-of-1 trial, 60 people who had stopped a statin, 12 months of statin, placebo or "
+               "nothing in random order",
+     "citation": "SAMSON, Wood et al., N Engl J Med 2020;383:2182 (letter)",
+     "title": "N-of-1 Trial of a Statin, Placebo, or No Treatment to Assess Side Effects",
+     "url": "https://doi.org/10.1056/NEJMc2031173", "pmid": "33196154",
+     "publicationStatus": "ok", "statusCheckedAt": CHECKED, "appraisalQuestion": STATIN_QUESTION,
+     "appraisalVerdict": "About 90% of the symptom burden felt on the statin was also felt on placebo. It tests "
+                         "the question one person at a time, which is what a person who feels tired can repeat "
+                         "with their doctor. It does not show that nobody has real side effects.",
+     "certainty": "moderate for the average; it cannot say which person has a real side effect",
+     "appraisalChecked": ["No retraction, correction or concern (PubMed)", "Registered before the first patient "
+                          "(NCT02668016, submitted 2016-01-19, started 2016-03)", "60 participants (registry)"],
+     "appraisalOpen": ["Published as a letter: the full report was not read",
+                       "People who stopped a statin within weeks may not have enrolled"],
+     "appraisedAt": CHECKED, "appraisalSource": STATIN,
+     "examines": [], "informs": [], "topics": ["Heart and vessels"]},
+    {"id": "clear-outcomes-2023", "year": 2023,
+     "design": "randomised placebo-controlled trial, 13,970 statin-intolerant people, bempedoic acid",
+     "citation": "CLEAR Outcomes, Nissen et al., N Engl J Med 2023;388:1353",
+     "title": "Bempedoic Acid and Cardiovascular Outcomes in Statin-Intolerant Patients",
+     "url": "https://doi.org/10.1056/NEJMoa2215024", "pmid": "36876740",
+     "publicationStatus": "ok", "statusCheckedAt": CHECKED, "appraisalQuestion": STATIN_QUESTION,
+     "appraisalVerdict": "For people who cannot take a statin there is an alternative with an outcome trial: "
+                         "bempedoic acid lowered LDL and major cardiovascular events against placebo, with few "
+                         "muscle complaints.",
+     "certainty": "high for statin-intolerant people at high risk",
+     "appraisalChecked": ["No retraction, correction or concern (PubMed)", "Registered before the first patient "
+                          "(NCT02993406, submitted 2016-12-09, started 2016-12-22)", "Double-blind"],
+     "appraisalOpen": ["Funded by the maker of the drug", "Enrolled people with, or at high risk of, heart "
+                       "disease: the benefit at lower risk is smaller"],
+     "appraisedAt": CHECKED, "appraisalSource": STATIN,
+     "examines": LDL, "informs": [], "topics": ["Heart and vessels"]},
+    {"id": "q10-qu-2018", "year": 2018,
+     "design": "meta-analysis of 12 small randomised trials, 575 people",
+     "citation": "Qu et al., J Am Heart Assoc 2018;7:e009835",
+     "title": "Effects of Coenzyme Q10 on Statin-Induced Myopathy: An Updated Meta-Analysis of Randomized "
+              "Controlled Trials",
+     "url": "https://doi.org/10.1161/JAHA.118.009835", "pmid": "30371340",
+     "publicationStatus": "ok", "statusCheckedAt": CHECKED, "appraisalQuestion": STATIN_QUESTION,
+     "appraisalVerdict": "Reports less muscle pain, weakness, cramps and muscle tiredness with Q10. The paper "
+                         "states that it had no registered protocol, and two later meta-analyses of largely the "
+                         "same trials disagree.",
+     "certainty": "very low",
+     "appraisalChecked": ["No retraction, correction or concern (PubMed)", "No registered protocol (stated in "
+                          "the full text)", "575 participants in 12 trials"],
+     "appraisalOpen": ["Muscle symptoms, not general tiredness", "Fixed-effect pooling of small trials"],
+     "appraisedAt": CHECKED, "appraisalSource": STATIN,
+     "examines": [], "informs": [], "topics": ["Heart and vessels"]},
+    {"id": "q10-kennedy-2020", "year": 2020,
+     "design": "systematic review and meta-analysis of 7 randomised trials, 321 people",
+     "citation": "Kennedy et al., Atherosclerosis 2020;299:1",
+     "title": "Effect of Coenzyme Q10 on statin-associated myalgia and adherence to statin therapy",
+     "url": "https://doi.org/10.1016/j.atherosclerosis.2020.03.006", "pmid": "32179207",
+     "publicationStatus": "ok", "statusCheckedAt": CHECKED, "appraisalQuestion": STATIN_QUESTION,
+     "appraisalVerdict": "No benefit of Q10 on muscle pain, and no more people stayed on their statin. Only two "
+                         "of the trials were positive.",
+     "certainty": "low",
+     "appraisalChecked": ["No retraction, correction or concern (PubMed)", "321 participants in 7 trials of 37 to "
+                          "76 people", "No registration named in the abstract"],
+     "appraisalOpen": ["Full text not read (subscription): registration not confirmed",
+                       "Muscle pain, not general tiredness"],
+     "appraisedAt": CHECKED, "appraisalSource": STATIN,
+     "examines": [], "informs": [], "topics": ["Heart and vessels"]},
+    {"id": "q10-kovacic-2025", "year": 2025,
+     "design": "systematic review and meta-analysis of 7 randomised trials, 389 people, 30 to 90 days",
+     "citation": "Kovacic et al., J Nutr Sci 2025;14:e72",
+     "title": "Effects of coenzyme Q10 supplementation on myopathy in statin-treated patients",
+     "url": "https://doi.org/10.1017/jns.2025.10043", "pmid": "41158831",
+     "publicationStatus": "ok", "statusCheckedAt": CHECKED, "appraisalQuestion": STATIN_QUESTION,
+     "appraisalVerdict": "Pain about one point lower on a ten-point scale, with an interval reaching almost zero "
+                         "(-1.88 to -0.03); four trials positive, three not. Registered in advance, but the "
+                         "trials are too small and too short to settle it.",
+     "certainty": "low",
+     "appraisalChecked": ["No retraction, correction or concern (PubMed)", "Registered in advance (PROSPERO "
+                          "CRD42023467604, stated in the full text)", "389 participants in 7 trials of 35 to 76 "
+                          "people"],
+     "appraisalOpen": ["Muscle pain, not general tiredness", "Doses from 100 to 600 mg a day pooled together"],
+     "appraisedAt": CHECKED, "appraisalSource": STATIN,
+     "examines": [], "informs": [], "topics": ["Heart and vessels"]},
+]
+
 # Existing knowledge-layer sources a German guideline cites (its printed reference list,
 # resolved to PubMed by the MVHD pipeline, PIPELINE).
 GUIDELINE_CITES = [  # (guideline, study id in this graph)
@@ -273,8 +363,68 @@ DISAGREES = [  # (guideline, guideline, topic, summary)
 ]
 
 
+# ── the gate a newer study must pass before it is set against a guideline ──
+# A guideline has already weighed the quality of the studies it cites; a newer study
+# has not been through that. Peer review is necessary but not enough: KETO-CTA was
+# peer reviewed and retracted. So a study is linked AFTER_CUTOFF_OF a guideline only
+# when it was peer reviewed, carries no retraction or expression of concern, and its
+# design and plan were fixed before the data: a randomised trial or a meta-analysis
+# of trials registered in advance, or a prospective cohort with a registered,
+# prespecified analysis. Everything else stays in the graph as context, not as a
+# challenge to the guideline. Facts as read in the appraisals (DRAFT, LPA).
+#
+# Registration is not enough either: a registered meta-analysis of seven trials of 35 to
+# 76 people (Q10) cannot settle a question. A study also needs at least MIN_PARTICIPANTS,
+# the size the CTT Collaboration itself requires of a trial before it pools it.
+# registered None means not found (full text not read), which fails like False.
+GATE_FACTS = {  # id: (peer reviewed, design, registered in advance, analysis prespecified, participants)
+    "keto-cta-2025": (True, "cohort", False, False, 100),            # registered after the start
+    "ctt-2026-labels": (True, "meta-analysis of trials", True, True, 123940),  # protocol published 2016
+    "ccc-smoking-2025": (True, "pooled cohorts", False, False, 323826),   # analysis plan not public
+    "lpa-horizon-2026": (True, "randomised trial", True, True, 8323),   # NCT04023552
+    "epic-norfolk-lpa-2025": (True, "prospective cohort", False, False, 17087),
+    "whs-lpa-2026": (True, "prospective cohort", False, False, 27748),   # hypothesis formulated after the data
+    "telaviv-lpa-2026": (True, "retrospective cohort", False, False, 3052),  # threshold found in the same data
+    "samson-2020": (True, "randomised trial", True, True, 60),          # NCT02668016
+    "clear-outcomes-2023": (True, "randomised trial", True, True, 13970),  # NCT02993406
+    "q10-qu-2018": (True, "meta-analysis of trials", False, False, 575),  # "no registered protocol"
+    "q10-kennedy-2020": (True, "meta-analysis of trials", None, None, 321),
+    "q10-kovacic-2025": (True, "meta-analysis of trials", True, True, 389),  # PROSPERO CRD42023467604
+}
+STRONG_DESIGNS = {"randomised trial", "meta-analysis of trials"}
+MIN_PARTICIPANTS = 1000
+
+
+def gate(st: dict) -> list[str]:
+    """Why a study may not be set against a guideline; empty when it passes."""
+    peer, design, registered, prespecified, participants = GATE_FACTS[st["id"]]
+    reasons = []
+    if not peer:
+        reasons.append("not peer reviewed (preprint)")
+    if st.get("publicationStatus") != "ok":
+        reasons.append(f"publication status: {st.get('publicationStatus')}")
+    if participants < MIN_PARTICIPANTS:
+        reasons.append(f"too small: {participants:,} participants, fewer than {MIN_PARTICIPANTS:,}")
+    if design in STRONG_DESIGNS:
+        if registered is None:
+            reasons.append("registration not found (full text not read)")
+        elif not registered:
+            reasons.append("not registered before it started")
+    elif design == "prospective cohort":
+        if not (registered and prespecified):
+            reasons.append("observational, analysis not registered and prespecified")
+    else:
+        reasons.append(f"design: {design}")
+    return reasons
+
+
+def _with_gate(st: dict) -> dict:
+    reasons = gate(st)
+    return st | {"gatePassed": not reasons, "gateReasons": reasons}
+
+
 def studies() -> list[dict]:
-    return GUIDELINES + STUDIES + LPA_STUDIES
+    return GUIDELINES + [_with_gate(st) for st in STUDIES + LPA_STUDIES + STATIN_STUDIES]
 
 
 def about() -> list[tuple[str, str]]:
@@ -284,14 +434,20 @@ def about() -> list[tuple[str, str]]:
 
 
 def after_cutoff_rows() -> list[dict]:
-    return [{"from": a, "to": b, "topic": t, "summary": s} for a, b, t, s in AFTER_CUTOFF]
+    """Only studies that pass the gate are set against a guideline."""
+    passed = {st["id"] for st in studies() if st.get("gatePassed")}
+    return [{"from": a, "to": b, "topic": t, "summary": s} for a, b, t, s in AFTER_CUTOFF if a in passed]
 
 
 def disagree_rows() -> list[dict]:
     return [{"from": a, "to": b, "topic": t, "summary": s} for a, b, t, s in DISAGREES]
 
 
+# Links from an earlier seed go first: a study that no longer passes the gate loses its link.
 SEED_STUDY_AFTER_CUTOFF = """
+OPTIONAL MATCH ()-[old:AFTER_CUTOFF_OF]->()
+DELETE old
+WITH count(*) AS removed
 UNWIND $afterCutoff AS c
 MATCH (a:Study {id: c.from})
 MATCH (g:Study {id: c.to})

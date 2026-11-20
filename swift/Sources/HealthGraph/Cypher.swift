@@ -323,6 +323,9 @@ enum Cypher {
   """#
 
   static let seedStudyAfterCutoff = #"""
+  OPTIONAL MATCH ()-[old:AFTER_CUTOFF_OF]->()
+  DELETE old
+  WITH count(*) AS removed
   UNWIND $afterCutoff AS c
   MATCH (a:Study {id: c.from})
   MATCH (g:Study {id: c.to})

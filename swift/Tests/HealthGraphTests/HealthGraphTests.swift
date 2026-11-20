@@ -443,8 +443,8 @@ struct PatientAttributeTests {
 @Suite("Knowledge layer", .serialized)
 struct KnowledgeTests {
   /// Same counts as the Python seed: 6 risks, 6 scores, 55 marker links, 173 ranges,
-  /// 62 studies (22 seeded with the risk links and newer views, 27 range sources, 6 German guidelines and
-  /// 7 appraised studies), 10 risk links.
+  /// 67 studies (22 seeded with the risk links and newer views, 27 range sources, 6 German guidelines and
+  /// 12 appraised studies), 10 risk links.
   @Test func seedsTheSameKnowledgeAsPython() throws {
     let store = try HealthStore(path: Fixtures.tempStore())
     try store.initSchema()
@@ -454,15 +454,15 @@ struct KnowledgeTests {
     #expect(try store.count("ReferenceRange") == 173)
     let markers = try store.rows(cypher: "MATCH (:LoincCode)-[k:MARKER_OF]->(:HealthRisk) RETURN count(k) AS n")
     #expect(markers.first?["n"] == "55")
-    #expect(try store.count("Study") == 62)  // 22 risk links and newer views, 27 ranges, 13 guidelines and appraisals
+    #expect(try store.count("Study") == 67)  // 22 risk links and newer views, 27 ranges, 18 guidelines and appraisals
     let links = try store.rows(cypher: "MATCH (:HealthRisk)-[k:RAISES_RISK_OF]->(:HealthRisk) RETURN count(k) AS n")
     #expect(links.first?["n"] == "10")
     let examines = try store.rows(cypher: "MATCH (:Study)-[k:EXAMINES]->(:LoincCode) RETURN count(k) AS n")
-    #expect(examines.first?["n"] == "186")
+    #expect(examines.first?["n"] == "190")
     let dissent = try store.rows(cypher: "MATCH (:Study {id: 'degam-053-024'})-[k:DISAGREES_WITH]->(:Study) RETURN count(k) AS n")
     #expect(dissent.first?["n"] == "2")
     let later = try store.rows(cypher: "MATCH (:Study)-[k:AFTER_CUTOFF_OF]->(:Study {id: 'degam-053-024'}) RETURN count(k) AS n")
-    #expect(later.first?["n"] == "4")
+    #expect(later.first?["n"] == "2")  // CTT and Lp(a)HORIZON pass the gate; WHS and Tel Aviv do not
     let retracted = try store.rows(cypher: "MATCH (s:Study {publicationStatus: 'retracted'}) RETURN s.pmid AS p")
     #expect(retracted.first?["p"] == "40192608")
     let about = try store.rows(cypher: "MATCH (:Study {id: 'esc-eas-2025-lipids'})-[k:ABOUT]->(:HealthRisk) RETURN count(k) AS n")

@@ -3,7 +3,7 @@
 // swiftlint:disable line_length
 
 enum KnowledgeData {
-  static let fingerprint = "43f56e30692f03c1"
+  static let fingerprint = "0b16b093a22f3be4"
   static let rangesSource = "services/epa-ingest/src/reference-ranges.ts (MinimumViableHealthDataspacev2)"
   static let json = #"""
   {
@@ -105,6 +105,26 @@ enum KnowledgeData {
      "study": "telaviv-lpa-2026"
     },
     {
+     "risk": "cardiovascular",
+     "study": "samson-2020"
+    },
+    {
+     "risk": "cardiovascular",
+     "study": "clear-outcomes-2023"
+    },
+    {
+     "risk": "cardiovascular",
+     "study": "q10-qu-2018"
+    },
+    {
+     "risk": "cardiovascular",
+     "study": "q10-kennedy-2020"
+    },
+    {
+     "risk": "cardiovascular",
+     "study": "q10-kovacic-2025"
+    },
+    {
      "risk": "kidney",
      "study": "degam-053-048"
     },
@@ -123,18 +143,6 @@ enum KnowledgeData {
      "summary": "Published six months after the guideline was adopted. It agrees with the guideline that muscle pain on a statin is mostly not caused by it, and adds that liver test changes are real in the first months.",
      "to": "degam-053-024",
      "topic": "Statin side effects"
-    },
-    {
-     "from": "whs-lpa-2026",
-     "summary": "Published after the guideline: higher risk above 30 mg/dL in women, from thresholds chosen after the data. It reports relative risks, not how much Lp(a) improves a risk estimate, the question the guideline asked.",
-     "to": "degam-053-024",
-     "topic": "Lipoprotein(a)"
-    },
-    {
-     "from": "telaviv-lpa-2026",
-     "summary": "Published after the guideline: a risk threshold near 50 mg/dL in one selected cohort.",
-     "to": "degam-053-024",
-     "topic": "Lipoprotein(a)"
     },
     {
      "from": "lpa-horizon-2026",
@@ -1184,6 +1192,26 @@ enum KnowledgeData {
      "code": "10835-7",
      "name": null,
      "study": "telaviv-lpa-2026"
+    },
+    {
+     "code": "22748-8",
+     "name": null,
+     "study": "clear-outcomes-2023"
+    },
+    {
+     "code": "13457-7",
+     "name": null,
+     "study": "clear-outcomes-2023"
+    },
+    {
+     "code": "18262-6",
+     "name": null,
+     "study": "clear-outcomes-2023"
+    },
+    {
+     "code": "2089-1",
+     "name": null,
+     "study": "clear-outcomes-2023"
     }
    ],
    "informs": [
@@ -6700,7 +6728,7 @@ enum KnowledgeData {
      "currency": [
       "Lipoprotein(a): advises against routine measurement on one 2012 meta-analysis (ERFC, c-statistic +0.0016, retrieved September 2023); its search update found nothing newer. Six societies (DGK, DGIM, DDG, DHL, DGSP, DGPR) dissent and favour one measurement in adulthood.",
       "Not cited although published before adoption: EPIC-Norfolk 2025 (Lp(a), LDL and hsCRP once, 20 years).",
-      "After adoption: CTT 2026 (statin side effects in product labels), WHS 2026 (Lp(a) thresholds), Lp(a)HORIZON 2026 (lowering Lp(a) with pelacarsen did not reduce events).",
+      "After adoption and through the quality gate: CTT 2026 (statin side effects in product labels), Lp(a)HORIZON 2026 (lowering Lp(a) with pelacarsen did not reduce events). Context only, below the gate: WHS 2026 (thresholds chosen after the data) and the Tel Aviv cohort 2026 (retrospective).",
       "Statins as a fixed moderate dose by absolute risk; the ESC/EAS 2025 update sets LDL targets instead."
      ],
      "design": "clinical practice guideline (S3, DEGAM)",
@@ -6885,6 +6913,12 @@ enum KnowledgeData {
      "certainty": "none (retracted)",
      "citation": "KETO-CTA, Soto-Mota et al., JACC Adv 2025;4:101686, retracted",
      "design": "observational cohort, 100 people, one year, no comparison group",
+     "gatePassed": false,
+     "gateReasons": [
+      "publication status: retracted",
+      "too small: 100 participants, fewer than 1,000",
+      "design: cohort"
+     ],
      "id": "keto-cta-2025",
      "kind": "study",
      "pmid": "40192608",
@@ -6916,6 +6950,8 @@ enum KnowledgeData {
      "certainty": "moderate",
      "citation": "CTT Collaboration, Lancet 2026;407:689",
      "design": "individual-participant meta-analysis, 19 placebo-controlled statin trials, 123,940 people",
+     "gatePassed": true,
+     "gateReasons": [],
      "id": "ctt-2026-labels",
      "kind": "study",
      "pmid": "41655587",
@@ -6946,6 +6982,10 @@ enum KnowledgeData {
      "certainty": "moderate for the direction, low for the size",
      "citation": "Tasdighi et al., PLoS Med 2025;22:e1004561",
      "design": "pooled analysis of 22 prospective cohorts, 323,826 adults",
+     "gatePassed": false,
+     "gateReasons": [
+      "design: pooled cohorts"
+     ],
      "id": "ccc-smoking-2025",
      "kind": "study",
      "pmid": "41252354",
@@ -6977,6 +7017,8 @@ enum KnowledgeData {
      "certainty": "high for this drug in its trial population; very low for any benefit at 30 mg/dL",
      "citation": "Lp(a)HORIZON, Cho et al., N Engl J Med 2026",
      "design": "randomised placebo-controlled trial, 8,323 people with cardiovascular disease and Lp(a) of at least 70 mg/dL, median 4.7 years",
+     "gatePassed": true,
+     "gateReasons": [],
      "id": "lpa-horizon-2026",
      "kind": "study",
      "pmid": "43001734",
@@ -7009,6 +7051,10 @@ enum KnowledgeData {
      "certainty": "low for a meaningful increase at 30 mg/dL",
      "citation": "EPIC-Norfolk, Kraaijenhof et al., Eur Heart J 2025;46:3875",
      "design": "prospective cohort, 17,087 European adults without cardiovascular disease, 20 years",
+     "gatePassed": false,
+     "gateReasons": [
+      "observational, analysis not registered and prespecified"
+     ],
      "id": "epic-norfolk-lpa-2025",
      "kind": "study",
      "pmid": "40167249",
@@ -7039,6 +7085,10 @@ enum KnowledgeData {
      "certainty": "low (women only, post hoc thresholds)",
      "citation": "Women's Health Study, Nordestgaard et al., JAMA Cardiol 2026;11:175",
      "design": "prospective cohort, 27,748 US women, 30 years",
+     "gatePassed": false,
+     "gateReasons": [
+      "observational, analysis not registered and prespecified"
+     ],
      "id": "whs-lpa-2026",
      "kind": "study",
      "pmid": "41499112",
@@ -7068,6 +7118,10 @@ enum KnowledgeData {
      "certainty": "very low for this person",
      "citation": "Tel Aviv cohort, Golan et al., Clin Res Cardiol 2026;115:357",
      "design": "retrospective single-centre cohort, 3,052 adults in a screening programme, median 6.4 years",
+     "gatePassed": false,
+     "gateReasons": [
+      "design: retrospective cohort"
+     ],
      "id": "telaviv-lpa-2026",
      "kind": "study",
      "pmid": "41400669",
@@ -7080,6 +7134,176 @@ enum KnowledgeData {
      ],
      "url": "https://doi.org/10.1007/s00392-025-02826-x",
      "year": 2026
+    },
+    {
+     "appraisalChecked": [
+      "No retraction, correction or concern (PubMed)",
+      "Registered before the first patient (NCT02668016, submitted 2016-01-19, started 2016-03)",
+      "60 participants (registry)"
+     ],
+     "appraisalOpen": [
+      "Published as a letter: the full report was not read",
+      "People who stopped a statin within weeks may not have enrolled"
+     ],
+     "appraisalQuestion": "A statin makes me tired. Is it the statin, does coenzyme Q10 help, and what else lowers LDL if I cannot take one?",
+     "appraisalSource": "https://github.com/ma3u/relate-hackathon-team/blob/main/docs/evidence/statin-tolerance-appraisal-2026-11-20.md",
+     "appraisalVerdict": "About 90% of the symptom burden felt on the statin was also felt on placebo. It tests the question one person at a time, which is what a person who feels tired can repeat with their doctor. It does not show that nobody has real side effects.",
+     "appraisedAt": "2026-11-20",
+     "certainty": "moderate for the average; it cannot say which person has a real side effect",
+     "citation": "SAMSON, Wood et al., N Engl J Med 2020;383:2182 (letter)",
+     "design": "randomised n-of-1 trial, 60 people who had stopped a statin, 12 months of statin, placebo or nothing in random order",
+     "gatePassed": false,
+     "gateReasons": [
+      "too small: 60 participants, fewer than 1,000"
+     ],
+     "id": "samson-2020",
+     "kind": "study",
+     "pmid": "33196154",
+     "publicationStatus": "ok",
+     "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/33196154/",
+     "statusCheckedAt": "2026-11-20",
+     "title": "N-of-1 Trial of a Statin, Placebo, or No Treatment to Assess Side Effects",
+     "topics": [
+      "Heart and vessels"
+     ],
+     "url": "https://doi.org/10.1056/NEJMc2031173",
+     "year": 2020
+    },
+    {
+     "appraisalChecked": [
+      "No retraction, correction or concern (PubMed)",
+      "Registered before the first patient (NCT02993406, submitted 2016-12-09, started 2016-12-22)",
+      "Double-blind"
+     ],
+     "appraisalOpen": [
+      "Funded by the maker of the drug",
+      "Enrolled people with, or at high risk of, heart disease: the benefit at lower risk is smaller"
+     ],
+     "appraisalQuestion": "A statin makes me tired. Is it the statin, does coenzyme Q10 help, and what else lowers LDL if I cannot take one?",
+     "appraisalSource": "https://github.com/ma3u/relate-hackathon-team/blob/main/docs/evidence/statin-tolerance-appraisal-2026-11-20.md",
+     "appraisalVerdict": "For people who cannot take a statin there is an alternative with an outcome trial: bempedoic acid lowered LDL and major cardiovascular events against placebo, with few muscle complaints.",
+     "appraisedAt": "2026-11-20",
+     "certainty": "high for statin-intolerant people at high risk",
+     "citation": "CLEAR Outcomes, Nissen et al., N Engl J Med 2023;388:1353",
+     "design": "randomised placebo-controlled trial, 13,970 statin-intolerant people, bempedoic acid",
+     "gatePassed": true,
+     "gateReasons": [],
+     "id": "clear-outcomes-2023",
+     "kind": "study",
+     "pmid": "36876740",
+     "publicationStatus": "ok",
+     "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/36876740/",
+     "statusCheckedAt": "2026-11-20",
+     "title": "Bempedoic Acid and Cardiovascular Outcomes in Statin-Intolerant Patients",
+     "topics": [
+      "Heart and vessels"
+     ],
+     "url": "https://doi.org/10.1056/NEJMoa2215024",
+     "year": 2023
+    },
+    {
+     "appraisalChecked": [
+      "No retraction, correction or concern (PubMed)",
+      "No registered protocol (stated in the full text)",
+      "575 participants in 12 trials"
+     ],
+     "appraisalOpen": [
+      "Muscle symptoms, not general tiredness",
+      "Fixed-effect pooling of small trials"
+     ],
+     "appraisalQuestion": "A statin makes me tired. Is it the statin, does coenzyme Q10 help, and what else lowers LDL if I cannot take one?",
+     "appraisalSource": "https://github.com/ma3u/relate-hackathon-team/blob/main/docs/evidence/statin-tolerance-appraisal-2026-11-20.md",
+     "appraisalVerdict": "Reports less muscle pain, weakness, cramps and muscle tiredness with Q10. The paper states that it had no registered protocol, and two later meta-analyses of largely the same trials disagree.",
+     "appraisedAt": "2026-11-20",
+     "certainty": "very low",
+     "citation": "Qu et al., J Am Heart Assoc 2018;7:e009835",
+     "design": "meta-analysis of 12 small randomised trials, 575 people",
+     "gatePassed": false,
+     "gateReasons": [
+      "too small: 575 participants, fewer than 1,000",
+      "not registered before it started"
+     ],
+     "id": "q10-qu-2018",
+     "kind": "study",
+     "pmid": "30371340",
+     "publicationStatus": "ok",
+     "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/30371340/",
+     "statusCheckedAt": "2026-11-20",
+     "title": "Effects of Coenzyme Q10 on Statin-Induced Myopathy: An Updated Meta-Analysis of Randomized Controlled Trials",
+     "topics": [
+      "Heart and vessels"
+     ],
+     "url": "https://doi.org/10.1161/JAHA.118.009835",
+     "year": 2018
+    },
+    {
+     "appraisalChecked": [
+      "No retraction, correction or concern (PubMed)",
+      "321 participants in 7 trials of 37 to 76 people",
+      "No registration named in the abstract"
+     ],
+     "appraisalOpen": [
+      "Full text not read (subscription): registration not confirmed",
+      "Muscle pain, not general tiredness"
+     ],
+     "appraisalQuestion": "A statin makes me tired. Is it the statin, does coenzyme Q10 help, and what else lowers LDL if I cannot take one?",
+     "appraisalSource": "https://github.com/ma3u/relate-hackathon-team/blob/main/docs/evidence/statin-tolerance-appraisal-2026-11-20.md",
+     "appraisalVerdict": "No benefit of Q10 on muscle pain, and no more people stayed on their statin. Only two of the trials were positive.",
+     "appraisedAt": "2026-11-20",
+     "certainty": "low",
+     "citation": "Kennedy et al., Atherosclerosis 2020;299:1",
+     "design": "systematic review and meta-analysis of 7 randomised trials, 321 people",
+     "gatePassed": false,
+     "gateReasons": [
+      "too small: 321 participants, fewer than 1,000",
+      "registration not found (full text not read)"
+     ],
+     "id": "q10-kennedy-2020",
+     "kind": "study",
+     "pmid": "32179207",
+     "publicationStatus": "ok",
+     "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/32179207/",
+     "statusCheckedAt": "2026-11-20",
+     "title": "Effect of Coenzyme Q10 on statin-associated myalgia and adherence to statin therapy",
+     "topics": [
+      "Heart and vessels"
+     ],
+     "url": "https://doi.org/10.1016/j.atherosclerosis.2020.03.006",
+     "year": 2020
+    },
+    {
+     "appraisalChecked": [
+      "No retraction, correction or concern (PubMed)",
+      "Registered in advance (PROSPERO CRD42023467604, stated in the full text)",
+      "389 participants in 7 trials of 35 to 76 people"
+     ],
+     "appraisalOpen": [
+      "Muscle pain, not general tiredness",
+      "Doses from 100 to 600 mg a day pooled together"
+     ],
+     "appraisalQuestion": "A statin makes me tired. Is it the statin, does coenzyme Q10 help, and what else lowers LDL if I cannot take one?",
+     "appraisalSource": "https://github.com/ma3u/relate-hackathon-team/blob/main/docs/evidence/statin-tolerance-appraisal-2026-11-20.md",
+     "appraisalVerdict": "Pain about one point lower on a ten-point scale, with an interval reaching almost zero (-1.88 to -0.03); four trials positive, three not. Registered in advance, but the trials are too small and too short to settle it.",
+     "appraisedAt": "2026-11-20",
+     "certainty": "low",
+     "citation": "Kovacic et al., J Nutr Sci 2025;14:e72",
+     "design": "systematic review and meta-analysis of 7 randomised trials, 389 people, 30 to 90 days",
+     "gatePassed": false,
+     "gateReasons": [
+      "too small: 389 participants, fewer than 1,000"
+     ],
+     "id": "q10-kovacic-2025",
+     "kind": "study",
+     "pmid": "41158831",
+     "publicationStatus": "ok",
+     "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/41158831/",
+     "statusCheckedAt": "2026-11-20",
+     "title": "Effects of coenzyme Q10 supplementation on myopathy in statin-treated patients",
+     "topics": [
+      "Heart and vessels"
+     ],
+     "url": "https://doi.org/10.1017/jns.2025.10043",
+     "year": 2025
     }
    ]
   }
