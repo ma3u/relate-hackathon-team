@@ -150,6 +150,9 @@ def evidence_lines(p):
         status = p["publicationStatus"]
         lines.append(("Status: no retraction, correction or concern" if status == "ok" else f"Status: {status.upper()}")
                      + f" (PubMed, checked {p.get('statusCheckedAt')})")
+    if p.get("gatePassed") is not None:
+        lines.append("Quality gate: passed, may be set against a guideline" if p["gatePassed"] else
+                     "Quality gate: not passed (" + "; ".join(p.get("gateReasons") or []) + "), context only")
     if p.get("appraisalVerdict"):
         lines += [f"Question: {p.get('appraisalQuestion')}", f"Verdict: {p['appraisalVerdict']}",
                   f"Certainty: {p.get('certainty')}",

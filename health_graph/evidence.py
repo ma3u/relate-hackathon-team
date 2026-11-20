@@ -18,9 +18,10 @@ Extends the knowledge layer (knowledge.py) with
         judgement items left open for a person (Woelfle et al., J Clin Epidemiol 2024)
     (:Study)-[:CITES {source: 'reference list'}]->(:Study)
         a German guideline cites a study in this graph (its printed reference list)
-    (:Study)-[:AFTER_CUTOFF_OF {topic, summary}]->(:Study {kind: 'guideline'})
-        published after the guideline was adopted, about one of its recommendations:
-        flagged, never applied in the guideline's place
+    (:Study {gatePassed, gateReasons})-[:AFTER_CUTOFF_OF {topic, summary}]->(:Study {kind: 'guideline'})
+        published after the guideline was adopted, about one of its recommendations, and
+        through the quality gate (gate() below): flagged, never applied in the
+        guideline's place
     (:Study)-[:DISAGREES_WITH {topic, summary}]->(:Study)
         two guidelines, or a guideline and its dissenting societies, answer one
         question differently: show both, never pick one silently
@@ -57,8 +58,9 @@ GUIDELINES = [
          "+0.0016, retrieved September 2023); its search update found nothing newer. Six societies (DGK, DGIM, "
          "DDG, DHL, DGSP, DGPR) dissent and favour one measurement in adulthood.",
          "Not cited although published before adoption: EPIC-Norfolk 2025 (Lp(a), LDL and hsCRP once, 20 years).",
-         "After adoption: CTT 2026 (statin side effects in product labels), WHS 2026 (Lp(a) thresholds), "
-         "Lp(a)HORIZON 2026 (lowering Lp(a) with pelacarsen did not reduce events).",
+         "After adoption and through the quality gate: CTT 2026 (statin side effects in product labels), "
+         "Lp(a)HORIZON 2026 (lowering Lp(a) with pelacarsen did not reduce events). Context only, below the gate: "
+         "WHS 2026 (thresholds chosen after the data) and the Tel Aviv cohort 2026 (retrospective).",
          "Statins as a fixed moderate dose by absolute risk; the ESC/EAS 2025 update sets LDL targets instead.",
      ],
      "examines": LDL + APOB + LPA + BP + EGFR + UACR, "informs": ["score2"],
@@ -273,8 +275,53 @@ DISAGREES = [  # (guideline, guideline, topic, summary)
 ]
 
 
+# ── the gate a newer study must pass before it is set against a guideline ──
+# A guideline has already weighed the quality of the studies it cites; a newer study
+# has not been through that. Peer review is necessary but not enough: KETO-CTA was
+# peer reviewed and retracted. So a study is linked AFTER_CUTOFF_OF a guideline only
+# when it was peer reviewed, carries no retraction or expression of concern, and its
+# design and plan were fixed before the data: a randomised trial or a meta-analysis
+# of trials registered in advance, or a prospective cohort with a registered,
+# prespecified analysis. Everything else stays in the graph as context, not as a
+# challenge to the guideline. Facts as read in the appraisals (DRAFT, LPA).
+GATE_FACTS = {  # id: (peer reviewed, design, registered in advance, analysis prespecified)
+    "keto-cta-2025": (True, "cohort", False, False),            # registered after the start
+    "ctt-2026-labels": (True, "meta-analysis of trials", True, True),  # protocol published 2016
+    "ccc-smoking-2025": (True, "pooled cohorts", False, False),   # analysis plan not public
+    "lpa-horizon-2026": (True, "randomised trial", True, True),   # NCT04023552
+    "epic-norfolk-lpa-2025": (True, "prospective cohort", False, False),
+    "whs-lpa-2026": (True, "prospective cohort", False, False),   # hypothesis formulated after the data
+    "telaviv-lpa-2026": (True, "retrospective cohort", False, False),  # threshold found in the same data
+}
+STRONG_DESIGNS = {"randomised trial", "meta-analysis of trials"}
+
+
+def gate(st: dict) -> list[str]:
+    """Why a study may not be set against a guideline; empty when it passes."""
+    peer, design, registered, prespecified = GATE_FACTS[st["id"]]
+    reasons = []
+    if not peer:
+        reasons.append("not peer reviewed (preprint)")
+    if st.get("publicationStatus") != "ok":
+        reasons.append(f"publication status: {st.get('publicationStatus')}")
+    if design in STRONG_DESIGNS:
+        if not registered:
+            reasons.append("not registered before it started")
+    elif design == "prospective cohort":
+        if not (registered and prespecified):
+            reasons.append("observational, analysis not registered and prespecified")
+    else:
+        reasons.append(f"design: {design}")
+    return reasons
+
+
+def _with_gate(st: dict) -> dict:
+    reasons = gate(st)
+    return st | {"gatePassed": not reasons, "gateReasons": reasons}
+
+
 def studies() -> list[dict]:
-    return GUIDELINES + STUDIES + LPA_STUDIES
+    return GUIDELINES + [_with_gate(st) for st in STUDIES + LPA_STUDIES]
 
 
 def about() -> list[tuple[str, str]]:
@@ -284,14 +331,20 @@ def about() -> list[tuple[str, str]]:
 
 
 def after_cutoff_rows() -> list[dict]:
-    return [{"from": a, "to": b, "topic": t, "summary": s} for a, b, t, s in AFTER_CUTOFF]
+    """Only studies that pass the gate are set against a guideline."""
+    passed = {st["id"] for st in studies() if st.get("gatePassed")}
+    return [{"from": a, "to": b, "topic": t, "summary": s} for a, b, t, s in AFTER_CUTOFF if a in passed]
 
 
 def disagree_rows() -> list[dict]:
     return [{"from": a, "to": b, "topic": t, "summary": s} for a, b, t, s in DISAGREES]
 
 
+# Links from an earlier seed go first: a study that no longer passes the gate loses its link.
 SEED_STUDY_AFTER_CUTOFF = """
+OPTIONAL MATCH ()-[old:AFTER_CUTOFF_OF]->()
+DELETE old
+WITH count(*) AS removed
 UNWIND $afterCutoff AS c
 MATCH (a:Study {id: c.from})
 MATCH (g:Study {id: c.to})
