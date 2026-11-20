@@ -189,6 +189,9 @@ const STATUS = {
 };
 const RISK_LINK = "#EF9F27";  // (:HealthRisk)-[:RAISES_RISK_OF]->(:HealthRisk), from studies
 const CITE_LINK = "#F5C4B3";  // (:Study)-[:CITES]->(:Study)
+const DISSENT_LINK = "#E24B4A";  // (:Study)-[:DISAGREES_WITH]->(:Study): two guidelines answer differently
+const LATER_LINK = "#5DCAA5";  // (:Study)-[:AFTER_CUTOFF_OF]->(:Study): published after the guideline
+const RETRACTED = "#E24B4A";  // a study PubMed lists as retracted
 const COLOR = {}, VISIBLE = {};
 FAMILIES.forEach(([, gs]) => gs.forEach(([g, c]) => { COLOR[g] = c; VISIBLE[g] = true; }));
 const groupsOf = (...fams) => FAMILIES.filter(([f]) => fams.includes(f)).flatMap(([, gs]) => gs.map(([g]) => g));
@@ -252,7 +255,9 @@ DATA.links.forEach(l => {
 });
 const FRIENDLY = {
   "← EXAMINES": "Studies about this marker", "INFORMS →": "Risk scores it informs", "← INFORMS": "Studies behind this score",
-  "CITES →": "Cites", "← CITES": "Cited by (in this graph)", "IN_TOPIC →": "Topic", "← IN_TOPIC": "Studies and guidelines",
+  "CITES →": "Cites", "← CITES": "Cited by (in this graph)",
+  "DISAGREES_WITH →": "Disagrees with", "← DISAGREES_WITH": "Disagrees with",
+  "AFTER_CUTOFF_OF →": "Published after this guideline", "← AFTER_CUTOFF_OF": "Newer than this guideline", "IN_TOPIC →": "Topic", "← IN_TOPIC": "Studies and guidelines",
   "ABOUT →": "Risks it is about", "SOURCED_FROM →": "Source (guideline or study)", "← SOURCED_FROM": "Reference ranges it sets", "← ABOUT": "Studies about this risk", "MARKER_OF →": "Marker of", "← MARKER_OF": "Its markers",
 };
 const studyById = new Map(DATA.nodes.filter(n => n.sid).map(n => [n.sid, n]));
@@ -277,19 +282,23 @@ const Graph = new ForceGraph3D(document.getElementById("graph"))
   .nodeRelSize(3)
   .nodeOpacity(0.92)
   .nodeResolution(12)
-  .nodeColor(n => n.g === "HealthRisk" && n.st ? STATUS[n.st.status].color : fade(n.out ? OUT_COLOR : COLOR[n.g], recency(n)))
+  .nodeColor(n => n.g === "HealthRisk" && n.st ? STATUS[n.st.status].color : n.ps === "retracted" ? RETRACTED
+    : fade(n.out ? OUT_COLOR : COLOR[n.g], recency(n)))
   .nodeLabel(n => `<b>${esc(n.n)}</b><br><span style="color:${COLOR[n.g]}">${esc(n.g)}</span>` +
     (answersOf(n).length ? `<br><b>Your answer:</b> ${esc(answersOf(n)[0].text)} · ${esc(answersOf(n)[0].date)}` : "") +
     (n.d.length ? "<br>" + n.d.slice(0, 3).map(esc).join("<br>") : ""))
   .linkColor(l => hlLinks.has(l) ? "#ffffff" : l.t === "RAISES_RISK_OF" ? RISK_LINK : l.t === "CITES" ? CITE_LINK
+    : l.t === "DISAGREES_WITH" ? DISSENT_LINK : l.t === "AFTER_CUTOFF_OF" ? LATER_LINK
     : l.t === "IN_TOPIC" ? "#EEEDFE" : (COLOR[l.source.g || nodeById(l.source).g] || "#555"))
   .linkOpacity(0.22)
-  .linkWidth(l => hlLinks.has(l) ? 1.4 : l.t === "RAISES_RISK_OF" ? 1.2 : l.t === "CITES" ? 0.7 : 0)
-  .linkCurvature(l => l.t === "RAISES_RISK_OF" ? 0.2 : l.t === "CITES" ? 0.1 : 0)
-  .linkDirectionalArrowLength(l => l.t === "RAISES_RISK_OF" ? 7 : l.t === "CITES" ? 4 : 0)
+  .linkWidth(l => hlLinks.has(l) ? 1.4 : l.t === "RAISES_RISK_OF" ? 1.2 : l.t === "CITES" ? 0.7
+    : l.t === "DISAGREES_WITH" || l.t === "AFTER_CUTOFF_OF" ? 1.2 : 0)
+  .linkCurvature(l => l.t === "RAISES_RISK_OF" ? 0.2 : l.t === "CITES" ? 0.1 : l.t === "DISAGREES_WITH" ? 0.3 : 0)
+  .linkDirectionalArrowLength(l => l.t === "RAISES_RISK_OF" ? 7 : l.t === "CITES" || l.t === "AFTER_CUTOFF_OF" ? 4 : 0)
   .linkDirectionalArrowRelPos(0.92)
   .linkDirectionalArrowColor(l => l.t === "CITES" ? CITE_LINK : RISK_LINK)
-  .linkLabel(l => l.t === "RAISES_RISK_OF" && l.p ? `<b>${esc(l.source.n)} → ${esc(l.target.n)}</b>${esc(effect(l.p))}<br>${esc(l.p.summary || "")}` : "")
+  .linkLabel(l => (l.t === "RAISES_RISK_OF" || l.t === "DISAGREES_WITH" || l.t === "AFTER_CUTOFF_OF") && l.p
+    ? `<b>${esc(l.source.n)} → ${esc(l.target.n)}</b>${l.p.topic ? ` · ${esc(l.p.topic)}` : ""}${esc(effect(l.p))}<br>${esc(l.p.summary || "")}` : "")
   .linkDirectionalParticles(l => hlLinks.has(l) ? 3 : 0)
   .linkDirectionalParticleWidth(1.6)
   .linkDirectionalParticleSpeed(0.006)
@@ -1265,7 +1274,7 @@ function showDetail(n) {
   });
   if (isEvidence(n)) {
     const ext = (u, t) => u ? `<a href="${esc(u)}" target="_blank" rel="noopener" style="color:var(--accent)">${t} ↗</a>` : "";
-    html += `<p>${[ext(n.url, "Paper (DOI)"), ext(n.pubmed, "PubMed")].filter(Boolean).join(" · ")}</p>`;
+    html += `<p>${[ext(n.url, /^https:\/\/doi\.org\//.test(n.url || "") ? "Paper (DOI)" : "Publisher page"), ext(n.pubmed, "PubMed")].filter(Boolean).join(" · ")}</p>`;
     // The markers it examines, with your latest value on each.
     const ex = nb(n, ["EXAMINES"]);
     if (ex.length) {

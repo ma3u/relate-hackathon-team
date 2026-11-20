@@ -298,11 +298,11 @@ def test_risk_links_name_their_studies(db):
     liver = next(r for r in rows if r["risk"] == "Liver fibrosis" and r["raisesRiskOf"] == "Type 2 diabetes")
     assert liver["estimate"] == 2.19 and liver["studies"] and all(liver["studies"])
     assert all(r["studies"] for r in rows)  # every link reaches at least one Study
-    assert counts["studyMarkers"] == len(knowledge._examines_rows()) and counts["studyScores"] == 13
-    assert counts["citations"] == len(knowledge.STUDY_CITATIONS)  # every cited id is a Study we seed
+    assert counts["studyMarkers"] == len(knowledge._examines_rows()) and counts["studyScores"] == len(knowledge._informs_rows())
+    assert counts["citations"] == len(knowledge._citation_rows())  # every cited id is a Study we seed
     kinds = {r["k"]: r["n"] for r in conn.execute("MATCH (s:Study) RETURN s.kind AS k, count(s) AS n")}
     sources = {s["id"] for s in knowledge.STUDIES} | {s["id"] for s in knowledge._range_source_rows()}
-    assert set(kinds) == {"study", "guideline"} and sum(kinds.values()) == len(sources) == 49
+    assert set(kinds) == {"study", "guideline"} and sum(kinds.values()) == len(sources)
     assert counts["studyRisks"] == len(knowledge.STUDY_ABOUT)  # every id there is a Study we seed
     newer = list(conn.execute("MATCH (s:Study {id: 'esc-eas-2025-lipids'})-[:ABOUT]->(h:HealthRisk) RETURN h.id AS h"))
     assert [r["h"] for r in newer] == ["cardiovascular"]
@@ -310,6 +310,36 @@ def test_risk_links_name_their_studies(db):
     hba1c = list(conn.execute(QUERIES["evidence"][1], {"loinc": "4548-4"}))
     assert any(r["study"].startswith("SCORE2-Diabetes") and r["pubmed"].endswith("/37247330/") for r in hba1c)
     assert all(r["doi"].startswith("https://doi.org/") for r in hba1c)
+
+
+def test_german_guidelines_and_appraised_studies(db):
+    from health_graph import evidence, knowledge
+    conn, _ = db
+    counts = knowledge.seed(conn)
+    assert counts["afterCutoff"] == len(evidence.AFTER_CUTOFF) and counts["disagreements"] == len(evidence.DISAGREES)
+    g = conn.execute("""MATCH (g:Study {id: 'degam-053-024'}) RETURN g.kind AS kind, g.guidelineClass AS cls,
+                        g.adoptedDate AS adopted, g.validUntil AS until, size(g.currency) AS notes""").single()
+    assert (g["kind"], g["cls"], g["adopted"], g["until"]) == ("guideline", "S3", "2025-08-01", "2029-11-30")
+    assert g["notes"] >= 1  # a guideline we read critically says where it is behind
+    partly = conn.execute("MATCH (g:Study {validity: 'partly-expired'}) RETURN g.earliestValidUntil AS e").single()
+    assert partly["e"] == "2024-10-22"  # NVL Herzinsuffizienz: most chapters expired before the whole
+    retracted = conn.execute("""MATCH (s:Study {publicationStatus: 'retracted'}) RETURN s.pmid AS pmid,
+                                s.certainty AS c""").single()
+    assert (retracted["pmid"], retracted["c"]) == ("40192608", "none (retracted)")
+    # every appraisal names its question, its source and what it left to a person
+    open_ = conn.execute("""MATCH (s:Study) WHERE s.appraisalVerdict IS NOT NULL AND (s.appraisalQuestion IS NULL
+                            OR s.appraisalSource IS NULL OR size(s.appraisalOpen) = 0 OR s.statusCheckedAt IS NULL)
+                            RETURN count(s) AS n""").single()["n"]
+    assert open_ == 0
+    # a later study is flagged against the guideline, never applied in its place
+    later = list(conn.execute("""MATCH (s:Study)-[k:AFTER_CUTOFF_OF]->(g:Study {kind: 'guideline'})
+                                 RETURN s.year AS y, g.adoptedDate AS a"""))
+    assert later and all(str(r["y"]) >= r["a"][:4] for r in later)
+    both = list(conn.execute("""MATCH (a:Study)-[k:DISAGREES_WITH]->(b:Study) RETURN k.topic AS t"""))
+    assert {"Lipoprotein(a)", "LDL cholesterol"} <= {r["t"] for r in both}
+    cites = conn.execute("""MATCH (:Study {id: 'degam-053-024'})-[k:CITES {source: 'reference list'}]->(s)
+                            RETURN count(s) AS n""").single()["n"]
+    assert cites == sum(1 for a, _ in evidence.GUIDELINE_CITES if a == "degam-053-024")
 
 
 def test_a_stored_score_points_at_the_values_it_used(db):

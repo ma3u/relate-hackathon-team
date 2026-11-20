@@ -269,8 +269,7 @@ enum Cypher {
   static let seedStudies = #"""
   UNWIND $studies AS s
   MERGE (st:Study {id: s.id})
-  SET st.citation = s.citation, st.title = s.title, st.year = s.year, st.design = s.design, st.url = s.url,
-      st.pmid = s.pmid, st.pubmedUrl = s.pubmedUrl, st.kind = s.kind, st.topics = s.topics
+  SET st += s
   RETURN count(st) AS studies
   """#
 
@@ -279,7 +278,7 @@ enum Cypher {
   MATCH (a:Study {id: c.from})
   MATCH (b:Study {id: c.to})
   MERGE (a)-[k:CITES]->(b)
-  SET k.source = 'OpenAlex referenced_works'
+  SET k.source = c.source
   RETURN count(k) AS citations
   """#
 
@@ -321,6 +320,24 @@ enum Cypher {
   MATCH (h:HealthRisk {id: a.risk})
   MERGE (st)-[k:ABOUT]->(h)
   RETURN count(k) AS studyRisks
+  """#
+
+  static let seedStudyAfterCutoff = #"""
+  UNWIND $afterCutoff AS c
+  MATCH (a:Study {id: c.from})
+  MATCH (g:Study {id: c.to})
+  MERGE (a)-[k:AFTER_CUTOFF_OF {topic: c.topic}]->(g)
+  SET k.summary = c.summary
+  RETURN count(k) AS afterCutoff
+  """#
+
+  static let seedStudyDisagrees = #"""
+  UNWIND $disagrees AS d
+  MATCH (a:Study {id: d.from})
+  MATCH (b:Study {id: d.to})
+  MERGE (a)-[k:DISAGREES_WITH {topic: d.topic}]->(b)
+  SET k.summary = d.summary
+  RETURN count(k) AS disagreements
   """#
 
   static let seedVersion = #"""

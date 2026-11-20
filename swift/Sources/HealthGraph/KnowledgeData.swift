@@ -3,7 +3,7 @@
 // swiftlint:disable line_length
 
 enum KnowledgeData {
-  static let fingerprint = "cb8ef333dc95bc2b"
+  static let fingerprint = "43f56e30692f03c1"
   static let rangesSource = "services/epa-ingest/src/reference-ranges.ts (MinimumViableHealthDataspacev2)"
   static let json = #"""
   {
@@ -59,68 +59,199 @@ enum KnowledgeData {
     {
      "risk": "cardiovascular",
      "study": "kjaergaard-2026-proteomics"
+    },
+    {
+     "risk": "cardiovascular",
+     "study": "degam-053-024"
+    },
+    {
+     "risk": "cardiovascular",
+     "study": "nvl-hypertonie-1"
+    },
+    {
+     "risk": "cardiovascular",
+     "study": "nvl-khk-7"
+    },
+    {
+     "risk": "cardiovascular",
+     "study": "nvl-herzinsuffizienz-4"
+    },
+    {
+     "risk": "cardiovascular",
+     "study": "keto-cta-2025"
+    },
+    {
+     "risk": "cardiovascular",
+     "study": "ctt-2026-labels"
+    },
+    {
+     "risk": "cardiovascular",
+     "study": "ccc-smoking-2025"
+    },
+    {
+     "risk": "cardiovascular",
+     "study": "lpa-horizon-2026"
+    },
+    {
+     "risk": "cardiovascular",
+     "study": "epic-norfolk-lpa-2025"
+    },
+    {
+     "risk": "cardiovascular",
+     "study": "whs-lpa-2026"
+    },
+    {
+     "risk": "cardiovascular",
+     "study": "telaviv-lpa-2026"
+    },
+    {
+     "risk": "kidney",
+     "study": "degam-053-048"
+    },
+    {
+     "risk": "kidney",
+     "study": "nvl-hypertonie-1"
+    },
+    {
+     "risk": "diabetes",
+     "study": "nvl-diabetes-3"
+    }
+   ],
+   "afterCutoff": [
+    {
+     "from": "ctt-2026-labels",
+     "summary": "Published six months after the guideline was adopted. It agrees with the guideline that muscle pain on a statin is mostly not caused by it, and adds that liver test changes are real in the first months.",
+     "to": "degam-053-024",
+     "topic": "Statin side effects"
+    },
+    {
+     "from": "whs-lpa-2026",
+     "summary": "Published after the guideline: higher risk above 30 mg/dL in women, from thresholds chosen after the data. It reports relative risks, not how much Lp(a) improves a risk estimate, the question the guideline asked.",
+     "to": "degam-053-024",
+     "topic": "Lipoprotein(a)"
+    },
+    {
+     "from": "telaviv-lpa-2026",
+     "summary": "Published after the guideline: a risk threshold near 50 mg/dL in one selected cohort.",
+     "to": "degam-053-024",
+     "topic": "Lipoprotein(a)"
+    },
+    {
+     "from": "lpa-horizon-2026",
+     "summary": "Published after the guideline: lowering Lp(a) with pelacarsen did not reduce events. It supports the guideline's caution that an Lp(a) result has no proven treatment consequence yet.",
+     "to": "degam-053-024",
+     "topic": "Lipoprotein(a)"
     }
    ],
    "citations": [
     {
      "from": "easl-2024-masld",
+     "source": "OpenAlex referenced_works",
      "to": "mantovani-2021-cvd"
     },
     {
      "from": "easl-2024-masld",
+     "source": "OpenAlex referenced_works",
      "to": "mantovani-2021-t2d"
     },
     {
      "from": "easl-2024-masld",
+     "source": "OpenAlex referenced_works",
      "to": "mantovani-2022-ckd"
     },
     {
      "from": "easl-2024-masld",
+     "source": "OpenAlex referenced_works",
      "to": "pmid-12093239"
     },
     {
      "from": "mantovani-2021-cvd",
+     "source": "OpenAlex referenced_works",
      "to": "mantovani-2021-t2d"
     },
     {
      "from": "mantovani-2021-cvd",
+     "source": "OpenAlex referenced_works",
      "to": "mantovani-2022-ckd"
     },
     {
      "from": "mantovani-2022-ckd",
+     "source": "OpenAlex referenced_works",
      "to": "mantovani-2021-t2d"
     },
     {
      "from": "pmid-15223694",
+     "source": "OpenAlex referenced_works",
      "to": "pmid-15223702"
     },
     {
      "from": "pmid-31504418",
+     "source": "OpenAlex referenced_works",
      "to": "ckdpc-2010"
     },
     {
      "from": "pmid-31504418",
+     "source": "OpenAlex referenced_works",
      "to": "erfc-2010"
     },
     {
      "from": "pmid-36036785",
+     "source": "OpenAlex referenced_works",
      "to": "pmid-31504418"
     },
     {
      "from": "pmid-38519239",
+     "source": "OpenAlex referenced_works",
      "to": "kdigo-2022-diabetes"
     },
     {
      "from": "prevent-2024",
+     "source": "OpenAlex referenced_works",
      "to": "ckdpc-2010"
     },
     {
      "from": "prevent-2024",
+     "source": "OpenAlex referenced_works",
      "to": "ckm-2023"
     },
     {
      "from": "score2-diabetes-2023",
+     "source": "OpenAlex referenced_works",
      "to": "erfc-2010"
+    },
+    {
+     "from": "degam-053-024",
+     "source": "reference list",
+     "to": "eas-2017-ldl"
+    },
+    {
+     "from": "degam-053-024",
+     "source": "reference list",
+     "to": "pmid-36036785"
+    },
+    {
+     "from": "degam-053-024",
+     "source": "reference list",
+     "to": "score2-diabetes-2023"
+    },
+    {
+     "from": "degam-053-048",
+     "source": "reference list",
+     "to": "pmid-31504418"
+    }
+   ],
+   "disagrees": [
+    {
+     "from": "degam-053-024",
+     "summary": "DEGAM: a statin at a fixed moderate dose when the absolute 10-year risk is high enough. ESC/EAS: LDL targets by risk category, treatment intensified until the target is reached.",
+     "to": "esc-eas-2025-lipids",
+     "topic": "LDL cholesterol"
+    },
+    {
+     "from": "degam-053-024",
+     "summary": "DEGAM: do not measure Lp(a) routinely (six societies dissent inside the guideline). ESC/EAS: measure Lp(a) at least once in every adult.",
+     "to": "esc-eas-2025-lipids",
+     "topic": "Lipoprotein(a)"
     }
    ],
    "examines": [
@@ -728,6 +859,331 @@ enum KnowledgeData {
      "code": "1989-3",
      "name": null,
      "study": "demay-2024-vitd"
+    },
+    {
+     "code": "22748-8",
+     "name": null,
+     "study": "degam-053-024"
+    },
+    {
+     "code": "13457-7",
+     "name": null,
+     "study": "degam-053-024"
+    },
+    {
+     "code": "18262-6",
+     "name": null,
+     "study": "degam-053-024"
+    },
+    {
+     "code": "2089-1",
+     "name": null,
+     "study": "degam-053-024"
+    },
+    {
+     "code": "1884-6",
+     "name": null,
+     "study": "degam-053-024"
+    },
+    {
+     "code": "10835-7",
+     "name": null,
+     "study": "degam-053-024"
+    },
+    {
+     "code": "8480-6",
+     "name": null,
+     "study": "degam-053-024"
+    },
+    {
+     "code": "8462-4",
+     "name": null,
+     "study": "degam-053-024"
+    },
+    {
+     "code": "62238-1",
+     "name": null,
+     "study": "degam-053-024"
+    },
+    {
+     "code": "98979-8",
+     "name": null,
+     "study": "degam-053-024"
+    },
+    {
+     "code": "33914-3",
+     "name": null,
+     "study": "degam-053-024"
+    },
+    {
+     "code": "48642-3",
+     "name": null,
+     "study": "degam-053-024"
+    },
+    {
+     "code": "9318-7",
+     "name": "Albumin/Creatinine [Mass Ratio] in Urine",
+     "study": "degam-053-024"
+    },
+    {
+     "code": "14959-1",
+     "name": "Microalbumin/Creatinine [Mass Ratio] in Urine",
+     "study": "degam-053-024"
+    },
+    {
+     "code": "62238-1",
+     "name": null,
+     "study": "degam-053-048"
+    },
+    {
+     "code": "98979-8",
+     "name": null,
+     "study": "degam-053-048"
+    },
+    {
+     "code": "33914-3",
+     "name": null,
+     "study": "degam-053-048"
+    },
+    {
+     "code": "48642-3",
+     "name": null,
+     "study": "degam-053-048"
+    },
+    {
+     "code": "9318-7",
+     "name": "Albumin/Creatinine [Mass Ratio] in Urine",
+     "study": "degam-053-048"
+    },
+    {
+     "code": "14959-1",
+     "name": "Microalbumin/Creatinine [Mass Ratio] in Urine",
+     "study": "degam-053-048"
+    },
+    {
+     "code": "2160-0",
+     "name": null,
+     "study": "degam-053-048"
+    },
+    {
+     "code": "8480-6",
+     "name": null,
+     "study": "nvl-hypertonie-1"
+    },
+    {
+     "code": "8462-4",
+     "name": null,
+     "study": "nvl-hypertonie-1"
+    },
+    {
+     "code": "62238-1",
+     "name": null,
+     "study": "nvl-hypertonie-1"
+    },
+    {
+     "code": "98979-8",
+     "name": null,
+     "study": "nvl-hypertonie-1"
+    },
+    {
+     "code": "33914-3",
+     "name": null,
+     "study": "nvl-hypertonie-1"
+    },
+    {
+     "code": "48642-3",
+     "name": null,
+     "study": "nvl-hypertonie-1"
+    },
+    {
+     "code": "9318-7",
+     "name": "Albumin/Creatinine [Mass Ratio] in Urine",
+     "study": "nvl-hypertonie-1"
+    },
+    {
+     "code": "14959-1",
+     "name": "Microalbumin/Creatinine [Mass Ratio] in Urine",
+     "study": "nvl-hypertonie-1"
+    },
+    {
+     "code": "4548-4",
+     "name": null,
+     "study": "nvl-diabetes-3"
+    },
+    {
+     "code": "59261-8",
+     "name": null,
+     "study": "nvl-diabetes-3"
+    },
+    {
+     "code": "2345-7",
+     "name": null,
+     "study": "nvl-diabetes-3"
+    },
+    {
+     "code": "1558-6",
+     "name": null,
+     "study": "nvl-diabetes-3"
+    },
+    {
+     "code": "62238-1",
+     "name": null,
+     "study": "nvl-diabetes-3"
+    },
+    {
+     "code": "98979-8",
+     "name": null,
+     "study": "nvl-diabetes-3"
+    },
+    {
+     "code": "33914-3",
+     "name": null,
+     "study": "nvl-diabetes-3"
+    },
+    {
+     "code": "48642-3",
+     "name": null,
+     "study": "nvl-diabetes-3"
+    },
+    {
+     "code": "9318-7",
+     "name": "Albumin/Creatinine [Mass Ratio] in Urine",
+     "study": "nvl-diabetes-3"
+    },
+    {
+     "code": "14959-1",
+     "name": "Microalbumin/Creatinine [Mass Ratio] in Urine",
+     "study": "nvl-diabetes-3"
+    },
+    {
+     "code": "22748-8",
+     "name": null,
+     "study": "nvl-khk-7"
+    },
+    {
+     "code": "13457-7",
+     "name": null,
+     "study": "nvl-khk-7"
+    },
+    {
+     "code": "18262-6",
+     "name": null,
+     "study": "nvl-khk-7"
+    },
+    {
+     "code": "2089-1",
+     "name": null,
+     "study": "nvl-khk-7"
+    },
+    {
+     "code": "10835-7",
+     "name": null,
+     "study": "nvl-khk-7"
+    },
+    {
+     "code": "8480-6",
+     "name": null,
+     "study": "nvl-khk-7"
+    },
+    {
+     "code": "8462-4",
+     "name": null,
+     "study": "nvl-khk-7"
+    },
+    {
+     "code": "33762-6",
+     "name": null,
+     "study": "nvl-herzinsuffizienz-4"
+    },
+    {
+     "code": "22748-8",
+     "name": null,
+     "study": "keto-cta-2025"
+    },
+    {
+     "code": "13457-7",
+     "name": null,
+     "study": "keto-cta-2025"
+    },
+    {
+     "code": "18262-6",
+     "name": null,
+     "study": "keto-cta-2025"
+    },
+    {
+     "code": "2089-1",
+     "name": null,
+     "study": "keto-cta-2025"
+    },
+    {
+     "code": "1884-6",
+     "name": null,
+     "study": "keto-cta-2025"
+    },
+    {
+     "code": "22748-8",
+     "name": null,
+     "study": "ctt-2026-labels"
+    },
+    {
+     "code": "13457-7",
+     "name": null,
+     "study": "ctt-2026-labels"
+    },
+    {
+     "code": "18262-6",
+     "name": null,
+     "study": "ctt-2026-labels"
+    },
+    {
+     "code": "2089-1",
+     "name": null,
+     "study": "ctt-2026-labels"
+    },
+    {
+     "code": "10835-7",
+     "name": null,
+     "study": "lpa-horizon-2026"
+    },
+    {
+     "code": "10835-7",
+     "name": null,
+     "study": "epic-norfolk-lpa-2025"
+    },
+    {
+     "code": "22748-8",
+     "name": null,
+     "study": "epic-norfolk-lpa-2025"
+    },
+    {
+     "code": "13457-7",
+     "name": null,
+     "study": "epic-norfolk-lpa-2025"
+    },
+    {
+     "code": "18262-6",
+     "name": null,
+     "study": "epic-norfolk-lpa-2025"
+    },
+    {
+     "code": "2089-1",
+     "name": null,
+     "study": "epic-norfolk-lpa-2025"
+    },
+    {
+     "code": "30522-7",
+     "name": null,
+     "study": "epic-norfolk-lpa-2025"
+    },
+    {
+     "code": "10835-7",
+     "name": null,
+     "study": "whs-lpa-2026"
+    },
+    {
+     "code": "10835-7",
+     "name": null,
+     "study": "telaviv-lpa-2026"
     }
    ],
    "informs": [
@@ -782,6 +1238,22 @@ enum KnowledgeData {
     {
      "score": "tg-hdl",
      "study": "kjaergaard-2026-proteomics"
+    },
+    {
+     "score": "score2",
+     "study": "degam-053-024"
+    },
+    {
+     "score": "egfr",
+     "study": "degam-053-048"
+    },
+    {
+     "score": "score2",
+     "study": "ccc-smoking-2025"
+    },
+    {
+     "score": "score2",
+     "study": "telaviv-lpa-2026"
     }
    ],
    "links": [
@@ -6221,6 +6693,393 @@ enum KnowledgeData {
      ],
      "url": "https://doi.org/10.1210/clinem/dgae290",
      "year": 2024
+    },
+    {
+     "adoptedDate": "2025-08-01",
+     "citation": "DEGAM S3-Leitlinie 053-024, Version 2.3 (2025)",
+     "currency": [
+      "Lipoprotein(a): advises against routine measurement on one 2012 meta-analysis (ERFC, c-statistic +0.0016, retrieved September 2023); its search update found nothing newer. Six societies (DGK, DGIM, DDG, DHL, DGSP, DGPR) dissent and favour one measurement in adulthood.",
+      "Not cited although published before adoption: EPIC-Norfolk 2025 (Lp(a), LDL and hsCRP once, 20 years).",
+      "After adoption: CTT 2026 (statin side effects in product labels), WHS 2026 (Lp(a) thresholds), Lp(a)HORIZON 2026 (lowering Lp(a) with pelacarsen did not reduce events).",
+      "Statins as a fixed moderate dose by absolute risk; the ESC/EAS 2025 update sets LDL targets instead."
+     ],
+     "design": "clinical practice guideline (S3, DEGAM)",
+     "earliestValidUntil": "2029-11-30",
+     "evidenceMedianAge": 7,
+     "guidelineClass": "S3",
+     "id": "degam-053-024",
+     "kind": "guideline",
+     "newestCitedYear": 2024,
+     "pmid": null,
+     "publisher": "DEGAM",
+     "pubmedUrl": null,
+     "referencesCount": 255,
+     "register": "AWMF 053-024",
+     "title": "Hausärztliche Risikoberatung zur kardiovaskulären Prävention",
+     "topics": [
+      "Heart and vessels"
+     ],
+     "url": "https://www.degam.de/leitlinie-s3-053-024",
+     "validUntil": "2029-11-30",
+     "validity": "active",
+     "version": "2.3",
+     "year": 2025
+    },
+    {
+     "adoptedDate": "2024-11-01",
+     "citation": "DEGAM S3-Leitlinie 053-048, Version 2.0 (2024)",
+     "currency": [],
+     "design": "clinical practice guideline (S3, DEGAM)",
+     "earliestValidUntil": "2029-06-30",
+     "evidenceMedianAge": 7,
+     "guidelineClass": "S3",
+     "id": "degam-053-048",
+     "kind": "guideline",
+     "newestCitedYear": 2024,
+     "pmid": null,
+     "publisher": "DEGAM",
+     "pubmedUrl": null,
+     "referencesCount": 250,
+     "register": "AWMF 053-048",
+     "title": "Versorgung von Patient*innen mit chronischer, nicht-nierenersatztherapiepflichtiger Nierenkrankheit in der Hausarztpraxis",
+     "topics": [
+      "Kidney"
+     ],
+     "url": "https://www.degam.de/leitlinie-s3-053-048",
+     "validUntil": "2029-06-30",
+     "validity": "active",
+     "version": "2.0",
+     "year": 2024
+    },
+    {
+     "adoptedDate": "2023-06-29",
+     "citation": "Nationale VersorgungsLeitlinie Hypertonie, Version 1.0 (2023)",
+     "currency": [
+      "Cites the Hygia Chronotherapy Trial, which carries an expression of concern (no recommendation is derived from it)."
+     ],
+     "design": "clinical practice guideline (S3, Nationale VersorgungsLeitlinie)",
+     "earliestValidUntil": "2028-06-29",
+     "evidenceMedianAge": 6,
+     "guidelineClass": "S3",
+     "id": "nvl-hypertonie-1",
+     "kind": "guideline",
+     "newestCitedYear": 2023,
+     "page": "https://www.leitlinien.de/themen/hypertonie",
+     "pmid": null,
+     "publisher": "NVL (BÄK, KBV, AWMF)",
+     "pubmedUrl": null,
+     "referencesCount": 182,
+     "register": "NVL 009",
+     "title": "Nationale VersorgungsLeitlinie Hypertonie",
+     "topics": [
+      "Heart and vessels",
+      "Kidney"
+     ],
+     "url": "https://doi.org/10.6101/AZQ/000502",
+     "validUntil": "2028-06-29",
+     "validity": "active",
+     "version": "1.0",
+     "year": 2023
+    },
+    {
+     "adoptedDate": "2023-05-15",
+     "citation": "Nationale VersorgungsLeitlinie Typ-2-Diabetes, Version 3.0 (2023)",
+     "currency": [
+      "FLOW (semaglutide in diabetes with kidney disease, NEJM 2024) came a year after adoption."
+     ],
+     "design": "clinical practice guideline (S3, Nationale VersorgungsLeitlinie)",
+     "earliestValidUntil": "2028-05-15",
+     "evidenceMedianAge": 5,
+     "guidelineClass": "S3",
+     "id": "nvl-diabetes-3",
+     "kind": "guideline",
+     "newestCitedYear": 2023,
+     "page": "https://www.leitlinien.de/themen/diabetes",
+     "pmid": null,
+     "publisher": "NVL (BÄK, KBV, AWMF)",
+     "pubmedUrl": null,
+     "referencesCount": 228,
+     "register": "NVL 001",
+     "title": "Nationale VersorgungsLeitlinie Typ-2-Diabetes",
+     "topics": [
+      "Metabolism"
+     ],
+     "url": "https://doi.org/10.6101/AZQ/000503",
+     "validUntil": "2028-05-15",
+     "validity": "active",
+     "version": "3.0",
+     "year": 2023
+    },
+    {
+     "adoptedDate": "2024-08-15",
+     "citation": "Nationale VersorgungsLeitlinie Chronische KHK, Version 7.0 (2024)",
+     "currency": [
+      "For people with coronary heart disease, not for primary prevention."
+     ],
+     "design": "clinical practice guideline (S3, Nationale VersorgungsLeitlinie)",
+     "earliestValidUntil": "2029-08-14",
+     "evidenceMedianAge": 11,
+     "guidelineClass": "S3",
+     "id": "nvl-khk-7",
+     "kind": "guideline",
+     "newestCitedYear": 2024,
+     "page": "https://www.leitlinien.de/themen/khk",
+     "pmid": null,
+     "publisher": "NVL (BÄK, KBV, AWMF)",
+     "pubmedUrl": null,
+     "referencesCount": 389,
+     "register": "NVL 004",
+     "title": "Nationale VersorgungsLeitlinie Chronische KHK",
+     "topics": [
+      "Heart and vessels"
+     ],
+     "url": "https://doi.org/10.6101/AZQ/000514",
+     "validUntil": "2029-08-14",
+     "validity": "active",
+     "version": "7.0",
+     "year": 2024
+    },
+    {
+     "adoptedDate": "2023-12-12",
+     "citation": "Nationale VersorgungsLeitlinie Chronische Herzinsuffizienz, Version 4.0 (2023)",
+     "currency": [
+      "Only the chapter on drug therapy was renewed in 2023; all other chapters are from 2019 and expired on 2024-10-22."
+     ],
+     "design": "clinical practice guideline (S3, Nationale VersorgungsLeitlinie)",
+     "earliestValidUntil": "2024-10-22",
+     "evidenceMedianAge": 9,
+     "guidelineClass": "S3",
+     "id": "nvl-herzinsuffizienz-4",
+     "kind": "guideline",
+     "newestCitedYear": 2023,
+     "page": "https://www.leitlinien.de/themen/herzinsuffizienz",
+     "pmid": null,
+     "publisher": "NVL (BÄK, KBV, AWMF)",
+     "pubmedUrl": null,
+     "referencesCount": 628,
+     "register": "NVL 006",
+     "title": "Nationale VersorgungsLeitlinie Chronische Herzinsuffizienz",
+     "topics": [
+      "Heart and vessels"
+     ],
+     "url": "https://doi.org/10.6101/AZQ/000510",
+     "validUntil": "2028-12-12",
+     "validity": "partly-expired",
+     "version": "4.0",
+     "year": 2023
+    },
+    {
+     "appraisalChecked": [
+      "Retraction and expression of concern (PubMed)",
+      "Registered after the first patient (ClinicalTrials.gov history)",
+      "Registered outcome reported only after a letter"
+     ],
+     "appraisalOpen": [
+      "Weight of the undisclosed equity and the funder's role",
+      "Whether the re-analysis preprint changes anything (not peer reviewed)"
+     ],
+     "appraisalQuestion": "Is a high LDL on a low-carb diet harmless?",
+     "appraisalSource": "https://github.com/ma3u/MinimumViableHealthDataspacev2/blob/claude/study-evaluation-master-prompt-vtyy9t/docs/discussions/study-appraisal-for-lay-people.md",
+     "appraisalVerdict": "Retracted on 2026-03-11; it could not answer the question before either: no comparison group, one year, a plaque change of the size of the difference between two readers, registered after the start. A retraction does not prove the opposite.",
+     "appraisedAt": "2026-11-19",
+     "certainty": "none (retracted)",
+     "citation": "KETO-CTA, Soto-Mota et al., JACC Adv 2025;4:101686, retracted",
+     "design": "observational cohort, 100 people, one year, no comparison group",
+     "id": "keto-cta-2025",
+     "kind": "study",
+     "pmid": "40192608",
+     "publicationStatus": "retracted",
+     "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/40192608/",
+     "statusCheckedAt": "2026-11-20",
+     "title": "Longitudinal Data From the KETO-CTA Study: Plaque Predicts Plaque, ApoB Does Not",
+     "topics": [
+      "Heart and vessels"
+     ],
+     "url": "https://doi.org/10.1016/j.jacadv.2025.101686",
+     "year": 2025
+    },
+    {
+     "appraisalChecked": [
+      "No retraction, correction or concern (PubMed, Crossref)",
+      "Double-blind trials only",
+      "False discovery rate controlled over 66 outcomes"
+     ],
+     "appraisalOpen": [
+      "A third of participants were in trials that did not record ordinary complaints",
+      "Run-in periods may have removed people who did not tolerate the drug",
+      "Data not released; the reviewers are the trialists"
+     ],
+     "appraisalQuestion": "I stopped a statin after three months. Were my side effects real?",
+     "appraisalSource": "https://github.com/ma3u/MinimumViableHealthDataspacev2/blob/claude/study-evaluation-master-prompt-vtyy9t/docs/discussions/study-appraisal-for-lay-people.md",
+     "appraisalVerdict": "For sleep, memory, mood and sexual function the trials show no excess, with tight intervals; liver test changes are real, early and dose-dependent. Muscle symptoms (2022 paper of the group): about 1 in 15 caused by the statin in year one. Whether symptoms that make people stop are caused by the drug was not measured.",
+     "appraisedAt": "2026-11-19",
+     "certainty": "moderate",
+     "citation": "CTT Collaboration, Lancet 2026;407:689",
+     "design": "individual-participant meta-analysis, 19 placebo-controlled statin trials, 123,940 people",
+     "id": "ctt-2026-labels",
+     "kind": "study",
+     "pmid": "41655587",
+     "publicationStatus": "ok",
+     "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/41655587/",
+     "statusCheckedAt": "2026-11-20",
+     "title": "Assessment of adverse effects attributed to statin therapy in product labels",
+     "topics": [
+      "Heart and vessels"
+     ],
+     "url": "https://doi.org/10.1016/S0140-6736(25)01578-8",
+     "year": 2026
+    },
+    {
+     "appraisalChecked": [
+      "No retraction, correction or concern (PubMed, Crossref)",
+      "Three different totals in the paper",
+      "Hazard ratio appears only after adjustment (0.83 crude, 1.51 adjusted)"
+     ],
+     "appraisalOpen": [
+      "Residual confounding",
+      "Whether data from older women apply to a man of 45 to 55"
+     ],
+     "appraisalQuestion": "I only smoke occasionally. Does that count?",
+     "appraisalSource": "https://github.com/ma3u/MinimumViableHealthDataspacev2/blob/claude/study-evaluation-master-prompt-vtyy9t/docs/discussions/study-appraisal-for-lay-people.md",
+     "appraisalVerdict": "One cigarette a day or fewer: cardiovascular disease HR 1.47 (1.28 to 1.70) against never-smokers, in 1,423 people, mostly older American women. After little lifetime exposure and stopping, no excess is visible.",
+     "appraisedAt": "2026-11-19",
+     "certainty": "moderate for the direction, low for the size",
+     "citation": "Tasdighi et al., PLoS Med 2025;22:e1004561",
+     "design": "pooled analysis of 22 prospective cohorts, 323,826 adults",
+     "id": "ccc-smoking-2025",
+     "kind": "study",
+     "pmid": "41252354",
+     "publicationStatus": "ok",
+     "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/41252354/",
+     "statusCheckedAt": "2026-11-20",
+     "title": "Association between cigarette smoking status, intensity, and cessation duration with long-term cardiovascular outcomes",
+     "topics": [
+      "Heart and vessels"
+     ],
+     "url": "https://doi.org/10.1371/journal.pmed.1004561",
+     "year": 2025
+    },
+    {
+     "appraisalChecked": [
+      "No retraction, correction or concern (PubMed)",
+      "Registered primary outcomes (NCT04023552) match the reported ones",
+      "PubMed has not yet typed it as a randomised trial: the type comes from indexing, which lags"
+     ],
+     "appraisalOpen": [
+      "Full text not read (subscription)",
+      "Registry history not read (HTTP 403)",
+      "Funded by the maker of the drug"
+     ],
+     "appraisalQuestion": "Does an Lp(a) of about 30 mg/dL raise the risk of an adult without heart disease, and does lowering Lp(a) help?",
+     "appraisalSource": "https://github.com/ma3u/relate-hackathon-team/blob/main/docs/evidence/lpa-appraisal-2026-11-20.md",
+     "appraisalVerdict": "Pelacarsen lowered Lp(a) by about 70% and did not reduce heart attacks, strokes or cardiovascular deaths: HR 1.02 (0.90 to 1.15). The first outcome trial of Lp(a) lowering is null. It enrolled people who already had cardiovascular disease and far higher Lp(a), so it says nothing direct about a value of 30 mg/dL.",
+     "appraisedAt": "2026-11-20",
+     "certainty": "high for this drug in its trial population; very low for any benefit at 30 mg/dL",
+     "citation": "Lp(a)HORIZON, Cho et al., N Engl J Med 2026",
+     "design": "randomised placebo-controlled trial, 8,323 people with cardiovascular disease and Lp(a) of at least 70 mg/dL, median 4.7 years",
+     "id": "lpa-horizon-2026",
+     "kind": "study",
+     "pmid": "43001734",
+     "publicationStatus": "ok",
+     "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/43001734/",
+     "statusCheckedAt": "2026-11-20",
+     "title": "Pelacarsen and Cardiovascular Outcomes in Patients with High Lipoprotein(a)",
+     "topics": [
+      "Heart and vessels"
+     ],
+     "url": "https://doi.org/10.1056/NEJMoa2610159",
+     "year": 2026
+    },
+    {
+     "appraisalChecked": [
+      "No retraction, correction or concern (PubMed)",
+      "Read in full",
+      "Not preregistered",
+      "17,087 in most places, 17,078 once"
+     ],
+     "appraisalOpen": [
+      "Calls for universal screening without a discrimination statistic",
+      "Industry ties of several authors",
+      "Lp(a) measured once"
+     ],
+     "appraisalQuestion": "Does an Lp(a) of about 30 mg/dL raise the risk of an adult without heart disease, and does lowering Lp(a) help?",
+     "appraisalSource": "https://github.com/ma3u/relate-hackathon-team/blob/main/docs/evidence/lpa-appraisal-2026-11-20.md",
+     "appraisalVerdict": "The closest match: European men and women without heart disease, Lp(a) in mg/dL. 30 mg/dL lies in the fourth fifth (16 to under 36), with no detectable extra risk: HR 0.97 (0.87 to 1.09), men 1.05 (0.90 to 1.22). Only the top fifth (36 and above) carried more, HR 1.19; LDL cholesterol carried more than Lp(a) in the same model (HR 1.78).",
+     "appraisedAt": "2026-11-20",
+     "certainty": "low for a meaningful increase at 30 mg/dL",
+     "citation": "EPIC-Norfolk, Kraaijenhof et al., Eur Heart J 2025;46:3875",
+     "design": "prospective cohort, 17,087 European adults without cardiovascular disease, 20 years",
+     "id": "epic-norfolk-lpa-2025",
+     "kind": "study",
+     "pmid": "40167249",
+     "publicationStatus": "ok",
+     "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/40167249/",
+     "statusCheckedAt": "2026-11-20",
+     "title": "Low-density lipoprotein cholesterol, C-reactive protein, and lipoprotein(a) universal one-time screening in primary prevention: the EPIC-Norfolk study",
+     "topics": [
+      "Heart and vessels"
+     ],
+     "url": "https://doi.org/10.1093/eurheartj/ehaf209",
+     "year": 2025
+    },
+    {
+     "appraisalChecked": [
+      "No retraction, correction or concern (PubMed)",
+      "Hypothesis stated as post hoc"
+     ],
+     "appraisalOpen": [
+      "Full text under embargo: the hazard ratio for 30 to 50 mg/dL not seen",
+      "A co-author receives royalties on an LPA variant patent",
+      "Whether it applies to men"
+     ],
+     "appraisalQuestion": "Does an Lp(a) of about 30 mg/dL raise the risk of an adult without heart disease, and does lowering Lp(a) help?",
+     "appraisalSource": "https://github.com/ma3u/relate-hackathon-team/blob/main/docs/evidence/lpa-appraisal-2026-11-20.md",
+     "appraisalVerdict": "Above 30 mg/dL somewhat higher 30-year risk of heart events in women; stroke and cardiovascular death only above 120 mg/dL. The hypothesis was formulated after the data were collected, and many cut-offs were tried.",
+     "appraisedAt": "2026-11-20",
+     "certainty": "low (women only, post hoc thresholds)",
+     "citation": "Women's Health Study, Nordestgaard et al., JAMA Cardiol 2026;11:175",
+     "design": "prospective cohort, 27,748 US women, 30 years",
+     "id": "whs-lpa-2026",
+     "kind": "study",
+     "pmid": "41499112",
+     "publicationStatus": "ok",
+     "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/41499112/",
+     "statusCheckedAt": "2026-11-20",
+     "title": "Thirty-Year Risk of Cardiovascular Disease Among Healthy Women According to Clinical Thresholds of Lipoprotein(a)",
+     "topics": [
+      "Heart and vessels"
+     ],
+     "url": "https://doi.org/10.1001/jamacardio.2025.5043",
+     "year": 2026
+    },
+    {
+     "appraisalChecked": [
+      "No retraction, correction or concern (PubMed)",
+      "Abstract only (subscription)"
+     ],
+     "appraisalOpen": [
+      "Selected screening population outside Europe",
+      "Threshold found and tested on one data set"
+     ],
+     "appraisalQuestion": "Does an Lp(a) of about 30 mg/dL raise the risk of an adult without heart disease, and does lowering Lp(a) help?",
+     "appraisalSource": "https://github.com/ma3u/relate-hackathon-team/blob/main/docs/evidence/lpa-appraisal-2026-11-20.md",
+     "appraisalVerdict": "Risk bends upward at about 50 mg/dL (48 without heart disease); above 50, HR 1.55 (1.10 to 2.17). The threshold was found and tested in the same data. 30 mg/dL lies below it.",
+     "appraisedAt": "2026-11-20",
+     "certainty": "very low for this person",
+     "citation": "Tel Aviv cohort, Golan et al., Clin Res Cardiol 2026;115:357",
+     "design": "retrospective single-centre cohort, 3,052 adults in a screening programme, median 6.4 years",
+     "id": "telaviv-lpa-2026",
+     "kind": "study",
+     "pmid": "41400669",
+     "publicationStatus": "ok",
+     "pubmedUrl": "https://pubmed.ncbi.nlm.nih.gov/41400669/",
+     "statusCheckedAt": "2026-11-20",
+     "title": "Prognostic value of lipoprotein(a) in a primary prevention ambulatory cohort",
+     "topics": [
+      "Heart and vessels"
+     ],
+     "url": "https://doi.org/10.1007/s00392-025-02826-x",
+     "year": 2026
     }
    ]
   }
