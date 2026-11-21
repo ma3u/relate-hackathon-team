@@ -1,0 +1,115 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 912" width="1200" height="912" role="img" aria-labelledby="t d">
+<title id="t">Health Knowledge Graph: Five-Layer Reference Architecture</title>
+<desc id="d">Five layers in one Neo4j property graph: data access and governance (Dataspace Protocol, ODRL), metadata catalogue (HealthDCAT-AP), clinical data (HL7 FHIR R4), research data (OMOP CDM v5.4) and clinical terminologies (SNOMED CT, ICD-10, LOINC, RxNorm), with the relationships that connect them.</desc>
+<defs>
+<linearGradient id="bar" x1="0" y1="0" x2="1" y2="0"><stop offset="0.00" stop-color="#2471A3"/><stop offset="0.25" stop-color="#148F77"/><stop offset="0.50" stop-color="#1E8449"/><stop offset="0.75" stop-color="#CA6F1E"/><stop offset="1.00" stop-color="#7D3C98"/></linearGradient>
+<marker id="m1" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#6CB4E4"/></marker>
+<marker id="m2" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#4FD1B5"/></marker>
+<marker id="m3" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#5FD38D"/></marker>
+<marker id="m4" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#F2A65A"/></marker>
+<marker id="m5" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#C39BD8"/></marker>
+<clipPath id="card"><rect width="1200" height="912" rx="14"/></clipPath>
+</defs>
+<rect width="1200" height="912" rx="14" fill="#0b1220"/>
+<rect x="0" y="0" width="1200" height="5" fill="url(#bar)" clip-path="url(#card)"/>
+<text x="48" y="52" font-family="Inter, 'Segoe UI', -apple-system, system-ui, Roboto, sans-serif" font-size="12" font-weight="600" letter-spacing="2" fill="#9fb0c6">EUROPEAN HEALTH DATA SPACE · REFERENCE IMPLEMENTATION</text>
+<text x="48" y="88" font-family="Inter, 'Segoe UI', -apple-system, system-ui, Roboto, sans-serif" font-size="28" font-weight="700" fill="#e6edf6">Health Knowledge Graph: Five-Layer Reference Architecture</text>
+<text x="48" y="116" font-family="Inter, 'Segoe UI', -apple-system, system-ui, Roboto, sans-serif" font-size="15" fill="#9fb0c6">From data access governance to clinical terminology, in a single Neo4j property graph</text>
+<rect x="48" y="150" width="1104" height="100" rx="10" fill="#2471A3" fill-opacity="0.12" stroke="#2471A3" stroke-opacity="0.85" stroke-width="1.25"/>
+<rect x="48" y="150" width="6" height="100" rx="3" fill="#2471A3"/>
+<text x="74" y="180" font-family="Inter, 'Segoe UI', -apple-system, system-ui, Roboto, sans-serif" font-size="11" font-weight="700" letter-spacing="1.8" fill="#6CB4E4">LAYER 1</text>
+<text x="74" y="206" font-family="Inter, 'Segoe UI', -apple-system, system-ui, Roboto, sans-serif" font-size="18" font-weight="700" fill="#e6edf6">Data Access &amp; Governance</text>
+<text x="74" y="229" font-family="Inter, 'Segoe UI', -apple-system, system-ui, Roboto, sans-serif" font-size="12" fill="#9fb0c6">Dataspace Protocol 2025-1 · ODRL 2.2 · EHDS Art. 45-53</text>
+<rect x="332.0" y="183.0" width="104.5" height="34" rx="7" fill="#2471A3" fill-opacity="0.28" stroke="#6CB4E4" stroke-opacity="0.75" stroke-width="1"/>
+<text x="384.2" y="204.3" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12.5" fill="#e6edf6" text-anchor="middle">Participant</text>
+<rect x="446.5" y="183.0" width="104.5" height="34" rx="7" fill="#2471A3" fill-opacity="0.28" stroke="#6CB4E4" stroke-opacity="0.75" stroke-width="1"/>
+<text x="498.8" y="204.3" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12.5" fill="#e6edf6" text-anchor="middle">DataProduct</text>
+<rect x="561.0" y="183.0" width="97.0" height="34" rx="7" fill="#2471A3" fill-opacity="0.28" stroke="#6CB4E4" stroke-opacity="0.75" stroke-width="1"/>
+<text x="609.5" y="204.3" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12.5" fill="#e6edf6" text-anchor="middle">OdrlPolicy</text>
+<rect x="668.0" y="183.0" width="82.0" height="34" rx="7" fill="#2471A3" fill-opacity="0.28" stroke="#6CB4E4" stroke-opacity="0.75" stroke-width="1"/>
+<text x="709.0" y="204.3" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12.5" fill="#e6edf6" text-anchor="middle">Contract</text>
+<rect x="760.0" y="183.0" width="149.5" height="34" rx="7" fill="#2471A3" fill-opacity="0.28" stroke="#6CB4E4" stroke-opacity="0.75" stroke-width="1"/>
+<text x="834.8" y="204.3" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12.5" fill="#e6edf6" text-anchor="middle">AccessApplication</text>
+<rect x="919.5" y="183.0" width="112.0" height="34" rx="7" fill="#2471A3" fill-opacity="0.28" stroke="#6CB4E4" stroke-opacity="0.75" stroke-width="1"/>
+<text x="975.5" y="204.3" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12.5" fill="#e6edf6" text-anchor="middle">HDABApproval</text>
+<line x1="108" y1="254" x2="108" y2="292" stroke="#6CB4E4" stroke-width="1.6" marker-end="url(#m1)"/>
+<text x="124" y="277.5" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12.5" font-weight="700" fill="#6CB4E4">DESCRIBED_BY</text>
+<text x="226.0" y="277.5" font-family="Inter, 'Segoe UI', -apple-system, system-ui, Roboto, sans-serif" font-size="12.5" fill="#9fb0c6">DataProduct to HealthDataset</text>
+<rect x="48" y="296" width="1104" height="100" rx="10" fill="#148F77" fill-opacity="0.12" stroke="#148F77" stroke-opacity="0.85" stroke-width="1.25"/>
+<rect x="48" y="296" width="6" height="100" rx="3" fill="#148F77"/>
+<text x="74" y="326" font-family="Inter, 'Segoe UI', -apple-system, system-ui, Roboto, sans-serif" font-size="11" font-weight="700" letter-spacing="1.8" fill="#4FD1B5">LAYER 2</text>
+<text x="74" y="352" font-family="Inter, 'Segoe UI', -apple-system, system-ui, Roboto, sans-serif" font-size="18" font-weight="700" fill="#e6edf6">Metadata Catalogue</text>
+<text x="74" y="375" font-family="Inter, 'Segoe UI', -apple-system, system-ui, Roboto, sans-serif" font-size="12" fill="#9fb0c6">HealthDCAT-AP · DCAT-AP 3 · EEHRxF</text>
+<rect x="332.0" y="329.0" width="119.5" height="34" rx="7" fill="#148F77" fill-opacity="0.28" stroke="#4FD1B5" stroke-opacity="0.75" stroke-width="1"/>
+<text x="391.8" y="350.3" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12.5" fill="#e6edf6" text-anchor="middle">HealthDataset</text>
+<rect x="461.5" y="329.0" width="112.0" height="34" rx="7" fill="#148F77" fill-opacity="0.28" stroke="#4FD1B5" stroke-opacity="0.75" stroke-width="1"/>
+<text x="517.5" y="350.3" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12.5" fill="#e6edf6" text-anchor="middle">Distribution</text>
+<rect x="583.5" y="329.0" width="112.0" height="34" rx="7" fill="#148F77" fill-opacity="0.28" stroke="#4FD1B5" stroke-opacity="0.75" stroke-width="1"/>
+<text x="639.5" y="350.3" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12.5" fill="#e6edf6" text-anchor="middle">ContactPoint</text>
+<rect x="705.5" y="329.0" width="104.5" height="34" rx="7" fill="#148F77" fill-opacity="0.28" stroke="#4FD1B5" stroke-opacity="0.75" stroke-width="1"/>
+<text x="757.8" y="350.3" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12.5" fill="#e6edf6" text-anchor="middle">EhdsPurpose</text>
+<rect x="820.0" y="329.0" width="119.5" height="34" rx="7" fill="#148F77" fill-opacity="0.28" stroke="#4FD1B5" stroke-opacity="0.75" stroke-width="1"/>
+<text x="879.8" y="350.3" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12.5" fill="#e6edf6" text-anchor="middle">EEHRxFProfile</text>
+<rect x="949.5" y="329.0" width="127.0" height="34" rx="7" fill="#148F77" fill-opacity="0.28" stroke="#4FD1B5" stroke-opacity="0.75" stroke-width="1"/>
+<text x="1013.0" y="350.3" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12.5" fill="#e6edf6" text-anchor="middle">EEHRxFCategory</text>
+<line x1="108" y1="438" x2="108" y2="400" stroke="#5FD38D" stroke-width="1.6" marker-end="url(#m3)"/>
+<text x="124" y="423.5" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12.5" font-weight="700" fill="#5FD38D">FROM_DATASET</text>
+<text x="226.0" y="423.5" font-family="Inter, 'Segoe UI', -apple-system, system-ui, Roboto, sans-serif" font-size="12.5" fill="#9fb0c6">Patient and other FHIR records to HealthDataset</text>
+<rect x="48" y="442" width="1104" height="100" rx="10" fill="#1E8449" fill-opacity="0.12" stroke="#1E8449" stroke-opacity="0.85" stroke-width="1.25"/>
+<rect x="48" y="442" width="6" height="100" rx="3" fill="#1E8449"/>
+<text x="74" y="472" font-family="Inter, 'Segoe UI', -apple-system, system-ui, Roboto, sans-serif" font-size="11" font-weight="700" letter-spacing="1.8" fill="#5FD38D">LAYER 3</text>
+<text x="74" y="498" font-family="Inter, 'Segoe UI', -apple-system, system-ui, Roboto, sans-serif" font-size="18" font-weight="700" fill="#e6edf6">Clinical Data</text>
+<text x="74" y="521" font-family="Inter, 'Segoe UI', -apple-system, system-ui, Roboto, sans-serif" font-size="12" fill="#9fb0c6">HL7 FHIR R4 · Synthea synthetic patients</text>
+<rect x="332.0" y="475.0" width="74.5" height="34" rx="7" fill="#1E8449" fill-opacity="0.28" stroke="#5FD38D" stroke-opacity="0.75" stroke-width="1"/>
+<text x="369.2" y="496.3" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12.5" fill="#e6edf6" text-anchor="middle">Patient</text>
+<rect x="416.5" y="475.0" width="89.5" height="34" rx="7" fill="#1E8449" fill-opacity="0.28" stroke="#5FD38D" stroke-opacity="0.75" stroke-width="1"/>
+<text x="461.2" y="496.3" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12.5" fill="#e6edf6" text-anchor="middle">Encounter</text>
+<rect x="516.0" y="475.0" width="89.5" height="34" rx="7" fill="#1E8449" fill-opacity="0.28" stroke="#5FD38D" stroke-opacity="0.75" stroke-width="1"/>
+<text x="560.8" y="496.3" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12.5" fill="#e6edf6" text-anchor="middle">Condition</text>
+<rect x="615.5" y="475.0" width="104.5" height="34" rx="7" fill="#1E8449" fill-opacity="0.28" stroke="#5FD38D" stroke-opacity="0.75" stroke-width="1"/>
+<text x="667.8" y="496.3" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12.5" fill="#e6edf6" text-anchor="middle">Observation</text>
+<rect x="730.0" y="475.0" width="149.5" height="34" rx="7" fill="#1E8449" fill-opacity="0.28" stroke="#5FD38D" stroke-opacity="0.75" stroke-width="1"/>
+<text x="804.8" y="496.3" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12.5" fill="#e6edf6" text-anchor="middle">MedicationRequest</text>
+<rect x="889.5" y="475.0" width="89.5" height="34" rx="7" fill="#1E8449" fill-opacity="0.28" stroke="#5FD38D" stroke-opacity="0.75" stroke-width="1"/>
+<text x="934.2" y="496.3" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12.5" fill="#e6edf6" text-anchor="middle">Procedure</text>
+<line x1="108" y1="546" x2="108" y2="584" stroke="#5FD38D" stroke-width="1.6" marker-end="url(#m3)"/>
+<text x="124" y="569.5" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12.5" font-weight="700" fill="#5FD38D">MAPPED_TO</text>
+<text x="203.5" y="569.5" font-family="Inter, 'Segoe UI', -apple-system, system-ui, Roboto, sans-serif" font-size="12.5" fill="#9fb0c6">FHIR resource to OMOP record</text>
+<rect x="48" y="588" width="1104" height="100" rx="10" fill="#CA6F1E" fill-opacity="0.12" stroke="#CA6F1E" stroke-opacity="0.85" stroke-width="1.25"/>
+<rect x="48" y="588" width="6" height="100" rx="3" fill="#CA6F1E"/>
+<text x="74" y="618" font-family="Inter, 'Segoe UI', -apple-system, system-ui, Roboto, sans-serif" font-size="11" font-weight="700" letter-spacing="1.8" fill="#F2A65A">LAYER 4</text>
+<text x="74" y="644" font-family="Inter, 'Segoe UI', -apple-system, system-ui, Roboto, sans-serif" font-size="18" font-weight="700" fill="#e6edf6">Research Data</text>
+<text x="74" y="667" font-family="Inter, 'Segoe UI', -apple-system, system-ui, Roboto, sans-serif" font-size="12" fill="#9fb0c6">OHDSI OMOP CDM v5.4</text>
+<rect x="332.0" y="621.0" width="97.0" height="34" rx="7" fill="#CA6F1E" fill-opacity="0.28" stroke="#F2A65A" stroke-opacity="0.75" stroke-width="1"/>
+<text x="380.5" y="642.3" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12.5" fill="#e6edf6" text-anchor="middle">OMOPPerson</text>
+<rect x="439.0" y="621.0" width="164.5" height="34" rx="7" fill="#CA6F1E" fill-opacity="0.28" stroke="#F2A65A" stroke-opacity="0.75" stroke-width="1"/>
+<text x="521.2" y="642.3" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12.5" fill="#e6edf6" text-anchor="middle">OMOPVisitOccurrence</text>
+<rect x="613.5" y="621.0" width="194.5" height="34" rx="7" fill="#CA6F1E" fill-opacity="0.28" stroke="#F2A65A" stroke-opacity="0.75" stroke-width="1"/>
+<text x="710.8" y="642.3" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12.5" fill="#e6edf6" text-anchor="middle">OMOPConditionOccurrence</text>
+<rect x="818.0" y="621.0" width="134.5" height="34" rx="7" fill="#CA6F1E" fill-opacity="0.28" stroke="#F2A65A" stroke-opacity="0.75" stroke-width="1"/>
+<text x="885.2" y="642.3" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12.5" fill="#e6edf6" text-anchor="middle">OMOPMeasurement</text>
+<rect x="962.5" y="621.0" width="142.0" height="34" rx="7" fill="#CA6F1E" fill-opacity="0.28" stroke="#F2A65A" stroke-opacity="0.75" stroke-width="1"/>
+<text x="1033.5" y="642.3" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12.5" fill="#e6edf6" text-anchor="middle">OMOPDrugExposure</text>
+<line x1="108" y1="692" x2="108" y2="730" stroke="#F2A65A" stroke-width="1.6" marker-end="url(#m4)"/>
+<text x="124" y="715.5" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12.5" font-weight="700" fill="#F2A65A">STANDARD_CONCEPT</text>
+<text x="256.0" y="715.5" font-family="Inter, 'Segoe UI', -apple-system, system-ui, Roboto, sans-serif" font-size="12.5" fill="#9fb0c6">OMOP record to concept</text>
+<line x1="528" y1="692" x2="528" y2="730" stroke="#5FD38D" stroke-width="1.6" marker-end="url(#m3)"/>
+<text x="544" y="715.5" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12.5" font-weight="700" fill="#5FD38D">CODED_BY</text>
+<text x="616.0" y="715.5" font-family="Inter, 'Segoe UI', -apple-system, system-ui, Roboto, sans-serif" font-size="12.5" fill="#9fb0c6">FHIR resource to concept (from layer 3)</text>
+<rect x="48" y="734" width="1104" height="100" rx="10" fill="#7D3C98" fill-opacity="0.12" stroke="#7D3C98" stroke-opacity="0.85" stroke-width="1.25"/>
+<rect x="48" y="734" width="6" height="100" rx="3" fill="#7D3C98"/>
+<text x="74" y="764" font-family="Inter, 'Segoe UI', -apple-system, system-ui, Roboto, sans-serif" font-size="11" font-weight="700" letter-spacing="1.8" fill="#C39BD8">LAYER 5</text>
+<text x="74" y="790" font-family="Inter, 'Segoe UI', -apple-system, system-ui, Roboto, sans-serif" font-size="18" font-weight="700" fill="#e6edf6">Clinical Terminologies</text>
+<text x="74" y="813" font-family="Inter, 'Segoe UI', -apple-system, system-ui, Roboto, sans-serif" font-size="12" fill="#9fb0c6">SNOMED CT · ICD-10 · LOINC · RxNorm</text>
+<rect x="332.0" y="767.0" width="119.5" height="34" rx="7" fill="#7D3C98" fill-opacity="0.28" stroke="#C39BD8" stroke-opacity="0.75" stroke-width="1"/>
+<text x="391.8" y="788.3" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12.5" fill="#e6edf6" text-anchor="middle">SnomedConcept</text>
+<rect x="461.5" y="767.0" width="89.5" height="34" rx="7" fill="#7D3C98" fill-opacity="0.28" stroke="#C39BD8" stroke-opacity="0.75" stroke-width="1"/>
+<text x="506.2" y="788.3" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12.5" fill="#e6edf6" text-anchor="middle">ICD10Code</text>
+<rect x="561.0" y="767.0" width="89.5" height="34" rx="7" fill="#7D3C98" fill-opacity="0.28" stroke="#C39BD8" stroke-opacity="0.75" stroke-width="1"/>
+<text x="605.8" y="788.3" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12.5" fill="#e6edf6" text-anchor="middle">LoincCode</text>
+<rect x="660.5" y="767.0" width="119.5" height="34" rx="7" fill="#7D3C98" fill-opacity="0.28" stroke="#C39BD8" stroke-opacity="0.75" stroke-width="1"/>
+<text x="720.2" y="788.3" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12.5" fill="#e6edf6" text-anchor="middle">RxNormConcept</text>
+<line x1="48" y1="856" x2="1152" y2="856" stroke="#64748b" stroke-opacity="0.35"/>
+<text x="48" y="878" font-family="Inter, 'Segoe UI', -apple-system, system-ui, Roboto, sans-serif" font-size="12.5" fill="#9fb0c6">Node labels and relationship types as stored in Neo4j 5 (neo4j/init-schema.cypher and seeds). All patient data is synthetic.</text>
+<text x="1152" y="878" font-family="Inter, 'Segoe UI', -apple-system, system-ui, Roboto, sans-serif" font-size="12.5" fill="#64748b" text-anchor="end">Arrows point from source to target node</text>
+</svg>

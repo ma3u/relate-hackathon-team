@@ -40,6 +40,7 @@
       <a href="#mac">Mac</a>
       <a href="#graph3d">3D-Graph</a>
       <a href="#private">Datenschutz</a>
+      <a href="#ehds">EHDS</a>
       <a href="#evidence">Evidenz</a>
       <a href="/slides.html" hreflang="en">Präsentation</a>
       <a class="lang" href="/" hreflang="en" lang="en" aria-label="English version">EN</a>
@@ -194,7 +195,50 @@
   </div>
 </section>
 
-<section id="evidence" class="alt">
+<section id="ehds" class="alt">
+  <div class="wrap">
+    <span class="pill">Europäischer Gesundheitsdatenraum</span>
+    <h2>Ihr Graph, verbunden mit dem Europäischen Gesundheitsdatenraum.</h2>
+    <p class="sub">Der <a href="https://eur-lex.europa.eu/eli/reg/2025/327/oj/deu">Europäische Gesundheitsdatenraum</a> (EHDS, Verordnung (EU) 2025/327) gibt jedem Menschen in der EU Zugang zu seinen elektronischen Gesundheitsdaten und das Recht, sie weiterzugeben: die Primärnutzung. Er regelt auch die Forschung mit Gesundheitsdaten, über Zugangsstellen für Gesundheitsdaten und sichere Verarbeitungsumgebungen: die Sekundärnutzung. Klarbefund ist die Seite des Menschen. Der EHDS Integration Hub ist die Seite des Datenraums.</p>
+    <div class="app">
+      <div class="text">
+        <h3>Ihre eigene Akte auf dem Hub</h3>
+        <ol class="steps">
+          <li><b>Verbinden.</b> In Klarbefund auf dem iPhone bietet <em>Connect to EHDS</em> drei Wege, und auf dem Telefon wird kein Passwort in eine Webseite getippt: ein Konto anlegen, wobei Apple dem Hub bestätigt, dass die Anfrage von der echten App auf einem echten Gerät kommt; sich mit einem vorhandenen Konto anmelden; oder einen QR-Code auf dem Patientenbildschirm am Computer scannen und dort bestätigen.</li>
+          <li><b>Ihre Akte lesen.</b> Messwerte mit ihren gedruckten Bereichen und Daten, Befunde, Impfungen und den Medikationsplan. Die App liest sie, wenn Sie den Bildschirm öffnen, und speichert sie nirgends.</li>
+          <li><b>Etwas hinzufügen, wenn Sie es wollen.</b> Zwei Schalter, beide aus, bis Sie sie einschalten: meine Befunde senden, als vorläufige Werte, gekennzeichnet als aus einem Scan gelesen, und meine Geräte-Verläufe senden, nur als Wochenmittel. Werte ohne LOINC-Code bleiben auf dem Telefon. <em>Disconnect</em> gibt es in der App und auf dem Patientenbildschirm.</li>
+          <li><b>Mit einer Wallet anmelden, wenn Sie wollen.</b> Auf der Website des Hubs kann eine EUDI-Wallet wie d-you Sie statt eines Passworts anmelden, vorerst mit der Sandbox-App von d-you. Der Hub speichert einen geschlüsselten Hash Ihrer Identität, nie Ihren Namen oder Ihr Geburtsdatum.</li>
+        </ol>
+        <p class="note">Das iPhone sendet dem Hub dieselben FHIR-R4-Befunde, die es Ihrem Mac sendet. Auf dem Demo-Hub sind alle anderen Akten synthetisch.</p>
+      </div>
+      <div><img class="phone-shot" src="/site/ehds/connect.png" alt="Connect to EHDS in Klarbefund: ein EHDS-Konto anlegen, sich mit einem Konto anmelden, oder per QR-Code vom Patientenbildschirm verbinden" loading="lazy"></div>
+    </div>
+
+    <h3 style="margin-top:56px">Forschung: Die Auswertung kommt zu den Daten</h3>
+    <div class="cards">
+      <div class="card"><h3>Zuerst Ihre Entscheidung</h3><p>Heute lässt der Hub Klarbefund-Daten aus Forschungsauszügen heraus. Für die Forschung braucht es zuerst Ihre Entscheidung in der App, und der EHDS erlaubt Ihnen, der Sekundärnutzung ganz zu widersprechen (Art. 71).</p></div>
+      <div class="card t"><h3>Eine sichere Verarbeitungsumgebung</h3><p>Forschende bekommen die Daten nicht. Mit einer Genehmigung der Zugangsstelle arbeiten sie in einem abgeschotteten Arbeitsbereich (Art. 73), und nur geprüfte Ergebnisse verlassen ihn: die Five Safes einer vertrauenswürdigen Forschungsumgebung.</p></div>
+      <div class="card a"><h3>Derselbe Code darin</h3><p>Der Graph-Code der Mac-App läuft auch unter Linux. Geprüft in einem Container am 16. November 2026 mit dem Beispielgraphen: die Tests, der Anamnese-Plan, die 3D-Ansicht und der nur lesende MCP-Server. In einem Arbeitsbereich würde er einen Relate-Graphen pro pseudonymisiertem Menschen bauen. Arbeitsbereiche pro Genehmigung und eine geprüfte Schleuse sind geplant, nicht gebaut.</p></div>
+    </div>
+
+    <div class="app" style="margin-top:56px">
+      <div class="text">
+        <span class="pill">EHDS Integration Hub</span>
+        <h3 style="font-size:28px">Die Seite des Datenraums, quelloffen.</h3>
+        <p style="color:var(--soft)">Der EHDS Integration Hub ist eine offene Referenzimplementierung des Europäischen Gesundheitsdatenraums. Kliniken, Forschende und die Zugangsstelle für Gesundheitsdaten tauschen Daten über Eclipse Dataspace Components und das Dataspace Protocol aus. Klinische Daten in FHIR R4, Forschungsdaten im OMOP CDM, Datensatzbeschreibungen in HealthDCAT-AP und die Terminologien (SNOMED CT, ICD-10, LOINC, RxNorm) liegen in einem Neo4j-Wissensgraphen mit fünf Schichten. Forschende stellen Anträge, die Zugangsstelle erteilt Genehmigungen, und die Auswertung läuft in einer sicheren Verarbeitungsumgebung, aus der nur Ergebnisse herauskommen.</p>
+        <p style="color:var(--soft)">Es ist eine Demonstration: 127 synthetische Patientinnen und Patienten, erfundene Organisationen, keine echten Gesundheitsdaten und keine Verbindung zur Europäischen Kommission oder zu einer Behörde. Klarbefund hat dort angefangen, als iPhone-App des Hubs.</p>
+        <div class="btns" style="margin-top:22px">
+          <a class="btn" href="https://ma3u.github.io/MinimumViableHealthDataspacev2/">Hub-Demo öffnen</a>
+          <a class="btn ghost" href="https://ma3u.github.io/MinimumViableHealthDataspacev2/docs/klarbefund">Klarbefund in der Hub-Doku</a>
+          <a class="btn ghost" href="https://github.com/ma3u/MinimumViableHealthDataspacev2">Quellcode auf GitHub</a>
+        </div>
+      </div>
+      <div><img class="macshot" src="/site/ehds/hub-architecture.svg" alt="Der Wissensgraph des Hubs in fünf Schichten: Datenzugang und Governance, Metadatenkatalog, klinische Daten in FHIR R4, Forschungsdaten im OMOP CDM, klinische Terminologien" loading="lazy"></div>
+    </div>
+  </div>
+</section>
+
+<section id="evidence">
   <div class="wrap">
     <h2>Evidenz, die ihren Platz verdient.</h2>
     <p class="sub">Der Graph sagt, welches Risiko welches erhöht, und mit welcher Sicherheit. Eine neuere Studie ändert so eine Verbindung erst, wenn sie drei Prüfungen besteht. Dass sie beim ersten Lesen solide wirkt, genügt nicht.</p>
@@ -208,7 +252,7 @@
   </div>
 </section>
 
-<section id="start">
+<section id="start" class="alt">
   <div class="wrap start">
     <div>
       <h2>Ausprobieren.</h2>
