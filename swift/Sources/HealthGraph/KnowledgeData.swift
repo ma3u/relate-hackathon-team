@@ -3,7 +3,7 @@
 // swiftlint:disable line_length
 
 enum KnowledgeData {
-  static let fingerprint = "0b16b093a22f3be4"
+  static let fingerprint = "ba978dfbdb44ba81"
   static let rangesSource = "services/epa-ingest/src/reference-ranges.ts (MinimumViableHealthDataspacev2)"
   static let json = #"""
   {
@@ -140,12 +140,14 @@ enum KnowledgeData {
    "afterCutoff": [
     {
      "from": "ctt-2026-labels",
+     "provisional": true,
      "summary": "Published six months after the guideline was adopted. It agrees with the guideline that muscle pain on a statin is mostly not caused by it, and adds that liver test changes are real in the first months.",
      "to": "degam-053-024",
      "topic": "Statin side effects"
     },
     {
      "from": "lpa-horizon-2026",
+     "provisional": true,
      "summary": "Published after the guideline: lowering Lp(a) with pelacarsen did not reduce events. It supports the guideline's caution that an Lp(a) result has no proven treatment consequence yet.",
      "to": "degam-053-024",
      "topic": "Lipoprotein(a)"
@@ -6913,12 +6915,18 @@ enum KnowledgeData {
      "certainty": "none (retracted)",
      "citation": "KETO-CTA, Soto-Mota et al., JACC Adv 2025;4:101686, retracted",
      "design": "observational cohort, 100 people, one year, no comparison group",
+     "gateOpen": [
+      "risk of bias not yet judged by a person (a named tool)"
+     ],
      "gatePassed": false,
+     "gatePrecision": "change in plaque volume: estimate not read",
      "gateReasons": [
       "publication status: retracted",
-      "too small: 100 participants, fewer than 1,000",
-      "design: cohort"
+      "design: cohort",
+      "effect estimate not read: precision not judged",
+      "information size: 100 participants, fewer than 800"
      ],
+     "gateStatus": "failed",
      "id": "keto-cta-2025",
      "kind": "study",
      "pmid": "40192608",
@@ -6950,8 +6958,13 @@ enum KnowledgeData {
      "certainty": "moderate",
      "citation": "CTT Collaboration, Lancet 2026;407:689",
      "design": "individual-participant meta-analysis, 19 placebo-controlled statin trials, 123,940 people",
+     "gateOpen": [
+      "risk of bias not yet judged by a person (AMSTAR 2 and RoB 2 of the trials)"
+     ],
      "gatePassed": true,
+     "gatePrecision": "abnormal liver transaminases: RR 1.41 (1.26 to 1.57), 1,339 events",
      "gateReasons": [],
+     "gateStatus": "provisional",
      "id": "ctt-2026-labels",
      "kind": "study",
      "pmid": "41655587",
@@ -6982,10 +6995,16 @@ enum KnowledgeData {
      "certainty": "moderate for the direction, low for the size",
      "citation": "Tasdighi et al., PLoS Med 2025;22:e1004561",
      "design": "pooled analysis of 22 prospective cohorts, 323,826 adults",
-     "gatePassed": false,
-     "gateReasons": [
-      "design: pooled cohorts"
+     "gateOpen": [
+      "risk of bias not yet judged by a person (a named tool)"
      ],
+     "gatePassed": false,
+     "gatePrecision": "cardiovascular disease, one cigarette a day or fewer: HR 1.47 (1.28 to 1.7), events not read",
+     "gateReasons": [
+      "design: pooled cohorts",
+      "number of events not read: information size not judged"
+     ],
+     "gateStatus": "failed",
      "id": "ccc-smoking-2025",
      "kind": "study",
      "pmid": "41252354",
@@ -7017,8 +7036,13 @@ enum KnowledgeData {
      "certainty": "high for this drug in its trial population; very low for any benefit at 30 mg/dL",
      "citation": "Lp(a)HORIZON, Cho et al., N Engl J Med 2026",
      "design": "randomised placebo-controlled trial, 8,323 people with cardiovascular disease and Lp(a) of at least 70 mg/dL, median 4.7 years",
+     "gateOpen": [
+      "risk of bias not yet judged by a person (RoB 2)"
+     ],
      "gatePassed": true,
+     "gatePrecision": "major cardiovascular events: HR 1.02 (0.9 to 1.15), 1,014 events",
      "gateReasons": [],
+     "gateStatus": "provisional",
      "id": "lpa-horizon-2026",
      "kind": "study",
      "pmid": "43001734",
@@ -7051,10 +7075,15 @@ enum KnowledgeData {
      "certainty": "low for a meaningful increase at 30 mg/dL",
      "citation": "EPIC-Norfolk, Kraaijenhof et al., Eur Heart J 2025;46:3875",
      "design": "prospective cohort, 17,087 European adults without cardiovascular disease, 20 years",
+     "gateOpen": [
+      "risk of bias not yet judged by a person (ROBINS-E)"
+     ],
      "gatePassed": false,
+     "gatePrecision": "major cardiovascular events, fourth against first fifth of Lp(a): HR 0.97 (0.87 to 1.09), 1,290 events",
      "gateReasons": [
       "observational, analysis not registered and prespecified"
      ],
+     "gateStatus": "failed",
      "id": "epic-norfolk-lpa-2025",
      "kind": "study",
      "pmid": "40167249",
@@ -7085,10 +7114,16 @@ enum KnowledgeData {
      "certainty": "low (women only, post hoc thresholds)",
      "citation": "Women's Health Study, Nordestgaard et al., JAMA Cardiol 2026;11:175",
      "design": "prospective cohort, 27,748 US women, 30 years",
-     "gatePassed": false,
-     "gateReasons": [
-      "observational, analysis not registered and prespecified"
+     "gateOpen": [
+      "risk of bias not yet judged by a person (ROBINS-E)"
      ],
+     "gatePassed": false,
+     "gatePrecision": "major cardiovascular events above 30 mg/dL: estimate not read",
+     "gateReasons": [
+      "observational, analysis not registered and prespecified",
+      "effect estimate not read: precision not judged"
+     ],
+     "gateStatus": "failed",
      "id": "whs-lpa-2026",
      "kind": "study",
      "pmid": "41499112",
@@ -7118,10 +7153,16 @@ enum KnowledgeData {
      "certainty": "very low for this person",
      "citation": "Tel Aviv cohort, Golan et al., Clin Res Cardiol 2026;115:357",
      "design": "retrospective single-centre cohort, 3,052 adults in a screening programme, median 6.4 years",
-     "gatePassed": false,
-     "gateReasons": [
-      "design: retrospective cohort"
+     "gateOpen": [
+      "risk of bias not yet judged by a person (a named tool)"
      ],
+     "gatePassed": false,
+     "gatePrecision": "major cardiovascular events above 50 mg/dL: HR 1.55 (1.1 to 2.17), events not read",
+     "gateReasons": [
+      "design: retrospective cohort",
+      "number of events not read: information size not judged"
+     ],
+     "gateStatus": "failed",
      "id": "telaviv-lpa-2026",
      "kind": "study",
      "pmid": "41400669",
@@ -7152,10 +7193,16 @@ enum KnowledgeData {
      "certainty": "moderate for the average; it cannot say which person has a real side effect",
      "citation": "SAMSON, Wood et al., N Engl J Med 2020;383:2182 (letter)",
      "design": "randomised n-of-1 trial, 60 people who had stopped a statin, 12 months of statin, placebo or nothing in random order",
-     "gatePassed": false,
-     "gateReasons": [
-      "too small: 60 participants, fewer than 1,000"
+     "gateOpen": [
+      "risk of bias not yet judged by a person (RoB 2)"
      ],
+     "gatePassed": false,
+     "gatePrecision": "symptom score: estimate not read",
+     "gateReasons": [
+      "effect estimate not read: precision not judged",
+      "information size: 60 participants, fewer than 800"
+     ],
+     "gateStatus": "failed",
      "id": "samson-2020",
      "kind": "study",
      "pmid": "33196154",
@@ -7186,8 +7233,13 @@ enum KnowledgeData {
      "certainty": "high for statin-intolerant people at high risk",
      "citation": "CLEAR Outcomes, Nissen et al., N Engl J Med 2023;388:1353",
      "design": "randomised placebo-controlled trial, 13,970 statin-intolerant people, bempedoic acid",
+     "gateOpen": [
+      "risk of bias not yet judged by a person (RoB 2)"
+     ],
      "gatePassed": true,
+     "gatePrecision": "major cardiovascular events: HR 0.87 (0.79 to 0.96), 1,746 events",
      "gateReasons": [],
+     "gateStatus": "provisional",
      "id": "clear-outcomes-2023",
      "kind": "study",
      "pmid": "36876740",
@@ -7218,11 +7270,16 @@ enum KnowledgeData {
      "certainty": "very low",
      "citation": "Qu et al., J Am Heart Assoc 2018;7:e009835",
      "design": "meta-analysis of 12 small randomised trials, 575 people",
-     "gatePassed": false,
-     "gateReasons": [
-      "too small: 575 participants, fewer than 1,000",
-      "not registered before it started"
+     "gateOpen": [
+      "risk of bias not yet judged by a person (AMSTAR 2 and RoB 2 of the trials)"
      ],
+     "gatePassed": false,
+     "gatePrecision": "muscle pain, points on a 10-point scale: WMD -1.6 (-1.75 to -1.44), 575 participants",
+     "gateReasons": [
+      "not registered before it started",
+      "information size: 575 participants, fewer than 800"
+     ],
+     "gateStatus": "failed",
      "id": "q10-qu-2018",
      "kind": "study",
      "pmid": "30371340",
@@ -7253,11 +7310,18 @@ enum KnowledgeData {
      "certainty": "low",
      "citation": "Kennedy et al., Atherosclerosis 2020;299:1",
      "design": "systematic review and meta-analysis of 7 randomised trials, 321 people",
-     "gatePassed": false,
-     "gateReasons": [
-      "too small: 321 participants, fewer than 1,000",
-      "registration not found (full text not read)"
+     "gateOpen": [
+      "risk of bias not yet judged by a person (AMSTAR 2 and RoB 2 of the trials)"
      ],
+     "gatePassed": false,
+     "gatePrecision": "muscle pain, points on a 10-point scale: WMD -0.42 (-1.47 to 0.62), 321 participants",
+     "gateReasons": [
+      "registration not found (full text not read)",
+      "imprecise: WMD -0.42 (-1.47 to 0.62) includes no effect and the minimal important difference of 1",
+      "information size: 321 participants, fewer than 800",
+      "small-study effects: pooled trials of 37 people, and trials under 50 report larger effects"
+     ],
+     "gateStatus": "failed",
      "id": "q10-kennedy-2020",
      "kind": "study",
      "pmid": "32179207",
@@ -7288,10 +7352,16 @@ enum KnowledgeData {
      "certainty": "low",
      "citation": "Kovacic et al., J Nutr Sci 2025;14:e72",
      "design": "systematic review and meta-analysis of 7 randomised trials, 389 people, 30 to 90 days",
-     "gatePassed": false,
-     "gateReasons": [
-      "too small: 389 participants, fewer than 1,000"
+     "gateOpen": [
+      "risk of bias not yet judged by a person (AMSTAR 2 and RoB 2 of the trials)"
      ],
+     "gatePassed": false,
+     "gatePrecision": "muscle pain, points on a 10-point scale: WMD -0.96 (-1.88 to -0.03), 389 participants",
+     "gateReasons": [
+      "information size: 389 participants, fewer than 800",
+      "small-study effects: pooled trials of 35 people, and trials under 50 report larger effects"
+     ],
+     "gateStatus": "failed",
      "id": "q10-kovacic-2025",
      "kind": "study",
      "pmid": "41158831",

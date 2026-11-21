@@ -330,7 +330,7 @@ enum Cypher {
   MATCH (a:Study {id: c.from})
   MATCH (g:Study {id: c.to})
   MERGE (a)-[k:AFTER_CUTOFF_OF {topic: c.topic}]->(g)
-  SET k.summary = c.summary
+  SET k.summary = c.summary, k.provisional = c.provisional
   RETURN count(k) AS afterCutoff
   """#
 

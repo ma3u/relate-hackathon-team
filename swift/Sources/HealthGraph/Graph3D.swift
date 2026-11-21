@@ -149,8 +149,15 @@ public enum Graph3D {
         + " (PubMed, checked \(str(p, "statusCheckedAt") ?? ""))")
     }
     if let passed = p["gatePassed"] as? Bool {
-      lines.append(passed ? "Quality gate: passed, may be set against a guideline"
-        : "Quality gate: not passed (" + list("gateReasons").joined(separator: "; ") + "), context only")
+      if !passed {
+        lines.append("Quality gate: not passed (" + list("gateReasons").joined(separator: "; ") + "), context only")
+      } else if str(p, "gateStatus") == "provisional" {
+        lines.append("Quality gate: form and precision passed, set against a guideline provisionally ("
+          + list("gateOpen").joined(separator: "; ") + ")")
+      } else {
+        lines.append("Quality gate: passed, risk of bias judged by a person, may be set against a guideline")
+      }
+      if let precision = str(p, "gatePrecision") { lines.append("Precision: \(precision)") }
     }
     if let verdict = str(p, "appraisalVerdict") {
       lines += ["Question: \(str(p, "appraisalQuestion") ?? "")", "Verdict: \(verdict)",

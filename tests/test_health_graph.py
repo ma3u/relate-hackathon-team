@@ -348,13 +348,26 @@ def test_german_guidelines_and_appraised_studies(db):
     assert later and all(str(r["y"]) >= r["a"][:4] for r in later)
     both = list(conn.execute("""MATCH (a:Study)-[k:DISAGREES_WITH]->(b:Study) RETURN k.topic AS t"""))
     assert {"Lipoprotein(a)", "LDL cholesterol"} <= {r["t"] for r in both}
-    # registered is not enough: small trials and meta-analyses of small trials stay context
-    gated = {r["id"]: r["why"] for r in conn.execute(
-        "MATCH (s:Study) WHERE s.id IN $ids RETURN s.id AS id, s.gateReasons AS why",
+    # registered is not enough: precision (GRADE), not a head count, and small trials stay context
+    gated = {r["id"]: r for r in conn.execute(
+        "MATCH (s:Study) WHERE s.id IN $ids RETURN s.id AS id, s.gateReasons AS why, s.gateStatus AS status, "
+        "s.gateOpen AS open, s.gatePrecision AS precision",
         {"ids": ["samson-2020", "clear-outcomes-2023", "q10-qu-2018", "q10-kennedy-2020", "q10-kovacic-2025"]})}
+    gated, rows = {i: r["why"] for i, r in gated.items()}, gated
     assert gated["clear-outcomes-2023"] == []
-    assert all(any(w.startswith("too small") for w in gated[i])
+    # through form and precision, but no person has judged its risk of bias yet: provisional
+    assert rows["clear-outcomes-2023"]["status"] == "provisional"
+    assert any("RoB 2" in o for o in rows["clear-outcomes-2023"]["open"])
+    assert rows["clear-outcomes-2023"]["precision"] == "major cardiovascular events: HR 0.87 (0.79 to 0.96), 1,746 events"
+    assert all(any(w.startswith("information size") for w in gated[i])
                for i in ["samson-2020", "q10-qu-2018", "q10-kennedy-2020", "q10-kovacic-2025"])
+    # an interval that holds both no effect and an important one is imprecise
+    assert any(w.startswith("imprecise") for w in gated["q10-kennedy-2020"])
+    # a narrow interval from trials of 35 people is still suspect: small-study effects
+    assert any(w.startswith("small-study effects") for w in gated["q10-kovacic-2025"])
+    # every link to a guideline is provisional until a person has judged the risk of bias
+    prov = {r["p"] for r in conn.execute("MATCH ()-[k:AFTER_CUTOFF_OF]->() RETURN k.provisional AS p")}
+    assert prov == {True}
     assert "not registered before it started" in gated["q10-qu-2018"]
     assert "registration not found (full text not read)" in gated["q10-kennedy-2020"]
     cites = conn.execute("""MATCH (:Study {id: 'degam-053-024'})-[k:CITES {source: 'reference list'}]->(s)
