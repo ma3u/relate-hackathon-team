@@ -7,7 +7,8 @@ Our submission to the **[Relate by Neo4j Hackathon](https://relate.devpost.com/)
 | | |
 |---|---|
 | 🎬 **Demo video (2 min)** | [youtu.be/TZWaN4sBj1s](https://www.youtube.com/watch?v=TZWaN4sBj1s) · full 3-minute version: [youtu.be/HRmlXPt0r_k](https://www.youtube.com/watch?v=HRmlXPt0r_k) |
-| 🌐 **Website** | [klarbefund.mabu.red](https://klarbefund.mabu.red/): Klarbefund for iPhone and Mac explained, with the TestFlight link |
+| 🌐 **Website** | [klarbefund.mabu.red](https://klarbefund.mabu.red/) (English) and [klarbefund.mabu.red/de/](https://klarbefund.mabu.red/de/) (Deutsch): Klarbefund for iPhone and Mac explained, with the TestFlight link |
+| 🧊 **Live 3D demo** | [klarbefund.mabu.red/3d/](https://klarbefund.mabu.red/3d/): the 3D view of the Mac app on the synthetic sample graph, in the browser. Rebuild with `scripts/build_site_demo.py` |
 | 🖥️ **Interactive presentation** | [klarbefund.mabu.red/slides.html](https://klarbefund.mabu.red/slides.html) |
 | 🏆 **Devpost** | [MyHealthCoach on Devpost](https://devpost.com/software/myhealthcoach-my-local-health-graph-not-the-cloud-s) |
 | 📱💻 **iPhone and Mac apps (TestFlight)** | [testflight.apple.com/join/ssADSXX6](https://testflight.apple.com/join/ssADSXX6): one link for Klarbefund on iPhone and [Klarbefund for Mac](docs/MAC.md) (pair, seal, connect Claude with one click, no scripts). Both are in development and testing, so TestFlight only, not on the App Store |
