@@ -151,8 +151,15 @@ def evidence_lines(p):
         lines.append(("Status: no retraction, correction or concern" if status == "ok" else f"Status: {status.upper()}")
                      + f" (PubMed, checked {p.get('statusCheckedAt')})")
     if p.get("gatePassed") is not None:
-        lines.append("Quality gate: passed, may be set against a guideline" if p["gatePassed"] else
-                     "Quality gate: not passed (" + "; ".join(p.get("gateReasons") or []) + "), context only")
+        if not p["gatePassed"]:
+            lines.append("Quality gate: not passed (" + "; ".join(p.get("gateReasons") or []) + "), context only")
+        elif p.get("gateStatus") == "provisional":
+            lines.append("Quality gate: form and precision passed, set against a guideline provisionally ("
+                         + "; ".join(p.get("gateOpen") or []) + ")")
+        else:
+            lines.append("Quality gate: passed, risk of bias judged by a person, may be set against a guideline")
+        if p.get("gatePrecision"):
+            lines.append(f"Precision: {p['gatePrecision']}")
     if p.get("appraisalVerdict"):
         lines += [f"Question: {p.get('appraisalQuestion')}", f"Verdict: {p['appraisalVerdict']}",
                   f"Certainty: {p.get('certainty')}",

@@ -298,7 +298,7 @@ const Graph = new ForceGraph3D(document.getElementById("graph"))
   .linkDirectionalArrowRelPos(0.92)
   .linkDirectionalArrowColor(l => l.t === "CITES" ? CITE_LINK : RISK_LINK)
   .linkLabel(l => (l.t === "RAISES_RISK_OF" || l.t === "DISAGREES_WITH" || l.t === "AFTER_CUTOFF_OF") && l.p
-    ? `<b>${esc(l.source.n)} → ${esc(l.target.n)}</b>${l.p.topic ? ` · ${esc(l.p.topic)}` : ""}${esc(effect(l.p))}<br>${esc(l.p.summary || "")}` : "")
+    ? `<b>${esc(l.source.n)} → ${esc(l.target.n)}</b>${l.p.topic ? ` · ${esc(l.p.topic)}` : ""}${l.p.provisional ? " · provisional: risk of bias not yet judged by a person" : ""}${esc(effect(l.p))}<br>${esc(l.p.summary || "")}` : "")
   .linkDirectionalParticles(l => hlLinks.has(l) ? 3 : 0)
   .linkDirectionalParticleWidth(1.6)
   .linkDirectionalParticleSpeed(0.006)

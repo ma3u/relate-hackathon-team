@@ -365,46 +365,154 @@ DISAGREES = [  # (guideline, guideline, topic, summary)
 
 # ── the gate a newer study must pass before it is set against a guideline ──
 # A guideline has already weighed the quality of the studies it cites; a newer study
-# has not been through that. Peer review is necessary but not enough: KETO-CTA was
-# peer reviewed and retracted. So a study is linked AFTER_CUTOFF_OF a guideline only
-# when it was peer reviewed, carries no retraction or expression of concern, and its
-# design and plan were fixed before the data: a randomised trial or a meta-analysis
-# of trials registered in advance, or a prospective cohort with a registered,
-# prespecified analysis. Everything else stays in the graph as context, not as a
-# challenge to the guideline. Facts as read in the appraisals (DRAFT, LPA).
+# has not been through that. The gate has three layers, revised on 2026-11-21 after a
+# clinical pharmacologist's review: formal criteria are too coarse,
+# a study's informativeness lies in its confidence interval and not in its head count,
+# and very small studies are still a reason for suspicion.
 #
-# Registration is not enough either: a registered meta-analysis of seven trials of 35 to
-# 76 people (Q10) cannot settle a question. A study also needs at least MIN_PARTICIPANTS,
-# the size the CTT Collaboration itself requires of a trial before it pools it.
-# registered None means not found (full text not read), which fails like False.
-GATE_FACTS = {  # id: (peer reviewed, design, registered in advance, analysis prespecified, participants)
-    "keto-cta-2025": (True, "cohort", False, False, 100),            # registered after the start
-    "ctt-2026-labels": (True, "meta-analysis of trials", True, True, 123940),  # protocol published 2016
-    "ccc-smoking-2025": (True, "pooled cohorts", False, False, 323826),   # analysis plan not public
-    "lpa-horizon-2026": (True, "randomised trial", True, True, 8323),   # NCT04023552
-    "epic-norfolk-lpa-2025": (True, "prospective cohort", False, False, 17087),
-    "whs-lpa-2026": (True, "prospective cohort", False, False, 27748),   # hypothesis formulated after the data
-    "telaviv-lpa-2026": (True, "retrospective cohort", False, False, 3052),  # threshold found in the same data
-    "samson-2020": (True, "randomised trial", True, True, 60),          # NCT02668016
-    "clear-outcomes-2023": (True, "randomised trial", True, True, 13970),  # NCT02993406
-    "q10-qu-2018": (True, "meta-analysis of trials", False, False, 575),  # "no registered protocol"
-    "q10-kennedy-2020": (True, "meta-analysis of trials", None, None, 321),
-    "q10-kovacic-2025": (True, "meta-analysis of trials", True, True, 389),  # PROSPERO CRD42023467604
+# 1. Form. Peer reviewed, no retraction or expression of concern, and design and plan
+#    fixed before the data: a randomised trial or a meta-analysis of trials registered in
+#    advance, or a prospective cohort with a registered, prespecified analysis.
+#    Necessary, never enough: KETO-CTA was peer reviewed and retracted, and most weak
+#    studies are neither retracted nor unregistered. registered None means not found
+#    (full text not read), which fails like False.
+# 2. Precision, GRADE's imprecision domain (Guyatt et al., J Clin Epidemiol 2011;64:1283),
+#    for the one result that bears on the guideline:
+#    - the 95% CI is rated down when it includes no effect and also an appreciable one,
+#      a relative change of 25% for a yes/no outcome (0.75 or 1.25) or the minimal
+#      important difference for a measured one. A CI that excludes no effect, or one
+#      that includes it but rules out an appreciable change (a precise "no"), passes;
+#    - the evidence must reach the optimal information size, by GRADE's rule of thumb
+#      400 events for a yes/no outcome (a relative change of 25%) and 800 participants
+#      for a measured one (0.2 standard deviations, alpha 0.05, power 0.8; the 2011
+#      paper said 400, corrected by the U.S. GRADE Network in 2021). This replaces the
+#      fixed 1,000 participants, which counted people, not information.
+#    - small-study effects: a pooled result with trials of fewer than SMALL_TRIAL people
+#      is held back. Such trials report effects about 48% larger than trials of 1,000
+#      or more (Dechartres et al., BMJ 2013;346:f2304), so a small trial is a reason
+#      for suspicion even when its interval looks narrow.
+# 3. A person's reading. Risk of bias judged domain by domain with the tool for the
+#    design (RoB 2, ROBINS-E, AMSTAR 2), by a person. Code checks the form and runs the
+#    numbers; a model may find a passage and quote it; neither finds every concealed
+#    weakness. Until a person has judged, a study that passes 1 and 2 is linked
+#    provisionally and shown as such; judged at high risk, it is not linked.
+# Everything that fails stays in the graph as context, with its reasons.
+GATE_FACTS = {
+    # id: (peer reviewed, design, registered in advance, analysis prespecified)
+    "keto-cta-2025": (True, "cohort", False, False),                 # registered after the start
+    "ctt-2026-labels": (True, "meta-analysis of trials", True, True),  # protocol published 2016
+    "ccc-smoking-2025": (True, "pooled cohorts", False, False),       # analysis plan not public
+    "lpa-horizon-2026": (True, "randomised trial", True, True),       # NCT04023552
+    "epic-norfolk-lpa-2025": (True, "prospective cohort", False, False),
+    "whs-lpa-2026": (True, "prospective cohort", False, False),       # hypothesis formulated after the data
+    "telaviv-lpa-2026": (True, "retrospective cohort", False, False),  # threshold found in the same data
+    "samson-2020": (True, "randomised trial", True, True),            # NCT02668016
+    "clear-outcomes-2023": (True, "randomised trial", True, True),    # NCT02993406
+    "q10-qu-2018": (True, "meta-analysis of trials", False, False),   # "no registered protocol"
+    "q10-kennedy-2020": (True, "meta-analysis of trials", None, None),
+    "q10-kovacic-2025": (True, "meta-analysis of trials", True, True),  # PROSPERO CRD42023467604
 }
+# id: the result that bears on the guideline, as read in the appraisal or the abstract.
+# kind "binary": measure, estimate, CI, events in the comparison. kind "continuous":
+# measure, estimate, CI, participants, the minimal important difference (MID).
+# estimate None: not read, so precision cannot be judged. smallest: the smallest pooled trial.
+# The MID for pain on a 10-point scale is 1 point, 10%: IMMPACT takes a fall of 10 to 20% as
+# minimally important (Dworkin et al., J Pain 2008;9:105, PMID 18055266).
+PRECISION = {
+    "keto-cta-2025": {"kind": "continuous", "outcome": "change in plaque volume", "estimate": None,
+                      "participants": 100},
+    "ctt-2026-labels": {"kind": "binary", "outcome": "abnormal liver transaminases", "measure": "RR",
+                        "estimate": 1.41, "ci": (1.26, 1.57), "events": 783 + 556},
+    "ccc-smoking-2025": {"kind": "binary", "outcome": "cardiovascular disease, one cigarette a day or fewer",
+                         "measure": "HR", "estimate": 1.47, "ci": (1.28, 1.70), "events": None},
+    "lpa-horizon-2026": {"kind": "binary", "outcome": "major cardiovascular events", "measure": "HR",
+                         "estimate": 1.02, "ci": (0.90, 1.15), "events": 511 + 503},
+    "epic-norfolk-lpa-2025": {"kind": "binary", "outcome": "major cardiovascular events, fourth against first "
+                              "fifth of Lp(a)", "measure": "HR", "estimate": 0.97, "ci": (0.87, 1.09),
+                              "events": 694 + 596},
+    "whs-lpa-2026": {"kind": "binary", "outcome": "major cardiovascular events above 30 mg/dL", "estimate": None,
+                     "events": 3707},
+    "telaviv-lpa-2026": {"kind": "binary", "outcome": "major cardiovascular events above 50 mg/dL",
+                         "measure": "HR", "estimate": 1.55, "ci": (1.10, 2.17), "events": None},
+    "samson-2020": {"kind": "continuous", "outcome": "symptom score", "estimate": None, "participants": 60},
+    "clear-outcomes-2023": {"kind": "binary", "outcome": "major cardiovascular events", "measure": "HR",
+                            "estimate": 0.87, "ci": (0.79, 0.96), "events": 819 + 927},
+    "q10-qu-2018": {"kind": "continuous", "outcome": "muscle pain, points on a 10-point scale", "measure": "WMD",
+                    "estimate": -1.60, "ci": (-1.75, -1.44), "participants": 575, "mid": 1.0, "smallest": None},
+    "q10-kennedy-2020": {"kind": "continuous", "outcome": "muscle pain, points on a 10-point scale",
+                         "measure": "WMD", "estimate": -0.42, "ci": (-1.47, 0.62), "participants": 321,
+                         "mid": 1.0, "smallest": 37},
+    "q10-kovacic-2025": {"kind": "continuous", "outcome": "muscle pain, points on a 10-point scale",
+                         "measure": "WMD", "estimate": -0.96, "ci": (-1.88, -0.03), "participants": 389,
+                         "mid": 1.0, "smallest": 35},
+}
+# id: (tool, judgement 'low' | 'some concerns' | 'high', who judged, date). Empty until a
+# person has read the full text and its protocol; a model's rating does not count.
+RISK_OF_BIAS: dict[str, tuple[str, str, str, str]] = {}
+
 STRONG_DESIGNS = {"randomised trial", "meta-analysis of trials"}
-MIN_PARTICIPANTS = 1000
+APPRECIABLE_RATIO = (0.75, 1.25)  # GRADE: a relative change of 25%
+MIN_EVENTS = 400                  # GRADE's rule of thumb for the optimal information size, yes/no outcomes
+MIN_PARTICIPANTS = 800            # the same, measured outcomes (corrected 2021)
+SMALL_TRIAL = 50                  # Dechartres et al. 2013: the smallest size band
+BIAS_TOOL = {"randomised trial": "RoB 2", "meta-analysis of trials": "AMSTAR 2 and RoB 2 of the trials",
+             "prospective cohort": "ROBINS-E"}
+
+
+def _n(x: float) -> str:
+    return f"{x:g}"
+
+
+def precision_line(st_id: str) -> str:
+    """The result the gate judged, in one line for the node panel."""
+    p = PRECISION[st_id]
+    if p.get("estimate") is None:
+        return f"{p['outcome']}: estimate not read"
+    lo, hi = p["ci"]
+    size = (f"{p['events']:,} events" if p.get("events") else "events not read") if p["kind"] == "binary" \
+        else f"{p['participants']:,} participants"
+    return f"{p['outcome']}: {p['measure']} {_n(p['estimate'])} ({_n(lo)} to {_n(hi)}), {size}"
+
+
+def precision(st_id: str) -> list[str]:
+    """GRADE imprecision: why the result is not precise enough; empty when it is."""
+    p = PRECISION[st_id]
+    reasons = []
+    if p.get("estimate") is None:
+        reasons.append("effect estimate not read: precision not judged")
+    else:
+        lo, hi = p["ci"]
+        ci = f"{p['measure']} {_n(p['estimate'])} ({_n(lo)} to {_n(hi)})"
+        if p["kind"] == "binary":
+            down, up = APPRECIABLE_RATIO
+            if lo <= 1 <= hi and (lo < down or hi > up):
+                reasons.append(f"imprecise: {ci} includes no effect and a change of 25%")
+        else:
+            mid = p["mid"]
+            if lo <= 0 <= hi and (lo < -mid or hi > mid):
+                reasons.append(f"imprecise: {ci} includes no effect and the minimal important difference "
+                               f"of {_n(mid)}")
+    if p["kind"] == "binary":
+        if p.get("events") is None:
+            reasons.append("number of events not read: information size not judged")
+        elif p["events"] < MIN_EVENTS:
+            reasons.append(f"information size: {p['events']:,} events, fewer than {MIN_EVENTS}")
+    elif p["participants"] < MIN_PARTICIPANTS:
+        reasons.append(f"information size: {p['participants']:,} participants, fewer than {MIN_PARTICIPANTS}")
+    if p.get("smallest") is not None and p["smallest"] < SMALL_TRIAL:
+        reasons.append(f"small-study effects: pooled trials of {p['smallest']} people, and trials under "
+                       f"{SMALL_TRIAL} report larger effects")
+    return reasons
 
 
 def gate(st: dict) -> list[str]:
-    """Why a study may not be set against a guideline; empty when it passes."""
-    peer, design, registered, prespecified, participants = GATE_FACTS[st["id"]]
+    """Why a study may not be set against a guideline; empty when it passes layers 1 and 2."""
+    peer, design, registered, prespecified = GATE_FACTS[st["id"]]
     reasons = []
     if not peer:
         reasons.append("not peer reviewed (preprint)")
     if st.get("publicationStatus") != "ok":
         reasons.append(f"publication status: {st.get('publicationStatus')}")
-    if participants < MIN_PARTICIPANTS:
-        reasons.append(f"too small: {participants:,} participants, fewer than {MIN_PARTICIPANTS:,}")
     if design in STRONG_DESIGNS:
         if registered is None:
             reasons.append("registration not found (full text not read)")
@@ -415,12 +523,21 @@ def gate(st: dict) -> list[str]:
             reasons.append("observational, analysis not registered and prespecified")
     else:
         reasons.append(f"design: {design}")
+    reasons += precision(st["id"])
+    bias = RISK_OF_BIAS.get(st["id"])
+    if bias and bias[1] == "high":
+        reasons.append(f"high risk of bias ({bias[0]}, judged by {bias[2]} on {bias[3]})")
     return reasons
 
 
 def _with_gate(st: dict) -> dict:
     reasons = gate(st)
-    return st | {"gatePassed": not reasons, "gateReasons": reasons}
+    design = GATE_FACTS[st["id"]][1]
+    bias = RISK_OF_BIAS.get(st["id"])
+    open_ = [] if bias else [f"risk of bias not yet judged by a person ({BIAS_TOOL.get(design, 'a named tool')})"]
+    status = "failed" if reasons else ("provisional" if open_ else "passed")
+    return st | {"gatePassed": not reasons, "gateStatus": status, "gateReasons": reasons, "gateOpen": open_,
+                 "gatePrecision": precision_line(st["id"])}
 
 
 def studies() -> list[dict]:
@@ -434,9 +551,10 @@ def about() -> list[tuple[str, str]]:
 
 
 def after_cutoff_rows() -> list[dict]:
-    """Only studies that pass the gate are set against a guideline."""
-    passed = {st["id"] for st in studies() if st.get("gatePassed")}
-    return [{"from": a, "to": b, "topic": t, "summary": s} for a, b, t, s in AFTER_CUTOFF if a in passed]
+    """Only studies through the gate are set against a guideline; provisionally until a person judged the bias."""
+    status = {st["id"]: st["gateStatus"] for st in studies() if st.get("gateStatus")}
+    return [{"from": a, "to": b, "topic": t, "summary": s, "provisional": status[a] == "provisional"}
+            for a, b, t, s in AFTER_CUTOFF if status.get(a) in ("passed", "provisional")]
 
 
 def disagree_rows() -> list[dict]:
@@ -452,7 +570,7 @@ UNWIND $afterCutoff AS c
 MATCH (a:Study {id: c.from})
 MATCH (g:Study {id: c.to})
 MERGE (a)-[k:AFTER_CUTOFF_OF {topic: c.topic}]->(g)
-SET k.summary = c.summary
+SET k.summary = c.summary, k.provisional = c.provisional
 RETURN count(k) AS afterCutoff
 """
 
