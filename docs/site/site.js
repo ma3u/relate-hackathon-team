@@ -1,0 +1,165 @@
+// The 3D graph flow: crossfades the views every few seconds; a tab jumps to its view;
+// hovering the picture or Pause holds it. With reduced motion it does not advance by itself.
+(function () {
+  var root = document.getElementById("gflow");
+  if (!root) return;
+  var tabs = [].slice.call(root.querySelectorAll('[role="tab"]'));
+  var imgs = [].slice.call(root.querySelectorAll(".gstage img"));
+  var cap = document.getElementById("gcap"), ctl = document.getElementById("gctl");
+  var DUR = 6000, i = 0, timer = 0, paused = false, hover = false;
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  root.style.setProperty("--dur", DUR / 1000 + "s");
+  function show(n) {
+    i = (n + imgs.length) % imgs.length;
+    if (imgs[(i + 1) % imgs.length]) imgs[(i + 1) % imgs.length].loading = "eager";
+    imgs.forEach(function (im, k) {
+      im.classList.remove("on");
+      if (k === i) { im.loading = "eager"; void im.offsetWidth; im.classList.add("on"); }
+    });
+    tabs.forEach(function (t, k) {
+      t.setAttribute("aria-selected", k === i ? "true" : "false");
+      t.tabIndex = k === i ? 0 : -1;
+      var bar = t.querySelector(".bar"); bar.style.animation = "none"; void bar.offsetWidth; bar.style.animation = "";
+    });
+    cap.textContent = imgs[i].getAttribute("data-cap");
+    var list = tabs[i].parentNode;
+    if (list.scrollWidth > list.clientWidth) list.scrollLeft = tabs[i].offsetLeft - list.offsetLeft - 16;
+    schedule();
+  }
+  function schedule() {
+    clearTimeout(timer);
+    var hold = paused || hover || reduce;
+    root.classList.toggle("paused", hold);
+    if (!hold) timer = setTimeout(function () { show(i + 1); }, DUR);
+  }
+  tabs.forEach(function (t, k) {
+    t.addEventListener("click", function () { show(k); });
+    t.addEventListener("keydown", function (e) {
+      var d = (e.key === "ArrowDown" || e.key === "ArrowRight") ? 1 : (e.key === "ArrowUp" || e.key === "ArrowLeft") ? -1 : 0;
+      if (d) { e.preventDefault(); show(k + d); tabs[i].focus(); }
+    });
+  });
+  var stage = document.getElementById("gstage");
+  stage.addEventListener("mouseenter", function () { hover = true; schedule(); });
+  stage.addEventListener("mouseleave", function () { hover = false; schedule(); });
+  ctl.addEventListener("click", function () { paused = !paused; ctl.textContent = paused ? (ctl.dataset.play || "Play") : (ctl.dataset.pause || "Pause"); schedule(); });
+  if (reduce) ctl.hidden = true;
+  tabs.forEach(function (t, k) { t.tabIndex = k === 0 ? 0 : -1; });
+  // start when the section comes into view, so the first view is not missed
+  if ("IntersectionObserver" in window) {
+    var io = new IntersectionObserver(function (e) { if (e[0].isIntersecting) { io.disconnect(); show(0); } }, { threshold: 0.3 });
+    io.observe(root);
+  } else { show(0); }
+})();
+// Hero background: health data points drift, links form between neighbours, and data flows
+// run along them as light pulses, denser on the right, away from the headline. Taken from the
+// cover of the Tractus-X Community Days deck. Runs only while the hero is on screen; one still
+// frame when the viewer prefers reduced motion.
+(function () {
+  var canvas = document.getElementById("hero-net");
+  if (!canvas || !canvas.getContext) return;
+  var hero = canvas.parentElement;
+  var ctx = canvas.getContext("2d");
+  var W = 1920, H = 1080, LINK = 250, scale = 1;
+  var COLORS = ["#3d9bff", "#19b39a", "#f5b335", "#a77bd1", "#2471a3", "#148f77"];
+  var seed = 7;
+  function rnd() { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }
+  var nodes = [];
+  for (var i = 0; i < 64; i++) {
+    var x = rnd() < 0.68 ? 900 + rnd() * 1020 : rnd() * 900;
+    nodes.push({ x: x, y: 40 + rnd() * 1000, vx: (rnd() - 0.5) * 0.35, vy: (rnd() - 0.5) * 0.35,
+      r: 2.5 + rnd() * 3.5, c: COLORS[Math.floor(rnd() * COLORS.length)], hub: rnd() < 0.12 });
+  }
+  var pulses = [];
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function fade(x) { return x < 1000 ? 0.25 + 0.75 * (x / 1000) * (x / 1000) : 1; }
+  function hexA(hex, a) {
+    var n = parseInt(hex.slice(1), 16);
+    return "rgba(" + (n >> 16) + "," + ((n >> 8) & 255) + "," + (n & 255) + "," + a.toFixed(3) + ")";
+  }
+  function resize() {
+    var w = hero.clientWidth, h = hero.clientHeight, dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
+    scale = w / W;
+    var nh = h / scale;
+    if (nh !== H) { for (var i = 0; i < nodes.length; i++) nodes[i].y = nodes[i].y / H * nh; H = nh; }
+    ctx.setTransform(dpr * scale, 0, 0, dpr * scale, 0, 0);
+  }
+  function step(dt) {
+    for (var i = 0; i < nodes.length; i++) {
+      var n = nodes[i];
+      n.x += n.vx * dt; n.y += n.vy * dt;
+      if (n.x < 0 || n.x > W) n.vx *= -1;
+      if (n.y < 0 || n.y > H) n.vy *= -1;
+    }
+    if (pulses.length < 26 && Math.random() < 0.18 * dt) {
+      var a = nodes[Math.floor(Math.random() * nodes.length)], best = null, bd = LINK;
+      for (var j = 0; j < nodes.length; j++) {
+        var b = nodes[j];
+        if (b === a) continue;
+        var d = Math.hypot(a.x - b.x, a.y - b.y);
+        if (d < bd && Math.random() < 0.5) { bd = d; best = b; }
+      }
+      if (best) pulses.push({ a: a, b: best, t: 0, v: 0.008 + Math.random() * 0.01, c: a.c });
+    }
+    for (var k = pulses.length - 1; k >= 0; k--) {
+      pulses[k].t += pulses[k].v * dt;
+      if (pulses[k].t >= 1) { pulses[k].b.flash = 1; pulses.splice(k, 1); }
+    }
+  }
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    ctx.lineWidth = 1.4;
+    for (var i = 0; i < nodes.length; i++) {
+      for (var j = i + 1; j < nodes.length; j++) {
+        var a = nodes[i], b = nodes[j], d = Math.hypot(a.x - b.x, a.y - b.y);
+        if (d < LINK) {
+          ctx.strokeStyle = "rgba(131,153,168," + ((1 - d / LINK) * 0.32 * fade((a.x + b.x) / 2)).toFixed(3) + ")";
+          ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+        }
+      }
+    }
+    for (var k = 0; k < pulses.length; k++) {
+      var p = pulses[k], x = p.a.x + (p.b.x - p.a.x) * p.t, y = p.a.y + (p.b.y - p.a.y) * p.t, f = fade(x);
+      var g = ctx.createRadialGradient(x, y, 0, x, y, 16);
+      g.addColorStop(0, hexA(p.c, 0.95 * f)); g.addColorStop(1, hexA(p.c, 0));
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, 16, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = hexA(p.c, 0.55 * f); ctx.lineWidth = 2.5;
+      var tt = Math.max(0, p.t - 0.18);
+      ctx.beginPath(); ctx.moveTo(p.a.x + (p.b.x - p.a.x) * tt, p.a.y + (p.b.y - p.a.y) * tt); ctx.lineTo(x, y); ctx.stroke();
+      ctx.lineWidth = 1.4;
+    }
+    for (var m = 0; m < nodes.length; m++) {
+      var n = nodes[m], fl = n.flash || 0, a2 = (0.55 + 0.45 * fl) * fade(n.x);
+      if (n.hub || fl > 0.05) {
+        var h = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.r * 6);
+        h.addColorStop(0, hexA(n.c, 0.35 * a2 + 0.3 * fl)); h.addColorStop(1, hexA(n.c, 0));
+        ctx.fillStyle = h; ctx.beginPath(); ctx.arc(n.x, n.y, n.r * 6, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.fillStyle = hexA(n.c, a2);
+      ctx.beginPath(); ctx.arc(n.x, n.y, n.r * (n.hub ? 1.6 : 1) + fl * 3, 0, Math.PI * 2); ctx.fill();
+      if (fl) n.flash = Math.max(0, fl - 0.04);
+    }
+  }
+  var running = false, visible = true, last = 0, raf = 0;
+  function frame(ts) {
+    if (!running) return;
+    var dt = last ? Math.min(3, (ts - last) / 16.7) : 1;
+    last = ts; step(dt); draw();
+    raf = requestAnimationFrame(frame);
+  }
+  function sync() {
+    if (reduce) { draw(); return; }
+    var on = visible && !document.hidden;
+    if (on && !running) { running = true; last = 0; raf = requestAnimationFrame(frame); }
+    if (!on && running) { running = false; cancelAnimationFrame(raf); }
+  }
+  resize();
+  for (var w = 0; w < 140; w++) step(1);
+  draw();
+  window.addEventListener("resize", function () { resize(); draw(); });
+  document.addEventListener("visibilitychange", sync);
+  if ("IntersectionObserver" in window) {
+    new IntersectionObserver(function (e) { visible = e[0].isIntersecting; sync(); }).observe(hero);
+  } else { sync(); }
+})();

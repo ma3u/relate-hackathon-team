@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Klarbefund · Ihr Gesundheitsgraph auf iPhone und Mac</title>
+<meta name="description" content="Klarbefund liest Ihre Laborbefunde auf Papier mit dem iPhone und hält sie, zusammen mit den Daten Ihrer Apple Watch, in einem Neo4j-Relate-Graphen auf Ihrem eigenen iPhone und Mac. Verschlüsselt, lokal, ohne Cloud. Claude oder ein lokales Modell liest nur mit.">
+<meta property="og:title" content="Klarbefund: Ihr Gesundheitsgraph auf Ihrem eigenen iPhone und Mac">
+<meta property="og:description" content="Laborbefunde und Apple-Watch-Daten in einem Neo4j-Relate-Graphen, auf Geräten, die Ihnen gehören. Relate by Neo4j Hackathon, NODES 2026.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Klarbefund">
+<meta property="og:locale" content="de_DE">
+<meta property="og:url" content="https://klarbefund.mabu.red/de/">
+<meta property="og:image" content="https://klarbefund.mabu.red/site/og-card.jpg">
+<meta property="og:image:secure_url" content="https://klarbefund.mabu.red/site/og-card.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Klarbefund: Ihre Laborbefunde in einem Graphen, der Ihnen gehört, auf iPhone und Mac">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Klarbefund: Ihr Gesundheitsgraph auf Ihrem eigenen iPhone und Mac">
+<meta name="twitter:description" content="Laborbefunde und Apple-Watch-Daten in einem Neo4j-Relate-Graphen, auf Geräten, die Ihnen gehören.">
+<meta name="twitter:image" content="https://klarbefund.mabu.red/site/og-card.jpg">
+<link rel="canonical" href="https://klarbefund.mabu.red/de/">
+<link rel="alternate" hreflang="en" href="https://klarbefund.mabu.red/">
+<link rel="alternate" hreflang="de" href="https://klarbefund.mabu.red/de/">
+<link rel="alternate" hreflang="x-default" href="https://klarbefund.mabu.red/">
+<link rel="icon" type="image/png" href="/site/favicon.png">
+<link rel="apple-touch-icon" href="/site/icon.png">
+<link rel="stylesheet" href="/site/site.css">
+</head>
+<body>
+<a class="skip" href="#main">Zum Inhalt</a>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#"><img src="/site/icon.png" alt="">Klarbefund</a>
+    <nav class="links" aria-label="Abschnitte">
+      <a href="#iphone">iPhone</a>
+      <a href="#mac">Mac</a>
+      <a href="#graph3d">3D-Graph</a>
+      <a href="#private">Datenschutz</a>
+      <a href="#evidence">Evidenz</a>
+      <a href="/slides.html" hreflang="en">Präsentation</a>
+      <a class="lang" href="/" hreflang="en" lang="en" aria-label="English version">EN</a>
+      <a class="cta" href="#start">Zur Beta</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+
+<div class="hero">
+  <canvas class="hero-net" id="hero-net" aria-hidden="true"></canvas>
+  <div class="wrap grid">
+    <div>
+      <p class="kicker">Relate by Neo4j Hackathon · NODES 2026</p>
+      <h1>Ihre Laborbefunde, <span class="grad">in einem Graphen, der Ihnen gehört.</span></h1>
+      <p class="lead">Klarbefund liest die Laborbefunde Ihrer Ärztin oder Ihres Arztes auf Papier mit dem iPhone und hält sie, zusammen mit den Daten Ihrer Apple Watch, in einem Neo4j-Relate-Graphen auf Ihrem eigenen iPhone und Mac. Verschlüsselt, lokal, ohne Cloud. Dann fragen Sie Claude oder ein Modell auf Ihrem Mac, was die Werte bedeuten.</p>
+      <div class="btns">
+        <a class="btn" href="https://testflight.apple.com/join/ssADSXX6">Beta über TestFlight laden</a>
+        <a class="btn ghost" href="https://www.youtube.com/watch?v=TZWaN4sBj1s">Demo ansehen (2 Minuten, Englisch)</a>
+      </div>
+      <p class="meta">Ein TestFlight-Link für beide Apps · iPhone mit iOS 26 · Mac mit macOS 14 oder neuer</p>
+    </div>
+    <div class="devices">
+      <img class="mac" src="/presentation/mac.png" alt="Klarbefund für Mac: iPhone per QR-Code koppeln, Ihr Gesundheitsgraph mit seinen Zahlen und der 3D-Ansicht, Ihre KI fragen (erfundene Demodaten)">
+      <img class="phone" src="/presentation/detail.png" alt="Klarbefund auf dem iPhone: ein Lipidprofil mit jedem Wert, seinem LOINC-Code, dem Referenzbereich und der Seite und Zeile, aus der er stammt (erfundene Demodaten)">
+    </div>
+  </div>
+</div>
+
+<section id="why">
+  <div class="wrap">
+    <h2>Zwei Apps, ein Graph.</h2>
+    <p class="sub">Gesundheitsdaten liegen auf Papier, in PDFs und in einem Dutzend Apps, die nicht miteinander reden. Klarbefund bringt sie in einen verbundenen Graphen, und der Graph bleibt auf Geräten, die Ihnen gehören.</p>
+    <div class="cards">
+      <div class="card"><div class="ico" aria-hidden="true">📱</div><h3>iPhone: erfassen</h3><p>Befund scannen, PDF importieren oder fotografieren. Jeder Wert wird gelesen, mit LOINC codiert und mit Seite und Zeile aufbewahrt, aus der er stammt. Apple Health ergänzt Wochenmittel Ihrer Uhr.</p></div>
+      <div class="card t"><div class="ico" aria-hidden="true">💻</div><h3>Mac: aufbewahren und erkunden</h3><p>Einmal per QR-Code koppeln. Ihre Befunde kommen über Ihr eigenes WLAN in einen Relate-Graphen, der mit AES-256 versiegelt ist, solange die App geschlossen ist. In 3D ansehen, Fragebögen beantworten, Risiken sehen.</p></div>
+      <div class="card a"><div class="ico" aria-hidden="true">💬</div><h3>KI: fragen, nur lesend</h3><p>Ein Klick verbindet Claude Desktop. ChatGPT, Gemini CLI oder ein lokales Modell in LM Studio gehen auch. Sie lesen den Graphen über einen MCP-Server, der jedes Schreiben ablehnt.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="iphone" class="alt">
+  <div class="wrap">
+    <div style="max-width:820px">
+        <span class="pill">Klarbefund für iPhone</span>
+        <h2>Vom Papier zu codierten Werten, in der Hosentasche.</h2>
+        <p class="sub" style="margin-bottom:0">Klarbefund liest deutsche und englische Laborbefunde auf dem Gerät, mit der Texterkennung von Apple. Zum Lesen wird nichts hochgeladen.</p>
+        <ol class="steps">
+          <li><b>Scannen, importieren oder fotografieren.</b> Klarbefund findet das Labor, das Datum und jeden Wert mit Einheit und Referenzbereich.</li>
+          <li><b>Mit dem Papier vergleichen.</b> Jeder Wert zeigt seinen LOINC-Code und die Seite und Zeile, aus der er gelesen wurde. Eine falsche Ziffer ist mit einem Tipp korrigiert. Digitale Befunde vom Labor gelten als endgültig, gescannte als vorläufig, bis Sie sie geprüft haben.</li>
+          <li><b>Sehen, wo Sie stehen.</b> Der Bereich, den das Labor druckt, der Bereich der Leitlinie und ein optimaler Bereich, jeweils mit Quelle. Ein Wert außerhalb der Leitlinie wird markiert.</li>
+          <li><b>Den Verlauf verfolgen.</b> Ein Graph auf dem iPhone verbindet jeden Wert mit seinem Befund und seinem Code, so wird derselbe Test aus drei Laboren eine Linie über die Jahre. Apple Health ergänzt Ruhepuls, HRV, Schritte, Gewicht, VO2max, Schlafphasen und mehr als Wochenmittel.</li>
+        </ol>
+    </div>
+    <div class="shots">
+      <figure><img src="/presentation/scan.png" alt="Der Originalscan eines erfundenen Laborbefunds" loading="lazy"><figcaption>Das Papier, wie gescannt</figcaption></figure>
+      <figure><img src="/presentation/detail.png" alt="Die gelesenen Werte mit LOINC-Codes und Quellzeilen" loading="lazy"><figcaption>Jeder Wert, codiert und nachvollziehbar</figcaption></figure>
+      <figure><img src="/presentation/list.png" alt="Die Liste der Laborbefunde in Klarbefund" loading="lazy"><figcaption>Alle Befunde, endgültig oder zu prüfen</figcaption></figure>
+      <figure><img src="/presentation/graph.png" alt="Der Gesundheitsgraph auf dem iPhone: Befunde, Laborwerte, LOINC-Codes, OMOP-Messungen" loading="lazy"><figcaption>Ein Relate-Graph auf dem iPhone</figcaption></figure>
+    </div>
+    <p class="note">Alle Screenshots zeigen erfundene Demodaten. Die App selbst ist auf Englisch und Deutsch, je nach Sprache des Telefons.</p>
+  </div>
+</section>
+
+<section id="mac">
+  <div class="wrap">
+    <div class="app">
+      <div class="text">
+        <span class="pill">Klarbefund für Mac</span>
+        <h2>Drei Schritte. Kein Terminal.</h2>
+        <p class="sub" style="margin-bottom:0">Klarbefund für Mac ist das Zuhause Ihres Graphen: Die App empfängt, was das iPhone schickt, hält es versiegelt und lässt eine KI darin lesen, solange sie geöffnet ist.</p>
+        <ol class="steps t">
+          <li><b>iPhone koppeln.</b> Auf dem iPhone Klarbefund öffnen, Mehr (…), <em>Export to my Mac (Relate)</em>, und den QR-Code scannen, den der Mac zeigt. Dann <em>Send everything now</em> tippen. Ab dann geht jeder Befund, den Sie scannen oder korrigieren, von selbst an den Mac.</li>
+          <li><b>Ihr Gesundheitsgraph.</b> Der Mac zählt Ihre Befunde, Werte, Apple-Watch-Wochen und die 173 Referenzbereiche, die die App mitbringt. <em>Open 3D view</em> zeigt alles: Ihr Hauptrisiko in der Mitte, dann die Risikoscores, die Evidenz, Ihre Antworten und Ihre Werte.</li>
+          <li><b>Ihre KI fragen.</b> <em>Connect Claude Desktop</em> installiert die Klarbefund-Erweiterung mit einem Klick: 27 fertige Prompts und 8 Guides, von „Where are my risks?“ bis zu einem Sechs-Minuten-Briefing für Ihren Arzttermin.</li>
+        </ol>
+        <div class="ai" aria-label="Unterstützte KI-Programme"><span>Claude Desktop</span><span>ChatGPT für Mac</span><span>Gemini CLI</span><span>LM Studio (lokal)</span></div>
+      </div>
+      <div>
+        <img class="macshot" src="/img/mac/klarbefund-mac.png" alt="Klarbefund für Mac mit seinen drei Schritten: iPhone koppeln, Ihr Gesundheitsgraph, Ihre KI fragen (erfundene Demodaten)" loading="lazy">
+        <div class="cards two" style="margin-top:20px">
+          <div class="card"><h3>Anamnese</h3><p>Validierte Fragebögen (Life's Essential 8, FINDRISC, AUDIT-C, MEDAS-14, PHQ-2 und mehr), aus Ihren Werten vorausgefüllt, wo das geht, und in Ihrem Graphen gespeichert, sobald Sie zustimmen.</p></div>
+          <div class="card t"><h3>Wissen im Graphen</h3><p>Gesundheitsrisiken, veröffentlichte Risikoscores wie SCORE2, die Marker, die Leitlinien nennen, und die Studien hinter jeder Verbindung, alles als Knoten neben Ihren Werten.</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="graph3d" class="alt">
+  <div class="wrap">
+    <span class="pill">Open 3D view</span>
+    <h2>Ihr Graph, in 3D.</h2>
+    <p class="sub">Ein Klick in Klarbefund für Mac öffnet den ganzen Graphen als interaktive 3D-Ansicht. Sie beginnt bei Ihrem Hauptrisiko und führt Sie Schicht für Schicht durch den Rest.</p>
+    <div class="gflow" id="gflow">
+      <div class="tabs" role="tablist" aria-label="Ansichten des 3D-Graphen">
+          <button role="tab" id="gt0" aria-controls="gstage" aria-selected="true" data-i="0"><b>1 · Gesundheitsrisiken</b><span class="bar"></span></button>
+          <button role="tab" id="gt1" aria-controls="gstage" aria-selected="false" data-i="1"><b>2 · Evidenz</b><span class="bar"></span></button>
+          <button role="tab" id="gt2" aria-controls="gstage" aria-selected="false" data-i="2"><b>3 · Eine Studie, geprüft</b><span class="bar"></span></button>
+          <button role="tab" id="gt3" aria-controls="gstage" aria-selected="false" data-i="3"><b>4 · Anamnese</b><span class="bar"></span></button>
+          <button role="tab" id="gt4" aria-controls="gstage" aria-selected="false" data-i="4"><b>5 · Messwerte</b><span class="bar"></span></button>
+          <button role="tab" id="gt5" aria-controls="gstage" aria-selected="false" data-i="5"><b>6 · Dokumente</b><span class="bar"></span></button>
+          <button role="tab" id="gt6" aria-controls="gstage" aria-selected="false" data-i="6"><b>7 · Alles</b><span class="bar"></span></button>
+      </div>
+      <div>
+        <div class="gwin">
+          <div class="chrome"><i></i><i></i><i></i><span>Klarbefund · Health graph in 3D</span></div>
+          <div class="gstage" id="gstage" role="tabpanel">
+            <img src="/site/graph/01-risks.jpg" alt="Die Ansicht Gesundheitsrisiken: das Hauptrisiko, Herz-Kreislauf-Erkrankung, rot mit seinen Markern und Werten (synthetischer Beispielgraph)" class="on" data-cap="Ihr Hauptrisiko in der Mitte, Größe und Farbe nach Ihren neuesten Werten auf seinen Markern. Darum herum: die Risikoscores, die Marker und Ihr letzter Wert auf jedem.">
+            <img src="/site/graph/02-evidence.jpg" alt="Die Ansicht Evidenz: Studien und Leitlinien um ihre Themen gruppiert (synthetischer Beispielgraph)" loading="lazy" data-cap="Jede Studie und Leitlinie hinter dem Graphen, nach Thema gruppiert. Orange Pfeile: In Studien entwickeln Menschen mit einer Erkrankung häufiger eine andere.">
+            <img src="/site/graph/03-study.jpg" alt="Eine Studie in der 3D-Ansicht mit ihrem Qualitätsfilter, ihrer Präzision und ihrem Urteil (synthetischer Beispielgraph)" loading="lazy" data-cap="Ein Klick auf eine Quelle zeigt, was der Qualitätsfilter sagt: hier eine randomisierte Studie, die Form und Präzision bestanden hat, vorläufig, bis ein Mensch ihr Verzerrungsrisiko beurteilt.">
+            <img src="/site/graph/04-anamnesis.jpg" alt="Die Ansicht Anamnese: Fragebögen und ihre Fragen, verbunden mit Codes und Risiken (synthetischer Beispielgraph)" loading="lazy" data-cap="Zehn validierte Fragebögen (Life's Essential 8, FINDRISC, AUDIT-C, MEDAS-14, PHQ-2 und mehr), jede Frage verbunden mit den Codes und Risiken, über die sie etwas sagt.">
+            <img src="/site/graph/05-measures.jpg" alt="Die Ansicht Messwerte: Laborwerte und Apple-Watch-Wochen auf einer Zeitspirale (synthetischer Beispielgraph)" loading="lazy" data-cap="Jeder Laborwert und jede Apple-Watch-Woche auf einer Zeitspirale, eine Umdrehung pro Jahr. Eine kleine Gruppe ist ein Befund oder eine Woche.">
+            <img src="/site/graph/06-documents.jpg" alt="Die Ansicht Dokumente: Befunde, Dokumente, Herkunft und Labore (synthetischer Beispielgraph)" loading="lazy" data-cap="Die gescannten Befunde, ihre Dokumente, wie jeder gelesen wurde (Provenienz), und die Labore, um dieselbe Spirale von Werten.">
+            <img src="/site/graph/07-everything.jpg" alt="Die Ansicht Alles: der ganze Gesundheitsgraph (synthetischer Beispielgraph)" loading="lazy" data-cap="Alles auf einmal, mit der OMOP-Forschungskopie jedes Werts in dem Format, das eine Studie bekäme.">
+          </div>
+        </div>
+        <p class="gcap" id="gcap" aria-live="polite">Ihr Hauptrisiko in der Mitte, Größe und Farbe nach Ihren neuesten Werten auf seinen Markern. Darum herum: die Risikoscores, die Marker und Ihr letzter Wert auf jedem.</p>
+        <div class="gbtns"><a class="btn" href="/3d/">Live-3D-Demo öffnen</a><button class="gctl" id="gctl" type="button" data-play="Abspielen" data-pause="Anhalten">Anhalten</button></div>
+        <p class="note">Gezeigt mit dem synthetischen Beispielgraphen aus dem Repository, kein echter Mensch. Gerendert vom selben Code wie die Mac-App (<code>scripts/graph3d.py</code>, durch einen Test mit der Swift-Ansicht gleich gehalten). Die Live-Demo ist genau diese Seite, auf Englisch: drehen, eine Studie anklicken, ihren Qualitätsfilter lesen. Am besten auf einem Computer.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="how">
+  <div class="wrap">
+    <h2>Wie die beiden miteinander reden.</h2>
+    <p class="sub">Kein Server dazwischen. Das iPhone sendet direkt an den einen Mac, mit dem es gekoppelt ist, und nur an diesen.</p>
+    <div class="flow">
+      <div class="node"><h3>iPhone</h3><p>Jeder Befund als FHIR-R4-Bundle (Patient, DiagnosticReport, Observations, Provenance); Apple Health als Wochenmittel-Observations auf denselben LOINC-Codes.</p></div>
+      <div class="arr"><b aria-hidden="true">→</b>HTTPS in Ihrem WLAN, Zertifikat per QR-Code festgelegt</div>
+      <div class="node"><h3>Mac</h3><p>Der Empfänger in Klarbefund für Mac schreibt eine Relate-Datei, <code>health.rl</code>. Ein erneut gesendeter Befund ersetzt den alten, nie doppelt. Für Forschungswerkzeuge entstehen OMOP-CDM-Zeilen.</p></div>
+      <div class="arr"><b aria-hidden="true">→</b>MCP über stdio, nur lesende Kopie</div>
+      <div class="node"><h3>Ihre KI</h3><p>Schreibt Cypher passend zum Schema, bekommt höchstens 500 Zeilen zurück und nennt zu jeder Zahl den Befund, das Datum und das Labor.</p></div>
+    </div>
+    <img class="gif" src="/img/klarbefund/klarbefund-relate-claude.gif" alt="Animation: Der Mac zeigt einen QR-Code, das iPhone scannt ihn, koppelt und sendet seine Befunde, der Mac zählt sie in seinem Relate-Graphen, und Claude Desktop fragt den Graphen nach LDL-Cholesterin (erfundene Daten)" loading="lazy">
+    <p class="note">Der ganze Weg mit erfundenen Entwicklungsdaten.</p>
+  </div>
+</section>
+
+<section id="private">
+  <div class="wrap">
+    <h2>Privat durch die Bauweise.</h2>
+    <p class="sub">Der ganze Graph eines Menschen ist eine Datei, also lässt er sich als Ganzes schützen. Das macht der Einzeldatei-Modus von Relate möglich.</p>
+    <div class="cards">
+      <div class="card"><div class="ico" aria-hidden="true">🔒</div><h3>Auf dem iPhone</h3><p>Der Graph liegt in der Sandbox der App unter dem iOS-Datenschutz (complete), ist vom Backup ausgenommen und geht nur an den gekoppelten Mac.</p></div>
+      <div class="card t"><div class="ico" aria-hidden="true">🗝️</div><h3>Auf dem Mac</h3><p>Mit AES-256-GCM versiegelt, solange Klarbefund für Mac geschlossen ist. Der Schlüssel bleibt im Schlüsselbund dieses Macs. Unterwegs festgelegtes TLS, keine Cloud.</p></div>
+      <div class="card a"><div class="ico" aria-hidden="true">👁️</div><h3>Für die KI</h3><p>Eine nur lesende Kopie, nur solange die App offen ist. Schreibende Abfragen werden abgelehnt. Claude, ChatGPT und Gemini laufen in den Clouds ihrer Hersteller, also gehen die Zeilen, die sie lesen, dorthin; ein lokales Modell hält alles auf dem Mac.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="evidence" class="alt">
+  <div class="wrap">
+    <h2>Evidenz, die ihren Platz verdient.</h2>
+    <p class="sub">Der Graph sagt, welches Risiko welches erhöht, und mit welcher Sicherheit. Eine neuere Studie ändert so eine Verbindung erst, wenn sie drei Prüfungen besteht. Dass sie beim ersten Lesen solide wirkt, genügt nicht.</p>
+    <div class="gate">
+      <div class="card"><h3><span>Schicht 1</span>Form</h3><p>Begutachtet und nicht zurückgezogen, ein Design, das die Frage beantworten kann, vorab registriert, die Auswertung vorab festgelegt.</p></div>
+      <div class="card t"><h3><span>Schicht 2</span>Präzision</h3><p>Beurteilt am Konfidenzintervall, wie GRADE es tut: Schließt es sowohl keinen Effekt als auch einen relevanten Effekt ein? Genug Ereignisse oder Teilnehmende? Kleine Studien werden markiert, weil sie Effekte oft überschätzen.</p></div>
+      <div class="card a"><h3><span>Schicht 3</span>Verzerrungsrisiko</h3><p>Beurteilt von einem Menschen mit den etablierten Werkzeugen (RoB 2, ROBINS-E, AMSTAR 2). Bis dahin bleibt eine Studie, die die ersten beiden Schichten bestanden hat, vorläufig.</p></div>
+    </div>
+    <div class="legend"><span><i style="background:var(--teal)"></i>bestanden</span><span><i style="background:var(--amber)"></i>vorläufig: Verzerrungsrisiko noch nicht von einem Menschen beurteilt</span><span><i style="background:var(--red)"></i>durchgefallen, mit Grund</span></div>
+    <p class="note">Die 3D-Ansicht auf dem Mac zeigt jede Studie mit ihrem Status und den Gründen. Methode und Beispiele: <a href="https://github.com/ma3u/relate-hackathon-team/blob/main/docs/evidence/statin-tolerance-appraisal-2026-11-20.md" hreflang="en">Bewertung zur Statin-Verträglichkeit</a> (Englisch).</p>
+  </div>
+</section>
+
+<section id="start">
+  <div class="wrap start">
+    <div>
+      <h2>Ausprobieren.</h2>
+      <ol class="steps">
+        <li><b>Der Beta beitreten</b> über den <a href="https://testflight.apple.com/join/ssADSXX6">TestFlight-Link</a>, auf dem iPhone und auf dem Mac. Ein Link für beide Apps.</li>
+        <li><b>Einen Laborbefund scannen</b> in Klarbefund auf dem iPhone, oder mehrere. Apple Health erlauben, wenn Sie eine Uhr oder einen Ring tragen, die dorthin synchronisieren.</li>
+        <li><b>Klarbefund für Mac öffnen</b> und koppeln: Mehr (…), <em>Export to my Mac (Relate)</em>, Code scannen, <em>Send everything now</em>. Mac und iPhone brauchen dasselbe WLAN.</li>
+        <li><b>Claude Desktop verbinden</b> in Schritt 3 und fragen: „Wo liegen meine Risiken?“</li>
+      </ol>
+      <p style="margin-top:28px;color:var(--soft)">Kein iPhone zur Hand? Das Repository enthält einen synthetischen Beispielgraphen, <code>examples/health-graph/health.rl</code>, den Sie mit der Relate-CLI abfragen und Claude bereitstellen können: <a href="https://github.com/ma3u/relate-hackathon-team#try-it-with-the-sample-graph" hreflang="en">mit dem Beispielgraphen ausprobieren</a>, oder seine <a href="/3d/">3D-Ansicht im Browser öffnen</a>.</p>
+      <p style="color:var(--soft)">Fehler gefunden oder eine Idee? In TestFlight <em>Send Beta Feedback</em> nutzen, oder <a href="https://github.com/ma3u/relate-hackathon-team/issues/new">ein Issue auf GitHub anlegen</a>.</p>
+      <div class="warn">Klarbefund ist kein Medizinprodukt. Es hilft Ihnen, Ihre Daten zu verstehen und Fragen für Ihre Ärztin oder Ihren Arzt vorzubereiten. Beide Apps sind in Entwicklung und im Test, deshalb nur über TestFlight, nicht im App Store.</div>
+    </div>
+    <div>
+      <img class="qr" src="/img/klarbefund/testflight-qr.svg" alt="QR-Code für die TestFlight-Beta von Klarbefund">
+      <p>Scannen, um der Beta beizutreten</p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap row">
+    <div>Klarbefund · entstanden für den <a href="https://relate.devpost.com/">Relate by Neo4j Hackathon</a>, NODES 2026, von Matthias Buchhorn-Roth.</div>
+    <div style="display:flex;flex-wrap:wrap;gap:18px">
+      <a href="/slides.html" hreflang="en">Präsentation</a>
+      <a href="https://www.youtube.com/watch?v=TZWaN4sBj1s">Demovideo</a>
+      <a href="https://devpost.com/software/myhealthcoach-my-local-health-graph-not-the-cloud-s">Devpost</a>
+      <a href="https://github.com/ma3u/relate-hackathon-team">Quellcode auf GitHub</a>
+      <a href="https://github.com/ma3u/relate-hackathon-team/issues/new">Feedback</a>
+      <a href="/imprint.html">Impressum</a>
+      <a href="/privacy.html">Datenschutz</a>
+      <a href="/" hreflang="en" lang="en">English</a>
+    </div>
+  </div>
+</footer>
+
+<script src="/site/site.js"></script>
+</body>
+</html>

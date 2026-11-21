@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://klarbefund.mabu.red/</loc><lastmod>2026-11-21</lastmod></url>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url><loc>https://klarbefund.mabu.red/</loc><lastmod>2026-11-21</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://klarbefund.mabu.red/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://klarbefund.mabu.red/de/"/></url>
+  <url><loc>https://klarbefund.mabu.red/de/</loc><lastmod>2026-11-21</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://klarbefund.mabu.red/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://klarbefund.mabu.red/de/"/></url>
+  <url><loc>https://klarbefund.mabu.red/3d/</loc><lastmod>2026-11-21</lastmod></url>
   <url><loc>https://klarbefund.mabu.red/slides.html</loc><lastmod>2026-11-21</lastmod></url>
+  <url><loc>https://klarbefund.mabu.red/imprint.html</loc><lastmod>2026-11-21</lastmod></url>
+  <url><loc>https://klarbefund.mabu.red/privacy.html</loc><lastmod>2026-11-21</lastmod></url>
 </urlset>
