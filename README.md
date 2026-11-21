@@ -7,13 +7,14 @@ Our submission to the **[Relate by Neo4j Hackathon](https://relate.devpost.com/)
 | | |
 |---|---|
 | 🎬 **Demo video (2 min)** | [youtu.be/TZWaN4sBj1s](https://www.youtube.com/watch?v=TZWaN4sBj1s) · full 3-minute version: [youtu.be/HRmlXPt0r_k](https://www.youtube.com/watch?v=HRmlXPt0r_k) |
-| 🖥️ **Interactive presentation** | [ma3u.github.io/relate-hackathon-team](https://ma3u.github.io/relate-hackathon-team/) |
+| 🌐 **Website** | [klarbefund.mabu.red](https://klarbefund.mabu.red/): Klarbefund for iPhone and Mac explained, with the TestFlight link |
+| 🖥️ **Interactive presentation** | [klarbefund.mabu.red/slides.html](https://klarbefund.mabu.red/slides.html) |
 | 🏆 **Devpost** | [MyHealthCoach on Devpost](https://devpost.com/software/myhealthcoach-my-local-health-graph-not-the-cloud-s) |
 | 📱💻 **iPhone and Mac apps (TestFlight)** | [testflight.apple.com/join/ssADSXX6](https://testflight.apple.com/join/ssADSXX6): one link for Klarbefund on iPhone and [Klarbefund for Mac](docs/MAC.md) (pair, seal, connect Claude with one click, no scripts). Both are in development and testing, so TestFlight only, not on the App Store |
 | 🔬 **For research** | [Klarbefund's graph in a Trusted Research Environment](#for-research-klarbefund-in-a-trusted-research-environment): why the analysis goes to the data, and how |
 | 🧪 **Sample graph** | [`examples/health-graph/health.rl`](examples/health-graph/health.rl), synthetic, no real person |
 
-[![The interactive presentation: MyHealthCoach, my local health graph, not the cloud's](docs/img/presentation-cover.png)](https://ma3u.github.io/relate-hackathon-team/)
+[![The interactive presentation: MyHealthCoach, my local health graph, not the cloud's](docs/img/presentation-cover.png)](https://klarbefund.mabu.red/slides.html)
 
 ## What it does
 
