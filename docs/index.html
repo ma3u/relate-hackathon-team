@@ -93,6 +93,35 @@ ol.steps b{color:var(--ink)}
 .ai{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
 .ai span{font-size:14px;padding:6px 12px;border-radius:999px;background:var(--panel);border:1px solid var(--line);color:var(--soft)}
 
+
+/* graph flow */
+.gflow{display:grid;grid-template-columns:220px 1fr;gap:28px;align-items:start}
+.gflow .tabs{display:flex;flex-direction:column;gap:8px}
+.gflow .tabs button{all:unset;cursor:pointer;display:block;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--soft);font-size:15px;line-height:1.35;position:relative;overflow:hidden}
+.gflow .tabs button:focus-visible{outline:3px solid #fff;outline-offset:2px}
+.gflow .tabs button b{display:block;color:var(--ink);font-size:16px}
+.gflow .tabs button span.d{display:none}
+.gflow .tabs button[aria-selected="true"]{border-color:var(--teal);background:rgba(25,179,154,.10)}
+.gflow .tabs button .bar{position:absolute;left:0;bottom:0;height:3px;width:0;background:var(--teal)}
+.gflow .tabs button[aria-selected="true"] .bar{animation:gbar var(--dur,6s) linear forwards}
+.gflow.paused .tabs button .bar{animation-play-state:paused}
+@keyframes gbar{to{width:100%}}
+.gwin{border-radius:14px;border:1px solid #2a3340;background:#0e1116;box-shadow:0 30px 80px rgba(0,0,0,.55);overflow:hidden}
+.gwin .chrome{display:flex;gap:7px;padding:10px 12px;border-bottom:1px solid #1d242e;align-items:center}
+.gwin .chrome i{width:11px;height:11px;border-radius:50%;background:#3a424d}
+.gwin .chrome i:nth-child(1){background:#ff5f57}.gwin .chrome i:nth-child(2){background:#febc2e}.gwin .chrome i:nth-child(3){background:#28c840}
+.gwin .chrome span{margin-left:10px;color:var(--muted);font-size:13px}
+.gstage{position:relative;aspect-ratio:16/10;overflow:hidden}
+.gstage img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .9s ease}
+.gstage img.on{opacity:1;animation:kb var(--dur,6s) ease-out forwards}
+.gflow.paused .gstage img.on{animation-play-state:paused}
+@keyframes kb{from{transform:scale(1)}to{transform:scale(1.06) translate(-1%,-1%)}}
+.gcap{color:var(--soft);margin:14px 0 0;min-height:52px}
+.gctl{all:unset;cursor:pointer;color:var(--blue);font-size:14px;margin-top:6px;display:inline-block}
+.gctl:focus-visible{outline:3px solid #fff;outline-offset:2px;border-radius:4px}
+@media (max-width:900px){.gflow{grid-template-columns:1fr}.gflow .tabs{flex-direction:row;overflow-x:auto;padding-bottom:4px}.gflow .tabs button{flex:0 0 auto}.gflow .tabs button span.d{display:none}}
+@media (prefers-reduced-motion: reduce){.gstage img{transition:none}.gstage img.on{animation:none}.gflow .tabs button .bar{display:none}}
+
 /* flow */
 .flow{display:grid;grid-template-columns:minmax(0,1fr) 120px minmax(0,1fr) 120px minmax(0,1fr);gap:14px;align-items:stretch}
 .flow .node{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px}
@@ -133,6 +162,7 @@ footer a{color:var(--soft)}
     <nav class="links" aria-label="Sections">
       <a href="#iphone">iPhone</a>
       <a href="#mac">Mac</a>
+      <a href="#graph3d">3D graph</a>
       <a href="#private">Privacy</a>
       <a href="#evidence">Evidence</a>
       <a href="slides.html">Presentation</a>
@@ -223,7 +253,43 @@ footer a{color:var(--soft)}
   </div>
 </section>
 
-<section id="how" class="alt">
+<section id="graph3d" class="alt">
+  <div class="wrap">
+    <span class="pill">Open 3D view</span>
+    <h2>Your graph, in 3D.</h2>
+    <p class="sub">One click in Klarbefund for Mac opens the whole graph as an interactive 3D view. It starts on your main risk and walks you through the rest, one layer at a time.</p>
+    <div class="gflow" id="gflow">
+      <div class="tabs" role="tablist" aria-label="Views of the 3D graph">
+          <button role="tab" id="gt0" aria-controls="gstage" aria-selected="true" data-i="0"><b>1 · Health risks</b><span class="d">Your main risk in the middle, sized and coloured by your newest values on its markers.</span><span class="bar"></span></button>
+          <button role="tab" id="gt1" aria-controls="gstage" aria-selected="false" data-i="1"><b>2 · Evidence</b><span class="d">Every study and guideline behind the graph, clustered by topic.</span><span class="bar"></span></button>
+          <button role="tab" id="gt2" aria-controls="gstage" aria-selected="false" data-i="2"><b>3 · A study, checked</b><span class="d">Click a source to see what the quality gate says: here a randomised trial that passed form and precision, provisional until a person judges its risk of bias.</span><span class="bar"></span></button>
+          <button role="tab" id="gt3" aria-controls="gstage" aria-selected="false" data-i="3"><b>4 · Anamnesis</b><span class="d">Ten validated questionnaires (Life's Essential 8, FINDRISC, AUDIT-C, MEDAS-14, PHQ-2 and more), each question tied to the codes and risks it informs.</span><span class="bar"></span></button>
+          <button role="tab" id="gt4" aria-controls="gstage" aria-selected="false" data-i="4"><b>5 · Measures</b><span class="d">Every lab value and Apple Watch week on a time spiral, one turn per year.</span><span class="bar"></span></button>
+          <button role="tab" id="gt5" aria-controls="gstage" aria-selected="false" data-i="5"><b>6 · Documents</b><span class="d">The scanned reports, their documents, how each was read (provenance) and the labs, around the same spiral of values.</span><span class="bar"></span></button>
+          <button role="tab" id="gt6" aria-controls="gstage" aria-selected="false" data-i="6"><b>7 · Everything</b><span class="d">All of it at once, with the OMOP research copy of each value in the format a study would receive.</span><span class="bar"></span></button>
+      </div>
+      <div>
+        <div class="gwin">
+          <div class="chrome"><i></i><i></i><i></i><span>Klarbefund · Health graph in 3D</span></div>
+          <div class="gstage" id="gstage" role="tabpanel">
+            <img src="site/graph/01-risks.jpg" alt="The Health risks view: the main risk, cardiovascular disease, in red with its markers and values (synthetic sample graph)" class="on" data-cap="Your main risk in the middle, sized and coloured by your newest values on its markers. Around it: the risk scores, the markers and your latest value on each.">
+            <img src="site/graph/02-evidence.jpg" alt="The Evidence view: studies and guidelines clustered around their topics (synthetic sample graph)" loading="lazy" data-cap="Every study and guideline behind the graph, clustered by topic. Orange arrows: in studies, people with one condition develop another more often.">
+            <img src="site/graph/03-study.jpg" alt="A study opened in the 3D view with its quality gate status, precision and verdict (synthetic sample graph)" loading="lazy" data-cap="Click a source to see what the quality gate says: here a randomised trial that passed form and precision, provisional until a person judges its risk of bias.">
+            <img src="site/graph/04-anamnesis.jpg" alt="The Anamnesis view: questionnaires and their questions linked to codes and risks (synthetic sample graph)" loading="lazy" data-cap="Ten validated questionnaires (Life's Essential 8, FINDRISC, AUDIT-C, MEDAS-14, PHQ-2 and more), each question tied to the codes and risks it informs.">
+            <img src="site/graph/05-measures.jpg" alt="The Measures view: lab values and Apple Watch weeks on a time spiral (synthetic sample graph)" loading="lazy" data-cap="Every lab value and Apple Watch week on a time spiral, one turn per year. A small cluster is one report or one week.">
+            <img src="site/graph/06-documents.jpg" alt="The Documents view: reports, documents, provenance and labs (synthetic sample graph)" loading="lazy" data-cap="The scanned reports, their documents, how each was read (provenance) and the labs, around the same spiral of values.">
+            <img src="site/graph/07-everything.jpg" alt="The Everything view: the whole health graph (synthetic sample graph)" loading="lazy" data-cap="All of it at once, with the OMOP research copy of each value in the format a study would receive.">
+          </div>
+        </div>
+        <p class="gcap" id="gcap" aria-live="polite">Your main risk in the middle, sized and coloured by your newest values on its markers. Around it: the risk scores, the markers and your latest value on each.</p>
+        <button class="gctl" id="gctl" type="button">Pause</button>
+        <p class="note">Shown with the synthetic sample graph from the repository, no real person. Rendered by the same code as the Mac app (<code>scripts/graph3d.py</code>, kept in parity with the Swift view by a test).</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="how">
   <div class="wrap">
     <h2>How the two talk to each other.</h2>
     <p class="sub">No server in between. The iPhone sends straight to the one Mac it was paired with, and only to that Mac.</p>
@@ -300,6 +366,62 @@ footer a{color:var(--soft)}
     </div>
   </div>
 </footer>
+
+<script>
+// The 3D graph flow: crossfades the views every few seconds; a tab jumps to its view;
+// hovering the picture or Pause holds it. With reduced motion it does not advance by itself.
+(function () {
+  var root = document.getElementById("gflow");
+  if (!root) return;
+  var tabs = [].slice.call(root.querySelectorAll('[role="tab"]'));
+  var imgs = [].slice.call(root.querySelectorAll(".gstage img"));
+  var cap = document.getElementById("gcap"), ctl = document.getElementById("gctl");
+  var DUR = 6000, i = 0, timer = 0, paused = false, hover = false;
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  root.style.setProperty("--dur", DUR / 1000 + "s");
+  function show(n) {
+    i = (n + imgs.length) % imgs.length;
+    if (imgs[(i + 1) % imgs.length]) imgs[(i + 1) % imgs.length].loading = "eager";
+    imgs.forEach(function (im, k) {
+      im.classList.remove("on");
+      if (k === i) { im.loading = "eager"; void im.offsetWidth; im.classList.add("on"); }
+    });
+    tabs.forEach(function (t, k) {
+      t.setAttribute("aria-selected", k === i ? "true" : "false");
+      t.tabIndex = k === i ? 0 : -1;
+      var bar = t.querySelector(".bar"); bar.style.animation = "none"; void bar.offsetWidth; bar.style.animation = "";
+    });
+    cap.textContent = imgs[i].getAttribute("data-cap");
+    var list = tabs[i].parentNode;
+    if (list.scrollWidth > list.clientWidth) list.scrollLeft = tabs[i].offsetLeft - list.offsetLeft - 16;
+    schedule();
+  }
+  function schedule() {
+    clearTimeout(timer);
+    var hold = paused || hover || reduce;
+    root.classList.toggle("paused", hold);
+    if (!hold) timer = setTimeout(function () { show(i + 1); }, DUR);
+  }
+  tabs.forEach(function (t, k) {
+    t.addEventListener("click", function () { show(k); });
+    t.addEventListener("keydown", function (e) {
+      var d = (e.key === "ArrowDown" || e.key === "ArrowRight") ? 1 : (e.key === "ArrowUp" || e.key === "ArrowLeft") ? -1 : 0;
+      if (d) { e.preventDefault(); show(k + d); tabs[i].focus(); }
+    });
+  });
+  var stage = document.getElementById("gstage");
+  stage.addEventListener("mouseenter", function () { hover = true; schedule(); });
+  stage.addEventListener("mouseleave", function () { hover = false; schedule(); });
+  ctl.addEventListener("click", function () { paused = !paused; ctl.textContent = paused ? "Play" : "Pause"; schedule(); });
+  if (reduce) ctl.hidden = true;
+  tabs.forEach(function (t, k) { t.tabIndex = k === 0 ? 0 : -1; });
+  // start when the section comes into view, so the first view is not missed
+  if ("IntersectionObserver" in window) {
+    var io = new IntersectionObserver(function (e) { if (e[0].isIntersecting) { io.disconnect(); show(0); } }, { threshold: 0.3 });
+    io.observe(root);
+  } else { show(0); }
+})();
+</script>
 
 <script>
 // Hero background: health data points drift, links form between neighbours, and data flows
