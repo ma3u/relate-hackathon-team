@@ -148,3 +148,4 @@ nav.links a.lang{border:1px solid #2c3846;border-radius:999px;padding:5px 11px;f
 .legal p,.legal li,.legal address{color:var(--soft);font-style:normal}
 .legal .upd{color:var(--muted);font-size:14px}
 .legal section+section{border-top:1px solid var(--line);margin-top:48px;padding-top:8px}
+.phone-shot{display:block;width:min(320px,100%);margin:0 auto;border-radius:30px;border:6px solid #1c222b;background:#f2f2f7;box-shadow:0 24px 60px rgba(0,0,0,.5)}

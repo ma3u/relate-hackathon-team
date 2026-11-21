@@ -40,6 +40,7 @@
       <a href="#mac">Mac</a>
       <a href="#graph3d">3D graph</a>
       <a href="#private">Privacy</a>
+      <a href="#ehds">EHDS</a>
       <a href="#evidence">Evidence</a>
       <a href="/slides.html">Presentation</a>
       <a class="lang" href="/de/" hreflang="de" lang="de" aria-label="Deutsche Fassung">DE</a>
@@ -194,7 +195,50 @@
   </div>
 </section>
 
-<section id="evidence" class="alt">
+<section id="ehds" class="alt">
+  <div class="wrap">
+    <span class="pill">European Health Data Space</span>
+    <h2>Your graph, connected to the European Health Data Space.</h2>
+    <p class="sub">The <a href="https://eur-lex.europa.eu/eli/reg/2025/327/oj/eng">European Health Data Space</a> (Regulation (EU) 2025/327) gives every person in the EU access to their electronic health data and the right to share it: that is primary use. It also sets the rules for research on health data, through health data access bodies and secure processing environments: that is secondary use. Klarbefund is the person's side. The EHDS Integration Hub is the data space side.</p>
+    <div class="app">
+      <div class="text">
+        <h3>Your own record on the hub</h3>
+        <ol class="steps">
+          <li><b>Connect.</b> In Klarbefund on the iPhone, <em>Connect to EHDS</em> offers three ways in, and no password is typed into a web page on the phone: create an account, where Apple confirms to the hub that the request comes from the genuine app on a real device; sign in with an account you have; or scan a QR code from the patient screen on a computer and approve there.</li>
+          <li><b>Read your record.</b> Measurements with their printed ranges and dates, reports, vaccinations and the medication plan. The app reads them when you open the screen and keeps them nowhere.</li>
+          <li><b>Add to it, if you decide.</b> Two switches, both off until you turn them on: send my reports, as preliminary values marked as read from a scan, and send my device trends, as weekly means only. Values without a LOINC code stay on the phone. <em>Disconnect</em> is in the app and on the patient screen.</li>
+          <li><b>Sign in with a wallet, if you want.</b> On the hub's website an EUDI wallet such as d-you can sign you in instead of a password, for now with the d-you sandbox app. The hub keeps one keyed hash of your identity, never your name or birth date.</li>
+        </ol>
+        <p class="note">The iPhone sends the hub the same FHIR R4 reports it sends your Mac. On the demo hub every other record is synthetic.</p>
+      </div>
+      <div><img class="phone-shot" src="/site/ehds/connect.png" alt="Connect to EHDS in Klarbefund: create an EHDS account, sign in with an account, or connect by QR code from the patient screen" loading="lazy"></div>
+    </div>
+
+    <h3 style="margin-top:56px">Research: the analysis comes to the data</h3>
+    <div class="cards">
+      <div class="card"><h3>Your decision first</h3><p>Today the hub leaves Klarbefund data out of research extracts. Using it for research needs your decision in the app first, and the EHDS lets you object to secondary use altogether (Art. 71).</p></div>
+      <div class="card t"><h3>A secure processing environment</h3><p>Researchers do not get the data. With a permit from the health data access body they work inside a sealed workspace (Art. 73), and only reviewed results leave: the Five Safes of a trusted research environment.</p></div>
+      <div class="card a"><h3>The same code inside</h3><p>The graph code of the Mac app also runs on Linux. Checked in a container on 16 November 2026 with the sample graph: the tests, the anamnesis plan, the 3D view and the read-only MCP server. In a workspace it would build one Relate graph per pseudonymised person. Workspaces per permit and a reviewed airlock are planned, not built.</p></div>
+    </div>
+
+    <div class="app" style="margin-top:56px">
+      <div class="text">
+        <span class="pill">EHDS Integration Hub</span>
+        <h3 style="font-size:28px">The data space side, open source.</h3>
+        <p style="color:var(--soft)">The EHDS Integration Hub is an open reference implementation of the European Health Data Space. Hospitals, researchers and the health data access body exchange data through Eclipse Dataspace Components and the Dataspace Protocol. Clinical data in FHIR R4, research data in OMOP CDM, dataset descriptions in HealthDCAT-AP and the terminologies (SNOMED CT, ICD-10, LOINC, RxNorm) live in one Neo4j knowledge graph of five layers. Researchers apply, the access body issues permits, and the analysis runs in a secure processing environment where only results leave.</p>
+        <p style="color:var(--soft)">It is a demonstration: 127 synthetic patients, fictional organisations, no real health data, and no connection to the European Commission or any authority. Klarbefund began there, as its iPhone app.</p>
+        <div class="btns" style="margin-top:22px">
+          <a class="btn" href="https://ma3u.github.io/MinimumViableHealthDataspacev2/">Open the hub demo</a>
+          <a class="btn ghost" href="https://ma3u.github.io/MinimumViableHealthDataspacev2/docs/klarbefund">Klarbefund in the hub docs</a>
+          <a class="btn ghost" href="https://github.com/ma3u/MinimumViableHealthDataspacev2">Source on GitHub</a>
+        </div>
+      </div>
+      <div><img class="macshot" src="/site/ehds/hub-architecture.svg" alt="The hub's knowledge graph in five layers: data access and governance, metadata catalogue, clinical data in FHIR R4, research data in OMOP CDM, clinical terminologies" loading="lazy"></div>
+    </div>
+  </div>
+</section>
+
+<section id="evidence">
   <div class="wrap">
     <h2>Evidence that earns its place.</h2>
     <p class="sub">The graph says which risk raises which, and with how much certainty. A newer study only changes such a link after it passes three checks. Looking sound on first read is not enough.</p>
@@ -208,7 +252,7 @@
   </div>
 </section>
 
-<section id="start">
+<section id="start" class="alt">
   <div class="wrap start">
     <div>
       <h2>Try it.</h2>
