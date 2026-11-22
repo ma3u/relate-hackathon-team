@@ -165,3 +165,39 @@
   document.addEventListener("visibilitychange", sync);
   sync();
 })();
+
+// The phone menu: the button top left shows and hides the page index. Escape, a chosen link,
+// a tap outside or a wider window close it; the section in view is marked current.
+(function () {
+  var btn = document.querySelector(".menu-btn"), toc = document.getElementById("toc");
+  if (!btn || !toc) return;
+  btn.hidden = false;
+  function set(open, refocus) {
+    btn.setAttribute("aria-expanded", open ? "true" : "false");
+    toc.hidden = !open;
+    if (!open && refocus) btn.focus();
+  }
+  btn.addEventListener("click", function () { set(toc.hidden); });
+  toc.addEventListener("click", function (e) { if (e.target.closest("a")) set(false); });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && !toc.hidden) { set(false, true); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!toc.hidden && !toc.contains(e.target) && !btn.contains(e.target)) set(false);
+  });
+  var wide = window.matchMedia("(min-width: 761px)");
+  (wide.addEventListener ? wide.addEventListener.bind(wide, "change") : wide.addListener.bind(wide))(function (m) { if (m.matches) set(false); });
+
+  if (!("IntersectionObserver" in window)) return;
+  var links = [].slice.call(toc.querySelectorAll('li a[href^="#"]'));
+  var byId = {};
+  links.forEach(function (a) { byId[a.getAttribute("href").slice(1)] = a; });
+  var seen = new IntersectionObserver(function (entries) {
+    entries.forEach(function (en) {
+      if (!en.isIntersecting) return;
+      links.forEach(function (a) { a.removeAttribute("aria-current"); });
+      var a = byId[en.target.id]; if (a) a.setAttribute("aria-current", "true");
+    });
+  }, { rootMargin: "-45% 0px -50% 0px" });
+  Object.keys(byId).forEach(function (id) { var s = document.getElementById(id); if (s) seen.observe(s); });
+})();

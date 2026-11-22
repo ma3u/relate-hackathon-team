@@ -25,10 +25,28 @@ header.top .wrap{display:flex;align-items:center;gap:20px;height:60px}
 nav.links{margin-left:auto;display:flex;align-items:center;gap:22px;font-size:15px}
 nav.links a{color:var(--soft)}
 nav.links a.cta{color:var(--bg);background:var(--blue);padding:9px 16px;border-radius:999px;font-weight:600;white-space:nowrap;min-height:40px;display:inline-flex;align-items:center}
+/* Phone menu: a disclosure button top left opens the page index (WCAG 2.2: 4.1.2 name/state, 2.5.8 targets, 2.4.7 focus) */
+.menu-btn{display:none;flex:none;align-items:center;justify-content:center;width:44px;height:44px;margin-left:-8px;padding:0;border:1px solid transparent;border-radius:10px;background:none;color:var(--ink);cursor:pointer}
+.menu-btn svg{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+.menu-btn .i-close,.menu-btn[aria-expanded="true"] .i-open{display:none}
+.menu-btn[aria-expanded="true"] .i-close{display:block}
+.menu-btn:hover,.menu-btn[aria-expanded="true"]{background:rgba(255,255,255,.08);border-color:#5d6b7c}
+.toc{position:absolute;top:100%;left:0;right:0;max-height:calc(100vh - 60px);max-height:calc(100dvh - 60px);overflow-y:auto;overscroll-behavior:contain;background:var(--bg);border-bottom:1px solid var(--line);padding:8px 16px 16px;box-shadow:0 18px 40px rgba(0,0,0,.5)}
+.toc[hidden]{display:none}
+.toc ol{list-style:none;margin:0;padding:0;counter-reset:toc}
+.toc li{counter-increment:toc;border-bottom:1px solid var(--line)}
+.toc a{display:flex;align-items:center;gap:14px;min-height:48px;padding:0 8px;color:var(--soft);font-size:17px;border-radius:8px}
+.toc li a::before{content:counter(toc,decimal-leading-zero);font:600 13px/1 ui-monospace,SFMono-Regular,Menlo,monospace;color:#8a97a8;min-width:22px}
+.toc a:hover{color:var(--ink);background:rgba(255,255,255,.06)}
+.toc a[aria-current="true"]{color:var(--ink);background:rgba(255,255,255,.08);box-shadow:inset 3px 0 0 var(--blue)}
+.toc>a{margin-top:8px;padding-left:44px}
+@media (max-width:760px){.menu-btn:not([hidden]){display:inline-flex}}
+@media (min-width:761px){.toc{display:none}}
+@media (forced-colors: active){.toc a[aria-current="true"]{outline:2px solid CanvasText}.menu-btn{border-color:ButtonText}}
 @media (max-width:760px){nav.links>a:not(.cta){display:none}nav.links{gap:10px}header.top .wrap{gap:12px;padding:0 16px}}
 @media (max-width:400px){.brand{font-size:16px;gap:8px}nav.links a.cta{padding:8px 12px;font-size:14px}.langs a{min-width:34px;padding:0 8px}}
 /* below 380px the brand shows its icon only; the name stays for screen readers (sr-only, not display:none) */
-@media (max-width:379px){.brand-name{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}}
+@media (max-width:480px){.brand-name{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}}
 /* language switch: both languages always visible, the current one filled (WCAG 2.2: name starts with the
    visible label 2.5.3, targets at least 24x24 2.5.8, 3:1 boundary 1.4.11, lang on each part 3.1.2) */
 .langs{display:inline-flex;align-items:center;gap:2px;padding:3px;border:1px solid #5d6b7c;border-radius:999px}
