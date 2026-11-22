@@ -80,8 +80,8 @@
       <p class="meta">Ein TestFlight-Link für beide Apps · iPhone mit iOS 26 · Mac mit macOS 14 oder neuer</p>
     </div>
     <div class="devices">
-      <img class="mac" src="/presentation/mac.png" alt="Klarbefund für Mac: iPhone per QR-Code koppeln, Ihr Gesundheitsgraph mit seinen Zahlen und der 3D-Ansicht, Ihre KI fragen (erfundene Demodaten)">
-      <img class="phone" src="/presentation/detail.png" alt="Klarbefund auf dem iPhone: ein Lipidprofil mit jedem Wert, seinem LOINC-Code, dem Referenzbereich und der Seite und Zeile, aus der er stammt (erfundene Demodaten)">
+      <img class="mac" src="/presentation/mac.png" alt="Klarbefund für Mac: iPhone per QR-Code koppeln, Ihr Gesundheitsgraph mit seinen Zahlen und der 3D-Ansicht, Ihre KI fragen (synthetische Daten)">
+      <img class="phone" src="/presentation/detail.png" alt="Klarbefund auf dem iPhone: ein Lipidprofil mit jedem Wert, seinem LOINC-Code, dem Referenzbereich und der Seite und Zeile, aus der er stammt (synthetische Daten)">
     </div>
   </div>
 </div>
@@ -112,12 +112,12 @@
         </ol>
     </div>
     <div class="shots">
-      <figure><img src="/presentation/scan.png" alt="Der Originalscan eines erfundenen Laborbefunds" loading="lazy"><figcaption>Das Papier, wie gescannt</figcaption></figure>
+      <figure><img src="/presentation/scan.png" alt="Der Originalscan eines synthetischen Laborbefunds" loading="lazy"><figcaption>Das Papier, wie gescannt</figcaption></figure>
       <figure><img src="/presentation/detail.png" alt="Die gelesenen Werte mit LOINC-Codes und Quellzeilen" loading="lazy"><figcaption>Jeder Wert, codiert und nachvollziehbar</figcaption></figure>
       <figure><img src="/presentation/list.png" alt="Die Liste der Laborbefunde in Klarbefund" loading="lazy"><figcaption>Alle Befunde, endgültig oder zu prüfen</figcaption></figure>
       <figure><img src="/presentation/graph.png" alt="Der Gesundheitsgraph auf dem iPhone: Befunde, Laborwerte, LOINC-Codes, OMOP-Messungen" loading="lazy"><figcaption>Ein Relate-Graph auf dem iPhone</figcaption></figure>
     </div>
-    <p class="note">Alle Screenshots zeigen erfundene Demodaten. Die App selbst ist auf Englisch und Deutsch, je nach Sprache des Telefons.</p>
+    <p class="note">Alle Screenshots zeigen synthetische Daten. Die App selbst ist auf Englisch und Deutsch, je nach Sprache des Telefons.</p>
   </div>
 </section>
 
@@ -136,7 +136,7 @@
         <div class="ai" aria-label="Unterstützte KI-Programme"><span>Claude Desktop</span><span>ChatGPT für Mac</span><span>Gemini CLI</span><span>LM Studio (lokal)</span></div>
       </div>
       <div>
-        <img class="macshot" src="/img/mac/klarbefund-mac.png" alt="Klarbefund für Mac mit seinen drei Schritten: iPhone koppeln, Ihr Gesundheitsgraph, Ihre KI fragen (erfundene Demodaten)" loading="lazy">
+        <img class="macshot" src="/img/mac/klarbefund-mac.png" alt="Klarbefund für Mac mit seinen drei Schritten: iPhone koppeln, Ihr Gesundheitsgraph, Ihre KI fragen (synthetische Daten)" loading="lazy">
         <div class="cards two" style="margin-top:20px">
           <div class="card"><h3>Anamnese</h3><p>Validierte Fragebögen (Life's Essential 8, FINDRISC, AUDIT-C, MEDAS-14, PHQ-2 und mehr), aus Ihren Werten vorausgefüllt, wo das geht, und in Ihrem Graphen gespeichert, sobald Sie zustimmen.</p></div>
           <div class="card t"><h3>Wissen im Graphen</h3><p>Gesundheitsrisiken, veröffentlichte Risikoscores wie SCORE2, die Marker, die Leitlinien nennen, und die Studien hinter jeder Verbindung, alles als Knoten neben Ihren Werten.</p></div>
@@ -193,8 +193,8 @@
       <div class="arr"><b aria-hidden="true">→</b>MCP über stdio, nur lesende Kopie</div>
       <div class="node"><h3>Ihre KI</h3><p>Schreibt Cypher passend zum Schema, bekommt höchstens 500 Zeilen zurück und nennt zu jeder Zahl den Befund, das Datum und das Labor.</p></div>
     </div>
-    <img class="gif" src="/img/klarbefund/klarbefund-relate-claude.gif" alt="Animation: Der Mac zeigt einen QR-Code, das iPhone scannt ihn, koppelt und sendet seine Befunde, der Mac zählt sie in seinem Relate-Graphen, und Claude Desktop fragt den Graphen nach LDL-Cholesterin (erfundene Daten)" loading="lazy">
-    <p class="note">Der ganze Weg mit erfundenen Entwicklungsdaten.</p>
+    <img class="gif" src="/img/klarbefund/klarbefund-relate-claude.gif" alt="Animation: Der Mac zeigt einen QR-Code, das iPhone scannt ihn, koppelt und sendet seine Befunde, der Mac zählt sie in seinem Relate-Graphen, und Claude Desktop fragt den Graphen nach LDL-Cholesterin (synthetische Daten)" loading="lazy">
+    <p class="note">Das Beispiel zeigt synthetische Daten.</p>
   </div>
 </section>
 
@@ -241,7 +241,7 @@
         <span class="pill">EHDS Integration Hub</span>
         <h3 style="font-size:28px">Die Seite des Datenraums, quelloffen.</h3>
         <p style="color:var(--soft)">Der EHDS Integration Hub ist eine offene Referenzimplementierung des Europäischen Gesundheitsdatenraums. Kliniken, Forschende und die Zugangsstelle für Gesundheitsdaten tauschen Daten über Eclipse Dataspace Components und das Dataspace Protocol aus. Klinische Daten in FHIR R4, Forschungsdaten im OMOP CDM, Datensatzbeschreibungen in HealthDCAT-AP und die Terminologien (SNOMED CT, ICD-10, LOINC, RxNorm) liegen in einem Neo4j-Wissensgraphen mit fünf Schichten. Forschende stellen Anträge, die Zugangsstelle erteilt Genehmigungen, und die Auswertung läuft in einer sicheren Verarbeitungsumgebung, aus der nur Ergebnisse herauskommen.</p>
-        <p style="color:var(--soft)">Es ist eine Demonstration: 127 synthetische Patientinnen und Patienten, erfundene Organisationen, keine echten Gesundheitsdaten und keine Verbindung zur Europäischen Kommission oder zu einer Behörde. Klarbefund hat dort angefangen, als iPhone-App des Hubs.</p>
+        <p style="color:var(--soft)">Es ist eine Demonstration: 127 synthetische Patientinnen und Patienten, fiktive Organisationen, keine echten Gesundheitsdaten und keine Verbindung zur Europäischen Kommission oder zu einer Behörde. Klarbefund hat dort angefangen, als iPhone-App des Hubs.</p>
         <div class="btns" style="margin-top:22px">
           <a class="btn" href="https://ma3u.github.io/MinimumViableHealthDataspacev2/">Hub-Demo öffnen</a>
           <a class="btn ghost" href="https://ma3u.github.io/MinimumViableHealthDataspacev2/docs/klarbefund">Klarbefund in der Hub-Doku</a>
