@@ -56,9 +56,19 @@ def test_prompts_and_guides_match_the_mac_catalog():
 def test_both_languages_show_the_same_sections_and_pictures():
     def shape(p):
         t = _text(p)
-        return re.findall(r'<section id="([^"]+)"', t), sorted(set(re.findall(r'<img[^>]* src="([^"]+)"', t)))
+        # a picture may have a German version: name.png on the English page, name-de.png on the German one
+        imgs = {re.sub(r"-de(\.\w+)$", r"\1", src) for src in re.findall(r'<img[^>]* src="([^"]+)"', t)}
+        return re.findall(r'<section id="([^"]+)"', t), sorted(imgs)
     assert shape(EN) == shape(DE)
 
+
+def test_the_german_page_shows_german_pictures_where_they_exist():
+    """A picture with a German version (name-de.png next to name.png) is shown in German on /de/."""
+    de = _text(DE)
+    for src in re.findall(r'<img[^>]* src="(/[^"]+)\.(png|jpg)"', _text(EN)):
+        path, ext = src
+        if (DOCS / f"{path.lstrip('/')}-de.{ext}").exists():
+            assert f'src="{path}-de.{ext}"' in de, path
 
 def test_nothing_is_loaded_from_another_host():
     for p in PAGES:
