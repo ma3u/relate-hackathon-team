@@ -215,8 +215,18 @@ footer a{color:var(--soft)}
 /* Theme switch: a toggle button (aria-pressed = dark is on). In the header from 761 px, in the phone menu below. */
 .theme-btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;flex:none;min-width:40px;min-height:40px;padding:0;border:1px solid var(--edge);border-radius:999px;background:none;color:var(--ink);cursor:pointer;font:inherit}
 .theme-btn svg{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.theme-btn .i-sun,.theme-btn[aria-pressed="true"] .i-moon{display:none}
-.theme-btn[aria-pressed="true"] .i-sun{display:block}
+/* the icon shows the theme in use: the sun by day (light), the moon by night (dark) */
+.theme-btn .i-moon,.theme-btn[aria-pressed="true"] .i-sun{display:none}
+.theme-btn[aria-pressed="true"] .i-moon{display:block}
+/* Tooltip (WCAG 2.2: 1.4.13): on hover and keyboard focus, stays while the pointer is on it, Escape hides it */
+.theme-btn.has-tip{position:relative}
+.theme-btn .tip{position:absolute;top:calc(100% + 10px);right:-8px;z-index:6;width:max-content;max-width:min(280px,80vw);padding:9px 12px;border-radius:10px;background:var(--ink);color:var(--bg);font-size:13px;line-height:1.45;font-weight:500;text-align:left;white-space:normal;box-shadow:0 10px 30px var(--shadow);opacity:0;visibility:hidden;transition:opacity .15s}
+.theme-btn .tip::before{content:"";position:absolute;left:0;right:0;top:-10px;height:10px}
+.theme-btn .tip b{display:block;font-weight:700;margin-bottom:2px}
+.theme-btn.has-tip:hover .tip,.theme-btn.has-tip:focus-visible .tip{opacity:1;visibility:visible}
+.theme-btn.has-tip.tip-off .tip{opacity:0;visibility:hidden}
+@media (prefers-reduced-motion: reduce){.theme-btn .tip{transition:none}}
+@media (forced-colors: active){.theme-btn .tip{border:1px solid CanvasText}}
 .theme-btn:hover{background:var(--hover)}
 .theme-btn[hidden]{display:none}
 .toc .theme-btn{display:flex;width:100%;justify-content:flex-start;min-height:48px;margin-top:8px;padding:0 8px 0 12px;border-radius:8px;font-size:17px;color:var(--soft)}
