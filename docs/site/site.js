@@ -51,14 +51,14 @@
     io.observe(root);
   } else { show(0); }
 })();
-// Hero background: health data points drift, links form between neighbours, and data flows
+// Page background: health data points drift, links form between neighbours, and data flows
 // run along them as light pulses, denser on the right, away from the headline. Taken from the
-// cover of the Tractus-X Community Days deck. Runs only while the hero is on screen; one still
-// frame when the viewer prefers reduced motion.
+// cover of the Tractus-X Community Days deck. A fixed layer behind the whole page, the size of
+// the window; it stops while the tab is hidden, and is one still frame when the viewer prefers
+// reduced motion.
 (function () {
   var canvas = document.getElementById("hero-net");
   if (!canvas || !canvas.getContext) return;
-  var hero = canvas.parentElement;
   var ctx = canvas.getContext("2d");
   var W = 1920, H = 1080, LINK = 250, scale = 1;
   var COLORS = ["#3d9bff", "#19b39a", "#f5b335", "#a77bd1", "#2471a3", "#148f77"];
@@ -72,17 +72,21 @@
   }
   var pulses = [];
   var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  function fade(x) { return x < 1000 ? 0.25 + 0.75 * (x / 1000) * (x / 1000) : 1; }
+  // dimmer on the left, where the headline is; x / W keeps that on a narrow window too
+  function fade(x) { var u = x / W * 1920; return u < 1000 ? 0.25 + 0.75 * (u / 1000) * (u / 1000) : 1; }
   function hexA(hex, a) {
     var n = parseInt(hex.slice(1), 16);
     return "rgba(" + (n >> 16) + "," + ((n >> 8) & 255) + "," + (n & 255) + "," + a.toFixed(3) + ")";
   }
+  // 1920 units across a wide window; a phone shows 1000 units, so the net keeps its density
   function resize() {
-    var w = hero.clientWidth, h = hero.clientHeight, dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var w = canvas.clientWidth || window.innerWidth, h = canvas.clientHeight || window.innerHeight;
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
     canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
-    scale = w / W;
-    var nh = h / scale;
-    if (nh !== H) { for (var i = 0; i < nodes.length; i++) nodes[i].y = nodes[i].y / H * nh; H = nh; }
+    scale = w >= 1000 ? w / 1920 : w / 1000;
+    var nw = w / scale, nh = h / scale;
+    for (var i = 0; i < nodes.length; i++) { nodes[i].x = nodes[i].x / W * nw; nodes[i].y = nodes[i].y / H * nh; }
+    W = nw; H = nh;
     ctx.setTransform(dpr * scale, 0, 0, dpr * scale, 0, 0);
   }
   function step(dt) {
@@ -141,7 +145,7 @@
       if (fl) n.flash = Math.max(0, fl - 0.04);
     }
   }
-  var running = false, visible = true, last = 0, raf = 0;
+  var running = false, last = 0, raf = 0;
   function frame(ts) {
     if (!running) return;
     var dt = last ? Math.min(3, (ts - last) / 16.7) : 1;
@@ -150,7 +154,7 @@
   }
   function sync() {
     if (reduce) { draw(); return; }
-    var on = visible && !document.hidden;
+    var on = !document.hidden;
     if (on && !running) { running = true; last = 0; raf = requestAnimationFrame(frame); }
     if (!on && running) { running = false; cancelAnimationFrame(raf); }
   }
@@ -159,7 +163,5 @@
   draw();
   window.addEventListener("resize", function () { resize(); draw(); });
   document.addEventListener("visibilitychange", sync);
-  if ("IntersectionObserver" in window) {
-    new IntersectionObserver(function (e) { visible = e[0].isIntersecting; sync(); }).observe(hero);
-  } else { sync(); }
+  sync();
 })();

@@ -27,7 +27,8 @@ nav.links a.cta{color:var(--bg);background:var(--blue);padding:7px 14px;border-r
 
 /* hero */
 .hero{position:relative;overflow:hidden;padding:84px 0 40px;background:radial-gradient(1100px 520px at 75% -10%,rgba(61,155,255,.20),transparent 60%),radial-gradient(800px 480px at 0% 10%,rgba(25,179,154,.14),transparent 60%)}
-.hero-net{position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+/* the network sits behind the whole page; sections shade it so their text stays readable */
+.hero-net{position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none}
 .hero .wrap{position:relative;z-index:1}
 .hero .grid{display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center}
 .kicker{color:var(--teal);font-weight:700;letter-spacing:.09em;text-transform:uppercase;font-size:13px;margin:0 0 14px}
@@ -45,8 +46,8 @@ h1 .grad{background:linear-gradient(90deg,var(--blue),var(--teal));-webkit-backg
 @media (max-width:900px){.hero .grid{grid-template-columns:1fr}.devices{min-height:0;margin-bottom:40px}}
 
 /* sections */
-section{padding:84px 0;border-top:1px solid var(--line)}
-section.alt{background:var(--bg2)}
+section{padding:84px 0;border-top:1px solid var(--line);background:rgba(5,8,13,.42)}
+section.alt{background:rgba(11,16,23,.64)}
 h2{font-size:clamp(30px,3.6vw,44px);line-height:1.1;letter-spacing:-.8px;margin:0 0 14px}
 h3{font-size:21px;margin:0 0 8px}
 .sub{color:var(--soft);font-size:19px;max-width:760px;margin:0 0 40px}
@@ -131,7 +132,7 @@ ol.steps b{color:var(--ink)}
 @media (max-width:900px){.start{grid-template-columns:1fr}}
 code{font-family:var(--mono);font-size:.9em;background:#0f1620;border:1px solid var(--line);padding:1px 6px;border-radius:6px}
 
-footer{padding:48px 0 64px;border-top:1px solid var(--line);color:var(--muted);font-size:14px}
+footer{padding:48px 0 64px;border-top:1px solid var(--line);background:rgba(5,8,13,.42);color:var(--muted);font-size:14px}
 footer .row{display:flex;flex-wrap:wrap;gap:18px 28px;justify-content:space-between}
 footer a{color:var(--soft)}
 .warn{border-left:3px solid var(--amber);padding:12px 16px;background:rgba(245,179,53,.07);border-radius:0 10px 10px 0;color:var(--soft);margin-top:28px}
