@@ -148,9 +148,40 @@ extension DoctorLetter {
       }
     }
 
+    /// A question as the letter quotes it: German by linkId (german.py), else as stored.
+    func question(_ a: Answer) -> String {
+      guard language == .de else { return a.question }
+      return German.question(a.linkId, protocolId: a.protocolId, context: a.context) ?? a.question
+    }
+
+    /// An answer's labels: German by code (german.py), else as stored.
+    func labels(_ a: Answer) -> [String] {
+      guard language == .de else { return a.labels }
+      return German.labels(a.linkId, protocolId: a.protocolId, codes: a.codes, english: a.labels) ?? a.labels
+    }
+
+    /// Whether the German letter quotes this answer's question and labels in German.
+    func translated(_ a: Answer) -> Bool {
+      German.question(a.linkId, protocolId: a.protocolId, context: a.context) != nil
+        && (a.labels.isEmpty || German.labels(a.linkId, protocolId: a.protocolId, codes: a.codes, english: a.labels) != nil)
+    }
+
+    func protocolName(_ id: String, _ name: String?) -> String? {
+      language == .de ? German.protocolName(id) ?? name : name
+    }
+
+    func band(_ protocolId: String, _ band: String) -> String {
+      language == .de ? German.band(protocolId, band) ?? band : band
+    }
+
     func source(_ r: Report) -> String {
       [r.title.isEmpty ? nil : r.title, r.performer, date(r.date)].compactMap { $0 }.joined(separator: ", ")
     }
+  }
+
+  /// A health risk's name in the letter's language (the graph names the six risks in English).
+  public static func riskName(_ id: String, _ name: String, language: Language) -> String {
+    Words(language: language).risk(id, name)
   }
 
   // MARK: Content
@@ -285,9 +316,10 @@ extension DoctorLetter {
       sport.append(weeklyTable(activity))
     }
     if let a = exerciseAnswer {
-      let said = ([a.labels.joined(separator: ", ")] + [a.text.map { s("“\($0)”", "„\($0)“") }].compactMap { $0 }).filter { !$0.isEmpty }
+      let said = ([w.labels(a).joined(separator: ", ")] + [a.text.map { s("“\($0)”", "„\($0)“") }].compactMap { $0 })
+        .filter { !$0.isEmpty }
       sport.append(.paragraph(s("My answer (\(w.date(a.authored))): ", "Meine Angabe (\(w.date(a.authored))): ")
-        + a.question + " " + said.joined(separator: " "), note: false))
+        + w.question(a) + " " + said.joined(separator: " "), note: false))
     }
     for r in exerciseReports {
       sport.append(.heading(w.source(r)))
@@ -309,22 +341,29 @@ extension DoctorLetter {
       history.append(.table(
         [s("Question", "Frage"), s("My answer", "Meine Antwort"), s("In my own words", "In meinen Worten"), s("Answered", "Angegeben")],
         answers.map { a in
-          var q = a.question
-          if let p = a.protocolName { q = "\(p): \(q)" }
-          if let c = a.context, !q.contains(c) { q += s(" (about \(w.date(c)))", " (zum \(w.date(c)))") }
-          return [Cell(q), Cell(a.labels.joined(separator: ", "), strong: a.riskFactor), Cell(a.text ?? ""),
+          var q = w.question(a)
+          if let p = a.protocolId.flatMap({ w.protocolName($0, a.protocolName) }) { q = "\(p): \(q)" }
+          if let c = a.context, !q.contains(c), !q.contains(w.date(c)) {
+            q += s(" (about \(w.date(c)))", " (zum \(w.date(c)))")
+          }
+          return [Cell(q), Cell(w.labels(a).joined(separator: ", "), strong: a.riskFactor), Cell(a.text ?? ""),
                   Cell(w.date(a.authored))]
         }))
     }
-    if language == .de && !answers.isEmpty {
+    // Every question and answer label has a German text (german.py); one stored under an older wording,
+    // or a question asked by another version, is quoted as stored, and the note says so.
+    if language == .de && !answers.allSatisfy(w.translated) {
       history.append(.paragraph(
-        "Fragen und Antwortoptionen der Anamnese stehen so da, wie Klarbefund sie gestellt hat (englisch); eigene Worte wie angegeben.",
+        "Fragen und Antworten ohne deutsche Fassung stehen so da, wie Klarbefund sie gespeichert hat (englisch); eigene Worte wie angegeben.",
         note: true))
     }
     if !scores.isEmpty {
       history.append(.table(
         [s("Questionnaire", "Fragebogen"), s("Score", "Punkte"), s("Band", "Einordnung"), s("Answered", "Angegeben")],
-        scores.map { [Cell($0.name), Cell($0.score.map(w.decimal) ?? "–"), Cell($0.band ?? "–"), Cell(w.date($0.authored))] }))
+        scores.map { sc in
+          [Cell(w.protocolName(sc.protocolId, sc.name) ?? sc.name), Cell(sc.score.map(w.decimal) ?? "–"),
+           Cell(sc.band.map { w.band(sc.protocolId, $0) } ?? "–"), Cell(w.date(sc.authored))]
+        }))
     }
     sections.append(Section(title: s("Anamnesis", "Anamnese"), blocks: history))
 
@@ -366,10 +405,14 @@ extension DoctorLetter {
           "My \(t.display) rose from \(w.value(t.first)) (\(w.date(t.first.date))) to \(w.value(t.last)) (\(w.date(t.last.date))). Is this rise relevant?",
           "Mein Wert \(t.display) stieg von \(w.value(t.first)) (\(w.date(t.first.date))) auf \(w.value(t.last)) (\(w.date(t.last.date))). Ist dieser Anstieg von Bedeutung?")
       case .test(let name):
-        return s("Would this test make sense for me: \(name)?", "Wäre diese Untersuchung für mich sinnvoll: \(name)?")
+        return s("Would this test make sense for me: \(name)?",
+                 "Wäre diese Untersuchung für mich sinnvoll: \(German.test(name) ?? name)?")
       case .unanswered(let open):
+        let texts = open.map { q in
+          language == .de ? German.question(q.linkId, context: q.context) ?? q.text : q.text
+        }
         return s("Questions of my anamnesis I could not answer yet: ", "Fragen meiner Anamnese, die ich noch nicht beantworten konnte: ")
-          + open.joined(separator: " / ") + s(" Do they matter for you?", " Sind sie für Sie wichtig?")
+          + texts.joined(separator: " / ") + s(" Do they matter for you?", " Sind sie für Sie wichtig?")
       }
     }
     sections.append(Section(
