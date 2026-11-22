@@ -36,7 +36,7 @@ header.top .wrap{display:flex;align-items:center;gap:20px;height:60px}
 .brand{display:flex;align-items:center;gap:10px;color:var(--ink);font-weight:700;font-size:18px;flex:none;white-space:nowrap}
 .brand img{width:30px;height:30px;border-radius:8px}
 nav.links{margin-left:auto;display:flex;align-items:center;gap:22px;font-size:15px}
-nav.links a{color:var(--soft)}
+nav.links a{color:var(--soft);white-space:nowrap}
 nav.links a.cta{color:var(--bg);background:var(--blue);padding:9px 16px;border-radius:999px;font-weight:600;white-space:nowrap;min-height:40px;display:inline-flex;align-items:center}
 /* Phone menu: a disclosure button top left opens the page index (WCAG 2.2: 4.1.2 name/state, 2.5.8 targets, 2.4.7 focus) */
 .menu-btn{display:none;flex:none;align-items:center;justify-content:center;width:44px;height:44px;margin-left:-8px;padding:0;border:1px solid transparent;border-radius:10px;background:none;color:var(--ink);cursor:pointer}
@@ -53,9 +53,12 @@ nav.links a.cta{color:var(--bg);background:var(--blue);padding:9px 16px;border-r
 .toc a:hover{color:var(--ink);background:var(--hover-soft)}
 .toc a[aria-current="true"]{color:var(--ink);background:var(--hover);box-shadow:inset 3px 0 0 var(--blue)}
 .toc>a{margin-top:8px;padding-left:44px}
-@media (max-width:760px){.menu-btn:not([hidden]){display:inline-flex}}
-@media (min-width:761px){.toc{display:none}}
+@media (max-width:1220px){.menu-btn:not([hidden]){display:inline-flex}}
+@media (min-width:1221px){.toc{display:none}}
+@media (min-width:761px){.toc{right:auto;width:400px;border-right:1px solid var(--line);border-radius:0 0 14px 0}}
 @media (forced-colors: active){.toc a[aria-current="true"]{outline:2px solid CanvasText}.menu-btn{border-color:ButtonText}}
+/* Up to 1220 px the section links do not fit in one line: the menu holds them (pages with a menu only) */
+@media (max-width:1220px){header.top:has(.menu-btn) nav.links>a:not(.cta){display:none}nav.links{gap:14px}}
 @media (max-width:760px){nav.links>a:not(.cta){display:none}nav.links{gap:10px}header.top .wrap{gap:12px;padding:0 16px}}
 @media (max-width:400px){.brand{font-size:16px;gap:8px}nav.links a.cta{padding:8px 12px;font-size:14px}.langs a{min-width:34px;padding:0 8px}}
 /* below 380px the brand shows its icon only; the name stays for screen readers (sr-only, not display:none) */
@@ -209,6 +212,6 @@ footer a{color:var(--soft)}
 .toc .theme-btn .sw::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:var(--muted);transition:transform .2s}
 .toc .theme-btn[aria-pressed="true"] .sw{background:var(--blue);border-color:var(--blue)}
 .toc .theme-btn[aria-pressed="true"] .sw::after{transform:translateX(16px);background:var(--on-accent)}
-@media (max-width:760px){header.top .theme-btn.in-nav{display:none}}
+@media (max-width:1220px){header.top .theme-btn.in-nav{display:none}}
 @media (prefers-reduced-motion: reduce){.toc .theme-btn .sw::after{transition:none}}
 @media (forced-colors: active){.theme-btn{border-color:ButtonText}.toc .theme-btn[aria-pressed="true"] .sw{background:Highlight}}

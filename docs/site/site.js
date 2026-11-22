@@ -188,7 +188,7 @@
   document.addEventListener("click", function (e) {
     if (!toc.hidden && !toc.contains(e.target) && !btn.contains(e.target)) set(false);
   });
-  var wide = window.matchMedia("(min-width: 761px)");
+  var wide = window.matchMedia("(min-width: 1221px)");
   (wide.addEventListener ? wide.addEventListener.bind(wide, "change") : wide.addListener.bind(wide))(function (m) { if (m.matches) set(false); });
 
   if (!("IntersectionObserver" in window)) return;
