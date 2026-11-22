@@ -10,7 +10,7 @@ enum SkillExport {
 
   /// Zips the bundled skill folder (folder at the zip's root) and asks where to save it.
   @MainActor static func save() -> String {
-    guard let folder else { return "The skill is missing from this build." }
+    guard let folder else { return String(localized: "The skill is missing from this build.") }
     var zipped: URL?, failure: NSError?
     var coordinated: NSError?
     NSFileCoordinator().coordinate(readingItemAt: folder, options: .forUploading, error: &coordinated) { zip in
@@ -19,19 +19,21 @@ enum SkillExport {
       try? FileManager.default.removeItem(at: copy)
       do { try FileManager.default.copyItem(at: zip, to: copy); zipped = copy } catch { failure = error as NSError }
     }
-    guard let zipped else { return "Could not zip the skill: \(coordinated ?? failure ?? NSError())" }
+    guard let zipped else {
+      return String(localized: "Could not zip the skill: \(String(describing: coordinated ?? failure ?? NSError()))")
+    }
     let panel = NSSavePanel()
     panel.nameFieldStringValue = "\(name).zip"
     panel.allowedContentTypes = [.zip]
-    panel.message = "Save the Klarbefund skill, then add it in Claude: Customize → Skills → + → Upload a skill."
+    panel.message = String(localized: "Save the Klarbefund skill, then add it in Claude: Customize → Skills → + → Upload a skill.")
     guard panel.runModal() == .OK, let target = panel.url else { return "" }
     do {
       try? FileManager.default.removeItem(at: target)
       try FileManager.default.copyItem(at: zipped, to: target)
       NSWorkspace.shared.activateFileViewerSelecting([target])
-      return "Saved \(target.lastPathComponent). In Claude: Customize → Skills → + → Upload a skill, and choose it."
+      return String(localized: "Saved \(target.lastPathComponent). In Claude: Customize → Skills → + → Upload a skill, and choose it.")
     } catch {
-      return "Could not save the skill: \(error.localizedDescription)"
+      return String(localized: "Could not save the skill: \(error.localizedDescription)")
     }
   }
 }

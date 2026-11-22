@@ -17,7 +17,7 @@ struct DoctorLetterView: View {
 
   @State private var kind: Kind = .gp
   @State private var risk = ""
-  @State private var language = DoctorLetter.Language(locale: Locale.current)
+  @State private var language = AppLanguage.current
   @State private var risks: [(id: String, name: String, values: Int)] = []
   @State private var html = ""
   @State private var ready = false
@@ -54,7 +54,7 @@ struct DoctorLetterView: View {
       if kind == .specialist {
         Picker("Risk", selection: $risk) {
           ForEach(risks.filter { $0.values > 0 }, id: \.id) { r in
-            Text("\(r.name) (\(r.values) values)").tag(r.id)
+            Text("\(DoctorLetter.riskName(r.id, r.name, language: AppLanguage.current)) (\(r.values) values)").tag(r.id)
           }
         }
         .fixedSize()
@@ -112,7 +112,8 @@ struct DoctorLetterView: View {
     panel.begin { response in
       guard response == .OK, let url = panel.url else { return }
       LetterPDF.save(webView, to: url) { ok in
-        message = ok ? "Saved \(url.lastPathComponent): A4, ready to print or to send." : "The PDF could not be saved."
+        message = ok ? String(localized: "Saved \(url.lastPathComponent): A4, ready to print or to send.")
+          : String(localized: "The PDF could not be saved.")
       }
     }
   }

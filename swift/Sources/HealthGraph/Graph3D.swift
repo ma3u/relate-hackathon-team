@@ -341,8 +341,12 @@ extension HealthStore {
   }
 
   /// `protocols.plan()` without the values: the protocols with every answer the person gave before
-  /// (and the age band from the year of birth) prefilled, scored, the ones answered this year last.
-  public func protocolPlan(today: String, birthYear: Int?, sex: String?) throws -> JSONObject {
+  /// (and the age band from the year of birth) prefilled, scored, the ones answered this year last. In
+  /// German (`language: .de`) names, questions, answer labels and where a prefill comes from are German.
+  public func protocolPlan(today: String, birthYear: Int?, sex: String?, language: DoctorLetter.Language = .en) throws
+    -> JSONObject
+  {
+    let de = language == .de
     var answers: [String: JSONObject] = [:]
     for a in try objects(Cypher.protocolLatestAnswers) { if let id = a["linkId"] as? String { answers[id] = a } }
     var done: [String: JSONObject] = [:]
@@ -352,6 +356,10 @@ extension HealthStore {
     func said(_ link: String) -> JSONObject? {
       guard let a = answers[link] else { return nil }
       let labels = (a["labels"] as? [String]).flatMap { $0.isEmpty ? nil : $0 } ?? codes(link)
+      if de {
+        let german = German.labels(link, codes: codes(link), english: labels) ?? labels
+        return ["text": "Ihre Antwort vom \(German.date(day(a))): \(german.joined(separator: ", "))", "date": day(a)]
+      }
       return ["text": "your answer on \(day(a)): \(labels.joined(separator: ", "))", "date": day(a)]
     }
     func out(_ code: String, _ src: JSONObject?) -> JSONObject {
@@ -364,7 +372,7 @@ extension HealthStore {
       if name == "age", let b = birthYear {
         let age = year - b
         let code = age < 45 ? "<45" : age < 55 ? "45-54" : age < 65 ? "55-64" : "65+"
-        return options.contains(code) ? out(code, ["text": "year of birth \(b)", "date": NSNull()]) : nil
+        return options.contains(code) ? out(code, ["text": de ? "Geburtsjahr \(b)" : "year of birth \(b)", "date": NSNull()]) : nil
       }
       if name.hasPrefix("answer:") {
         let link = String(name.dropFirst(7))
@@ -411,8 +419,10 @@ extension HealthStore {
     let prefillText = Protocols.data.object("prefillText") ?? [:]
     let evidence = Protocols.data.object("evidence") ?? [:]
     let todayDate = ISO8601DateFormatter().date(from: today + "T00:00:00Z") ?? Date()
+    let answeredOn = { (a: JSONObject) in de ? "Ihre Antwort vom \(German.date(day(a)))" : "your answer on \(day(a))" }
     var result: [(JSONObject, Double, Int)] = []
     for (order, p) in Protocols.definitions.enumerated() {
+      let pid = p.string("id") ?? ""
       var given: [String: [String]] = [:]
       var items: [JSONObject] = []
       for it in Protocols.items(p) {
@@ -421,13 +431,13 @@ extension HealthStore {
         var pre: JSONObject?
         if it.string("type") == "month" {
           if let a, let t = a["text"] as? String, !t.isEmpty {
-            pre = ["code": NSNull(), "value": t, "text": "your answer on \(day(a))", "observation": NSNull(), "date": day(a)]
+            pre = ["code": NSNull(), "value": t, "text": answeredOn(a), "observation": NSNull(), "date": day(a)]
           }
         } else if let name = it.string("prefill") {
           pre = prefill(name, it)
         }
         if pre == nil, let a, let c = (a["codes"] as? [String])?.first, Protocols.option(it, c) != nil {
-          pre = ["code": c, "text": "your answer on \(day(a))", "observation": NSNull(), "date": day(a)]
+          pre = ["code": c, "text": answeredOn(a), "observation": NSNull(), "date": day(a)]
         }
         if let c = pre?["code"] as? String { given[link] = [c] }
         var item: JSONObject = [:]
@@ -437,6 +447,15 @@ extension HealthStore {
         item["options"] = it["options"] ?? [Any]()
         item["prefilled"] = pre ?? NSNull()
         item["prefillFrom"] = it.string("prefill").flatMap { prefillText[$0] } ?? NSNull()
+        if de {
+          item["text"] = German.question(link, protocolId: pid) ?? item["text"]
+          item["options"] = Protocols.options(it).map { o -> JSONObject in
+            var o = o
+            if let c = o.string("code"), let l = German.label(link, protocolId: pid, code: c) { o["label"] = l }
+            return o
+          }
+          if let key = it.string("prefill"), let from = German.prefill(key) { item["prefillFrom"] = from }
+        }
         items.append(item)
       }
       for i in items.indices { items[i]["enabled"] = Protocols.enabled(items[i], given) }
@@ -456,6 +475,12 @@ extension HealthStore {
         entry[k] = p[k] ?? NSNull()
       }
       entry["critical"] = p["critical"] ?? [String]()
+      if de {
+        entry["name"] = German.protocolName(pid) ?? entry["name"]
+        entry["title"] = German.protocolTitle(pid) ?? entry["title"]
+        entry["why"] = German.protocolWhy(pid) ?? entry["why"]
+        entry["critical"] = German.protocolCritical(pid) ?? entry["critical"]
+      }
       entry["evidence"] = ((p["evidence"] as? [String]) ?? []).compactMap { id -> JSONObject? in
         guard var e = evidence[id] as? JSONObject else { return nil }
         e["id"] = id

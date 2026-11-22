@@ -64,13 +64,14 @@ RETURN a.id AS fromId, a.name AS fromName, b.id AS toId, b.name AS toName, k.sum
 ORDER BY fromId, toId
 """
 
-# The latest answer per question, the data-driven anamnesis and the protocols alike.
+# The latest answer per question, the data-driven anamnesis and the protocols alike. The codes let the
+# German letter quote the German answer labels (german.py) for the English ones stored.
 ANSWERS = """
 MATCH (:Patient)-[:HAS_RESPONSE]->(r:QuestionnaireResponse)-[:HAS_ANSWER]->(a:Answer)
 WITH a.linkId AS linkId, a, r ORDER BY a.authored DESC
 WITH linkId, collect([a, r])[0] AS newest
 WITH linkId, newest[0] AS a, newest[1] AS r
-RETURN linkId, a.question AS question, a.labels AS labels, a.text AS text, a.context AS context,
+RETURN linkId, a.question AS question, a.codes AS codes, a.labels AS labels, a.text AS text, a.context AS context,
        a.authored AS authored, a.riskFactor AS riskFactor, r.protocol AS protocol
 ORDER BY authored DESC, linkId
 """

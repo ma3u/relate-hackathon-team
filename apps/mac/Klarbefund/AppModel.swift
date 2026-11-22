@@ -3,6 +3,21 @@ import Foundation
 import HealthGraph
 import HealthGraphReceiver
 
+/// The language Klarbefund for Mac speaks: German when the Mac prefers German, else English (the app's
+/// localizations are en and de). The HealthGraph library writes the anamnesis, the protocols and the
+/// doctor's letter in it; the window texts come from Localizable.strings the same way.
+enum AppLanguage {
+  static var current: DoctorLetter.Language {
+    DoctorLetter.Language(locale: Locale(identifier: Bundle.main.preferredLocalizations.first ?? "en"))
+  }
+
+  /// A date as the app's language writes it (YYYY-MM-DD in English, DD.MM.YYYY in German).
+  static func day(_ iso: String) -> String { current == .de ? German.date(iso) : String(iso.prefix(10)) }
+}
+
+/// A text that is not a literal (a catalog title, a client's name), looked up in Localizable.strings.
+func loc(_ key: String) -> String { Bundle.main.localizedString(forKey: key, value: key, table: nil) }
+
 /// Where Klarbefund for Mac keeps things. Everything is inside the app's sandbox,
 /// except the read-only snapshot for Claude, which lives in the app-group
 /// container that the MCP helper shares, and only while the app is open.
@@ -40,7 +55,7 @@ enum Snapshot {
   }
 
   struct Missing: Error, CustomStringConvertible {
-    var description: String { "Your health graph is not open yet. Send your reports from the iPhone first." }
+    var description: String { String(localized: "Your health graph is not open yet. Send your reports from the iPhone first.") }
   }
 }
 
@@ -103,7 +118,7 @@ final class AppModel: ObservableObject {
         Task { @MainActor in AppModel.shared.applyInbox() }
       }
     } catch {
-      problem = "Klarbefund could not open your health graph: \(error)"
+      problem = String(localized: "Klarbefund could not open your health graph: \(String(describing: error))")
     }
   }
 
@@ -124,7 +139,7 @@ final class AppModel: ObservableObject {
   /// Stores one protocol's answers given in the 3D view, then refreshes the snapshot. Returns what the
   /// page shows: {ok, message} or {ok: false, error}.
   func storeFromView(_ protocolId: String, _ answers: [String: Any]) -> [String: Any] {
-    storeProtocol(protocolId, answers, source: "graph3d", from: "the 3D view")
+    storeProtocol(protocolId, answers, source: "graph3d", from: String(localized: "the 3D view"))
   }
 
   /// Stores one protocol's answers (the 3D view, the Anamnesis window), then refreshes the snapshot.
@@ -135,9 +150,11 @@ final class AppModel: ObservableObject {
       let store = try HealthStore(path: Paths.store.path)
       let counts = try store.storeProtocol(protocolId, answers, source: source)
       let n = counts["answers"] as? Int ?? 0
-      let band = (counts["band"] as? String).map { ", \($0)" } ?? ""
-      received("\(counts["name"] as? String ?? protocolId): \(n) answers stored from \(place)\(band)")
-      return ["ok": true, "message": "Stored in your health graph: \(n) answers\(band), coded with SNOMED CT."]
+      let de = AppLanguage.current == .de
+      let band = (counts["band"] as? String).map { ", " + ((de ? German.band(protocolId, $0) : nil) ?? $0) } ?? ""
+      let name = (de ? German.protocolName(protocolId) : nil) ?? counts["name"] as? String ?? protocolId
+      received(String(localized: "\(name): \(n) answers stored from \(place)\(band)"))
+      return ["ok": true, "message": String(localized: "Stored in your health graph: \(n) answers\(band), coded with SNOMED CT.")]
     } catch {
       return ["ok": false, "error": "\(error)"]
     }
@@ -150,8 +167,8 @@ final class AppModel: ObservableObject {
       let store = try HealthStore(path: Paths.store.path)
       let counts = try store.storeAnamnesis(answers, source: "mac-app")
       let n = counts["answers"] ?? 0
-      received("Anamnesis: \(n) answers stored from the Anamnesis window")
-      return ["ok": true, "message": "Stored in your health graph: \(n) answers, linked to the values they are about."]
+      received(String(localized: "Anamnesis: \(n) answers stored from the Anamnesis window"))
+      return ["ok": true, "message": String(localized: "Stored in your health graph: \(n) answers, linked to the values they are about.")]
     } catch {
       return ["ok": false, "error": "\(error)"]
     }
@@ -232,7 +249,7 @@ final class AppModel: ObservableObject {
   func connectClaude() {
     guard !connecting else { return }
     connecting = true
-    claudeMessage = "Preparing the extension for Claude Desktop…"
+    claudeMessage = String(localized: "Preparing the extension for Claude Desktop…")
     let icon = NSApp.applicationIconImage?.pngData(size: 512)
     Task.detached(priority: .userInitiated) {
       let result = Result { try ClaudeConnect.makeExtension(icon: icon) }
@@ -246,9 +263,7 @@ final class AppModel: ObservableObject {
       try ClaudeConnect.open(try result.get())
       UserDefaults.standard.set(ClaudeConnect.extensionVersion, forKey: Self.connectedVersionKey)
       objectWillChange.send()
-      claudeMessage = "Claude Desktop is asking to install “Klarbefund Health Graph” \(ClaudeConnect.extensionVersion). "
-        + "Click Install, then start a new chat. If Claude says it is already installed, uninstall it under "
-        + "Settings → Extensions and click Connect again: your health graph is not affected."
+      claudeMessage = String(localized: "Claude Desktop is asking to install “Klarbefund Health Graph” \(ClaudeConnect.extensionVersion). Click Install, then start a new chat. If Claude says it is already installed, uninstall it under Settings → Extensions and click Connect again: your health graph is not affected.")
     } catch {
       claudeMessage = "\(error)"
     }

@@ -124,10 +124,12 @@ public struct DoctorLetter {
     public let lastDate: String
   }
 
-  /// The latest answer to one question, as the person gave it.
+  /// The latest answer to one question, as the person gave it: the question and labels as stored (English),
+  /// the codes the German letter looks the German texts up by.
   public struct Answer: Sendable {
     public let linkId: String
     public let question: String
+    public var codes: [String] = []
     public let labels: [String]
     public let text: String?
     public let context: String?
@@ -152,6 +154,14 @@ public struct DoctorLetter {
     public let summary: String?
   }
 
+  /// An anamnesis question the plan still asks, with the sample date it is about (`context`).
+  public struct OpenQuestion: Sendable {
+    public let linkId: String
+    public let context: String?
+    /// The question in English, as the plan asks it.
+    public let text: String
+  }
+
   public enum Question: Sendable {
     /// The newest value of a marker is outside the range; with its trend when there is one.
     case outOfRange(LabValue, Trend?)
@@ -160,7 +170,7 @@ public struct DoctorLetter {
     /// A test the anamnesis plan suggests asking for.
     case test(String)
     /// Anamnesis questions the plan still asks.
-    case unanswered([String])
+    case unanswered([OpenQuestion])
   }
 
   public let variant: Variant
@@ -403,6 +413,7 @@ extension HealthStore {
       let pid = a.text("protocol")
       return L.Answer(
         linkId: link, question: a.text("question") ?? Anamnesis.item(link)?.string("text") ?? link,
+        codes: a["codes"] as? [String] ?? [],
         labels: a["labels"] as? [String] ?? [], text: a.text("text"), context: a.text("context"),
         authored: String((a.string("authored") ?? "").prefix(10)), protocolId: pid,
         protocolName: pid.flatMap { Protocols.definition($0)?.string("name") },
@@ -451,7 +462,9 @@ extension HealthStore {
       questions += tests.map { .test($0) }
       let open = (plan["questions"] as? [JSONObject] ?? []).filter { q in
         focus.map { Set(q["risks"] as? [String] ?? []).contains($0) } ?? true
-      }.compactMap { $0.string("text") }
+      }.compactMap { q in
+        q.string("text").map { L.OpenQuestion(linkId: q.string("linkId") ?? "", context: q.text("context"), text: $0) }
+      }
       if !open.isEmpty { questions.append(.unanswered(Array(open.prefix(6)))) }
     }
 
@@ -466,8 +479,12 @@ extension HealthStore {
 }
 
 extension Anamnesis {
-  /// The text of an anamnesis question by linkId, a dated one with "that day" for its date.
-  public static func questionText(_ linkId: String) -> String? {
-    item(linkId)?.string("text")?.replacingOccurrences(of: "{date}", with: "that day")
+  /// The text of an anamnesis question by linkId, a dated one with its `context` date (else "that day"),
+  /// in English or German.
+  public static func questionText(_ linkId: String, context: String? = nil, language: DoctorLetter.Language = .en)
+    -> String?
+  {
+    if language == .de, let de = German.question(linkId, context: context) { return de }
+    return item(linkId)?.string("text")?.replacingOccurrences(of: "{date}", with: context ?? "that day")
   }
 }

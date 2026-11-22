@@ -4,7 +4,9 @@ import SwiftUI
 /// The anamnesis, natively on the Mac: what stands out in your own values and only the questions
 /// it leaves (HealthGraph's anamnesis plan), then the validated protocols one at a time, prefilled
 /// from your earlier answers and year of birth. Read from Claude's read-only snapshot; saving hands
-/// the answers to the app, which checks and stores them in the graph it owns (source "mac-app").
+/// the answers to the app, which checks and stores them in the graph it owns (source "mac-app"). In the
+/// app's language: German questions and answers (HealthGraph's German texts) when the Mac prefers German;
+/// the answers are stored as before, by linkId and code.
 struct AnamnesisView: View {
   @ObservedObject var model: AppModel
   @ObservedObject var state: AnamnesisState
@@ -45,8 +47,9 @@ struct AnamnesisView: View {
   @ViewBuilder private var sidebar: some View {
     VStack(alignment: .leading, spacing: 4) {
       Text("Anamnesis").font(.title2.bold()).padding(.bottom, 6)
-      entry(.values, "From your values", detail: state.questions.isEmpty
-        ? "Nothing open" : "\(state.questions.count) open questions", symbol: "waveform.path.ecg")
+      entry(.values, String(localized: "From your values"), detail: state.questions.isEmpty
+        ? String(localized: "Nothing open") : String(localized: "\(state.questions.count) open questions"),
+        symbol: "waveform.path.ecg")
       Text("Protocols").font(.caption.weight(.semibold)).foregroundStyle(.secondary).padding(.top, 10)
       ForEach(state.protocols, id: \.id) { p in
         entry(.protocolId(p.id), p.name, detail: p.status, symbol: p.answered ? "checkmark.circle" : "list.bullet.clipboard")
@@ -114,7 +117,9 @@ struct AnamnesisView: View {
         QuestionCard(question: q, selected: binding(q.key), text: textBinding(q.key))
       }
       if !state.questions.isEmpty {
-        SaveRow(title: "Save answers", enabled: state.hasAnswers, message: state.message) { state.saveValues(model) }
+        SaveRow(title: "Save answers", enabled: state.hasAnswers, message: state.message, failed: state.failed) {
+          state.saveValues(model)
+        }
       }
     }
   }
@@ -130,7 +135,7 @@ struct AnamnesisView: View {
       ForEach(p.items.filter { state.enabled($0, in: p.id) }) { q in
         QuestionCard(question: q, selected: binding(q.key, protocolId: p.id), text: textBinding(q.key, protocolId: p.id))
       }
-      SaveRow(title: "Save \(p.name)", enabled: state.hasAnswers(p.id), message: state.message) {
+      SaveRow(title: "Save \(p.name)", enabled: state.hasAnswers(p.id), message: state.message, failed: state.failed) {
         state.saveProtocol(p.id, model)
       }
       if let source = p.source {
@@ -195,6 +200,8 @@ final class AnamnesisState: ObservableObject {
   @Published var protocols: [ProtocolForm] = []
   @Published var problem: String?
   @Published var message: String?
+  /// The last save was refused (the message says why).
+  @Published var failed = false
 
   @Published private var choices: [String: Set<String>] = [:]
   @Published private var texts: [String: String] = [:]
@@ -226,12 +233,13 @@ final class AnamnesisState: ObservableObject {
 
   func reload() {
     let source = source, today = today ?? ISO8601DateFormatter.string(from: Date(), timeZone: .current, formatOptions: [.withFullDate])
+    let language = AppLanguage.current
     do {
       let (plan, protocolPlan) = try Snapshot.read(source) { store -> (JSONObject, JSONObject) in
         let person = try store.rows(cypher: "MATCH (p:Patient) RETURN p.birthYear AS y, p.gender AS g").first ?? [:]
-        return (try store.anamnesisPlan(today: today),
+        return (try store.anamnesisPlan(today: today, language: language),
                 try store.protocolPlan(today: today, birthYear: person["y"].flatMap { Int($0) },
-                                       sex: person["g"].flatMap { $0.isEmpty ? nil : $0 }))
+                                       sex: person["g"].flatMap { $0.isEmpty ? nil : $0 }, language: language))
       }
       problem = nil
       apply(plan: plan, protocolPlan: protocolPlan)
@@ -241,9 +249,13 @@ final class AnamnesisState: ObservableObject {
   }
 
   private func apply(plan: JSONObject, protocolPlan: JSONObject) {
+    let language = AppLanguage.current
     findings = (plan["findings"] as? [JSONObject] ?? []).map { f in
       let values = (f["values"] as? [JSONObject] ?? []).map { v in
-        "\(v["display"] as? String ?? "") \(Self.plain(v["value"])) \(v["unit"] as? String ?? "") on \(v["date"] as? String ?? "")"
+        let value = language == .de ? Self.plain(v["value"]).replacingOccurrences(of: ".", with: ",") : Self.plain(v["value"])
+        let display = v["display"] as? String ?? "", unit = v["unit"] as? String ?? ""
+        let day = AppLanguage.day(v["date"] as? String ?? "")
+        return String(localized: "\(display) \(value) \(unit) on \(day)")
       }
       let title = f["title"] as? String ?? ""
       return values.isEmpty ? title : "\(title): \(values.joined(separator: "; "))"
@@ -252,7 +264,9 @@ final class AnamnesisState: ObservableObject {
       + (plan["skipped"] as? [JSONObject] ?? []).compactMap { s in
         (s["reason"] as? String).map { reason in
           let link = s["linkId"] as? String ?? ""
-          return "\(Anamnesis.questionText(link) ?? link) (\(reason))"
+          let key = s["key"] as? String ?? link
+          let context = key.contains("@") ? String(key.split(separator: "@", maxSplits: 1)[1]) : nil
+          return "\(Anamnesis.questionText(link, context: context, language: language) ?? link) (\(reason))"
         }
       }
     questions = (plan["questions"] as? [JSONObject] ?? []).map { q in
@@ -282,14 +296,16 @@ final class AnamnesisState: ObservableObject {
       }
       let last = p["lastAnswered"] as? JSONObject
       let lastDay = (last?["authored"] as? String).map { String($0.prefix(10)) }
-      let band = last?["band"] as? String
+      let band = (last?["band"] as? String).map { language == .de ? German.band(id, $0) ?? $0 : $0 }
       let prefilled = p["prefilled"] as? Int ?? 0
-      let status = lastDay.map { "Answered \($0)" + (band.map { ", \($0)" } ?? "") }
-        ?? (prefilled > 0 ? "\(prefilled) of \(items.count) prefilled" : "\(items.count) questions")
+      let status = lastDay.map { String(localized: "Answered \(AppLanguage.day($0))") + (band.map { ", \($0)" } ?? "") }
+        ?? (prefilled > 0 ? String(localized: "\(prefilled) of \(items.count) prefilled")
+          : String(localized: "\(items.count) questions"))
       let source = [p["source"] as? String, (p["year"] as? Int).map(String.init)].compactMap { $0 }.joined(separator: ", ")
       return ProtocolForm(
         id: id, name: p["name"] as? String ?? id, title: p["title"] as? String, why: p["why"] as? String,
-        source: source.isEmpty ? nil : "Source: \(source)", status: status, answered: lastDay != nil, items: items)
+        source: source.isEmpty ? nil : String(localized: "Source: \(source)"), status: status, answered: lastDay != nil,
+        items: items)
     }
   }
 
@@ -309,14 +325,15 @@ final class AnamnesisState: ObservableObject {
     }
   }
 
-  /// Hands the plan's answers to the app: {key: {codes, text, basedOn, findings, question}}.
+  /// Hands the plan's answers to the app: {key: {codes, text, basedOn, findings}}. The question is stored
+  /// as the anamnesis defines it (English), whatever language it was shown in; the letter translates it.
   func saveValues(_ model: AppModel) {
     var answers: [String: Any] = [:]
     for q in questions {
       let codes = q.options.map(\.code).filter { choice(q.key, nil).contains($0) }
       let text = words(q.key, nil).trimmingCharacters(in: .whitespacesAndNewlines)
       if codes.isEmpty && text.isEmpty { continue }
-      var a: [String: Any] = ["codes": codes, "basedOn": q.basedOn, "findings": q.findings, "question": q.text]
+      var a: [String: Any] = ["codes": codes, "basedOn": q.basedOn, "findings": q.findings]
       if !text.isEmpty { a["text"] = text }
       answers[q.key] = a
     }
@@ -348,12 +365,14 @@ final class AnamnesisState: ObservableObject {
 
   private func report(_ result: [String: Any], clear: String?) {
     if result["ok"] as? Bool == true {
+      failed = false
       message = result["message"] as? String
       if clear == nil {  // answered questions leave the plan once the snapshot is refreshed
         for q in questions { choices[Self.slot(q.key, nil)] = nil; texts[Self.slot(q.key, nil)] = nil }
       }
     } else {
-      message = "Not stored: \(result["error"] as? String ?? "unknown error")"
+      failed = true
+      message = String(localized: "Not stored: \(result["error"] as? String ?? String(localized: "unknown error"))")
     }
   }
 }
@@ -361,7 +380,7 @@ final class AnamnesisState: ObservableObject {
 // MARK: Pieces
 
 private struct Card<Content: View>: View {
-  let title: String, symbol: String
+  let title: LocalizedStringKey, symbol: String
   @ViewBuilder var content: Content
   var body: some View {
     VStack(alignment: .leading, spacing: 6) {
@@ -386,10 +405,10 @@ private struct QuestionCard: View {
         Label("Prefilled from \(pre)", systemImage: "wand.and.stars").font(.caption).foregroundStyle(.secondary)
       }
       if question.month {
-        field("Year and month, e.g. 2024-03")
+        field(String(localized: "Year and month, e.g. 2024-03"))
       } else {
         ForEach(question.options, id: \.code) { o in option(o) }
-        field("In your own words (optional)")
+        field(String(localized: "In your own words (optional)"))
       }
     }
     .padding(12).frame(maxWidth: .infinity, alignment: .leading)
@@ -431,9 +450,10 @@ private struct QuestionCard: View {
 }
 
 private struct SaveRow: View {
-  let title: String
+  let title: LocalizedStringKey
   let enabled: Bool
   let message: String?
+  let failed: Bool
   let action: () -> Void
 
   var body: some View {
@@ -448,8 +468,8 @@ private struct SaveRow: View {
       Text("Checked and stored in your health graph on this Mac, coded with SNOMED CT where a code exists. Nothing is uploaded.")
         .font(.caption).foregroundStyle(.secondary)
       if let message {
-        Label(message, systemImage: message.hasPrefix("Not stored") ? "xmark.octagon" : "checkmark.circle.fill")
-          .foregroundStyle(message.hasPrefix("Not stored") ? .red : .green).textSelection(.enabled)
+        Label(message, systemImage: failed ? "xmark.octagon" : "checkmark.circle.fill")
+          .foregroundStyle(failed ? .red : .green).textSelection(.enabled)
       }
     }
   }
