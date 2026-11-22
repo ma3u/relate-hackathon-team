@@ -43,6 +43,7 @@
     <nav class="links" aria-label="Sections">
       <a href="#iphone">iPhone</a>
       <a href="#mac">Mac</a>
+      <a href="#letter">Doctor's letter</a>
       <a href="#graph3d">3D graph</a>
       <a href="#private">Privacy</a>
       <a href="#ehds">EHDS</a>
@@ -58,6 +59,7 @@
       <li><a href="#why">Two apps, one graph</a></li>
       <li><a href="#iphone">iPhone</a></li>
       <li><a href="#mac">Mac</a></li>
+      <li><a href="#letter">Doctor's letter</a></li>
       <li><a href="#graph3d">3D graph</a></li>
       <li><a href="#how">How they talk</a></li>
       <li><a href="#private">Privacy</a></li>
@@ -77,7 +79,7 @@
     <div>
       <p class="kicker">Relate by Neo4j Hackathon · NODES 2026</p>
       <h1>Your lab reports, <span class="grad">in a graph you own.</span></h1>
-      <p class="lead">Klarbefund reads the paper lab reports from your doctor on the iPhone and keeps them, with your Apple Watch data, in one Neo4j Relate graph on your own iPhone and Mac. Encrypted, local, no cloud. Then you ask Claude, or a model on your Mac, what it means.</p>
+      <p class="lead">Klarbefund reads the paper lab reports from your doctor on the iPhone and keeps them, with your Apple Watch data, in one Neo4j Relate graph on your own iPhone and Mac. Encrypted, local, no cloud. Then you ask Claude, or a model on your Mac, what it means. Before a visit, Klarbefund for Mac writes a doctor's letter for your GP or specialist.</p>
       <div class="btns">
         <a class="btn" href="https://testflight.apple.com/join/ssADSXX6">Get the beta on TestFlight</a>
         <a class="btn ghost" href="https://www.youtube.com/watch?v=TZWaN4sBj1s">Watch the 2-minute demo</a>
@@ -151,7 +153,33 @@
   </div>
 </section>
 
-<section id="graph3d" class="alt">
+<section id="letter" class="alt">
+  <div class="wrap">
+    <div class="app">
+      <div class="text">
+        <span class="pill">For your doctor's visit</span>
+        <h2>From your graph to a doctor's letter.</h2>
+        <p class="sub" style="margin-bottom:0">Before you see your GP or a specialist, Klarbefund for Mac brings your current findings together on a few printable pages. Every number names its report, date, page and line, so your doctor can check it on the paper.</p>
+        <ol class="steps">
+          <li><b>Answer the anamnesis.</b> <em>Anamnesis</em> asks only what your lab values and Apple Watch data cannot tell, questionnaire by questionnaire, prefilled where it can be. Your answers are stored in your graph.</li>
+          <li><b>Choose the letter.</b> <em>Doctor's letter</em> for your GP gives an overview of everything; for a specialist it focuses on one health risk, its markers and the risks it raises. In German or English.</li>
+          <li><b>Save as PDF or print.</b> A4, to bring along or send ahead. Claude reads the same letter through the <code>doctor_letter</code> tool, for example to prepare your questions.</li>
+        </ol>
+        <div class="cards" style="grid-template-columns:1fr;margin-top:28px">
+          <div class="card"><h3>What the letter holds</h3><p>The reason for the visit, the latest lab tests as printed, the trend of each value against the guideline range valid on its date, Apple Watch vitals and activity as weekly means, your anamnesis in your own words, and questions for your doctor.</p></div>
+          <div class="card t"><h3>Your own record</h3><p>A summary you prepare yourself, not a diagnosis and not medical advice. It is written on your Mac, from your graph, and leaves it only when you save, print or send it.</p></div>
+        </div>
+      </div>
+      <div>
+        <img class="macshot" src="/img/mac/doctor-letter.png" alt="The first page of a doctor's letter for the GP: reason for the visit, then the latest lab tests with the lab's range, the guideline range valid on that date and the value as printed (synthetic data)" loading="lazy">
+        <img class="macshot" src="/img/mac/anamnesis.png" alt="The Anamnesis window in Klarbefund for Mac: what stands out in the values, what is already known, and only the open questions (synthetic data)" loading="lazy" style="margin-top:20px">
+        <p class="note">The example shows synthetic data.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="graph3d">
   <div class="wrap">
     <span class="pill">Open 3D view</span>
     <h2>Your graph, in 3D.</h2>
@@ -187,7 +215,7 @@
   </div>
 </section>
 
-<section id="how">
+<section id="how" class="alt">
   <div class="wrap">
     <h2>How the two talk to each other.</h2>
     <p class="sub">No server in between. The iPhone sends straight to the one Mac it was paired with, and only to that Mac.</p>

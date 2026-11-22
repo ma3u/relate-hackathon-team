@@ -112,8 +112,11 @@ extension HealthStore {
     try connection.query(cypher, parameters).records.map { $0.dictionary.mapValues(foundation) }
   }
 
-  /// Findings in the person's data, what the graph already answers, and the questions to ask.
-  public func anamnesisPlan(today: String? = nil) throws -> JSONObject {
+  /// Findings in the person's data, what the graph already answers, and the questions to ask. In German
+  /// (`language: .de`) every text a person reads is German (german.py); keys, codes and structure are the
+  /// same, so a plan answered in German stores the same answers.
+  public func anamnesisPlan(today: String? = nil, language: DoctorLetter.Language = .en) throws -> JSONObject {
+    let de = language == .de
     let today = today ?? Anamnesis.isoDay(Date())
     let oldDays = (Anamnesis.limits["oldDays"] as? Int) ?? 548
     let answerDays = (Anamnesis.limits["answerDays"] as? Int) ?? 365
@@ -137,18 +140,24 @@ extension HealthStore {
 
     var known: [(String, String)] = []
     if let abpm = facts.string("abpm") {
-      known.append(("bp_measured", "24-hour blood pressure measurement on \(abpm)"))
+      known.append(("bp_measured", de ? "24-Stunden-Blutdruckmessung am \(German.date(abpm))"
+                                      : "24-hour blood pressure measurement on \(abpm)"))
     } else if let n = facts["officeBp"] as? Int, n >= 2 {
-      known.append(("bp_measured", "\(n) blood pressure readings in the last year"))
+      known.append(("bp_measured", de ? "\(n) Blutdruckmessungen im letzten Jahr"
+                                      : "\(n) blood pressure readings in the last year"))
     }
     if let n = facts["activeWeeks"] as? Int, n >= 8 {
-      known.append(("activity_measured", "Apple Watch exercise minutes for \(n) weeks of the last year"))
+      known.append(("activity_measured", de ? "Trainingsminuten der Apple Watch für \(n) Wochen des letzten Jahres"
+                                            : "Apple Watch exercise minutes for \(n) weeks of the last year"))
     }
     if let n = facts["weights"] as? Int, n >= 3 {
-      known.append(("weight_series",
-                    "\(n) weights from \(facts.string("firstWeight") ?? "") to \(facts.string("lastWeight") ?? "")"))
+      let first = facts.string("firstWeight") ?? "", last = facts.string("lastWeight") ?? ""
+      known.append(("weight_series", de ? "\(n) Gewichtsmessungen vom \(German.date(first)) bis \(German.date(last))"
+                                        : "\(n) weights from \(first) to \(last)"))
     }
-    if let d = facts.string("boneDensity") { known.append(("bone_density", "bone density scan on \(d)")) }
+    if let d = facts.string("boneDensity") {
+      known.append(("bone_density", de ? "Knochendichtemessung am \(German.date(d))" : "bone density scan on \(d)"))
+    }
     let knownBy = Dictionary(known, uniquingKeysWith: { a, _ in a })
     let recent = answered.filter { _, a in
       guard let at = a.string("authored") else { return false }
@@ -177,7 +186,8 @@ extension HealthStore {
           if f == "at_limit_low" && when.contains("low") { f = "low" }
           if when.contains(f) {
             var hit = v
-            hit["name"] = Anamnesis.groups.first { $0.string("id") == gid }?.string("name") ?? gid
+            hit["name"] = (de ? German.group(gid) : nil)
+              ?? Anamnesis.groups.first { $0.string("id") == gid }?.string("name") ?? gid
             hit["trigger"] = f
             hits.append(hit)
           }
@@ -223,11 +233,13 @@ extension HealthStore {
       let dates: [String] = hits.compactMap { $0.string("date") }
       let date: Any = dates.max() ?? detail?.string("date") ?? NSNull()
       let codes: [String] = Array(Set(hits.compactMap { $0.string("code") })).sorted()
-      let tests: [String] = (rule["tests"] as? [String] ?? []) + missing
+      var tests: [String] = (rule["tests"] as? [String] ?? []) + missing
+      let rid = rule.string("id") ?? ""
+      if de { tests = tests.map { German.test($0) ?? $0 } }
       var finding: JSONObject = [:]
-      finding["id"] = rule.string("id") ?? ""
-      finding["title"] = rule["title"] ?? ""
-      finding["why"] = rule["why"] ?? ""
+      finding["id"] = rid
+      finding["title"] = (de ? German.rule(rid, "title") : nil) ?? rule["title"] ?? ""
+      finding["why"] = (de ? German.rule(rid, "why") : nil) ?? rule["why"] ?? ""
       finding["risks"] = rule["risks"] ?? [String]()
       finding["values"] = hits.filter { $0["group"] != nil }
       finding["detail"] = detail ?? NSNull()
@@ -257,10 +269,13 @@ extension HealthStore {
         }
         seen.insert(key)
         if let a = recent[key] {
-          let labels = (a["labels"] as? [String] ?? []).joined(separator: ", ")
+          let english = a["labels"] as? [String] ?? []
+          let labels = ((de ? German.labels(linkId, codes: [], english: english) : nil) ?? english).joined(separator: ", ")
           let extra = a.string("text").map { " / " + $0 } ?? ""
+          let day = String((a.string("authored") ?? "").prefix(10))
           skipped.append(["key": key, "linkId": linkId, "finding": fid,
-                          "reason": "answered on \(String((a.string("authored") ?? "").prefix(10))): \(labels)\(extra)"])
+                          "reason": de ? "beantwortet am \(German.date(day)): \(labels)\(extra)"
+                                       : "answered on \(day): \(labels)\(extra)"])
           continue
         }
         if let by = item.string("knownBy"), let why = knownBy[by] {
@@ -268,11 +283,14 @@ extension HealthStore {
           continue
         }
         let options = (item["options"] as? [[Any]] ?? []).map { o -> JSONObject in
-          ["code": o[0], "label": o[1], "riskFactor": o[2]]
+          let german = de ? (o[0] as? String).flatMap { German.label(linkId, code: $0) } : nil
+          return ["code": o[0], "label": german ?? o[1], "riskFactor": o[2]]
         }
+        let asked = (de ? German.question(linkId, context: dated ? date : nil) : nil)
+          ?? text.replacingOccurrences(of: "{date}", with: date ?? "that day")
         questions.append([
           "key": key, "linkId": linkId, "context": dated ? (date ?? "") : NSNull(),
-          "text": text.replacingOccurrences(of: "{date}", with: date ?? "that day"),
+          "text": asked,
           "options": options, "multiple": item["multiple"] ?? false, "risks": item["risks"] ?? [],
           "findings": [fid], "basedOn": codes,
         ])

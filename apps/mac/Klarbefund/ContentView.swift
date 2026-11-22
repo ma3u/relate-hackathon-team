@@ -5,6 +5,9 @@ import SwiftUI
 /// controls, so small buttons and links are drawn as plain images and text then.
 @MainActor var renderingForDocs = false
 
+/// Set by the debug `--letter-render` run: the main window then never opens or seals the real graph.
+@MainActor var skipGraph = false
+
 /// One window, three steps: pair the iPhone, see the graph, connect an AI (Claude, ChatGPT, Gemini or a local model).
 struct ContentView: View {
   @ObservedObject var model: AppModel
@@ -95,6 +98,27 @@ struct ContentView: View {
       .disabled(model.counts.values == 0 && model.counts.weeks == 0)
       .help("Your risks, values, evidence and anamnesis as an interactive 3D graph, on this Mac.")
     }
+    HStack(spacing: 10) {
+      if renderingForDocs {  // drawn, as above
+        ForEach([("Doctor's letter", "doc.text"), ("Anamnesis", "list.bullet.clipboard")], id: \.0) { title, symbol in
+          Label(LocalizedStringKey(title), systemImage: symbol).frame(maxWidth: .infinity)
+            .padding(.vertical, 7).background(.quaternary, in: RoundedRectangle(cornerRadius: 7))
+        }
+      } else {
+        Button { openWindow(id: "doctor-letter") } label: {
+          Label("Doctor's letter", systemImage: "doc.text").frame(maxWidth: .infinity)
+        }
+        .controlSize(.large)
+        .disabled(model.counts.values == 0 && model.counts.weeks == 0)
+        .help("Your latest lab tests, trends, Apple Watch vitals, sport and anamnesis on one A4 letter for your GP or a specialist, in German or English.")
+        Button { openWindow(id: "anamnesis") } label: {
+          Label("Anamnesis", systemImage: "list.bullet.clipboard").frame(maxWidth: .infinity)
+        }
+        .controlSize(.large)
+        .disabled(model.counts.values == 0 && model.counts.weeks == 0)
+        .help("Answer what your data cannot tell, and the validated questionnaires, here on this Mac.")
+      }
+    }
     if !model.activity.isEmpty {
       DisclosureGroup("Activity") {
         ScrollView {
@@ -123,10 +147,10 @@ struct ContentView: View {
 
   @ViewBuilder private var aiContent: some View {
     if renderingForDocs {  // ImageRenderer draws no segmented control
-      Text(AIClient.allCases.map(\.title).joined(separator: " · ")).font(.callout.weight(.semibold))
+      Text(AIClient.allCases.map { loc($0.title) }.joined(separator: " · ")).font(.callout.weight(.semibold))
     } else {
       Picker("AI", selection: $client) {
-        ForEach(AIClient.allCases) { Text($0.title).tag($0) }
+        ForEach(AIClient.allCases) { Text(loc($0.title)).tag($0) }
       }
       .pickerStyle(.segmented).labelsHidden()
     }
@@ -136,13 +160,13 @@ struct ContentView: View {
     case .gemini: gemini
     case .local: local
     }
-    Label(client.privacy, systemImage: client == .local ? "lock.laptopcomputer" : "cloud")
+    Label(loc(client.privacy), systemImage: client == .local ? "lock.laptopcomputer" : "cloud")
       .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
     Text("Then ask, for example:").font(.callout.weight(.semibold)).padding(.top, 4)
-    ForEach(MCPCatalog.prompts.filter { $0.group == .risks }.prefix(3), id: \.name) { Ask($0.ask) }
+    ForEach(MCPCatalog.prompts.filter { $0.group == .risks }.prefix(3), id: \.name) { Ask(loc($0.ask)) }
     let catalog = Label(
       "What it can do here (\(MCPCatalog.prompts.count) prompts, \(MCPCatalog.guides.count) guides)",
-      systemImage: "list.bullet.rectangle")
+      systemImage: "list.bullet.rectangle")  // the prompts and guides stay English: they are sent to the AI
     if renderingForDocs {
       catalog.font(.callout).foregroundStyle(Color.accentColor)
     } else {
@@ -182,10 +206,10 @@ struct ContentView: View {
     } else {
       Button {
         guard let link = setup.lmStudioLink, NSWorkspace.shared.urlForApplication(toOpen: link) != nil else {
-          localMessage = "LM Studio is not installed. Get it at lmstudio.ai, open it once, then click again."
+          localMessage = String(localized: "LM Studio is not installed. Get it at lmstudio.ai, open it once, then click again.")
           return
         }
-        localMessage = "LM Studio asks to add \(AISetup.serverName): confirm, then start a chat with a tool-use model."
+        localMessage = String(localized: "LM Studio asks to add \(AISetup.serverName): confirm, then start a chat with a tool-use model.")
         NSWorkspace.shared.open(link)
       } label: {
         Label("Add to LM Studio", systemImage: "plus.app").frame(maxWidth: .infinity)
@@ -204,14 +228,13 @@ struct ContentView: View {
     Button {
       model.connectClaude()
     } label: {
-      Label(model.connecting ? "Preparing the extension…" : "Connect Claude Desktop",
+      Label(model.connecting ? LocalizedStringKey("Preparing the extension…") : LocalizedStringKey("Connect Claude Desktop"),
             systemImage: model.connecting ? "hourglass" : "link").frame(maxWidth: .infinity)
     }
     .controlSize(.large).buttonStyle(.borderedProminent)
     .disabled(model.connecting)
     if model.claudeMessage == nil && model.extensionOutdated && !renderingForDocs {
-      Label("Klarbefund was updated. If you connected Claude before, click Connect again so Claude gets the new "
-        + "tools (version \(ClaudeConnect.extensionVersion)). Your health graph is not affected.",
+      Label("Klarbefund was updated. If you connected Claude before, click Connect again so Claude gets the new tools (version \(ClaudeConnect.extensionVersion)). Your health graph is not affected.",
         systemImage: "arrow.triangle.2.circlepath")
         .font(.callout).foregroundStyle(.secondary)
     }
@@ -254,7 +277,7 @@ struct ContentView: View {
 }
 
 private struct Step<Content: View>: View {
-  let number: Int, title: String, symbol: String
+  let number: Int, title: LocalizedStringKey, symbol: String
   @ViewBuilder var content: Content
   var body: some View {
     VStack(alignment: .leading, spacing: 12) {
@@ -287,7 +310,7 @@ private struct Numbered: View {
 }
 
 private struct CountRow: View {
-  let value: Int, label: String
+  let value: Int, label: LocalizedStringKey
   var body: some View {
     GridRow {
       Text(value.formatted()).font(.title2.bold().monospacedDigit()).gridColumnAlignment(.trailing)

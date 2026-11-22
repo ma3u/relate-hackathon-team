@@ -42,6 +42,7 @@
     <nav class="links" aria-label="Abschnitte">
       <a href="#iphone">iPhone</a>
       <a href="#mac">Mac</a>
+      <a href="#letter">Arztbrief</a>
       <a href="#graph3d">3D-Graph</a>
       <a href="#private">Datenschutz</a>
       <a href="#ehds">EHDS</a>
@@ -57,6 +58,7 @@
       <li><a href="#why">Zwei Apps, ein Graph</a></li>
       <li><a href="#iphone">iPhone</a></li>
       <li><a href="#mac">Mac</a></li>
+      <li><a href="#letter">Arztbrief</a></li>
       <li><a href="#graph3d">3D-Graph</a></li>
       <li><a href="#how">Wie die beiden reden</a></li>
       <li><a href="#private">Datenschutz</a></li>
@@ -76,7 +78,7 @@
     <div>
       <p class="kicker">Relate by Neo4j Hackathon · NODES 2026</p>
       <h1>Ihre Laborbefunde, <span class="grad">in einem Graphen, der Ihnen gehört.</span></h1>
-      <p class="lead">Klarbefund liest die Laborbefunde Ihrer Ärztin oder Ihres Arztes auf Papier mit dem iPhone und hält sie, zusammen mit den Daten Ihrer Apple Watch, in einem Neo4j-Relate-Graphen auf Ihrem eigenen iPhone und Mac. Verschlüsselt, lokal, ohne Cloud. Dann fragen Sie Claude oder ein Modell auf Ihrem Mac, was die Werte bedeuten.</p>
+      <p class="lead">Klarbefund liest die Laborbefunde Ihrer Ärztin oder Ihres Arztes auf Papier mit dem iPhone und hält sie, zusammen mit den Daten Ihrer Apple Watch, in einem Neo4j-Relate-Graphen auf Ihrem eigenen iPhone und Mac. Verschlüsselt, lokal, ohne Cloud. Dann fragen Sie Claude oder ein Modell auf Ihrem Mac, was die Werte bedeuten. Vor dem Termin schreibt Klarbefund für Mac einen Arztbrief für Hausarzt oder Facharzt.</p>
       <div class="btns">
         <a class="btn" href="https://testflight.apple.com/join/ssADSXX6">Beta über TestFlight laden</a>
         <a class="btn ghost" href="https://www.youtube.com/watch?v=TZWaN4sBj1s">Demo ansehen (2 Minuten, Englisch)</a>
@@ -133,7 +135,7 @@
         <h2>Drei Schritte. Kein Terminal.</h2>
         <p class="sub" style="margin-bottom:0">Klarbefund für Mac ist das Zuhause Ihres Graphen: Die App empfängt, was das iPhone schickt, hält es versiegelt und lässt eine KI darin lesen, solange sie geöffnet ist.</p>
         <ol class="steps t">
-          <li><b>iPhone koppeln.</b> Auf dem iPhone Klarbefund öffnen, Mehr (…), <em>Export to my Mac (Relate)</em>, und den QR-Code scannen, den der Mac zeigt. Dann <em>Send everything now</em> tippen. Ab dann geht jeder Befund, den Sie scannen oder korrigieren, von selbst an den Mac.</li>
+          <li><b>iPhone koppeln.</b> Auf dem iPhone Klarbefund öffnen, Mehr (…), <em>An meinen Mac exportieren (Relate)</em>, und den QR-Code scannen, den der Mac zeigt. Dann <em>Jetzt alles senden</em> tippen. Ab dann geht jeder Befund, den Sie scannen oder korrigieren, von selbst an den Mac.</li>
           <li><b>Ihr Gesundheitsgraph.</b> Der Mac zählt Ihre Befunde, Werte, Apple-Watch-Wochen und die 173 Referenzbereiche, die die App mitbringt. <em>Open 3D view</em> zeigt alles: Ihr Hauptrisiko in der Mitte, dann die Risikoscores, die Evidenz, Ihre Antworten und Ihre Werte.</li>
           <li><b>Ihre KI fragen.</b> <em>Connect Claude Desktop</em> installiert die Klarbefund-Erweiterung mit einem Klick: 27 fertige Prompts und 8 Guides, von „Where are my risks?“ bis zu einem Sechs-Minuten-Briefing für Ihren Arzttermin.</li>
         </ol>
@@ -150,7 +152,33 @@
   </div>
 </section>
 
-<section id="graph3d" class="alt">
+<section id="letter" class="alt">
+  <div class="wrap">
+    <div class="app">
+      <div class="text">
+        <span class="pill">Für den Arztbesuch</span>
+        <h2>Vom Graphen zum Arztbrief.</h2>
+        <p class="sub" style="margin-bottom:0">Vor dem Termin bei Hausarzt oder Facharzt fasst Klarbefund für Mac Ihren aktuellen Befund auf wenigen druckbaren Seiten zusammen. Jede Zahl nennt ihren Befund, ihr Datum, Seite und Zeile, damit Ihre Ärztin oder Ihr Arzt sie auf dem Papier prüfen kann.</p>
+        <ol class="steps">
+          <li><b>Anamnese beantworten.</b> <em>Anamnesis</em> fragt nur, was Ihre Laborwerte und die Daten der Apple Watch nicht verraten, Fragebogen für Fragebogen, vorausgefüllt, wo es geht. Ihre Antworten werden in Ihrem Graphen gespeichert.</li>
+          <li><b>Brief wählen.</b> <em>Doctor's letter</em> gibt für den Hausarzt einen Überblick über alles; für den Facharzt konzentriert er sich auf ein Gesundheitsrisiko, seine Marker und die Risiken, die es erhöht. Auf Deutsch oder Englisch.</li>
+          <li><b>Als PDF sichern oder drucken.</b> A4, zum Mitnehmen oder Vorabschicken. Claude liest denselben Brief über das Werkzeug <code>doctor_letter</code>, etwa um Ihre Fragen vorzubereiten.</li>
+        </ol>
+        <div class="cards" style="grid-template-columns:1fr;margin-top:28px">
+          <div class="card"><h3>Was der Brief enthält</h3><p>Den Anlass des Besuchs, die letzten Labortests wie gedruckt, den Verlauf jedes Werts gegen den Leitlinienbereich, der an seinem Datum galt, Vitalwerte und Aktivität der Apple Watch als Wochenmittel, Ihre Anamnese in Ihren eigenen Worten und Fragen an Ihre Ärztin oder Ihren Arzt.</p></div>
+          <div class="card t"><h3>Ihre eigene Aufstellung</h3><p>Eine Zusammenfassung, die Sie selbst vorbereiten, keine Diagnose und keine medizinische Beratung. Sie entsteht auf Ihrem Mac aus Ihrem Graphen und verlässt ihn nur, wenn Sie sie sichern, drucken oder verschicken.</p></div>
+        </div>
+      </div>
+      <div>
+        <img class="macshot" src="/img/mac/doctor-letter-de.png" alt="Die erste Seite eines Arztbriefs für die Hausarztpraxis: Anlass des Besuchs, dann die letzten Labortests mit dem Bereich des Labors, dem am Datum gültigen Leitlinienbereich und dem Wert wie gedruckt (synthetische Daten)" loading="lazy">
+        <img class="macshot" src="/img/mac/anamnesis-de.png" alt="Das Anamnese-Fenster in Klarbefund für Mac: was in den Werten auffällt, was schon bekannt ist, und nur die offenen Fragen (synthetische Daten)" loading="lazy" style="margin-top:20px">
+        <p class="note">Das Beispiel zeigt synthetische Daten. Klarbefund für Mac, die Anamnese und der Arztbrief sind auf Deutsch und Englisch, je nach Sprache des Macs.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="graph3d">
   <div class="wrap">
     <span class="pill">Open 3D view</span>
     <h2>Ihr Graph, in 3D.</h2>
@@ -186,7 +214,7 @@
   </div>
 </section>
 
-<section id="how">
+<section id="how" class="alt">
   <div class="wrap">
     <h2>Wie die beiden miteinander reden.</h2>
     <p class="sub">Kein Server dazwischen. Das iPhone sendet direkt an den einen Mac, mit dem es gekoppelt ist, und nur an diesen.</p>
@@ -223,7 +251,7 @@
       <div class="text">
         <h3>Ihre eigene Akte auf dem Hub</h3>
         <ol class="steps">
-          <li><b>Verbinden.</b> In Klarbefund auf dem iPhone bietet <em>Connect to EHDS</em> drei Wege, und auf dem Telefon wird kein Passwort in eine Webseite getippt: ein Konto anlegen, wobei Apple dem Hub bestätigt, dass die Anfrage von der echten App auf einem echten Gerät kommt; sich mit einem vorhandenen Konto anmelden; oder einen QR-Code auf dem Patientenbildschirm am Computer scannen und dort bestätigen.</li>
+          <li><b>Verbinden.</b> In Klarbefund auf dem iPhone bietet <em>Mit EHDS verbinden</em> drei Wege, und auf dem Telefon wird kein Passwort in eine Webseite getippt: ein Konto anlegen, wobei Apple dem Hub bestätigt, dass die Anfrage von der echten App auf einem echten Gerät kommt; sich mit einem vorhandenen Konto anmelden; oder einen QR-Code auf dem Patientenbildschirm am Computer scannen und dort bestätigen.</li>
           <li><b>Ihre Akte lesen.</b> Messwerte mit ihren gedruckten Bereichen und Daten, Befunde, Impfungen und den Medikationsplan. Die App liest sie, wenn Sie den Bildschirm öffnen, und speichert sie nirgends.</li>
           <li><b>Etwas hinzufügen, wenn Sie es wollen.</b> Zwei Schalter, beide aus, bis Sie sie einschalten: meine Befunde senden, als vorläufige Werte, gekennzeichnet als aus einem Scan gelesen, und meine Geräte-Verläufe senden, nur als Wochenmittel. Werte ohne LOINC-Code bleiben auf dem Telefon. <em>Disconnect</em> gibt es in der App und auf dem Patientenbildschirm.</li>
           <li><b>Mit einer Wallet anmelden, wenn Sie wollen.</b> Auf der Website des Hubs kann eine EUDI-Wallet wie d-you Sie statt eines Passworts anmelden, vorerst mit der Sandbox-App von d-you. Der Hub speichert einen geschlüsselten Hash Ihrer Identität, nie Ihren Namen oder Ihr Geburtsdatum.</li>
@@ -278,11 +306,11 @@
       <ol class="steps">
         <li><b>Der Beta beitreten</b> über den <a href="https://testflight.apple.com/join/ssADSXX6">TestFlight-Link</a>, auf dem iPhone und auf dem Mac. Ein Link für beide Apps.</li>
         <li><b>Einen Laborbefund scannen</b> in Klarbefund auf dem iPhone, oder mehrere. Apple Health erlauben, wenn Sie eine Uhr oder einen Ring tragen, die dorthin synchronisieren.</li>
-        <li><b>Klarbefund für Mac öffnen</b> und koppeln: Mehr (…), <em>Export to my Mac (Relate)</em>, Code scannen, <em>Send everything now</em>. Mac und iPhone brauchen dasselbe WLAN.</li>
+        <li><b>Klarbefund für Mac öffnen</b> und koppeln: Mehr (…), <em>An meinen Mac exportieren (Relate)</em>, Code scannen, <em>Jetzt alles senden</em>. Mac und iPhone brauchen dasselbe WLAN.</li>
         <li><b>Claude Desktop verbinden</b> in Schritt 3 und fragen: „Wo liegen meine Risiken?“</li>
       </ol>
       <p style="margin-top:28px;color:var(--soft)">Kein iPhone zur Hand? Das Repository enthält einen synthetischen Beispielgraphen, <code>examples/health-graph/health.rl</code>, den Sie mit der Relate-CLI abfragen und Claude bereitstellen können: <a href="https://github.com/ma3u/relate-hackathon-team#try-it-with-the-sample-graph" hreflang="en">mit dem Beispielgraphen ausprobieren</a>, oder seine <a href="/3d/">3D-Ansicht im Browser öffnen</a>.</p>
-      <p style="color:var(--soft)">Fehler gefunden oder eine Idee? In TestFlight <em>Send Beta Feedback</em> nutzen, oder <a href="https://github.com/ma3u/relate-hackathon-team/issues/new">ein Issue auf GitHub anlegen</a>.</p>
+      <p style="color:var(--soft)">Fehler gefunden oder eine Idee? In TestFlight Beta-Feedback senden, oder <a href="https://github.com/ma3u/relate-hackathon-team/issues/new">ein Issue auf GitHub anlegen</a>.</p>
       <div class="warn">Klarbefund ist kein Medizinprodukt. Es hilft Ihnen, Ihre Daten zu verstehen und Fragen für Ihre Ärztin oder Ihren Arzt vorzubereiten. Beide Apps sind in Entwicklung und im Test, deshalb nur über TestFlight, nicht im App Store.</div>
     </div>
     <div>

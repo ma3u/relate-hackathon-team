@@ -36,16 +36,15 @@ struct Graph3DView: NSViewRepresentable {
   nonisolated static func page() -> String {
     guard let url = Bundle.main.url(forResource: "graph3d", withExtension: "html"),
       let template = try? String(contentsOf: url, encoding: .utf8)
-    else { return message("The 3D view is missing from this build of Klarbefund.") }
+    else { return message(String(localized: "The 3D view is missing from this build of Klarbefund.")) }
     guard let snap = Paths.snapshot, FileManager.default.fileExists(atPath: snap.path) else {
-      return message("Your health graph is not open yet. Send your reports from the iPhone first.")
+      return message(String(localized: "Your health graph is not open yet. Send your reports from the iPhone first."))
     }
     do {
-      let store = try HealthStore(path: snap.path, readOnly: true)
       let day = ISO8601DateFormatter.string(from: Date(), timeZone: .current, formatOptions: [.withFullDate])
-      return try store.graph3DPage(template: template, today: day)
+      return try Snapshot.read(snap) { try $0.graph3DPage(template: template, today: day) }
     } catch {
-      return message("Klarbefund could not read your health graph for the 3D view: \(error)")
+      return message(String(localized: "Klarbefund could not read your health graph for the 3D view: \(String(describing: error))"))
     }
   }
 

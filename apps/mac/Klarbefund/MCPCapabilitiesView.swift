@@ -1,7 +1,8 @@
 import SwiftUI
 
 /// What the Klarbefund MCP server offers Claude: its tools, prompts and guides,
-/// read from MCPCatalog, the list the helper (klarbefund-mcp) serves.
+/// read from MCPCatalog, the list the helper (klarbefund-mcp) serves. In German the titles and
+/// descriptions are shown in German; the guides' text and what is sent to the AI stay English.
 struct MCPCapabilitiesView: View {
   @Environment(\.dismiss) private var dismiss
   /// False only for the docs render: ImageRenderer draws no scroll view and no AppKit controls.
@@ -37,10 +38,11 @@ struct MCPCapabilitiesView: View {
   private var content: some View {
     VStack(alignment: .leading, spacing: 18) {
       header
-      CatalogSection(title: "Tools", detail: "4: three read-only, one for your anamnesis answers", symbol: "wrench.and.screwdriver") { tools }
-      CatalogSection(title: "Prompts", detail: "\(MCPCatalog.prompts.count), in Claude's prompt menu (+)",
+      CatalogSection(title: "Tools", detail: String(localized: "4: three read-only, one for your anamnesis answers"),
+                     symbol: "wrench.and.screwdriver") { tools }
+      CatalogSection(title: "Prompts", detail: String(localized: "\(MCPCatalog.prompts.count), in Claude's prompt menu (+)"),
                      symbol: "text.bubble") { prompts }
-      CatalogSection(title: "Guides", detail: "\(MCPCatalog.guides.count) resources Claude can read",
+      CatalogSection(title: "Guides", detail: String(localized: "\(MCPCatalog.guides.count) resources Claude can read"),
                      symbol: "book") { guideList }
       if let security {
         CatalogSection(title: "Security", detail: security.uri, symbol: "lock.shield") {
@@ -59,11 +61,9 @@ struct MCPCapabilitiesView: View {
         .foregroundStyle(.secondary)
       Grid(alignment: .leadingFirstTextBaseline, horizontalSpacing: 12, verticalSpacing: 6) {
         Fact(label: "Server", value: "\(MCPCatalog.serverTitle) (\(MCPCatalog.serverName))")
-        Fact(label: "Transport", value: "stdio, local, read-only")
-        Fact(label: "Protocol", value: "MCP \(MCPCatalog.modernVersions.joined(separator: ", ")) (stateless), "
-          + "\(MCPCatalog.legacyVersions.joined(separator: ", ")) (initialize)")
-        Fact(label: "Authorization", value: "OAuth 2.1 applies to HTTP transports; a local stdio server "
-          + "takes no credentials: macOS decides who can start it and what it can read.")
+        Fact(label: "Transport", value: String(localized: "stdio, local, read-only"))
+        Fact(label: "Protocol", value: String(localized: "MCP \(MCPCatalog.modernVersions.joined(separator: ", ")) (stateless), \(MCPCatalog.legacyVersions.joined(separator: ", ")) (initialize)"))
+        Fact(label: "Authorization", value: String(localized: "OAuth 2.1 applies to HTTP transports; a local stdio server takes no credentials: macOS decides who can start it and what it can read."))
       }
       .font(.callout)
     }
@@ -72,12 +72,9 @@ struct MCPCapabilitiesView: View {
   private var tools: some View {
     VStack(alignment: .leading, spacing: 8) {
       Item(title: "get_schema", detail: "Labels and relationship types in your health graph, with counts.")
-      Item(title: "read_cypher", detail: "One read-only Cypher query (MATCH ... RETURN), at most 500 rows. "
-        + "Queries that would write are rejected.")
-      Item(title: "anamnesis_plan", detail: "What stands out in your values, what your data already answers, "
-        + "and only the questions left.")
-      Item(title: "save_anamnesis_answers", detail: "Hands the answers you confirmed to Klarbefund for Mac, "
-        + "which checks and stores them in your graph. The only way anything is written.")
+      Item(title: "read_cypher", detail: "One read-only Cypher query (MATCH ... RETURN), at most 500 rows. Queries that would write are rejected.")
+      Item(title: "anamnesis_plan", detail: "What stands out in your values, what your data already answers, and only the questions left.")
+      Item(title: "save_anamnesis_answers", detail: "Hands the answers you confirmed to Klarbefund for Mac, which checks and stores them in your graph. The only way anything is written.")
     }
   }
 
@@ -87,7 +84,7 @@ struct MCPCapabilitiesView: View {
         let items = MCPCatalog.prompts.filter { $0.group == group }
         if !items.isEmpty {
           VStack(alignment: .leading, spacing: 8) {
-            Text(group.rawValue).font(.headline)
+            Text(loc(group.rawValue)).font(.headline)
             ForEach(items, id: \.name) { PromptRow(prompt: $0) }
           }
         }
@@ -105,8 +102,8 @@ struct MCPCapabilitiesView: View {
             .background(.background, in: RoundedRectangle(cornerRadius: 8))
         } label: {
           VStack(alignment: .leading, spacing: 2) {
-            Text(g.title).font(.callout.weight(.semibold))
-            Text(g.description).font(.caption).foregroundStyle(.secondary)
+            Text(loc(g.title)).font(.callout.weight(.semibold))
+            Text(loc(g.description)).font(.caption).foregroundStyle(.secondary)
             Text(g.uri).font(.caption.monospaced()).foregroundStyle(.tertiary).textSelection(.enabled)
           }
         }
@@ -116,7 +113,7 @@ struct MCPCapabilitiesView: View {
 }
 
 private struct CatalogSection<Content: View>: View {
-  let title: String, detail: String, symbol: String
+  let title: LocalizedStringKey, detail: String, symbol: String
   @ViewBuilder var content: Content
   var body: some View {
     VStack(alignment: .leading, spacing: 12) {
@@ -133,7 +130,7 @@ private struct CatalogSection<Content: View>: View {
 }
 
 private struct Fact: View {
-  let label: String, value: String
+  let label: LocalizedStringKey, value: String
   var body: some View {
     GridRow {
       Text(label).foregroundStyle(.secondary).gridColumnAlignment(.trailing)
@@ -144,10 +141,10 @@ private struct Fact: View {
 }
 
 private struct Item: View {
-  let title: String, detail: String
+  let title: String, detail: LocalizedStringKey
   var body: some View {
     VStack(alignment: .leading, spacing: 2) {
-      Text(title).font(.callout.monospaced().weight(.semibold))
+      Text(verbatim: title).font(.callout.monospaced().weight(.semibold))
       Text(detail).font(.callout).foregroundStyle(.secondary)
     }
   }
@@ -158,11 +155,11 @@ private struct PromptRow: View {
   var body: some View {
     HStack(alignment: .top) {
       VStack(alignment: .leading, spacing: 2) {
-        Text("“\(prompt.title)”").font(.callout.weight(.medium))
-        Text(prompt.description).font(.caption).foregroundStyle(.secondary)
+        Text("“\(loc(prompt.title))”").font(.callout.weight(.medium))
+        Text(loc(prompt.description)).font(.caption).foregroundStyle(.secondary)
           .fixedSize(horizontal: false, vertical: true)
         if !prompt.arguments.isEmpty {
-          Text(prompt.arguments.map { $0.required ? $0.name : "\($0.name) (optional)" }
+          Text(prompt.arguments.map { $0.required ? $0.name : String(localized: "\($0.name) (optional)") }
             .joined(separator: ", "))
             .font(.caption.monospaced()).foregroundStyle(.tertiary)
         }
@@ -171,7 +168,7 @@ private struct PromptRow: View {
       if renderingForDocs {
         Image(systemName: "doc.on.doc").foregroundStyle(Color.accentColor)
       } else {
-        Button { copy(prompt.ask) } label: { Image(systemName: "doc.on.doc") }
+        Button { copy(loc(prompt.ask)) } label: { Image(systemName: "doc.on.doc") }
           .buttonStyle(.borderless).help("Copy")
       }
     }

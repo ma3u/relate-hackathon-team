@@ -1,0 +1,3 @@
+/* Klarbefund for Mac: Info.plist in German. */
+"NSHumanReadableCopyright" = "Ihre Gesundheitsdaten bleiben auf Ihren Geräten.";
+"NSLocalNetworkUsageDescription" = "Klarbefund empfängt Ihre Laborbefunde und Apple-Health-Daten von Ihrem iPhone über Ihr WLAN.";

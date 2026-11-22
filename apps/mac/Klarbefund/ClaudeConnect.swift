@@ -21,9 +21,10 @@ enum ClaudeConnect {
     case noClaude, noHelper, zip(Int32)
     var description: String {
       switch self {
-      case .noClaude: return "Claude Desktop is not installed. Get it at claude.ai/download, then click Connect again."
-      case .noHelper: return "The Claude connector is missing from this copy of Klarbefund. Reinstall Klarbefund from TestFlight."
-      case .zip(let code): return "Could not package the Claude extension (ditto \(code))."
+      case .noClaude: return String(localized: "Claude Desktop is not installed. Get it at claude.ai/download, then click Connect again.")
+      case .noHelper:
+        return String(localized: "The Claude connector is missing from this copy of Klarbefund. Reinstall Klarbefund from TestFlight.")
+      case .zip(let code): return String(localized: "Could not package the Claude extension (ditto \(Int(code))).")
       }
     }
   }

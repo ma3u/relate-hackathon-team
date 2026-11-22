@@ -692,6 +692,64 @@ enum Cypher {
          collect(DISTINCT o.resourceId) AS observations, collect(DISTINCT h.id) AS risks
   ORDER BY authored DESC, order
   """#
+
+  static let letterPatient = #"""
+  MATCH (p:Patient)
+  RETURN p.birthYear AS birthYear, p.gender AS sex
+  LIMIT 1
+  """#
+
+  static let letterLabValues = #"""
+  MATCH (:Patient)-[:HAS_OBSERVATION]->(o:Observation)
+  WHERE o.duplicateOf IS NULL AND coalesce(o.sourceKind, '') <> 'device-weekly-mean'
+  OPTIONAL MATCH (r:DiagnosticReport)-[:HAS_RESULT]->(o)
+  RETURN o.resourceId AS id, o.code AS code, o.display AS display, o.valueQuantity AS value,
+         o.comparator AS comparator, o.unit AS unit, o.effectiveDate AS date,
+         o.referenceLow AS labLow, o.referenceHigh AS labHigh, o.referenceText AS labText,
+         o.sourceLine AS sourceLine, o.sourceKind AS sourceKind,
+         r.resourceId AS report, r.title AS title, r.performer AS performer, r.effectiveDate AS reportDate
+  ORDER BY date, display
+  """#
+
+  static let letterDeviceValues = #"""
+  MATCH (:Patient)-[:HAS_OBSERVATION]->(o:Observation)
+  WHERE o.sourceKind = 'device-weekly-mean' AND o.valueQuantity IS NOT NULL
+  RETURN o.code AS code, o.display AS display, o.valueQuantity AS value, o.unit AS unit, o.effectiveDate AS date
+  ORDER BY code, date
+  """#
+
+  static let letterRanges = #"""
+  MATCH (r:ReferenceRange)-[:APPLIES_TO]->(c:LoincCode)
+  WHERE c.code IN $codes
+  RETURN c.code AS code, r.ucum AS ucum, r.sex AS sex, r.guidelineLow AS low, r.guidelineHigh AS high,
+         r.validFrom AS validFrom, r.validUntil AS validUntil, r.sourceLabel AS source,
+         r.supersededBy AS supersededBy
+  ORDER BY code, validFrom
+  """#
+
+  static let letterRisks = #"""
+  MATCH (h:HealthRisk)
+  OPTIONAL MATCH (c:LoincCode)-[:MARKER_OF]->(h)
+  RETURN h.id AS id, h.name AS name, collect(DISTINCT c.code) AS codes
+  ORDER BY id
+  """#
+
+  static let letterRiskLinks = #"""
+  MATCH (a:HealthRisk)-[k:RAISES_RISK_OF]->(b:HealthRisk)
+  WHERE a.id = $risk OR b.id = $risk
+  RETURN a.id AS fromId, a.name AS fromName, b.id AS toId, b.name AS toName, k.summary AS summary
+  ORDER BY fromId, toId
+  """#
+
+  static let letterAnswers = #"""
+  MATCH (:Patient)-[:HAS_RESPONSE]->(r:QuestionnaireResponse)-[:HAS_ANSWER]->(a:Answer)
+  WITH a.linkId AS linkId, a, r ORDER BY a.authored DESC
+  WITH linkId, collect([a, r])[0] AS newest
+  WITH linkId, newest[0] AS a, newest[1] AS r
+  RETURN linkId, a.question AS question, a.codes AS codes, a.labels AS labels, a.text AS text, a.context AS context,
+         a.authored AS authored, a.riskFactor AS riskFactor, r.protocol AS protocol
+  ORDER BY authored DESC, linkId
+  """#
 }
 
 /// The rules an assessment follows (assessment.py): its finding kinds, severities and limits.
