@@ -61,6 +61,9 @@
   if (!canvas || !canvas.getContext) return;
   var ctx = canvas.getContext("2d");
   var W = 1920, H = 1080, LINK = 250, scale = 1;
+  var NETLINE = "131,153,168";
+  function tone() { NETLINE = document.documentElement.getAttribute("data-theme") === "light" ? "60,80,100" : "131,153,168"; }
+  tone(); document.addEventListener("kb-theme", function () { tone(); if (typeof draw === "function") draw(); });
   var COLORS = ["#3d9bff", "#19b39a", "#f5b335", "#a77bd1", "#2471a3", "#148f77"];
   var seed = 7;
   function rnd() { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }
@@ -118,7 +121,7 @@
       for (var j = i + 1; j < nodes.length; j++) {
         var a = nodes[i], b = nodes[j], d = Math.hypot(a.x - b.x, a.y - b.y);
         if (d < LINK) {
-          ctx.strokeStyle = "rgba(131,153,168," + ((1 - d / LINK) * 0.32 * fade((a.x + b.x) / 2)).toFixed(3) + ")";
+          ctx.strokeStyle = "rgba(" + NETLINE + "," + ((1 - d / LINK) * 0.32 * fade((a.x + b.x) / 2)).toFixed(3) + ")";
           ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
         }
       }
@@ -185,7 +188,7 @@
   document.addEventListener("click", function (e) {
     if (!toc.hidden && !toc.contains(e.target) && !btn.contains(e.target)) set(false);
   });
-  var wide = window.matchMedia("(min-width: 761px)");
+  var wide = window.matchMedia("(min-width: 1221px)");
   (wide.addEventListener ? wide.addEventListener.bind(wide, "change") : wide.addListener.bind(wide))(function (m) { if (m.matches) set(false); });
 
   if (!("IntersectionObserver" in window)) return;
@@ -200,4 +203,32 @@
     });
   }, { rootMargin: "-45% 0px -50% 0px" });
   Object.keys(byId).forEach(function (id) { var s = document.getElementById(id); if (s) seen.observe(s); });
+})();
+
+// Day and night: without a choice the theme follows the visitor's local time (light from 7 to 19 h,
+// in the browser's time zone) and changes by itself at those hours; the switch stores a choice.
+(function () {
+  var root = document.documentElement, KEY = "kb-theme";
+  var btns = [].slice.call(document.querySelectorAll(".theme-btn"));
+  function stored() { try { var s = localStorage.getItem(KEY); return s === "light" || s === "dark" ? s : null; } catch (e) { return null; } }
+  function byClock() { var h = new Date().getHours(); return h >= 7 && h < 19 ? "light" : "dark"; }
+  function apply(theme) {
+    if (root.getAttribute("data-theme") !== theme) {
+      root.setAttribute("data-theme", theme);
+      document.dispatchEvent(new Event("kb-theme"));
+    }
+    btns.forEach(function (b) { b.setAttribute("aria-pressed", theme === "dark" ? "true" : "false"); });
+  }
+  btns.forEach(function (b) {
+    b.hidden = false;
+    b.addEventListener("click", function () {
+      var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+      try { localStorage.setItem(KEY, next); } catch (e) {}
+      apply(next);
+    });
+  });
+  function follow() { if (!stored()) apply(byClock()); }
+  apply(stored() || byClock());
+  setInterval(follow, 60000);
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) follow(); });
 })();
