@@ -100,6 +100,25 @@ def test_phone_menu_indexes_every_section():
         toc = re.search(r'<nav id="toc" class="toc" aria-label="[^"]+" hidden>(.*?)</nav>', t, re.S).group(1)
         assert re.findall(r'<li><a href="#([^"]+)">', toc) == sections, page
 
+def test_every_page_picks_its_theme_before_painting_and_offers_the_switch():
+    """Day and night: each page sets data-theme in <head> before the stylesheet loads (no flash),
+    from a stored choice or the local hour, and offers a named toggle (WCAG 2.2: 4.1.2)."""
+    for page in PAGES[:4]:
+        t = _text(page)
+        head = t[:t.index("</head>")]
+        script = head.index('localStorage.getItem("kb-theme")')
+        assert 'getHours()' in head[script:] and 'data-theme' in head[script:], page.name
+        assert script < head.index('rel="stylesheet"'), page.name
+        assert '<meta name="color-scheme" content="dark light">' in head, page.name
+        buttons = re.findall(r'<button class="theme-btn[^"]*" type="button" aria-pressed="true" hidden>(.*?)</button>', t, re.S)
+        assert buttons, page.name
+        for b in buttons:
+            assert re.search(r'<span class="(sr-only|lbl)">[^<]+</span>', b), page.name
+        assert '<script src="/site/site.js">' in t, page.name
+    for page in (EN, DE):
+        toc = re.search(r'<nav id="toc".*?</nav>', _text(page), re.S).group(0)
+        assert 'class="theme-btn"' in toc, page.name
+
 def test_sitemap_lists_pages_that_exist():
     locs = re.findall(r"<loc>https://klarbefund\.mabu\.red/([^<]*)</loc>", _text(DOCS / "sitemap.xml"))
     assert locs
