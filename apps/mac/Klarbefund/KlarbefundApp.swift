@@ -25,6 +25,7 @@ struct KlarbefundApp: App {
     /// sheet, unscrolled, at its full height.
     @MainActor private static func renderForDocsIfAsked() {
       let args = CommandLine.arguments
+      if args.contains("--letter-render") { skipGraph = true }  // DocsRender.letters runs once AppKit is up
       guard let i = args.firstIndex(of: "--screenshot"), i + 1 < args.count else { return }
       renderingForDocs = true
       let demo = AppModel()
@@ -55,8 +56,15 @@ struct KlarbefundApp: App {
       // `--ai chatgpt|gemini|local`: step 3 with that AI's setup instead of Claude's.
       let ai = args.firstIndex(of: "--ai").flatMap { $0 + 1 < args.count ? AIClient(rawValue: args[$0 + 1]) : nil } ?? .claude
       // `--capabilities`: the "What Claude can do here" sheet instead (no data at all).
-      let screen = args.contains("--capabilities")
+      // `--anamnesis STORE.rl [--today YYYY-MM-DD]`: the Anamnesis window on that store (synthetic data only).
+      var screen = args.contains("--capabilities")
         ? AnyView(MCPCapabilitiesView(scrolls: false)) : AnyView(ContentView(model: demo, client: ai).frame(width: w, height: h))
+      if let a = args.firstIndex(of: "--anamnesis"), a + 1 < args.count {
+        let today = args.firstIndex(of: "--today").flatMap { $0 + 1 < args.count ? args[$0 + 1] : nil }
+        let state = AnamnesisState(source: URL(fileURLWithPath: args[a + 1]), today: today)
+        state.reload()
+        screen = AnyView(AnamnesisView(model: demo, state: state).frame(width: w, height: h))
+      }
       let view = screen
         .background(Color(nsColor: .windowBackgroundColor))
         .environment(\.colorScheme, args.contains("--light") ? .light : .dark)
@@ -74,13 +82,21 @@ struct KlarbefundApp: App {
   var body: some Scene {
     Window("Klarbefund", id: "main") {
       ContentView(model: AppModel.shared)
-        .onAppear { AppModel.shared.start() }
+        .onAppear { if !skipGraph { AppModel.shared.start() } }
     }
     .windowResizability(.contentMinSize)
     Window("Health graph in 3D", id: "graph3d") {
       Graph3DView().frame(minWidth: 900, minHeight: 600)
     }
     .defaultSize(width: 1440, height: 900)
+    Window("Doctor's letter", id: "doctor-letter") {
+      DoctorLetterView(model: AppModel.shared).frame(minWidth: 820, minHeight: 640)
+    }
+    .defaultSize(width: 980, height: 1000)
+    Window("Anamnesis", id: "anamnesis") {
+      AnamnesisView(model: AppModel.shared, state: AnamnesisState.shared)
+    }
+    .defaultSize(width: 1120, height: 820)
   }
 }
 
@@ -90,6 +106,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
       // `--write-extension`: build the Claude extension, print its path and quit (for checks).
       if CommandLine.arguments.contains("--write-extension") {
         do { print(try ClaudeConnect.makeExtension().path) } catch { print("error: \(error)") }
+        exit(0)
+      }
+      // `--letter-render STORE.rl --out DIR [--today YYYY-MM-DD]`: the doctor's letters of that store
+      // (synthetic data only) as HTML, Markdown and A4 PDF, and the first page as PNG, then quit.
+      // The main window never opens the real graph in this run (skipGraph, set in init).
+      let args = CommandLine.arguments
+      if let i = args.firstIndex(of: "--letter-render"), i + 1 < args.count,
+        let o = args.firstIndex(of: "--out"), o + 1 < args.count
+      {
+        let today = args.firstIndex(of: "--today").flatMap { $0 + 1 < args.count ? args[$0 + 1] : nil }
+        MainActor.assumeIsolated {
+          DocsRender.letters(store: args[i + 1], out: args[o + 1], today: today)
+        }
         exit(0)
       }
       // `--tls-selftest`: a throwaway identity and store in the sandbox's temp
@@ -109,6 +138,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
   func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
 
   func applicationWillTerminate(_ notification: Notification) {
-    MainActor.assumeIsolated { AppModel.shared.stop() }
+    MainActor.assumeIsolated { if !skipGraph { AppModel.shared.stop() } }
   }
 }

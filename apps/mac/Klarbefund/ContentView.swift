@@ -5,6 +5,9 @@ import SwiftUI
 /// controls, so small buttons and links are drawn as plain images and text then.
 @MainActor var renderingForDocs = false
 
+/// Set by the debug `--letter-render` run: the main window then never opens or seals the real graph.
+@MainActor var skipGraph = false
+
 /// One window, three steps: pair the iPhone, see the graph, connect an AI (Claude, ChatGPT, Gemini or a local model).
 struct ContentView: View {
   @ObservedObject var model: AppModel
@@ -94,6 +97,27 @@ struct ContentView: View {
       .controlSize(.large)
       .disabled(model.counts.values == 0 && model.counts.weeks == 0)
       .help("Your risks, values, evidence and anamnesis as an interactive 3D graph, on this Mac.")
+    }
+    HStack(spacing: 10) {
+      if renderingForDocs {  // drawn, as above
+        ForEach([("Doctor's letter", "doc.text"), ("Anamnesis", "list.bullet.clipboard")], id: \.0) { title, symbol in
+          Label(title, systemImage: symbol).frame(maxWidth: .infinity)
+            .padding(.vertical, 7).background(.quaternary, in: RoundedRectangle(cornerRadius: 7))
+        }
+      } else {
+        Button { openWindow(id: "doctor-letter") } label: {
+          Label("Doctor's letter", systemImage: "doc.text").frame(maxWidth: .infinity)
+        }
+        .controlSize(.large)
+        .disabled(model.counts.values == 0 && model.counts.weeks == 0)
+        .help("Your latest lab tests, trends, Apple Watch vitals, sport and anamnesis on one A4 letter for your GP or a specialist, in German or English.")
+        Button { openWindow(id: "anamnesis") } label: {
+          Label("Anamnesis", systemImage: "list.bullet.clipboard").frame(maxWidth: .infinity)
+        }
+        .controlSize(.large)
+        .disabled(model.counts.values == 0 && model.counts.weeks == 0)
+        .help("Answer what your data cannot tell, and the validated questionnaires, here on this Mac.")
+      }
     }
     if !model.activity.isEmpty {
       DisclosureGroup("Activity") {
