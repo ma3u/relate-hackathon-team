@@ -205,13 +205,18 @@
   Object.keys(byId).forEach(function (id) { var s = document.getElementById(id); if (s) seen.observe(s); });
 })();
 
-// Day and night: without a choice the theme follows the visitor's local time (light from 7 to 19 h,
-// in the browser's time zone) and changes by itself at those hours; the switch stores a choice.
+// Day and night: without a choice the theme follows the sun where the visitor is (sunrise and
+// sunset for the browser's time zone) and changes by itself; the switch stores a choice.
 (function () {
   var root = document.documentElement, KEY = "kb-theme";
   var btns = [].slice.call(document.querySelectorAll(".theme-btn"));
   function stored() { try { var s = localStorage.getItem(KEY); return s === "light" || s === "dark" ? s : null; } catch (e) { return null; } }
-  function byClock() { var h = new Date().getHours(); return h >= 7 && h < 19 ? "light" : "dark"; }
+  // light while the sun is up where the visitor is (kbSunUp comes from the page's head script)
+  function byClock() {
+    var z = ""; try { z = Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch (e) {}
+    if (window.kbSunUp) return window.kbSunUp(new Date(), z) ? "light" : "dark";
+    var h = new Date().getHours(); return h >= 7 && h < 17 ? "light" : "dark";
+  }
   function apply(theme) {
     if (root.getAttribute("data-theme") !== theme) {
       root.setAttribute("data-theme", theme);
