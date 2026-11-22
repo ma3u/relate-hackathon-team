@@ -112,12 +112,13 @@ def test_phone_menu_indexes_every_section():
 
 def test_every_page_picks_its_theme_before_painting_and_offers_the_switch():
     """Day and night: each page sets data-theme in <head> before the stylesheet loads (no flash),
-    from a stored choice or the local hour, and offers a named toggle (WCAG 2.2: 4.1.2)."""
+    from a stored choice or the sun where the visitor is, and offers a named toggle (WCAG 2.2: 4.1.2).
+    All pages carry the same sun calculation."""
     for page in PAGES[:4]:
         t = _text(page)
         head = t[:t.index("</head>")]
         script = head.index('localStorage.getItem("kb-theme")')
-        assert 'getHours()' in head[script:] and 'data-theme' in head[script:], page.name
+        assert 'kbSunUp(new Date()' in head[script:] and 'timeZone' in head[script:] and 'data-theme' in head[script:], page.name
         assert script < head.index('rel="stylesheet"'), page.name
         assert '<meta name="color-scheme" content="dark light">' in head, page.name
         buttons = re.findall(r'<button class="theme-btn[^"]*" type="button" aria-pressed="true" hidden>(.*?)</button>', t, re.S)
@@ -125,6 +126,8 @@ def test_every_page_picks_its_theme_before_painting_and_offers_the_switch():
         for b in buttons:
             assert re.search(r'<span class="(sr-only|lbl)">[^<]+</span>', b), page.name
         assert '<script src="/site/site.js">' in t, page.name
+    suns = {re.search(r'function kbSunUp.*?return [^}]*}', _text(p)).group(0) for p in PAGES[:4]}
+    assert len(suns) == 1
     for page in (EN, DE):
         toc = re.search(r'<nav id="toc".*?</nav>', _text(page), re.S).group(0)
         assert 'class="theme-btn"' in toc, page.name
