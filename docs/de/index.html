@@ -40,6 +40,7 @@
     <nav class="links" aria-label="Abschnitte">
       <a href="#iphone">iPhone</a>
       <a href="#mac">Mac</a>
+      <a href="#letter">Arztbrief</a>
       <a href="#graph3d">3D-Graph</a>
       <a href="#private">Datenschutz</a>
       <a href="#ehds">EHDS</a>
@@ -54,6 +55,7 @@
       <li><a href="#why">Zwei Apps, ein Graph</a></li>
       <li><a href="#iphone">iPhone</a></li>
       <li><a href="#mac">Mac</a></li>
+      <li><a href="#letter">Arztbrief</a></li>
       <li><a href="#graph3d">3D-Graph</a></li>
       <li><a href="#how">Wie die beiden reden</a></li>
       <li><a href="#private">Datenschutz</a></li>
@@ -72,7 +74,7 @@
     <div>
       <p class="kicker">Relate by Neo4j Hackathon · NODES 2026</p>
       <h1>Ihre Laborbefunde, <span class="grad">in einem Graphen, der Ihnen gehört.</span></h1>
-      <p class="lead">Klarbefund liest die Laborbefunde Ihrer Ärztin oder Ihres Arztes auf Papier mit dem iPhone und hält sie, zusammen mit den Daten Ihrer Apple Watch, in einem Neo4j-Relate-Graphen auf Ihrem eigenen iPhone und Mac. Verschlüsselt, lokal, ohne Cloud. Dann fragen Sie Claude oder ein Modell auf Ihrem Mac, was die Werte bedeuten.</p>
+      <p class="lead">Klarbefund liest die Laborbefunde Ihrer Ärztin oder Ihres Arztes auf Papier mit dem iPhone und hält sie, zusammen mit den Daten Ihrer Apple Watch, in einem Neo4j-Relate-Graphen auf Ihrem eigenen iPhone und Mac. Verschlüsselt, lokal, ohne Cloud. Dann fragen Sie Claude oder ein Modell auf Ihrem Mac, was die Werte bedeuten. Vor dem Termin schreibt Klarbefund für Mac einen Arztbrief für Hausarzt oder Facharzt.</p>
       <div class="btns">
         <a class="btn" href="https://testflight.apple.com/join/ssADSXX6">Beta über TestFlight laden</a>
         <a class="btn ghost" href="https://www.youtube.com/watch?v=TZWaN4sBj1s">Demo ansehen (2 Minuten, Englisch)</a>
@@ -146,7 +148,33 @@
   </div>
 </section>
 
-<section id="graph3d" class="alt">
+<section id="letter" class="alt">
+  <div class="wrap">
+    <div class="app">
+      <div class="text">
+        <span class="pill">Für den Arztbesuch</span>
+        <h2>Vom Graphen zum Arztbrief.</h2>
+        <p class="sub" style="margin-bottom:0">Vor dem Termin bei Hausarzt oder Facharzt fasst Klarbefund für Mac Ihren aktuellen Befund auf wenigen druckbaren Seiten zusammen. Jede Zahl nennt ihren Befund, ihr Datum, Seite und Zeile, damit Ihre Ärztin oder Ihr Arzt sie auf dem Papier prüfen kann.</p>
+        <ol class="steps">
+          <li><b>Anamnese beantworten.</b> <em>Anamnesis</em> fragt nur, was Ihre Laborwerte und die Daten der Apple Watch nicht verraten, Fragebogen für Fragebogen, vorausgefüllt, wo es geht. Ihre Antworten werden in Ihrem Graphen gespeichert.</li>
+          <li><b>Brief wählen.</b> <em>Doctor's letter</em> gibt für den Hausarzt einen Überblick über alles; für den Facharzt konzentriert er sich auf ein Gesundheitsrisiko, seine Marker und die Risiken, die es erhöht. Auf Deutsch oder Englisch.</li>
+          <li><b>Als PDF sichern oder drucken.</b> A4, zum Mitnehmen oder Vorabschicken. Claude liest denselben Brief über das Werkzeug <code>doctor_letter</code>, etwa um Ihre Fragen vorzubereiten.</li>
+        </ol>
+        <div class="cards" style="grid-template-columns:1fr;margin-top:28px">
+          <div class="card"><h3>Was der Brief enthält</h3><p>Den Anlass des Besuchs, die letzten Labortests wie gedruckt, den Verlauf jedes Werts gegen den Leitlinienbereich, der an seinem Datum galt, Vitalwerte und Aktivität der Apple Watch als Wochenmittel, Ihre Anamnese in Ihren eigenen Worten und Fragen an Ihre Ärztin oder Ihren Arzt.</p></div>
+          <div class="card t"><h3>Ihre eigene Aufstellung</h3><p>Eine Zusammenfassung, die Sie selbst vorbereiten, keine Diagnose und keine medizinische Beratung. Sie entsteht auf Ihrem Mac aus Ihrem Graphen und verlässt ihn nur, wenn Sie sie sichern, drucken oder verschicken.</p></div>
+        </div>
+      </div>
+      <div>
+        <img class="macshot" src="/img/mac/doctor-letter.png" alt="Die erste Seite eines Arztbriefs für den Hausarzt: Anlass des Besuchs, dann die letzten Labortests mit dem Bereich des Labors, dem am Datum gültigen Leitlinienbereich und dem Wert wie gedruckt (synthetische Daten)" loading="lazy">
+        <img class="macshot" src="/img/mac/anamnesis.png" alt="Das Anamnese-Fenster in Klarbefund für Mac: was in den Werten auffällt, was schon bekannt ist, und nur die offenen Fragen (synthetische Daten)" loading="lazy" style="margin-top:20px">
+        <p class="note">Das Beispiel zeigt synthetische Daten.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="graph3d">
   <div class="wrap">
     <span class="pill">Open 3D view</span>
     <h2>Ihr Graph, in 3D.</h2>
@@ -182,7 +210,7 @@
   </div>
 </section>
 
-<section id="how">
+<section id="how" class="alt">
   <div class="wrap">
     <h2>Wie die beiden miteinander reden.</h2>
     <p class="sub">Kein Server dazwischen. Das iPhone sendet direkt an den einen Mac, mit dem es gekoppelt ist, und nur an diesen.</p>
