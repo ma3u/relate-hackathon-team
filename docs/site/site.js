@@ -206,7 +206,8 @@
 })();
 
 // Day and night: without a choice the theme follows the sun where the visitor is (sunrise and
-// sunset for the browser's time zone) and changes by itself; the switch stores a choice.
+// sunset for the browser's time zone) and changes by itself; the switch stores a choice, and
+// choosing what the sun would pick clears it.
 (function () {
   var root = document.documentElement, KEY = "kb-theme";
   var btns = [].slice.call(document.querySelectorAll(".theme-btn"));
@@ -223,12 +224,48 @@
       document.dispatchEvent(new Event("kb-theme"));
     }
     btns.forEach(function (b) { b.setAttribute("aria-pressed", theme === "dark" ? "true" : "false"); });
+    if (typeof explain === "function" && tips) explain();
   }
-  btns.forEach(function (b) {
+  // The header button explains itself: the theme in use, why (the sun, or the visitor's choice) and
+  // what a click does. Choosing the theme the sun would pick goes back to automatic.
+  var de = (root.getAttribute("lang") || "").slice(0, 2) === "de";
+  var T = de ? {
+    light: "Helles Design", dark: "Dunkles Design",
+    sunUp: "Bei Ihnen ist Tag: automatisch nach Sonnenauf- und -untergang.",
+    sunDown: "Bei Ihnen ist Nacht: automatisch nach Sonnenauf- und -untergang.",
+    chosen: "Von Ihnen gewählt.",
+    toDark: "Klicken für das dunkle Design.", toLight: "Klicken für das helle Design.",
+    toAuto: " Damit gilt wieder die Tageszeit."
+  } : {
+    light: "Light theme", dark: "Dark theme",
+    sunUp: "It is day where you are: automatic, by sunrise and sunset.",
+    sunDown: "It is night where you are: automatic, by sunrise and sunset.",
+    chosen: "Your choice.",
+    toDark: "Click for the dark theme.", toLight: "Click for the light theme.",
+    toAuto: " That goes back to the time of day."
+  };
+  var tips = [];
+  function explain() {
+    var theme = root.getAttribute("data-theme"), auto = byClock(), mine = stored();
+    var why = mine ? T.chosen : (auto === "light" ? T.sunUp : T.sunDown);
+    var next = theme === "dark" ? T.toLight : T.toDark;
+    if (mine && mine !== auto) next += T.toAuto;
+    tips.forEach(function (tip) { tip.innerHTML = "<b>" + T[theme] + "</b>" + why + " " + next; });
+  }
+  btns.forEach(function (b, k) {
     b.hidden = false;
+    if (!b.closest(".toc")) {
+      var tip = document.createElement("span");
+      tip.className = "tip"; tip.id = "theme-tip-" + k; tip.setAttribute("role", "tooltip");
+      b.appendChild(tip); b.classList.add("has-tip"); b.setAttribute("aria-describedby", tip.id);
+      tips.push(tip);
+      b.addEventListener("keydown", function (e) { if (e.key === "Escape") b.classList.add("tip-off"); });
+      b.addEventListener("mouseleave", function () { b.classList.remove("tip-off"); });
+      b.addEventListener("blur", function () { b.classList.remove("tip-off"); });
+    }
     b.addEventListener("click", function () {
       var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
-      try { localStorage.setItem(KEY, next); } catch (e) {}
+      try { if (next === byClock()) localStorage.removeItem(KEY); else localStorage.setItem(KEY, next); } catch (e) {}
       apply(next);
     });
   });
