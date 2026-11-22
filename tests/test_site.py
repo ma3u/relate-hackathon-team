@@ -73,6 +73,21 @@ def test_no_em_dashes():
         assert "—" not in _text(p), p.name
 
 
+def test_language_switch_names_what_it_shows():
+    """WCAG 2.2: the accessible name starts with the visible label (2.5.3), each link says its
+    language (3.1.2), and the page's own language is marked current."""
+    for page, own in ((EN, "en"), (DE, "de")):
+        t = _text(page)
+        group = re.search(r'<span class="langs"[^>]*>(.*?)</span>(?=\n)', t, re.S).group(1)
+        links = re.findall(r"<a ([^>]*)>([A-Z]{2})<span class=\"sr-only\"> (\w+)</span></a>", group)
+        assert [code for _, code, _ in links] == ["EN", "DE"], page
+        for attrs, code, name in links:
+            assert "aria-label" not in attrs
+            assert f'lang="{code.lower()}"' in attrs and f'hreflang="{code.lower()}"' in attrs
+            assert name.upper().startswith(code)
+            assert ("aria-current" in attrs) == (code.lower() == own), (page, code)
+
+
 def test_sitemap_lists_pages_that_exist():
     locs = re.findall(r"<loc>https://klarbefund\.mabu\.red/([^<]*)</loc>", _text(DOCS / "sitemap.xml"))
     assert locs
