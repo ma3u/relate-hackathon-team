@@ -198,7 +198,20 @@ footer a{color:var(--soft)}
 .legal section+section{border-top:1px solid var(--line);margin-top:48px;padding-top:8px}
 .phone-shot{display:block;width:min(320px,100%);margin:0 auto;border-radius:30px;border:6px solid #1c222b;background:#f2f2f7;box-shadow:0 24px 60px var(--shadow)}
 /* a fullscreen window on a large display gets a wider column and slightly larger text */
-@media (min-width:1680px){:root{--wrap:1280px}body{font-size:18px}}
+/* Wide and ultrawide screens: the whole page grows with the window instead of staying a narrow
+   column. Each step needs the width and the height, so a 21:9 screen is not zoomed past its height.
+   The network background is not zoomed; it already fills the window. */
+@media (min-width:1680px){:root{--wrap:1200px}}
+@media (min-width:2560px) and (min-aspect-ratio:2/1){:root{--wrap:1400px}}
+@media (min-width:1680px) and (min-height:800px){header.top,main,footer{zoom:1.1}html{scroll-padding-top:84px}}
+@media (min-width:1920px) and (min-height:900px){header.top,main,footer{zoom:1.2}html{scroll-padding-top:91px}}
+@media (min-width:2240px) and (min-height:1050px){header.top,main,footer{zoom:1.35}html{scroll-padding-top:103px}}
+@media (min-width:2560px) and (min-height:1180px){header.top,main,footer{zoom:1.5}html{scroll-padding-top:114px}}
+@media (min-width:3000px) and (min-height:1380px){header.top,main,footer{zoom:1.75}html{scroll-padding-top:133px}}
+@media (min-width:3440px) and (min-height:1600px){header.top,main,footer{zoom:2}html{scroll-padding-top:152px}}
+@media (min-width:3840px) and (min-height:1800px){header.top,main,footer{zoom:2.25}html{scroll-padding-top:171px}}
+@media (min-width:4400px) and (min-height:2100px){header.top,main,footer{zoom:2.6}html{scroll-padding-top:198px}}
+@media (min-width:5120px) and (min-height:2400px){header.top,main,footer{zoom:3}html{scroll-padding-top:228px}}
 /* Theme switch: a toggle button (aria-pressed = dark is on). In the header from 761 px, in the phone menu below. */
 .theme-btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;flex:none;min-width:40px;min-height:40px;padding:0;border:1px solid var(--edge);border-radius:999px;background:none;color:var(--ink);cursor:pointer;font:inherit}
 .theme-btn svg{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
