@@ -88,6 +88,18 @@ def test_language_switch_names_what_it_shows():
             assert ("aria-current" in attrs) == (code.lower() == own), (page, code)
 
 
+def test_phone_menu_indexes_every_section():
+    """The phone menu lists every section of the page, in page order, and its button names and
+    controls it (WCAG 2.2: 4.1.2); a section added to the page fails here until the menu has it."""
+    for page in (EN, DE):
+        t = _text(page)
+        sections = re.findall(r'<section id="([^"]+)"', t)
+        btn = re.search(r'<button class="menu-btn"([^>]*)>(.*?)</button>', t, re.S)
+        assert 'aria-controls="toc"' in btn.group(1) and 'aria-expanded="false"' in btn.group(1), page
+        assert re.search(r'<span class="sr-only">\w+</span>$', btn.group(2)), page
+        toc = re.search(r'<nav id="toc" class="toc" aria-label="[^"]+" hidden>(.*?)</nav>', t, re.S).group(1)
+        assert re.findall(r'<li><a href="#([^"]+)">', toc) == sections, page
+
 def test_sitemap_lists_pages_that_exist():
     locs = re.findall(r"<loc>https://klarbefund\.mabu\.red/([^<]*)</loc>", _text(DOCS / "sitemap.xml"))
     assert locs
