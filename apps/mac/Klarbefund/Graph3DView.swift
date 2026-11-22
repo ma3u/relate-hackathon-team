@@ -41,9 +41,8 @@ struct Graph3DView: NSViewRepresentable {
       return message("Your health graph is not open yet. Send your reports from the iPhone first.")
     }
     do {
-      let store = try HealthStore(path: snap.path, readOnly: true)
       let day = ISO8601DateFormatter.string(from: Date(), timeZone: .current, formatOptions: [.withFullDate])
-      return try store.graph3DPage(template: template, today: day)
+      return try Snapshot.read(snap) { try $0.graph3DPage(template: template, today: day) }
     } catch {
       return message("Klarbefund could not read your health graph for the 3D view: \(error)")
     }

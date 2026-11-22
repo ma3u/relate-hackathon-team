@@ -27,6 +27,23 @@ enum Paths {
   }
 }
 
+/// Reads of Claude's read-only snapshot from inside the app (the counts, the 3D view, the doctor's letter,
+/// the anamnesis window), one at a time: Relate allows one open handle per store per process.
+enum Snapshot {
+  private static let lock = NSLock()
+
+  static func read<T>(_ path: URL? = Paths.snapshot, _ body: (HealthStore) throws -> T) throws -> T {
+    guard let path, FileManager.default.fileExists(atPath: path.path) else { throw Missing() }
+    lock.lock()
+    defer { lock.unlock() }
+    return try body(try HealthStore(path: path.path, readOnly: true))
+  }
+
+  struct Missing: Error, CustomStringConvertible {
+    var description: String { "Your health graph is not open yet. Send your reports from the iPhone first." }
+  }
+}
+
 struct GraphCounts: Equatable {
   var reports = 0, values = 0, weeks = 0, codes = 0, ranges = 0
 }
@@ -43,6 +60,8 @@ final class AppModel: ObservableObject {
   @Published var activity: [String] = []
   @Published var problem: String?
   @Published var claudeMessage: String?
+  /// Counts up each time Claude's snapshot is refreshed, so the windows that read it reload.
+  @Published var snapshotVersion = 0
 
   private var server: ReceiverServer?
   private var refresh: Task<Void, Never>?
@@ -105,13 +124,34 @@ final class AppModel: ObservableObject {
   /// Stores one protocol's answers given in the 3D view, then refreshes the snapshot. Returns what the
   /// page shows: {ok, message} or {ok: false, error}.
   func storeFromView(_ protocolId: String, _ answers: [String: Any]) -> [String: Any] {
+    storeProtocol(protocolId, answers, source: "graph3d", from: "the 3D view")
+  }
+
+  /// Stores one protocol's answers (the 3D view, the Anamnesis window), then refreshes the snapshot.
+  func storeProtocol(_ protocolId: String, _ answers: [String: Any], source: String, from place: String)
+    -> [String: Any]
+  {
     do {
       let store = try HealthStore(path: Paths.store.path)
-      let counts = try store.storeProtocol(protocolId, answers, source: "graph3d")
+      let counts = try store.storeProtocol(protocolId, answers, source: source)
       let n = counts["answers"] as? Int ?? 0
       let band = (counts["band"] as? String).map { ", \($0)" } ?? ""
-      received("\(counts["name"] as? String ?? protocolId): \(n) answers stored from the 3D view\(band)")
+      received("\(counts["name"] as? String ?? protocolId): \(n) answers stored from \(place)\(band)")
       return ["ok": true, "message": "Stored in your health graph: \(n) answers\(band), coded with SNOMED CT."]
+    } catch {
+      return ["ok": false, "error": "\(error)"]
+    }
+  }
+
+  /// Stores the answers to the anamnesis plan's questions given in the Anamnesis window, then refreshes
+  /// the snapshot. Keys and values as `save_anamnesis_answers` takes them.
+  func storeAnamnesis(_ answers: [String: Any]) -> [String: Any] {
+    do {
+      let store = try HealthStore(path: Paths.store.path)
+      let counts = try store.storeAnamnesis(answers, source: "mac-app")
+      let n = counts["answers"] ?? 0
+      received("Anamnesis: \(n) answers stored from the Anamnesis window")
+      return ["ok": true, "message": "Stored in your health graph: \(n) answers, linked to the values they are about."]
     } catch {
       return ["ok": false, "error": "\(error)"]
     }
@@ -142,7 +182,10 @@ final class AppModel: ObservableObject {
       try? await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
       guard !Task.isCancelled else { return }
       let counts = Self.snapshotAndCount()
-      await MainActor.run { if let counts { AppModel.shared.counts = counts } }
+      await MainActor.run {
+        if let counts { AppModel.shared.counts = counts }
+        AppModel.shared.snapshotVersion += 1
+      }
     }
   }
 
@@ -159,14 +202,15 @@ final class AppModel: ObservableObject {
       } else {
         try fm.moveItem(at: tmp, to: snap)
       }
-      let g = try HealthStore(path: snap.path, readOnly: true)
-      func n(_ cypher: String) -> Int { Int((try? g.rows(cypher: cypher).first?["n"]) ?? "0") ?? 0 }
-      return GraphCounts(
-        reports: (try? g.count("DiagnosticReport")) ?? 0,
-        values: n("MATCH (o:Observation) WHERE o.duplicateOf IS NULL AND coalesce(o.sourceKind, '') <> 'device-weekly-mean' RETURN count(o) AS n"),
-        weeks: n("MATCH (o:Observation) WHERE o.sourceKind = 'device-weekly-mean' RETURN count(o) AS n"),
-        codes: (try? g.count("LoincCode")) ?? 0,
-        ranges: (try? g.count("ReferenceRange")) ?? 0)
+      return try Snapshot.read(snap) { g in
+        func n(_ cypher: String) -> Int { Int((try? g.rows(cypher: cypher).first?["n"]) ?? "0") ?? 0 }
+        return GraphCounts(
+          reports: (try? g.count("DiagnosticReport")) ?? 0,
+          values: n("MATCH (o:Observation) WHERE o.duplicateOf IS NULL AND coalesce(o.sourceKind, '') <> 'device-weekly-mean' RETURN count(o) AS n"),
+          weeks: n("MATCH (o:Observation) WHERE o.sourceKind = 'device-weekly-mean' RETURN count(o) AS n"),
+          codes: (try? g.count("LoincCode")) ?? 0,
+          ranges: (try? g.count("ReferenceRange")) ?? 0)
+      }
     } catch {
       NSLog("snapshot failed: \(error)")
       return nil

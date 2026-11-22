@@ -16,6 +16,7 @@ enum MCPCatalog {
     ("get_schema", "Labels and relationships in your health graph, with counts."),
     ("read_cypher", "One read-only Cypher query against your health graph."),
     ("anamnesis_plan", "Findings in your data, the anamnesis questions they leave and the tests to ask your doctor for."),
+    ("doctor_letter", "Your doctor's letter for the GP or a specialist: latest labs, trends, Apple Watch, sport, anamnesis, questions."),
     ("save_anamnesis_answers", "Hands your confirmed anamnesis answers to Klarbefund for Mac to store."),
     ("anamnesis_protocols", "The validated questionnaires (Life's Essential 8, FINDRISC, ...) and your earlier answers."),
     ("save_protocol_answers", "Hands one questionnaire's confirmed answers to Klarbefund for Mac to score and store."),
@@ -370,9 +371,13 @@ enum MCPCatalog {
       description: "The four most important topics for a short appointment, with trends, questions and sources.",
       group: .doctor, arguments: [],
       template: """
-        Prepare my next doctor's visit from my health graph: the four most important topics for a \
-        six-minute appointment, the trends behind each (with dates), one question per topic, and the \
-        guideline sources.
+        Prepare my next doctor's visit from my health graph. Call doctor_letter first (variant gp; or \
+        specialist with the health risk the visit is about), in the language I write in: it holds my latest \
+        lab tests as printed, the trends with their dates and ranges, my Apple Watch vitals, my activity, my \
+        anamnesis and questions. From it, give me the four most important topics for a six-minute \
+        appointment, the trends behind each (with dates), one question per topic, and the guideline sources. \
+        Quote the letter's numbers as they stand. Tell me I can print the full letter, or save it as a PDF, \
+        with Doctor's letter in Klarbefund for Mac.
         """),
 
     // Habits and Apple Watch

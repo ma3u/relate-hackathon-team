@@ -14,7 +14,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from health_graph import anamnesis, assessment, knowledge, protocols, store  # noqa: E402
+from health_graph import anamnesis, assessment, knowledge, letter, protocols, store  # noqa: E402
 from health_graph.queries import QUERIES  # noqa: E402
 
 OUT = ROOT / "swift/Sources/HealthGraph/Cypher.swift"
@@ -82,6 +82,17 @@ ASSESSMENT = [
     ("assessmentList", "ASSESSMENTS"),
 ]
 
+# Swift name -> letter.py constant: what the doctor's letter reads.
+LETTER = [
+    ("letterPatient", "PATIENT"),
+    ("letterLabValues", "LAB_VALUES"),
+    ("letterDeviceValues", "DEVICE_VALUES"),
+    ("letterRanges", "RANGES"),
+    ("letterRisks", "RISKS"),
+    ("letterRiskLinks", "RISK_LINKS"),
+    ("letterAnswers", "ANSWERS"),
+]
+
 # Swift name -> store.py constant, in the order they run.
 STATEMENTS = [
     ("deleteReport", "DELETE_REPORT"),
@@ -131,6 +142,9 @@ def render() -> str:
         out += ["", f"  static let {swift} = {raw(text, 2)}"]
     for swift, py in ASSESSMENT:
         text = textwrap.dedent(getattr(assessment, py)).strip()
+        out += ["", f"  static let {swift} = {raw(text, 2)}"]
+    for swift, py in LETTER:
+        text = textwrap.dedent(getattr(letter, py)).strip()
         out += ["", f"  static let {swift} = {raw(text, 2)}"]
     kinds = ", ".join(f"{swift_string(k)}: {swift_string(v)}" for k, v in assessment.KINDS.items())
     out += [

@@ -159,6 +159,24 @@ func anamnesisPlan() throws -> String {
   return String(decoding: data, as: UTF8.self)
 }
 
+/// The doctor's letter as Markdown, built from the read-only snapshot (HealthGraph's DoctorLetter).
+func doctorLetter(_ args: [String: Any]) throws -> String {
+  let kind = (args["variant"] as? String ?? "gp").lowercased()
+  let risk = (args["risk"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+  let language: DoctorLetter.Language = (args["language"] as? String)?.lowercased().hasPrefix("de") == true ? .de : .en
+  let variant: DoctorLetter.Variant
+  switch kind {
+  case "gp": variant = .gp
+  case "specialist":
+    guard let risk, !risk.isEmpty else {
+      throw HealthGraphError.invalid("a specialist's letter needs a risk: cardiovascular, diabetes, kidney, liver, fitness or bone")
+    }
+    variant = .specialist(risk)
+  default: throw HealthGraphError.invalid("variant is gp or specialist, not \(kind)")
+  }
+  return try openGraph().doctorLetter(variant).markdown(language: language)
+}
+
 func saveAnamnesis(_ answers: [String: Any]) throws -> String {
   guard snapshot.map({ FileManager.default.fileExists(atPath: $0.path) }) == true, let inbox else {
     throw GraphError.closed
@@ -244,6 +262,28 @@ let tools: [[String: Any]] = [
       + "a coronary calcium score, Lp(a) for relatives), each only while the graph has no value for it. "
       + "Ask these questions; do not ask what known or skipped already answers.",
     "inputSchema": ["type": "object", "properties": [String: Any]()],
+    "annotations": readOnly,
+  ],
+  [
+    "name": "doctor_letter",
+    "title": "Doctor's letter",
+    "description": "The user's doctor's letter as Markdown, the same one Klarbefund for Mac prints: the latest lab tests "
+      + "exactly as printed (value, unit, the lab's range, report, lab, the printed line), every marker's dated values "
+      + "compared only with a guideline range in the same unit valid on the value's date (source named), Apple Watch "
+      + "weekly means (the recent 12 weeks against the year before), sport and activity, the latest anamnesis answer "
+      + "per question in the user's own words, and plain questions for the doctor. A value seen in two reports counts "
+      + "once. variant: gp (an overview of everything) or specialist (one health risk, with risk: cardiovascular, "
+      + "diabetes, kidney, liver, fitness or bone; adds the risks it raises and is raised by). language: de or en. "
+      + "Quote its numbers as they stand; never a diagnosis.",
+    "inputSchema": [
+      "type": "object",
+      "properties": [
+        "variant": ["type": "string", "enum": ["gp", "specialist"], "description": "gp (default) or specialist."],
+        "risk": ["type": "string", "enum": ["cardiovascular", "diabetes", "kidney", "liver", "fitness", "bone"],
+                 "description": "For a specialist: the health risk in focus."],
+        "language": ["type": "string", "enum": ["de", "en"], "description": "German or English (default en)."],
+      ],
+    ],
     "annotations": readOnly,
   ],
   [
@@ -465,6 +505,8 @@ while let line = readLine(strippingNewline: true) {
         }
       case "anamnesis_plan":
         do { reply(text(try anamnesisPlan())) } catch { reply(text("\(error)", error: true)) }
+      case "doctor_letter":
+        do { reply(text(try doctorLetter(args))) } catch { reply(text("\(error)", error: true)) }
       case "anamnesis_protocols":
         do { reply(text(try anamnesisProtocols())) } catch { reply(text("\(error)", error: true)) }
       case "save_protocol_answers":
