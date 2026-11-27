@@ -46,7 +46,7 @@
   .steps button[aria-selected=true] { border-color: var(--accent); background: #16312a; }
   #stepHint { margin-top: 8px; }
   #labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
-  #labels div { position: absolute; transform: translate(-50%, -150%); font-size: 11px; color: #e8e6df; white-space: nowrap; text-shadow: 0 0 3px #000, 0 0 3px #000, 0 0 6px #000; }
+  #labels div { position: absolute; transform: translate(-50%, -150%); font-size: 12.5px; color: #e8e6df; white-space: nowrap; text-shadow: 0 0 3px #000, 0 0 3px #000, 0 0 6px #000; }
   .trail { font-size: 12px; color: var(--muted); margin: 0 24px 8px 0; line-height: 1.6; }
   .trail a { color: var(--accent); text-decoration: none; }
   .trail a:hover { text-decoration: underline; }
@@ -71,7 +71,7 @@
   #topics summary { cursor: pointer; font-size: 13px; padding: 2px 0; display: flex; gap: 6px; align-items: center; }
   #topics summary .count { margin-left: auto; }
   #topics .nb { font-size: 12px; padding-left: 14px; }
-  #labels div.year { color: #EF9F27; font-weight: 600; font-size: 12px; }
+  #labels div.year { color: #EF9F27; font-weight: 600; font-size: 13px; }
   .chart { display: block; margin: 4px 0 2px; overflow: visible; }
   .chart text { font: 10px -apple-system, system-ui, sans-serif; fill: var(--muted); }
   .chart .last { fill: var(--ink); font-size: 11px; font-weight: 600; }
@@ -200,6 +200,9 @@ const MEASURES = groupsOf("Measures"), DOCS = groupsOf("Documents"), RESEARCH = 
 const ANAMNESIS = groupsOf("Anamnesis");
 
 // Risks first, then the evidence behind them, then the measures, then the documents.
+// Guideline recommendations (hundreds) are in no overview: as nodes they would crowd every other
+// label out. They are listed in the detail panel of a value, a risk score or a guideline, and
+// appear as nodes when one of those is in focus.
 const STAGES = [
   { name: "Health risks", groups: ["HealthRisk", "RiskScore", "Study", "Guideline", "LoincCode", "Lab value"],
     // The marker codes you have a value on, your newest value on each, the evidence about the risks.
@@ -213,9 +216,9 @@ const STAGES = [
         "Around them: risk scores (pink), lab markers (grey) and your latest value on each (green; red outside the lab's range). " +
         "Older values sit further back and are smaller: a value counts half after a year. Your overview is on the right; click a risk for its values.";
     } },
-  { name: "Evidence", groups: ["HealthRisk", "RiskScore", "Study", "Guideline", "Recommendation", "Topic"], only: () => true,
+  { name: "Evidence", groups: ["HealthRisk", "RiskScore", "Study", "Guideline", "Topic"], only: () => true,
     get hint() { return `All ${(counts.Study || 0) + (counts.Guideline || 0)} sources behind the graph:` + this.rest; },
-    rest: " studies (coral) and guidelines (amber) with their graded recommendations (gold), clustered around their topics (white). A thin arrow from one source to another means it cites it. Orange arrows: in studies, people who have one condition develop another more often. Click a topic or a source." },
+    rest: " studies (coral) and guidelines (amber), clustered around their topics (white). Click a guideline, a value or a risk score for its graded recommendations. A thin arrow from one source to another means it cites it. Orange arrows: in studies, people who have one condition develop another more often. Click a topic or a source." },
   { name: "Anamnesis", groups: ["HealthRisk", "LoincCode", ...ANAMNESIS],
     // The protocols and their questions, coded: LOINC codes only where a question uses one.
     only: n => n.g !== "LoincCode" || (n._pq ??= n.nbs.some(([t, m]) => t === "CODED_BY" && (m.g === "Protocol question" || m.g === "Anamnesis protocol"))),
@@ -230,7 +233,7 @@ const STAGES = [
     hint: "Every lab value (green) and Apple Watch week (blue) on a time spiral: one turn per year, the oldest at the bottom, the newest at the top; a small cluster is one day (one report, one week). Grey LOINC codes tie together the values of one marker; purple: guideline ranges." },
   { name: "Documents", groups: ["HealthRisk", "RiskScore", ...MEASURES, ...DOCS], only: () => true, spiral: true,
     hint: "Adds you (white), the scanned reports (dark green), their documents, how they were scanned (provenance) and the labs, around the same time spiral of your values." },
-  { name: "Everything", groups: ["HealthRisk", "RiskScore", "Study", "Guideline", "Recommendation", ...MEASURES, ...DOCS, ...RESEARCH, ...ANAMNESIS], only: () => true, spiral: true,
+  { name: "Everything", groups: ["HealthRisk", "RiskScore", "Study", "Guideline", ...MEASURES, ...DOCS, ...RESEARCH, ...ANAMNESIS], only: () => true, spiral: true,
     hint: "Adds the evidence, the anamnesis protocols and the OMOP research copy (orange): each of your values in the format a research study would receive." },
 ];
 let stage = 0;
@@ -484,9 +487,21 @@ function centreOnFreeArea() {
 // on screen, so the long time axis into the depth does not shrink the graph the way
 // zoomToFit's bounding box did. On the health-risk overview your main risk is the centre:
 // the view and the opening turn are about it, and everything else fits around it.
+// The nodes the view is framed on: all of them, except a few far from the rest. A small cluster
+// drifting off (one topic with two sources) would otherwise shrink the whole graph to a dot.
+function core(nodes) {
+  if (nodes.length < 20) return nodes;
+  const mid = k => { const v = nodes.map(n => [n.x, n.y, n.z][k]).sort((a, b) => a - b); return v[v.length >> 1]; };
+  const m = [mid(0), mid(1), mid(2)];
+  const dist = n => Math.hypot(n.x - m[0], n.y - m[1], n.z - m[2]);
+  const ds = nodes.map(dist).sort((a, b) => a - b);
+  const cut = ds[Math.floor(ds.length * 0.9)] * 1.25;
+  const kept = nodes.filter(n => dist(n) <= cut || n.st?.status === "main");
+  return kept.length >= nodes.length * 0.8 ? kept : nodes;
+}
 function fitView(ms = 900) {
   const main = !drill.length && stage === 0 ? RANKED.find(n => n.st.status === "main" && n.x !== undefined) : null;
-  const nodes = Graph.graphData().nodes.filter(n => n.x !== undefined);
+  const nodes = core(Graph.graphData().nodes.filter(n => n.x !== undefined));
   if (!nodes.length) return;
   const f = centreOnFreeArea(), W = innerWidth, H = innerHeight;
   const cam = Graph.camera(), V = cam.position.constructor, probe = cam.clone();
