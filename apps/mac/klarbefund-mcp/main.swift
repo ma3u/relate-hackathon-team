@@ -40,6 +40,13 @@ let instructions = """
   (:Study {pmid, pubmedUrl})-[:EXAMINES]->(:LoincCode) and -[:INFORMS]->(:RiskScore): the markers and scores a study is about, \
   so a value leads to its evidence: (o:Observation)-[:CODED_BY]->(:LoincCode)<-[:EXAMINES]-(st:Study). \
   Study.kind is 'study' or 'guideline', Study.topics clusters them; (:Study)-[:CITES]->(:Study) where one source cites another.
+  - Guideline recommendations, when the person extracted them on their Mac: \
+  (:Study {kind: 'guideline'})-[:HAS_RECOMMENDATION]->(:GuidelineRecommendation {number, grade, strength, direction, \
+  basis, section, page, printedPage, pdfUrl, needsReview})-[:MENTIONS {term}]->(:LoincCode). \
+  A value leads to them: (o:Observation)-[:CODED_BY]->(:LoincCode)<-[:MENTIONS]-(e:GuidelineRecommendation). \
+  They hold no wording (copyright): name the guideline, the box number, the grade (⇑⇑ soll, ⇑ sollte, ⇔ kann, \
+  ⇓ sollte nicht, ⇓⇓ soll nicht) and the page, give e.pdfUrl so the person reads it there, and never invent its text. \
+  Skip e.needsReview = true (a check failed). MENTIONS means the wording names the value, not that it applies to them.
   - OMOP research copies: (:OMOPPerson), (:OMOPMeasurement).
   - Anamnesis, when the person answered one: (:Patient)-[:HAS_RESPONSE]->(:QuestionnaireResponse {authored})-[:HAS_ANSWER]->\
   (:Answer {linkId, question, labels, text, riskFactor})-[:RISK_FACTOR_FOR]->(:HealthRisk); (:Answer)-[:BASED_ON]->(:LoincCode). \

@@ -19,6 +19,7 @@ struct Graph3DView: NSViewRepresentable {
     config.userContentController = content
     config.websiteDataStore = .nonPersistent()  // nothing of the page is kept on disk
     let web = WKWebView(frame: .zero, configuration: config)
+    web.uiDelegate = context.coordinator  // a link that opens a new window (target=_blank) goes to the browser
     load(into: web)
     return web
   }
@@ -53,7 +54,15 @@ struct Graph3DView: NSViewRepresentable {
     return "<html><body style=\"background:#0b0d11;color:#e8e8e8;font:15px -apple-system;padding:40px\">\(safe)</body></html>"
   }
 
-  final class Coordinator: NSObject, WKScriptMessageHandlerWithReply {
+  final class Coordinator: NSObject, WKScriptMessageHandlerWithReply, WKUIDelegate {
+    /// The page's outbound links (the publisher's page, PubMed, a guideline's PDF at its page) open in the
+    /// default browser; only https, and the page itself never navigates away.
+    func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration,
+                 for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
+      if let url = navigationAction.request.url, url.scheme == "https" { NSWorkspace.shared.open(url) }
+      return nil
+    }
+
     @MainActor func userContentController(
       _ controller: WKUserContentController, didReceive message: WKScriptMessage
     ) async -> (Any?, String?) {

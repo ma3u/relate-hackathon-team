@@ -594,6 +594,9 @@ enum MCPCatalog {
           IS NULL RETURN c.code, o.display, o.valueQuantity, o.unit, o.effectiveDate ORDER BY o.effectiveDate DESC
           - Markers of a risk: MATCH (c:LoincCode)-[:MARKER_OF]->(r:HealthRisk {id: 'cardiovascular'}) RETURN c.code
           - Evidence for a marker: MATCH (c:LoincCode {code: '1884-6'})<-[:EXAMINES]-(s:Study) RETURN s.citation, s.year
+          - Guideline recommendations that name a marker: MATCH (c:LoincCode {code: '4548-4'})<-[:MENTIONS]-\
+          (e:GuidelineRecommendation) WHERE e.needsReview = false RETURN e.register, e.number, e.grade, e.strength, \
+          e.printedPage, e.pdfUrl
           """),
       Guide(
         uri: "klarbefund://guide/graph", name: "graph", title: "The health graph and the 3D view",
@@ -609,6 +612,9 @@ enum MCPCatalog {
           each range with its source, edition (validFrom, validUntil, supersededBy) and unit.
           - Knowledge: (:LoincCode)-[:MARKER_OF]->(:HealthRisk); (:RiskScore)-[:ESTIMATES]->(:HealthRisk); \
           (:HealthRisk)-[:RAISES_RISK_OF]->(:HealthRisk) from studies; (:Study)-[:EXAMINES|ABOUT|INFORMS|CITES]->(...).
+          - Guideline recommendations: (:Study {kind: 'guideline'})-[:HAS_RECOMMENDATION]->(:GuidelineRecommendation)\
+          -[:MENTIONS]->(:LoincCode): the graded boxes (⇑⇑ soll … ⇓⇓ soll nicht) whose wording names a lab value, \
+          with chapter, page and a link to the guideline at that page. No wording is stored; read it in the guideline.
           - Research copy: (:OMOPPerson), (:OMOPMeasurement).
 
           A HealthRisk is a condition the knowledge layer tracks for everyone, not a diagnosis: nothing \

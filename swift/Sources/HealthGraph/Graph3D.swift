@@ -87,6 +87,8 @@ public enum Graph3D {
         topics.isEmpty ? "" : "Topics: " + topics.joined(separator: ", "),
         str(p, "pmid").map { "PubMed \($0)" } ?? "",
       ] + evidenceLines(p))
+    case "GuidelineRecommendation":
+      return ("Recommendation", recommendationName(p), recommendationLines(p))
     case "AnamnesisCategory", "AnamnesisProtocol", "Questionnaire":
       return ("Anamnesis protocol", str(p, "name") ?? str(p, "title") ?? label, [
         str(p, "title") ?? "", str(p, "source") ?? "", str(p, "why") ?? str(p, "description") ?? "",
@@ -122,6 +124,36 @@ public enum Graph3D {
     default:
       return (label, label, [])
     }
+  }
+
+  /// `recommendation_name()` in scripts/graph3d.py: "NVL 009 · 3-4 ⇑⇑ soll".
+  static func recommendationName(_ p: JSONObject) -> String {
+    let grade = [str(p, "grade"), str(p, "strength")].compactMap { $0 }.joined(separator: " ")
+    return "\(str(p, "register") ?? str(p, "guidelineId") ?? "Guideline") · \(str(p, "number") ?? "?") \(grade)"
+      .trimmingCharacters(in: .whitespaces)
+  }
+
+  /// `recommendation_lines()` in scripts/graph3d.py: what the box says about itself, never its wording.
+  static func recommendationLines(_ p: JSONObject) -> [String] {
+    let held = p["needsReview"] as? Bool == true
+    let direction: String
+    switch str(p, "direction") {
+    case "do": direction = "Recommends doing it"
+    case "do not": direction = "Recommends against it"
+    case "open": direction = "Open: it may be done"
+    default: direction = str(p, "type") == "statement" ? "Statement, no grade" : ""
+    }
+    let page = p["printedPage"] ?? p["page"]
+    return [
+      held ? "Held back: a check failed, read it in the guideline" : direction,
+      [str(p, "section").map { "Chapter \($0)" }, (page == nil || page is NSNull) ? nil : "page \(num(page))"]
+        .compactMap { $0 }.joined(separator: ", "),
+      str(p, "basis") == "evidence" ? "Evidence-based" : str(p, "basis") == "consensus" ? "Expert consensus" : "",
+      str(p, "consensus").map { "Consensus: \($0)" } ?? "",
+      p["dissent"] as? Bool == true ? "Other societies dissent: see the guideline" : "",
+      str(p, "status") ?? "",
+      [str(p, "guidelineTitle"), str(p, "guidelineVersion").map { "version \($0)" }].compactMap { $0 }.joined(separator: ", "),
+    ]
   }
 
   static func isNumber(_ v: Any?) -> Bool { v is Int || v is Double }
@@ -274,6 +306,11 @@ public enum Graph3D {
         node["pubmed"] = p["pubmedUrl"] ?? NSNull()
         if let s = str(p, "publicationStatus") { node["ps"] = s }
         if let v = str(p, "validity") { node["gv"] = v }
+      }
+      if lab == "GuidelineRecommendation" {
+        node["url"] = p["pdfUrl"] ?? NSNull()
+        node["gr"] = p["grade"] ?? NSNull()
+        if p["needsReview"] as? Bool == true { node["held"] = 1 }
       }
       if lab == "ReferenceRange" {
         var rr: JSONObject = [:]

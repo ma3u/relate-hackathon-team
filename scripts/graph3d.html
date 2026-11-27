@@ -46,7 +46,7 @@
   .steps button[aria-selected=true] { border-color: var(--accent); background: #16312a; }
   #stepHint { margin-top: 8px; }
   #labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
-  #labels div { position: absolute; transform: translate(-50%, -150%); font-size: 11px; color: #e8e6df; white-space: nowrap; text-shadow: 0 0 3px #000, 0 0 3px #000, 0 0 6px #000; }
+  #labels div { position: absolute; transform: translate(-50%, -150%); font-size: 12.5px; color: #e8e6df; white-space: nowrap; text-shadow: 0 0 3px #000, 0 0 3px #000, 0 0 6px #000; }
   .trail { font-size: 12px; color: var(--muted); margin: 0 24px 8px 0; line-height: 1.6; }
   .trail a { color: var(--accent); text-decoration: none; }
   .trail a:hover { text-decoration: underline; }
@@ -71,7 +71,7 @@
   #topics summary { cursor: pointer; font-size: 13px; padding: 2px 0; display: flex; gap: 6px; align-items: center; }
   #topics summary .count { margin-left: auto; }
   #topics .nb { font-size: 12px; padding-left: 14px; }
-  #labels div.year { color: #EF9F27; font-weight: 600; font-size: 12px; }
+  #labels div.year { color: #EF9F27; font-weight: 600; font-size: 13px; }
   .chart { display: block; margin: 4px 0 2px; overflow: visible; }
   .chart text { font: 10px -apple-system, system-ui, sans-serif; fill: var(--muted); }
   .chart .last { fill: var(--ink); font-size: 11px; font-weight: 600; }
@@ -144,7 +144,7 @@ const DATA = /*DATA*/null;
 
 const FAMILIES = [
   ["Risks", [["HealthRisk", "#F09595"], ["RiskScore", "#ED93B1"]]],
-  ["Evidence", [["Study", "#F5C4B3"], ["Guideline", "#FAEEDA"], ["Topic", "#EEEDFE"]]],
+  ["Evidence", [["Study", "#F5C4B3"], ["Guideline", "#FAEEDA"], ["Recommendation", "#E8B04A"], ["Topic", "#EEEDFE"]]],
   ["Measures", [
     ["Lab value", "#5DCAA5"], ["Apple Watch week", "#85B7EB"], ["LoincCode", "#D3D1C7"],
     ["ReferenceRange", "#AFA9EC"], ["NcbiTaxon", "#888780"]]],
@@ -200,6 +200,9 @@ const MEASURES = groupsOf("Measures"), DOCS = groupsOf("Documents"), RESEARCH = 
 const ANAMNESIS = groupsOf("Anamnesis");
 
 // Risks first, then the evidence behind them, then the measures, then the documents.
+// Guideline recommendations (hundreds) are in no overview: as nodes they would crowd every other
+// label out. They are listed in the detail panel of a value, a risk score or a guideline, and
+// appear as nodes when one of those is in focus.
 const STAGES = [
   { name: "Health risks", groups: ["HealthRisk", "RiskScore", "Study", "Guideline", "LoincCode", "Lab value"],
     // The marker codes you have a value on, your newest value on each, the evidence about the risks.
@@ -215,7 +218,7 @@ const STAGES = [
     } },
   { name: "Evidence", groups: ["HealthRisk", "RiskScore", "Study", "Guideline", "Topic"], only: () => true,
     get hint() { return `All ${(counts.Study || 0) + (counts.Guideline || 0)} sources behind the graph:` + this.rest; },
-    rest: " studies (coral) and guidelines (amber), clustered around their topics (white). A thin arrow from one source to another means it cites it. Orange arrows: in studies, people who have one condition develop another more often. Click a topic or a source." },
+    rest: " studies (coral) and guidelines (amber), clustered around their topics (white). Click a guideline, a value or a risk score for its graded recommendations. A thin arrow from one source to another means it cites it. Orange arrows: in studies, people who have one condition develop another more often. Click a topic or a source." },
   { name: "Anamnesis", groups: ["HealthRisk", "LoincCode", ...ANAMNESIS],
     // The protocols and their questions, coded: LOINC codes only where a question uses one.
     only: n => n.g !== "LoincCode" || (n._pq ??= n.nbs.some(([t, m]) => t === "CODED_BY" && (m.g === "Protocol question" || m.g === "Anamnesis protocol"))),
@@ -258,6 +261,8 @@ const FRIENDLY = {
   "CITES →": "Cites", "← CITES": "Cited by (in this graph)",
   "DISAGREES_WITH →": "Disagrees with", "← DISAGREES_WITH": "Disagrees with",
   "AFTER_CUTOFF_OF →": "Published after this guideline", "← AFTER_CUTOFF_OF": "Newer than this guideline", "IN_TOPIC →": "Topic", "← IN_TOPIC": "Studies and guidelines",
+  "HAS_RECOMMENDATION →": "Its graded recommendations", "← HAS_RECOMMENDATION": "Guideline",
+  "MENTIONS →": "Lab values and risks its wording names", "← MENTIONS": "Guideline recommendations that name it",
   "ABOUT →": "Risks it is about", "SOURCED_FROM →": "Source (guideline or study)", "← SOURCED_FROM": "Reference ranges it sets", "← ABOUT": "Studies about this risk", "MARKER_OF →": "Marker of", "← MARKER_OF": "Its markers",
 };
 const studyById = new Map(DATA.nodes.filter(n => n.sid).map(n => [n.sid, n]));
@@ -310,8 +315,8 @@ const Graph = new ForceGraph3D(document.getElementById("graph"))
 // hundreds of values pinned on a spiral it would push a lone hub (you) off screen. zoomToFit frames.
 Graph.d3Force("center", null);
 // Values pinned on the time spiral push nothing away (712 of them would fling a hub off screen).
-Graph.d3Force("charge").strength(m => m.fx !== undefined && DATED.has(m.g) ? 0 : -28);
-Graph.d3Force("link").distance(l => (l.t === "HAS_OBSERVATION" ? 60 : l.t === "IN_TOPIC" ? 18 : 26));
+Graph.d3Force("charge").strength(m => m.fx !== undefined && DATED.has(m.g) ? 0 : -40);
+Graph.d3Force("link").distance(l => (l.t === "HAS_OBSERVATION" ? 60 : l.t === "IN_TOPIC" ? 22 : 32));
 // Time as depth: every dated value that is not pinned on the time spiral is pulled
 // back by its age, DEPTH per year, so the newest values are in front. In a
 // drill-down the depth is measured from the node in focus (pinned where you
@@ -328,6 +333,32 @@ const timeForce = alpha => {
 };
 timeForce.initialize = ns => { timeNodes = ns; };
 Graph.d3Force("time", timeForce);
+// The free area's proportions: a free-force layout is a ball, and a ball in a tall or wide area
+// leaves its corners empty. The free nodes are drawn out (or in) along the vertical, the axis the
+// view turns about, until the layout's height to width matches the area's. Depth stays with time.
+let shapeNodes = [];
+const shapeForce = alpha => {
+  const free = shapeNodes.filter(n => n.fx === undefined && n.x !== undefined);
+  if (free.length < 12) return;
+  const f = freeArea(), want = (f.B - f.T) / Math.max(1, f.R - f.L);
+  let cx = 0, cy = 0, cz = 0;
+  free.forEach(n => { cx += n.x; cy += n.y; cz += n.z || 0; });
+  cx /= free.length; cy /= free.length; cz /= free.length;
+  let sy = 0, sxz = 0;
+  free.forEach(n => { sy += (n.y - cy) ** 2; sxz += ((n.x - cx) ** 2 + ((n.z || 0) - cz) ** 2) / 2; });
+  const have = Math.sqrt(sy / Math.max(sxz, 1));  // spread in y against the spread across
+  const k = Math.max(-0.5, Math.min(0.5, Math.log(want / Math.max(have, 0.05)))) * 0.06 * alpha;
+  // A light pull to the middle as well: a topic cluster on one long chain drifts far out and
+  // would otherwise set the frame for everything else. Depth of dated values stays with time.
+  const g = 0.012 * alpha;
+  free.forEach(n => {
+    n.vy += (n.y - cy) * k - (n.y - cy) * g;
+    n.vx -= (n.x - cx) * g;
+    if (!(n.dt && isDated(n))) n.vz -= ((n.z || 0) - cz) * g;
+  });
+};
+shapeForce.initialize = ns => { shapeNodes = ns; };
+Graph.d3Force("shape", shapeForce);
 
 const shown = n => VISIBLE[n.g] && STAGES[stage].groups.includes(n.g) && STAGES[stage].only(n);
 const short = t => (t = String(t)).length > 26 ? t.slice(0, 25) + "…" : t;
@@ -478,13 +509,25 @@ function centreOnFreeArea() {
   cam.updateProjectionMatrix();
   return f;
 }
+// The nodes the view is framed on: all of them, except a few far from the rest. A small cluster
+// drifting off (one topic with two sources) would otherwise shrink the whole graph to a dot.
+function core(nodes) {
+  if (nodes.length < 20) return nodes;
+  const mid = k => { const v = nodes.map(n => [n.x, n.y, n.z][k]).sort((a, b) => a - b); return v[v.length >> 1]; };
+  const m = [mid(0), mid(1), mid(2)];
+  const dist = n => Math.hypot(n.x - m[0], n.y - m[1], n.z - m[2]);
+  const ds = nodes.map(dist).sort((a, b) => a - b);
+  const cut = ds[Math.floor(ds.length * 0.9)] * 1.25;
+  const kept = nodes.filter(n => dist(n) <= cut || n.st?.status === "main");
+  return kept.length >= nodes.length * 0.8 ? kept : nodes;
+}
 // Frame what is shown so it fills the free area, keeping the viewing direction. Measured
 // on screen, so the long time axis into the depth does not shrink the graph the way
 // zoomToFit's bounding box did. On the health-risk overview your main risk is the centre:
 // the view and the opening turn are about it, and everything else fits around it.
 function fitView(ms = 900) {
   const main = !drill.length && stage === 0 ? RANKED.find(n => n.st.status === "main" && n.x !== undefined) : null;
-  const nodes = Graph.graphData().nodes.filter(n => n.x !== undefined);
+  const nodes = core(Graph.graphData().nodes.filter(n => n.x !== undefined));
   if (!nodes.length) return;
   const f = centreOnFreeArea(), W = innerWidth, H = innerHeight;
   const cam = Graph.camera(), V = cam.position.constructor, probe = cam.clone();
@@ -680,6 +723,9 @@ const EXPLAIN = {
   ReferenceRange: n => `A reference range: the official guideline range and, where its source names one, an optimal band, for one marker in one unit. Linked to its source, with the date it applies from${n.r && n.r.until ? " and the date a newer edition replaced it" : ""}.`,
   Study: () => `A study: the markers it examined (with your latest value on each), the risks it is about, the scores it informs, the sources it cites or that cite it, and its topic.`,
   Guideline: () => `A guideline or consensus statement: the reference ranges it sets, the markers and risks it is about, the sources it cites or that cite it, and its topic.`,
+  Recommendation: n => n.held
+    ? `A recommendation box of a guideline that a check held back: its grade and direction could not be confirmed. Read it in the guideline.`
+    : `One recommendation of a guideline: its grade as printed (⇑⇑ soll, ⇑ sollte, ⇔ kann, ⇓ sollte nicht, ⇓⇓ soll nicht), its chapter and page, and the lab values its wording names. The wording itself stays in the publisher's PDF: open it at the page.`,
   Topic: n => `The topic "${n.n}": the studies (coral) and guidelines (amber) about it, the risks they connect, and the citations among them.`,
   NcbiTaxon: () => `An organism from a microbiome report, and your values on it.`,
   Knowledge: () => `The version of the knowledge layer: a fingerprint of every seeded fact.`,
@@ -1233,6 +1279,31 @@ function showOverview() {
   el.querySelectorAll(".savebtn").forEach(b => b.onclick = () => saveProtocol(b.dataset.save));
 }
 
+// The guideline recommendations whose wording names this lab value, strongest grade first, the held-back ones last.
+const GRADE_ORDER = ["⇑⇑", "⇓⇓", "⇑", "⇓", "⇔"];
+function recommendationLink(n) {
+  if (!n.url) return "";
+  return `<div class="callout">${n.held ? "<b>Held back.</b> A check could not confirm the grade or the direction of this box. " : ""}` +
+    `The wording is in the guideline: <a href="${esc(n.url)}" target="_blank" rel="noopener" style="color:var(--accent)">open it at this page ↗</a>. ` +
+    `Whether it applies to you is a question for your doctor.</div>`;
+}
+function recommendationsFor(code, btn) {
+  const recs = nb(code, ["MENTIONS"]).filter(m => m.g === "Recommendation");
+  if (!recs.length) return "";
+  const rank = m => (m.held ? 10 : 0) + Math.max(0, GRADE_ORDER.indexOf(m.gr || ""));
+  const what = code.g === "RiskScore" ? "this risk" : "this value";
+  let html = `<div class="rel">What guidelines recommend that names ${what} (${recs.length})</div>` +
+    `<div class="hint" style="margin-top:0">Each recommendation names ${what} in its wording. Open it to read it in the guideline; ` +
+    `whether it applies to you is a question for your doctor.</div>`;
+  recs.sort((a, b) => rank(a) - rank(b) || a.n.localeCompare(b.n)).forEach(m => {
+    html += btn(m, m.held ? `${m.n} · held back` : m.n, "code");
+    const dissent = m.d.some(x => /dissent/.test(x)) ? " · other societies dissent" : "";
+    if (m.url) html += `<div class="hint inset" style="margin-top:0">${esc(m.d[0] || "")}${m.d[1] ? ` · ${esc(m.d[1])}` : ""}${dissent} · ` +
+      `<a href="${esc(m.url)}" target="_blank" rel="noopener" style="color:var(--accent)">open ↗</a></div>`;
+  });
+  return html;
+}
+
 function showDetail(n) {
   const el = document.getElementById("detail");
   const dot = m => `<span class="dot" style="display:inline-block;margin-right:6px;background:${m.out ? OUT_COLOR : COLOR[m.g]}"></span>`;
@@ -1257,6 +1328,9 @@ function showDetail(n) {
     const c = nb(n, ["CODED_BY"]).find(m => m.g === "LoincCode");
     if (c) html += chartsFor(c, n);
   }
+  if (n.g === "Recommendation") html += recommendationLink(n);
+  const recCode = n.g === "LoincCode" || n.g === "RiskScore" ? n : n.g === "Lab value" ? nb(n, ["CODED_BY"]).find(m => m.g === "LoincCode") : null;
+  if (recCode) html += recommendationsFor(recCode, btn);
 
   if (n.g === "HealthRisk") html += riskStanding(n);
 
@@ -1321,6 +1395,7 @@ function showDetail(n) {
     if (codes.length && /CODED_BY/.test(k)) return;  // listed above, by date
     if (n.rlinks && /RAISES_RISK_OF/.test(k)) return;  // listed above, with the studies
     if (isEvidence(n) && /EXAMINES/.test(k)) return;    // listed above, with your values
+    if (recCode && /MENTIONS/.test(k)) return;          // listed above, strongest first
     html += `<div class="rel">${esc(FRIENDLY[k] || k)} (${ms.length})</div>`;
     if (ms.length > 40) {
       // A long list says little item by item: group it by name, newest first within a name.

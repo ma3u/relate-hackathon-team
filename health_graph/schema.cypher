@@ -35,6 +35,8 @@ CREATE CONSTRAINT reference_range_id IF NOT EXISTS FOR (n:ReferenceRange) REQUIR
 CREATE CONSTRAINT score_result_id IF NOT EXISTS FOR (n:ScoreResult) REQUIRE n.id IS UNIQUE;
 CREATE CONSTRAINT knowledge_id IF NOT EXISTS FOR (n:Knowledge) REQUIRE n.id IS UNIQUE;
 CREATE CONSTRAINT study_id IF NOT EXISTS FOR (n:Study) REQUIRE n.id IS UNIQUE;
+// Recommendations of a German guideline (health_graph/guidelines.py): facts about each box, no guideline text.
+CREATE CONSTRAINT guideline_recommendation_id IF NOT EXISTS FOR (n:GuidelineRecommendation) REQUIRE n.id IS UNIQUE;
 CREATE CONSTRAINT questionnaire_id IF NOT EXISTS FOR (n:Questionnaire) REQUIRE n.id IS UNIQUE;
 CREATE CONSTRAINT questionnaire_item_id IF NOT EXISTS FOR (n:QuestionnaireItem) REQUIRE n.id IS UNIQUE;
 CREATE CONSTRAINT questionnaire_response_id IF NOT EXISTS FOR (n:QuestionnaireResponse) REQUIRE n.id IS UNIQUE;

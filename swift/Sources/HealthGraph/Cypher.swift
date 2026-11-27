@@ -42,6 +42,8 @@ enum Cypher {
   CREATE CONSTRAINT score_result_id IF NOT EXISTS FOR (n:ScoreResult) REQUIRE n.id IS UNIQUE;
   CREATE CONSTRAINT knowledge_id IF NOT EXISTS FOR (n:Knowledge) REQUIRE n.id IS UNIQUE;
   CREATE CONSTRAINT study_id IF NOT EXISTS FOR (n:Study) REQUIRE n.id IS UNIQUE;
+  // Recommendations of a German guideline (health_graph/guidelines.py): facts about each box, no guideline text.
+  CREATE CONSTRAINT guideline_recommendation_id IF NOT EXISTS FOR (n:GuidelineRecommendation) REQUIRE n.id IS UNIQUE;
   CREATE CONSTRAINT questionnaire_id IF NOT EXISTS FOR (n:Questionnaire) REQUIRE n.id IS UNIQUE;
   CREATE CONSTRAINT questionnaire_item_id IF NOT EXISTS FOR (n:QuestionnaireItem) REQUIRE n.id IS UNIQUE;
   CREATE CONSTRAINT questionnaire_response_id IF NOT EXISTS FOR (n:QuestionnaireResponse) REQUIRE n.id IS UNIQUE;
@@ -750,6 +752,61 @@ enum Cypher {
          a.authored AS authored, a.riskFactor AS riskFactor, r.protocol AS protocol
   ORDER BY authored DESC, linkId
   """#
+
+  static let guidelineVersions = #"""
+  MATCH (g:Study {kind: 'guideline'})
+  WHERE g.register IS NOT NULL
+  RETURN g.register AS register, g.version AS version
+  """#
+
+  static let guidelinePruneRecommendations = #"""
+  UNWIND $guidelines AS gl
+  MATCH (e:GuidelineRecommendation {guidelineId: gl.id})
+  WHERE NOT e.id IN gl.ids
+  DETACH DELETE e
+  RETURN count(*) AS pruned
+  """#
+
+  static let guidelineStoreRecommendations = #"""
+  UNWIND $recommendations AS r
+  MATCH (g:Study {kind: 'guideline', register: r.register, version: r.version})
+  MERGE (e:GuidelineRecommendation {id: r.id})
+  SET e.guidelineId = r.guidelineId, e.register = r.register, e.number = r.number, e.type = r.type,
+      e.basis = r.basis, e.status = r.status, e.grade = r.grade, e.strength = r.strength,
+      e.direction = r.direction, e.gradeLetter = r.gradeLetter, e.page = r.page,
+      e.printedPage = r.printedPage, e.section = r.section, e.pdfUrl = r.pdfUrl,
+      e.wordingSha256 = r.wordingSha256, e.needsReview = r.needsReview,
+      e.reviewReasons = r.reviewReasons, e.shortVersion = r.shortVersion,
+      e.consensus = r.consensus, e.dissent = r.dissent,
+      e.guidelineTitle = g.title, e.guidelineVersion = g.version, e.checkedAt = $checkedAt
+  MERGE (g)-[:HAS_RECOMMENDATION]->(e)
+  RETURN count(e) AS recommendations
+  """#
+
+  static let guidelineUnlinkMentions = #"""
+  UNWIND $ids AS id
+  MATCH (e:GuidelineRecommendation {id: id})-[x:MENTIONS]->()
+  DELETE x
+  RETURN count(*) AS unlinked
+  """#
+
+  static let guidelineStoreMentions = #"""
+  UNWIND $mentions AS m
+  MATCH (e:GuidelineRecommendation {id: m.id})
+  MATCH (c:LoincCode {code: m.code})
+  MERGE (e)-[x:MENTIONS]->(c)
+  SET x.term = m.term
+  RETURN count(x) AS mentions
+  """#
+
+  static let guidelineStoreScores = #"""
+  UNWIND $mentions AS m
+  MATCH (e:GuidelineRecommendation {id: m.id})
+  MATCH (s:RiskScore {id: m.score})
+  MERGE (e)-[x:MENTIONS]->(s)
+  SET x.term = m.term
+  RETURN count(x) AS scores
+  """#
 }
 
 /// The rules an assessment follows (assessment.py): its finding kinds, severities and limits.
@@ -761,6 +818,16 @@ public enum AssessmentRules {
   public static let maxTitle = 200
   public static let maxText = 2000
   public static let maxSummary = 4000
+}
+
+/// The rules a guideline artefact follows (guidelines.py): the fields a record may carry and its limits.
+public enum GuidelineRules {
+  public static let schemaVersion = "1.0"
+  public static let recordFields: Set<String> = ["basis", "checks", "consensus", "direction", "dissent", "grade", "gradeLetter", "guidelineId", "id", "loinc", "needsReview", "number", "page", "pdfUrl", "printedPage", "reviewReasons", "scores", "section", "status", "strength", "type", "wordingSha256"]
+  public static let grades: [String] = ["⇑⇑", "⇑", "⇔", "⇓", "⇓⇓", "A", "B", "0", "EK"]
+  public static let idPattern = "^(?:nvl-\\d{3}|\\d{3}-\\d{3}(?:OL)?):\\d{1,2}(?:\\.\\d+)?-\\d{1,3}[a-z]{0,2}$"
+  public static let loincPattern = "^\\d{1,7}-\\d$"
+  public static let maxText = 120
 }
 
 /// Named read-only queries (CLI, tests, the app). Same as health_graph/queries.py.
