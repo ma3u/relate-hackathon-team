@@ -315,8 +315,8 @@ const Graph = new ForceGraph3D(document.getElementById("graph"))
 // hundreds of values pinned on a spiral it would push a lone hub (you) off screen. zoomToFit frames.
 Graph.d3Force("center", null);
 // Values pinned on the time spiral push nothing away (712 of them would fling a hub off screen).
-Graph.d3Force("charge").strength(m => m.fx !== undefined && DATED.has(m.g) ? 0 : -28);
-Graph.d3Force("link").distance(l => (l.t === "HAS_OBSERVATION" ? 60 : l.t === "IN_TOPIC" ? 18 : 26));
+Graph.d3Force("charge").strength(m => m.fx !== undefined && DATED.has(m.g) ? 0 : -40);
+Graph.d3Force("link").distance(l => (l.t === "HAS_OBSERVATION" ? 60 : l.t === "IN_TOPIC" ? 22 : 32));
 // Time as depth: every dated value that is not pinned on the time spiral is pulled
 // back by its age, DEPTH per year, so the newest values are in front. In a
 // drill-down the depth is measured from the node in focus (pinned where you
@@ -333,6 +333,32 @@ const timeForce = alpha => {
 };
 timeForce.initialize = ns => { timeNodes = ns; };
 Graph.d3Force("time", timeForce);
+// The free area's proportions: a free-force layout is a ball, and a ball in a tall or wide area
+// leaves its corners empty. The free nodes are drawn out (or in) along the vertical, the axis the
+// view turns about, until the layout's height to width matches the area's. Depth stays with time.
+let shapeNodes = [];
+const shapeForce = alpha => {
+  const free = shapeNodes.filter(n => n.fx === undefined && n.x !== undefined);
+  if (free.length < 12) return;
+  const f = freeArea(), want = (f.B - f.T) / Math.max(1, f.R - f.L);
+  let cx = 0, cy = 0, cz = 0;
+  free.forEach(n => { cx += n.x; cy += n.y; cz += n.z || 0; });
+  cx /= free.length; cy /= free.length; cz /= free.length;
+  let sy = 0, sxz = 0;
+  free.forEach(n => { sy += (n.y - cy) ** 2; sxz += ((n.x - cx) ** 2 + ((n.z || 0) - cz) ** 2) / 2; });
+  const have = Math.sqrt(sy / Math.max(sxz, 1));  // spread in y against the spread across
+  const k = Math.max(-0.5, Math.min(0.5, Math.log(want / Math.max(have, 0.05)))) * 0.06 * alpha;
+  // A light pull to the middle as well: a topic cluster on one long chain drifts far out and
+  // would otherwise set the frame for everything else. Depth of dated values stays with time.
+  const g = 0.012 * alpha;
+  free.forEach(n => {
+    n.vy += (n.y - cy) * k - (n.y - cy) * g;
+    n.vx -= (n.x - cx) * g;
+    if (!(n.dt && isDated(n))) n.vz -= ((n.z || 0) - cz) * g;
+  });
+};
+shapeForce.initialize = ns => { shapeNodes = ns; };
+Graph.d3Force("shape", shapeForce);
 
 const shown = n => VISIBLE[n.g] && STAGES[stage].groups.includes(n.g) && STAGES[stage].only(n);
 const short = t => (t = String(t)).length > 26 ? t.slice(0, 25) + "…" : t;
@@ -483,10 +509,6 @@ function centreOnFreeArea() {
   cam.updateProjectionMatrix();
   return f;
 }
-// Frame what is shown so it fills the free area, keeping the viewing direction. Measured
-// on screen, so the long time axis into the depth does not shrink the graph the way
-// zoomToFit's bounding box did. On the health-risk overview your main risk is the centre:
-// the view and the opening turn are about it, and everything else fits around it.
 // The nodes the view is framed on: all of them, except a few far from the rest. A small cluster
 // drifting off (one topic with two sources) would otherwise shrink the whole graph to a dot.
 function core(nodes) {
@@ -499,6 +521,10 @@ function core(nodes) {
   const kept = nodes.filter(n => dist(n) <= cut || n.st?.status === "main");
   return kept.length >= nodes.length * 0.8 ? kept : nodes;
 }
+// Frame what is shown so it fills the free area, keeping the viewing direction. Measured
+// on screen, so the long time axis into the depth does not shrink the graph the way
+// zoomToFit's bounding box did. On the health-risk overview your main risk is the centre:
+// the view and the opening turn are about it, and everything else fits around it.
 function fitView(ms = 900) {
   const main = !drill.length && stage === 0 ? RANKED.find(n => n.st.status === "main" && n.x !== undefined) : null;
   const nodes = core(Graph.graphData().nodes.filter(n => n.x !== undefined));
