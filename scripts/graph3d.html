@@ -144,7 +144,7 @@ const DATA = /*DATA*/null;
 
 const FAMILIES = [
   ["Risks", [["HealthRisk", "#F09595"], ["RiskScore", "#ED93B1"]]],
-  ["Evidence", [["Study", "#F5C4B3"], ["Guideline", "#FAEEDA"], ["Topic", "#EEEDFE"]]],
+  ["Evidence", [["Study", "#F5C4B3"], ["Guideline", "#FAEEDA"], ["Recommendation", "#E8B04A"], ["Topic", "#EEEDFE"]]],
   ["Measures", [
     ["Lab value", "#5DCAA5"], ["Apple Watch week", "#85B7EB"], ["LoincCode", "#D3D1C7"],
     ["ReferenceRange", "#AFA9EC"], ["NcbiTaxon", "#888780"]]],
@@ -213,9 +213,9 @@ const STAGES = [
         "Around them: risk scores (pink), lab markers (grey) and your latest value on each (green; red outside the lab's range). " +
         "Older values sit further back and are smaller: a value counts half after a year. Your overview is on the right; click a risk for its values.";
     } },
-  { name: "Evidence", groups: ["HealthRisk", "RiskScore", "Study", "Guideline", "Topic"], only: () => true,
+  { name: "Evidence", groups: ["HealthRisk", "RiskScore", "Study", "Guideline", "Recommendation", "Topic"], only: () => true,
     get hint() { return `All ${(counts.Study || 0) + (counts.Guideline || 0)} sources behind the graph:` + this.rest; },
-    rest: " studies (coral) and guidelines (amber), clustered around their topics (white). A thin arrow from one source to another means it cites it. Orange arrows: in studies, people who have one condition develop another more often. Click a topic or a source." },
+    rest: " studies (coral) and guidelines (amber) with their graded recommendations (gold), clustered around their topics (white). A thin arrow from one source to another means it cites it. Orange arrows: in studies, people who have one condition develop another more often. Click a topic or a source." },
   { name: "Anamnesis", groups: ["HealthRisk", "LoincCode", ...ANAMNESIS],
     // The protocols and their questions, coded: LOINC codes only where a question uses one.
     only: n => n.g !== "LoincCode" || (n._pq ??= n.nbs.some(([t, m]) => t === "CODED_BY" && (m.g === "Protocol question" || m.g === "Anamnesis protocol"))),
@@ -230,7 +230,7 @@ const STAGES = [
     hint: "Every lab value (green) and Apple Watch week (blue) on a time spiral: one turn per year, the oldest at the bottom, the newest at the top; a small cluster is one day (one report, one week). Grey LOINC codes tie together the values of one marker; purple: guideline ranges." },
   { name: "Documents", groups: ["HealthRisk", "RiskScore", ...MEASURES, ...DOCS], only: () => true, spiral: true,
     hint: "Adds you (white), the scanned reports (dark green), their documents, how they were scanned (provenance) and the labs, around the same time spiral of your values." },
-  { name: "Everything", groups: ["HealthRisk", "RiskScore", "Study", "Guideline", ...MEASURES, ...DOCS, ...RESEARCH, ...ANAMNESIS], only: () => true, spiral: true,
+  { name: "Everything", groups: ["HealthRisk", "RiskScore", "Study", "Guideline", "Recommendation", ...MEASURES, ...DOCS, ...RESEARCH, ...ANAMNESIS], only: () => true, spiral: true,
     hint: "Adds the evidence, the anamnesis protocols and the OMOP research copy (orange): each of your values in the format a research study would receive." },
 ];
 let stage = 0;
@@ -258,6 +258,8 @@ const FRIENDLY = {
   "CITES →": "Cites", "← CITES": "Cited by (in this graph)",
   "DISAGREES_WITH →": "Disagrees with", "← DISAGREES_WITH": "Disagrees with",
   "AFTER_CUTOFF_OF →": "Published after this guideline", "← AFTER_CUTOFF_OF": "Newer than this guideline", "IN_TOPIC →": "Topic", "← IN_TOPIC": "Studies and guidelines",
+  "HAS_RECOMMENDATION →": "Its graded recommendations", "← HAS_RECOMMENDATION": "Guideline",
+  "MENTIONS →": "Lab values its wording names", "← MENTIONS": "Guideline recommendations that name it",
   "ABOUT →": "Risks it is about", "SOURCED_FROM →": "Source (guideline or study)", "← SOURCED_FROM": "Reference ranges it sets", "← ABOUT": "Studies about this risk", "MARKER_OF →": "Marker of", "← MARKER_OF": "Its markers",
 };
 const studyById = new Map(DATA.nodes.filter(n => n.sid).map(n => [n.sid, n]));
@@ -680,6 +682,9 @@ const EXPLAIN = {
   ReferenceRange: n => `A reference range: the official guideline range and, where its source names one, an optimal band, for one marker in one unit. Linked to its source, with the date it applies from${n.r && n.r.until ? " and the date a newer edition replaced it" : ""}.`,
   Study: () => `A study: the markers it examined (with your latest value on each), the risks it is about, the scores it informs, the sources it cites or that cite it, and its topic.`,
   Guideline: () => `A guideline or consensus statement: the reference ranges it sets, the markers and risks it is about, the sources it cites or that cite it, and its topic.`,
+  Recommendation: n => n.held
+    ? `A recommendation box of a guideline that a check held back: its grade and direction could not be confirmed. Read it in the guideline.`
+    : `One recommendation of a guideline: its grade as printed (⇑⇑ soll, ⇑ sollte, ⇔ kann, ⇓ sollte nicht, ⇓⇓ soll nicht), its chapter and page, and the lab values its wording names. The wording itself stays in the publisher's PDF: open it at the page.`,
   Topic: n => `The topic "${n.n}": the studies (coral) and guidelines (amber) about it, the risks they connect, and the citations among them.`,
   NcbiTaxon: () => `An organism from a microbiome report, and your values on it.`,
   Knowledge: () => `The version of the knowledge layer: a fingerprint of every seeded fact.`,
@@ -1233,6 +1238,29 @@ function showOverview() {
   el.querySelectorAll(".savebtn").forEach(b => b.onclick = () => saveProtocol(b.dataset.save));
 }
 
+// The guideline recommendations whose wording names this lab value, strongest grade first, the held-back ones last.
+const GRADE_ORDER = ["⇑⇑", "⇓⇓", "⇑", "⇓", "⇔"];
+function recommendationLink(n) {
+  if (!n.url) return "";
+  return `<div class="callout">${n.held ? "<b>Held back.</b> A check could not confirm the grade or the direction of this box. " : ""}` +
+    `The wording is in the guideline: <a href="${esc(n.url)}" target="_blank" rel="noopener" style="color:var(--accent)">open it at this page ↗</a>. ` +
+    `Whether it applies to you is a question for your doctor.</div>`;
+}
+function recommendationsFor(code, btn) {
+  const recs = nb(code, ["MENTIONS"]).filter(m => m.g === "Recommendation");
+  if (!recs.length) return "";
+  const rank = m => (m.held ? 10 : 0) + Math.max(0, GRADE_ORDER.indexOf(m.gr || ""));
+  let html = `<div class="rel">What guidelines recommend that names this value (${recs.length})</div>` +
+    `<div class="hint" style="margin-top:0">Each recommendation names this value in its wording. Open it to read it in the guideline; ` +
+    `whether it applies to you is a question for your doctor.</div>`;
+  recs.sort((a, b) => rank(a) - rank(b) || a.n.localeCompare(b.n)).forEach(m => {
+    html += btn(m, m.held ? `${m.n} · held back` : m.n, "code");
+    if (m.url) html += `<div class="hint inset" style="margin-top:0">${esc(m.d[0] || "")}${m.d[1] ? ` · ${esc(m.d[1])}` : ""} · ` +
+      `<a href="${esc(m.url)}" target="_blank" rel="noopener" style="color:var(--accent)">open ↗</a></div>`;
+  });
+  return html;
+}
+
 function showDetail(n) {
   const el = document.getElementById("detail");
   const dot = m => `<span class="dot" style="display:inline-block;margin-right:6px;background:${m.out ? OUT_COLOR : COLOR[m.g]}"></span>`;
@@ -1257,6 +1285,9 @@ function showDetail(n) {
     const c = nb(n, ["CODED_BY"]).find(m => m.g === "LoincCode");
     if (c) html += chartsFor(c, n);
   }
+  if (n.g === "Recommendation") html += recommendationLink(n);
+  const recCode = n.g === "LoincCode" ? n : n.g === "Lab value" ? nb(n, ["CODED_BY"]).find(m => m.g === "LoincCode") : null;
+  if (recCode) html += recommendationsFor(recCode, btn);
 
   if (n.g === "HealthRisk") html += riskStanding(n);
 
@@ -1321,6 +1352,7 @@ function showDetail(n) {
     if (codes.length && /CODED_BY/.test(k)) return;  // listed above, by date
     if (n.rlinks && /RAISES_RISK_OF/.test(k)) return;  // listed above, with the studies
     if (isEvidence(n) && /EXAMINES/.test(k)) return;    // listed above, with your values
+    if (recCode && /MENTIONS/.test(k)) return;          // listed above, strongest first
     html += `<div class="rel">${esc(FRIENDLY[k] || k)} (${ms.length})</div>`;
     if (ms.length > 40) {
       // A long list says little item by item: group it by name, newest first within a name.

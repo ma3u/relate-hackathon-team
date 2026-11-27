@@ -41,6 +41,30 @@ def num(v):
     return f"{v:g}" if isinstance(v, float) else str(v)
 
 
+def recommendation_name(p):
+    """'NVL 009 · 3-4 ⇑⇑ soll': the guideline, the box number and its grade."""
+    grade = " ".join(x for x in (p.get("grade"), p.get("strength")) if x)
+    return f"{p.get('register') or p.get('guidelineId') or 'Guideline'} · {p.get('number') or '?'} {grade}".strip()
+
+
+def recommendation_lines(p):
+    """What a recommendation box says about itself, never its wording (that stays in the publisher's PDF)."""
+    held = p.get("needsReview") is True
+    direction = {"do": "Recommends doing it", "do not": "Recommends against it",
+                 "open": "Open: it may be done"}.get(p.get("direction") or "",
+                                                     "Statement, no grade" if p.get("type") == "statement" else "")
+    page = p.get("printedPage") if p.get("printedPage") is not None else p.get("page")
+    return [
+        "Held back: a check failed, read it in the guideline" if held else direction,
+        ", ".join(x for x in (f"Chapter {p['section']}" if p.get("section") else None,
+                              f"page {num(page)}" if page is not None else None) if x),
+        {"evidence": "Evidence-based", "consensus": "Expert consensus"}.get(p.get("basis") or "", ""),
+        p.get("status") or "",
+        ", ".join(x for x in (p.get("guidelineTitle"),
+                              f"version {p['guidelineVersion']}" if p.get("guidelineVersion") else None) if x),
+    ]
+
+
 def describe(label, p):
     """(group, name, detail lines) for one node."""
     if label == "Observation":
@@ -100,6 +124,8 @@ def describe(label, p):
             p.get("title") or "", p.get("citation") or "", p.get("design") or "",
             "Topics: " + ", ".join(p["topics"]) if p.get("topics") else "",
             f"PubMed {p['pmid']}" if p.get("pmid") else ""] + evidence_lines(p)
+    if label == "GuidelineRecommendation":
+        return "Recommendation", recommendation_name(p), recommendation_lines(p)
     # The anamnesis: protocols (validated questionnaires), their questions, SNOMED CT codes, your answers.
     if label in ("AnamnesisCategory", "AnamnesisProtocol", "Questionnaire"):
         return "Anamnesis protocol", p.get("name") or p.get("title") or label, [
@@ -261,6 +287,11 @@ def build(nodes_in, links_in):
                 node["ps"] = p["publicationStatus"]
             if p.get("validity"):
                 node["gv"] = p["validity"]
+        if r["label"] == "GuidelineRecommendation":
+            node["url"] = p.get("pdfUrl")
+            node["gr"] = p.get("grade")
+            if p.get("needsReview") is True:
+                node["held"] = 1
         if r["label"] == "ReferenceRange":
             node["r"] = {k: p.get(f) for k, f in (("gl", "guidelineLow"), ("gh", "guidelineHigh"), ("ol", "optimalLow"),
                                                    ("oh", "optimalHigh"), ("u", "ucum"), ("sex", "sex"), ("src", "sourceLabel"),

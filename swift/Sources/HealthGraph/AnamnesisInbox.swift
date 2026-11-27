@@ -14,7 +14,10 @@ public enum AnamnesisInbox {
   public static let protocolSuffix = ".protocol.json"
   /// What a reading concluded (Assessments): findings linked to the values, risks and responses they rest on.
   public static let assessmentSuffix = ".assessment.json"
-  static var suffixes: [String] { [suffix, protocolSuffix, assessmentSuffix] }
+  /// A guideline artefact from `python -m health_graph.guidelines extract` on this Mac: facts about the
+  /// recommendation boxes (number, grade, page, lab values named), no guideline text (GuidelineRecommendations).
+  public static let guidelinesSuffix = ".guidelines.json"
+  static var suffixes: [String] { [suffix, protocolSuffix, assessmentSuffix, guidelinesSuffix] }
 
   /// Whether a folder listing holds a request the app should store.
   public static func waiting(_ names: [String]) -> Bool {
@@ -86,6 +89,13 @@ public enum AnamnesisInbox {
     for file in files {
       do {
         let request = try JSON.object(Data(contentsOf: file))
+        if file.lastPathComponent.hasSuffix(guidelinesSuffix) {
+          let counts = try store.storeGuidelineRecommendations(request)
+          try fm.removeItem(at: file)
+          log.append("Guidelines: \(counts["recommendations"] as? Int ?? 0) recommendations stored, "
+            + "\(counts["mentions"] as? Int ?? 0) links to lab values, \(counts["unmatched"] as? Int ?? 0) for a version not in the graph")
+          continue
+        }
         if file.lastPathComponent.hasSuffix(assessmentSuffix) {
           guard let assessment = request["assessment"] as? JSONObject else {
             throw HealthGraphError.invalid("a request without an assessment")

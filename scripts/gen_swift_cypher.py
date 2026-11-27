@@ -14,7 +14,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from health_graph import anamnesis, assessment, german, knowledge, letter, protocols, store  # noqa: E402
+from health_graph import anamnesis, assessment, german, guidelines, knowledge, letter, protocols, store  # noqa: E402
 from health_graph.queries import QUERIES  # noqa: E402
 
 OUT = ROOT / "swift/Sources/HealthGraph/Cypher.swift"
@@ -82,6 +82,15 @@ ASSESSMENT = [
     ("assessmentList", "ASSESSMENTS"),
 ]
 
+# Swift name -> guidelines.py constant: a guideline's recommendations (facts, no text), linked to lab values.
+GUIDELINES = [
+    ("guidelineVersions", "GUIDELINE_VERSIONS"),
+    ("guidelinePruneRecommendations", "PRUNE_RECOMMENDATIONS"),
+    ("guidelineStoreRecommendations", "STORE_RECOMMENDATIONS"),
+    ("guidelineUnlinkMentions", "UNLINK_RECOMMENDATION_MENTIONS"),
+    ("guidelineStoreMentions", "STORE_RECOMMENDATION_MENTIONS"),
+]
+
 # Swift name -> letter.py constant: what the doctor's letter reads.
 LETTER = [
     ("letterPatient", "PATIENT"),
@@ -146,6 +155,9 @@ def render() -> str:
     for swift, py in LETTER:
         text = textwrap.dedent(getattr(letter, py)).strip()
         out += ["", f"  static let {swift} = {raw(text, 2)}"]
+    for swift, py in GUIDELINES:
+        text = textwrap.dedent(getattr(guidelines, py)).strip()
+        out += ["", f"  static let {swift} = {raw(text, 2)}"]
     kinds = ", ".join(f"{swift_string(k)}: {swift_string(v)}" for k, v in assessment.KINDS.items())
     out += [
         "}",
@@ -159,6 +171,16 @@ def render() -> str:
         f"  public static let maxTitle = {assessment.MAX_TITLE}",
         f"  public static let maxText = {assessment.MAX_TEXT}",
         f"  public static let maxSummary = {assessment.MAX_SUMMARY}",
+        "}",
+        "",
+        "/// The rules a guideline artefact follows (guidelines.py): the fields a record may carry and its limits.",
+        "public enum GuidelineRules {",
+        f"  public static let schemaVersion = {swift_string(guidelines.SCHEMA_VERSION)}",
+        f"  public static let recordFields: Set<String> = [{', '.join(swift_string(f) for f in sorted(guidelines.RECORD_FIELDS))}]",
+        f"  public static let grades: [String] = [{', '.join(swift_string(g) for g in guidelines.GRADES)}]",
+        f"  public static let idPattern = {swift_string(guidelines.ID_RE.pattern)}",
+        f"  public static let loincPattern = {swift_string(guidelines.LOINC_RE.pattern)}",
+        f"  public static let maxText = {guidelines.MAX_TEXT}",
     ]
     out += [
         "}",
