@@ -33,7 +33,7 @@ struct GuidelineRecommendationTests {
     #expect(throws: (any Error).self) {
       try GuidelineRecommendations.validate(Self.artefact(["reviewReasons": [String(repeating: "x", count: 200)]]))
     }
-    #expect(throws: (any Error).self) { try GuidelineRecommendations.validate(Self.artefact(["grade": "A"])) }
+    #expect(throws: (any Error).self) { try GuidelineRecommendations.validate(Self.artefact(["grade": "Z"])) }
     #expect(throws: (any Error).self) { try GuidelineRecommendations.validate(Self.artefact(["id": "nvl-009 3-1"])) }
     #expect(throws: (any Error).self) {
       try GuidelineRecommendations.validate(Self.artefact(["loinc": [["code": "eGFR", "term": "eGFR"]]]))
@@ -68,11 +68,31 @@ struct GuidelineRecommendationTests {
     #expect(counts["unmatched"] as? Int == 1 && counts["recommendations"] as? Int == 0)
   }
 
+  @Test func aDegamLetterGradeAndItsRiskScoreAreStored() throws {
+    let store = try Self.store()
+    var a = Self.artefact([
+      "id": "053-024:9.1-2a", "guidelineId": "053-024", "number": "9.1-2a", "grade": "A", "strength": "soll",
+      "gradeLetter": "A", "consensus": "starker Konsens", "dissent": true, "loinc": [Any](),
+      "scores": [["id": "score2", "term": "kardiovaskuläres Risiko"]],
+    ], version: "2.3")
+    a["guidelines"] = [["id": "053-024", "version": "2.3", "extracted": true]]
+    let counts = try store.storeGuidelineRecommendations(a)
+    #expect(counts["recommendations"] as? Int == 1 && counts["scores"] as? Int == 1)
+    let row = try store.rows(cypher: """
+      MATCH (g:Study {register: 'AWMF 053-024'})-[:HAS_RECOMMENDATION]->(e)-[:MENTIONS]->(s:RiskScore)
+      RETURN e.grade AS grade, toString(e.dissent) AS dissent, s.id AS score
+      """)
+    #expect(row == [["grade": "A", "dissent": "true", "score": "score2"]])
+    #expect(throws: (any Error).self) {
+      try GuidelineRecommendations.validate(Self.artefact(["scores": [["id": "SCORE 2!", "term": "x"]]]))
+    }
+  }
+
   @Test func theCypherIsThePythonReference() throws {
     let python = try String(contentsOf: Fixtures.root.appendingPathComponent("health_graph/guidelines.py"), encoding: .utf8)
     func squash(_ s: String) -> String { s.split(whereSeparator: \.isWhitespace).joined(separator: " ") }
     for statement in [Cypher.guidelineVersions, Cypher.guidelinePruneRecommendations, Cypher.guidelineStoreRecommendations,
-                      Cypher.guidelineUnlinkMentions, Cypher.guidelineStoreMentions] {
+                      Cypher.guidelineUnlinkMentions, Cypher.guidelineStoreMentions, Cypher.guidelineStoreScores] {
       #expect(squash(python).contains(squash(statement)))
     }
   }
@@ -84,7 +104,7 @@ struct GuidelineRecommendationTests {
       "guidelineTitle": "Nationale VersorgungsLeitlinie Hypertonie", "guidelineVersion": "1.0",
     ])
     #expect(group == "Recommendation" && name == "NVL 009 · 3-1 ⇑⇑ soll")
-    #expect(lines == ["Recommends doing it", "Chapter 3.2, page 22", "Evidence-based", "neu 2023",
+    #expect(lines.filter { !$0.isEmpty } == ["Recommends doing it", "Chapter 3.2, page 22", "Evidence-based", "neu 2023",
                       "Nationale VersorgungsLeitlinie Hypertonie, version 1.0"])
   }
 }

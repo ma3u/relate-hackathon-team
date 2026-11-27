@@ -51,7 +51,7 @@ public enum GuidelineRecommendations {
       } else if !(grade == nil || grade is NSNull) {
         throw fail("\(rid): grade unknown")
       }
-      for key in ["number", "type", "basis", "status", "strength", "direction", "gradeLetter", "section"] {
+      for key in ["number", "type", "basis", "status", "strength", "direction", "gradeLetter", "section", "consensus"] {
         guard let v = r[key], !(v is NSNull) else { continue }
         guard let s = v as? String, s.count <= 40 else { throw fail("\(rid): \(key) must be a short string") }
       }
@@ -76,6 +76,20 @@ public enum GuidelineRecommendations {
         else { throw fail("\(rid): loinc entries are {code, term}") }
         mentions.append(["id": rid, "code": code, "term": term])
       }
+      let scoresAny = r["scores"] ?? [Any]()
+      guard let scores = (scoresAny is NSNull ? [Any]() : scoresAny as? [Any]), scores.count <= 10 else {
+        throw fail("\(rid): scores entries are {id, term}")
+      }
+      let scoreRe = try NSRegularExpression(pattern: "^[a-z0-9-]{1,30}$")
+      for score in scores {
+        guard let s = score as? JSONObject, let id = s["id"] as? String, matches(scoreRe, id),
+          let term = s["term"] as? String, term.count <= 40
+        else { throw fail("\(rid): scores entries are {id, term}") }
+        mentions.append(["id": rid, "score": id, "term": term])
+      }
+      guard r["dissent"] == nil || r["dissent"] is NSNull || r["dissent"] is Bool else {
+        throw fail("\(rid): dissent must be true or false")
+      }
       let short = ((r["checks"] as? JSONObject)?["shortVersion"] as? String).flatMap { $0.count <= 40 ? $0 : nil }
       func value(_ key: String) -> Any { r[key] ?? NSNull() }
       rows.append([
@@ -85,7 +99,8 @@ public enum GuidelineRecommendations {
         "gradeLetter": value("gradeLetter"), "page": value("page"), "printedPage": value("printedPage"),
         "section": value("section"), "pdfUrl": url ?? NSNull(), "wordingSha256": sha,
         "needsReview": (r["needsReview"] as? Bool ?? false) || !reasons.isEmpty, "reviewReasons": reasons,
-        "shortVersion": short ?? NSNull(),
+        "shortVersion": short ?? NSNull(), "consensus": value("consensus"),
+        "dissent": r["dissent"] as? Bool ?? false,
       ])
     }
     return (rows, mentions)
@@ -121,12 +136,17 @@ extension HealthStore {
         "recommendations": JSON.cypher(matched), "checkedAt": .string(checkedAt),
       ])
       _ = try c.query(Cypher.guidelineUnlinkMentions, ["ids": JSON.cypher(ids.sorted())])
+      let mine = mentions.filter { ids.contains($0["id"] as? String ?? "") }
       let linked = try c.query(Cypher.guidelineStoreMentions, [
-        "mentions": JSON.cypher(mentions.filter { ids.contains($0["id"] as? String ?? "") }),
+        "mentions": JSON.cypher(mine.filter { $0["code"] != nil }),
+      ])
+      let scored = try c.query(Cypher.guidelineStoreScores, [
+        "mentions": JSON.cypher(mine.filter { $0["score"] != nil }),
       ])
       return [
         "recommendations": Int(stored.records.first?["recommendations"]?.intValue ?? 0),
         "mentions": Int(linked.records.first?["mentions"]?.intValue ?? 0),
+        "scores": Int(scored.records.first?["scores"]?.intValue ?? 0),
         "pruned": Int(pruned.records.first?["pruned"]?.intValue ?? 0),
         "unmatched": rows.count - matched.count,
       ]

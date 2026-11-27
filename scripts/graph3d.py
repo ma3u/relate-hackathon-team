@@ -59,6 +59,8 @@ def recommendation_lines(p):
         ", ".join(x for x in (f"Chapter {p['section']}" if p.get("section") else None,
                               f"page {num(page)}" if page is not None else None) if x),
         {"evidence": "Evidence-based", "consensus": "Expert consensus"}.get(p.get("basis") or "", ""),
+        f"Consensus: {p['consensus']}" if p.get("consensus") else "",
+        "Other societies dissent: see the guideline" if p.get("dissent") is True else "",
         p.get("status") or "",
         ", ".join(x for x in (p.get("guidelineTitle"),
                               f"version {p['guidelineVersion']}" if p.get("guidelineVersion") else None) if x),

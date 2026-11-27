@@ -149,6 +149,8 @@ public enum Graph3D {
       [str(p, "section").map { "Chapter \($0)" }, (page == nil || page is NSNull) ? nil : "page \(num(page))"]
         .compactMap { $0 }.joined(separator: ", "),
       str(p, "basis") == "evidence" ? "Evidence-based" : str(p, "basis") == "consensus" ? "Expert consensus" : "",
+      str(p, "consensus").map { "Consensus: \($0)" } ?? "",
+      p["dissent"] as? Bool == true ? "Other societies dissent: see the guideline" : "",
       str(p, "status") ?? "",
       [str(p, "guidelineTitle"), str(p, "guidelineVersion").map { "version \($0)" }].compactMap { $0 }.joined(separator: ", "),
     ]

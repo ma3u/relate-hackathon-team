@@ -89,6 +89,7 @@ GUIDELINES = [
     ("guidelineStoreRecommendations", "STORE_RECOMMENDATIONS"),
     ("guidelineUnlinkMentions", "UNLINK_RECOMMENDATION_MENTIONS"),
     ("guidelineStoreMentions", "STORE_RECOMMENDATION_MENTIONS"),
+    ("guidelineStoreScores", "STORE_RECOMMENDATION_SCORES"),
 ]
 
 # Swift name -> letter.py constant: what the doctor's letter reads.
@@ -177,7 +178,7 @@ def render() -> str:
         "public enum GuidelineRules {",
         f"  public static let schemaVersion = {swift_string(guidelines.SCHEMA_VERSION)}",
         f"  public static let recordFields: Set<String> = [{', '.join(swift_string(f) for f in sorted(guidelines.RECORD_FIELDS))}]",
-        f"  public static let grades: [String] = [{', '.join(swift_string(g) for g in guidelines.GRADES)}]",
+        f"  public static let grades: [String] = [{', '.join(swift_string(g) for g in guidelines.ALLOWED_GRADES)}]",
         f"  public static let idPattern = {swift_string(guidelines.ID_RE.pattern)}",
         f"  public static let loincPattern = {swift_string(guidelines.LOINC_RE.pattern)}",
         f"  public static let maxText = {guidelines.MAX_TEXT}",

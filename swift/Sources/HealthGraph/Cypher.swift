@@ -777,6 +777,7 @@ enum Cypher {
       e.printedPage = r.printedPage, e.section = r.section, e.pdfUrl = r.pdfUrl,
       e.wordingSha256 = r.wordingSha256, e.needsReview = r.needsReview,
       e.reviewReasons = r.reviewReasons, e.shortVersion = r.shortVersion,
+      e.consensus = r.consensus, e.dissent = r.dissent,
       e.guidelineTitle = g.title, e.guidelineVersion = g.version, e.checkedAt = $checkedAt
   MERGE (g)-[:HAS_RECOMMENDATION]->(e)
   RETURN count(e) AS recommendations
@@ -784,7 +785,7 @@ enum Cypher {
 
   static let guidelineUnlinkMentions = #"""
   UNWIND $ids AS id
-  MATCH (e:GuidelineRecommendation {id: id})-[x:MENTIONS]->(:LoincCode)
+  MATCH (e:GuidelineRecommendation {id: id})-[x:MENTIONS]->()
   DELETE x
   RETURN count(*) AS unlinked
   """#
@@ -796,6 +797,15 @@ enum Cypher {
   MERGE (e)-[x:MENTIONS]->(c)
   SET x.term = m.term
   RETURN count(x) AS mentions
+  """#
+
+  static let guidelineStoreScores = #"""
+  UNWIND $mentions AS m
+  MATCH (e:GuidelineRecommendation {id: m.id})
+  MATCH (s:RiskScore {id: m.score})
+  MERGE (e)-[x:MENTIONS]->(s)
+  SET x.term = m.term
+  RETURN count(x) AS scores
   """#
 }
 
@@ -813,8 +823,8 @@ public enum AssessmentRules {
 /// The rules a guideline artefact follows (guidelines.py): the fields a record may carry and its limits.
 public enum GuidelineRules {
   public static let schemaVersion = "1.0"
-  public static let recordFields: Set<String> = ["basis", "checks", "direction", "grade", "gradeLetter", "guidelineId", "id", "loinc", "needsReview", "number", "page", "pdfUrl", "printedPage", "reviewReasons", "section", "status", "strength", "type", "wordingSha256"]
-  public static let grades: [String] = ["⇑⇑", "⇑", "⇔", "⇓", "⇓⇓"]
+  public static let recordFields: Set<String> = ["basis", "checks", "consensus", "direction", "dissent", "grade", "gradeLetter", "guidelineId", "id", "loinc", "needsReview", "number", "page", "pdfUrl", "printedPage", "reviewReasons", "scores", "section", "status", "strength", "type", "wordingSha256"]
+  public static let grades: [String] = ["⇑⇑", "⇑", "⇔", "⇓", "⇓⇓", "A", "B", "0", "EK"]
   public static let idPattern = "^(?:nvl-\\d{3}|\\d{3}-\\d{3}(?:OL)?):\\d{1,2}(?:\\.\\d+)?-\\d{1,3}[a-z]{0,2}$"
   public static let loincPattern = "^\\d{1,7}-\\d$"
   public static let maxText = 120

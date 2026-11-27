@@ -115,6 +115,74 @@ def test_numbering_gaps_show_missing_boxes():
     assert G.numbering_gaps(["2-1", "2-3", "3-1", "3-2a", "3-2b"]) == ["2-2"]
 
 
+# The DEGAM layout: a header with kind, basis and status, the grade letter in a column to the right,
+# parts a), b) each with their own letter, a dissent note in a third column, the consensus below.
+DEGAM_PAGE = """9.1    Ein erfundenes Kapitel
+
+ 9.1-2 Empfehlung evidenzbasiert neu 2024
+ a) Bei einem erfundenen Risiko ≥ 20 % in                         Empfehlungsgrad   Dissens: Zwei erfundene
+ 10 Jahren soll ein Test angeboten werden.                                            Gesellschaften stimmen
+                                                                    A                 nicht zu.
+ b) Bei einem absoluten Risiko unter 10 % soll der Test nicht
+                                                                    A
+ angeboten werden.
+
+ 9.1-3 Empfehlung konsensbasiert bestätigt 2024                         Empfehlungsgrad
+ Vor dem Test sollten erfundene Ursachen bedacht werden.          Empfehlungsgrad
+                                                                         EK
+ Ergebnis Konsensverfahren: starker Konsens
+
+Rationale
+                                                   127
+"""
+
+# A symbol font: the legend's wording column says which glyph means which direction.
+LEGEND_PAGE = """\uf0dd\uf0dd            soll                                   Starke Positiv-Empfehlung        A
+\uf0df\uf0df            soll nicht                             Starke Negativ-Empfehlung        A
+
+ 4-1 | k | neu 2024
+ Ein erfundener Test soll nicht wiederholt werden.                                   \uf0df\uf0df
+"""
+
+
+def test_the_degam_layout_letter_grades_and_dissent():
+    b = {x.number: x for x in G.find_degam_boxes([DEGAM_PAGE])}
+    assert sorted(b) == ["9.1-2a", "9.1-2b", "9.1-3"]
+    assert (b["9.1-2a"].grade, b["9.1-2b"].grade, b["9.1-3"].grade) == ("A", "A", "EK")
+    assert b["9.1-2a"].dissent and not b["9.1-3"].dissent
+    assert b["9.1-3"].consensus == "starker Konsens" and b["9.1-2a"].printed_page == 127
+    assert b["9.1-3"].status == "bestätigt 2024"  # not the column label beside it
+    # the letter says how strong, the wording which way
+    a = G.interpret(G._join_lines(b["9.1-2a"].lines), "A", "recommendation")
+    bb = G.interpret(G._join_lines(b["9.1-2b"].lines), "A", "recommendation")
+    ek = G.interpret(G._join_lines(b["9.1-3"].lines), "EK", "recommendation")
+    assert (a["strength"], a["direction"]) == ("soll", "do")
+    assert (bb["strength"], bb["direction"]) == ("soll nicht", "do not")
+    assert (ek["strength"], ek["direction"], ek["findings"]) == ("sollte", "do", [])
+    assert G.interpret("Der Test sollte erfolgen.", "A", "recommendation")["findings"]  # B wording, A letter
+    # the dissent note in the right-hand column is not part of the wording
+    assert "Gesellschaften" not in G._join_lines(b["9.1-2a"].lines)
+    assert G.normalise(G._join_lines(b["9.1-2a"].lines)) in G.normalise(G.text_column(DEGAM_PAGE))
+
+
+def test_a_symbol_font_is_read_with_the_guidelines_own_legend():
+    assert G.symbol_legend([LEGEND_PAGE]) == {"\uf0dd\uf0dd": "⇑⇑", "\uf0df\uf0df": "⇓⇓"}
+    box = G.find_boxes([LEGEND_PAGE])[0]
+    assert box.grade == "⇓⇓" and G.check_record(G._join_lines(box.lines), box.grade, box.kind) == []
+
+
+def test_a_cardiovascular_risk_links_to_the_risk_score():
+    assert G.link_scores("Bei einem absoluten Risiko für kardiovaskuläre Ereignisse ≥ 20 %") == [
+        {"id": "score2", "term": "kardiovaskuläres Risiko"}]
+    assert G.link_scores("Die eGFR soll bestimmt werden.") == []
+
+
+def test_nicht_in_a_compound_and_a_relative_clause_do_not_mislead():
+    assert G.check_record("Es sollen nicht-medikamentöse Hilfen angeboten werden.", "⇑⇑", "recommendation") == []
+    assert G.check_record("Wirkstoffe, die den Zustand verschlechtern können, sollen geprüft werden.",
+                          "⇑⇑", "recommendation") == []
+
+
 def test_degam_is_refused_without_consent(tmp_path):
     manifest = {"guidelines": [{"id": "degam-x", "awmfId": "053-999", "publisher": "DEGAM", "title": "x",
                                 "files": {"long": {"pdf": "x.pdf"}}}]}
@@ -148,7 +216,7 @@ def test_an_artefact_with_wording_is_refused():
     with pytest.raises(ValueError, match="reviewReasons"):
         G.validate(artefact(reviewReasons=["x" * 200]))
     with pytest.raises(ValueError, match="grade"):
-        G.validate(artefact(grade="A"))
+        G.validate(artefact(grade="Z"))
     with pytest.raises(ValueError, match="id"):
         G.validate(artefact(id="nvl-009 3-1"))
     with pytest.raises(ValueError, match="loinc"):
@@ -192,6 +260,18 @@ def test_storing_again_replaces_and_prunes(db):
     ids = [r["id"] for r in db.execute("MATCH (e:GuidelineRecommendation) RETURN e.id AS id")]
     assert ids == ["nvl-009:3-2"]  # 3-1 is no longer in the guideline's artefact
     assert db.execute("MATCH (:GuidelineRecommendation)-[m:MENTIONS]->() RETURN count(m) AS n").single()["n"] == 0
+
+
+def test_a_letter_grade_and_the_risk_score_are_stored(db):
+    a = artefact(id="053-024:9.1-2a", guidelineId="053-024", number="9.1-2a", grade="A", gradeLetter="A",
+                 consensus="starker Konsens", dissent=True, loinc=[],
+                 scores=[{"id": "score2", "term": "kardiovaskuläres Risiko"}])
+    a["guidelines"] = [{"id": "053-024", "version": "2.3", "extracted": True}]
+    counts = G.store(db, a)
+    assert counts["recommendations"] == 1 and counts["scores"] == 1
+    row = db.execute("MATCH (g:Study {register: 'AWMF 053-024'})-[:HAS_RECOMMENDATION]->(e)-[:MENTIONS]->(s:RiskScore) "
+                     "RETURN e.grade AS grade, e.dissent AS dissent, s.id AS score").single()
+    assert (row["grade"], row["dissent"], row["score"]) == ("A", True, "score2")
 
 
 def test_a_guideline_version_the_knowledge_layer_does_not_know_is_not_stored(db):

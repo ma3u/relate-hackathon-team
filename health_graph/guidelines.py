@@ -61,7 +61,8 @@ NOTICE = (
 RECORD_FIELDS = {
     "id", "guidelineId", "number", "type", "basis", "status", "grade", "strength",
     "direction", "gradeLetter", "page", "printedPage", "section", "pdfUrl",
-    "wordingSha256", "loinc", "checks", "needsReview", "reviewReasons",
+    "wordingSha256", "loinc", "scores", "consensus", "dissent", "checks", "needsReview",
+    "reviewReasons",
 }
 
 # ── grades ──────────────────────────────────────────────────────────────────
@@ -76,7 +77,33 @@ GRADES: dict[str, dict[str, str]] = {
     "⇓": {"strength": "sollte nicht", "direction": "do not", "letter": "B"},
     "⇓⇓": {"strength": "soll nicht", "direction": "do not", "letter": "A"},
 }
-GRADE_AT_END = re.compile(r"\s{3,}(⇑⇑|⇓⇓|⇑|⇓|⇔)\s*$")
+# The DEGAM prints the letter (A, B, 0) or EK (expert consensus); the letter says how strong,
+# the wording says which way: "soll" and "soll nicht" are both A.
+LETTERS: dict[str, str] = {"A": "soll", "B": "sollte", "0": "kann"}
+ALLOWED_GRADES = [*GRADES, *LETTERS, "EK"]
+PUA = "\uf000-\uf8ff"  # a symbol font's private-use glyphs, as pdftotext prints them
+ARROW_FOR = {"soll": "⇑⇑", "sollte": "⇑", "kann": "⇔", "sollte nicht": "⇓", "soll nicht": "⇓⇓"}
+LEGEND_ROW = re.compile(rf"^\s*([{PUA}]{{1,2}})\s{{2,}}(soll nicht|sollte nicht|sollte|soll|kann)\b")
+
+
+def symbol_legend(pages: list[str]) -> dict[str, str]:
+    """The guideline's own legend for a symbol font: glyphs -> arrow, read from the wording column.
+
+    The letter column is no help: A stands for both "soll" and "soll nicht". The wording column
+    ("soll", "sollte nicht", "kann erwogen werden") says which way, so that is what is read.
+    """
+    legend: dict[str, str] = {}
+    for page in pages[:60]:
+        for line in page.split("\n"):
+            m = LEGEND_ROW.match(line)
+            if m:
+                legend.setdefault(m.group(1), ARROW_FOR[m.group(2)])
+    return legend
+
+
+def grade_at_end(legend: dict[str, str]) -> re.Pattern:
+    symbols = sorted({"⇑⇑", "⇓⇓", "⇑", "⇓", "⇔", *legend}, key=len, reverse=True)
+    return re.compile(r"\s{3,}(" + "|".join(re.escape(x) for x in symbols) + r")\s*$")
 
 HEADER = re.compile(
     r"^\s+(?P<number>\d{1,2}(?:\.\d+)?-\d{1,3}[a-z]?)\s*\|\s*(?P<basis>[ek])\s*\|\s*"
@@ -85,6 +112,7 @@ HEADER = re.compile(
 LABEL = re.compile(r"^\s*(Empfehlung(?:en)?|Statement(?:s)?)\s*$")
 HEADING = re.compile(r"^(?P<num>\d{1,2}(?:\.\d{1,2}){0,3})\s{2,}(?P<title>\S.*?)\s*$")
 FOOTER = re.compile(r"©.*Seite\s+(?P<page>\d+)\s*$")
+PAGE_ONLY = re.compile(r"^\s{20,}(?P<page>[1-9]\d{0,2})\s*$")  # the DEGAM prints the bare number (a grade "0" is not one)
 BULLET_GLYPHS = "•▪"
 
 # ── text normalisation (for checks only; the stored wording is not reworded) ─
@@ -113,7 +141,7 @@ def _join_lines(lines: list[str]) -> str:
 
 def normalise(text: str) -> str:
     """The form both sides of the verbatim check are compared in."""
-    text = re.sub(r"(⇑⇑|⇓⇓|⇑|⇓|⇔)", " ", text)
+    text = re.sub(rf"(⇑⇑|⇓⇓|⇑|⇓|⇔|[{PUA}])", " ", text)
     for g in BULLET_GLYPHS + "•":
         text = text.replace(g, " ")
     text = re.sub(r"([a-zäöüß])-\s*\n\s*([a-zäöüß])", r"\1\2", text)
@@ -151,9 +179,27 @@ class Box:
     printed_page: int | None
     section: str | None
     ran_off_page: bool
+    preamble: int = 0  # leading lines shared by all parts a), b), c): checked on the page apart from the part
 
 
-def find_boxes(pages: list[str]) -> list[Box]:
+def split_columns(line: str) -> tuple[str, str]:
+    """(text column, what stands right of it): the grade column, a dissent note."""
+    m = re.match(r"^(\s*)(.*?)(?:\s{5,}(\S.*?))?\s*$", line)
+    lead, left, right = m.group(1), m.group(2), m.group(3) or ""
+    if len(lead) >= 40:  # nothing in the text column on this line
+        return "", (left + ("     " + right if right else "")).strip()
+    return left, right
+
+
+def text_column(page: str) -> str:
+    """A page with the right-hand columns removed: what a box's wording is checked against."""
+    return "\n".join(split_columns(line)[0] for line in page.split("\n"))
+
+
+def find_boxes(pages: list[str], legend: dict[str, str] | None = None) -> list[Box]:
+    """The NVL dialect: a header "3-4 | e | neu 2023", the grade as an arrow (or a symbol font) far right."""
+    legend = symbol_legend(pages) if legend is None else legend
+    grade_re = grade_at_end(legend)
     boxes: list[Box] = []
     label = "recommendation"
     section: str | None = None
@@ -196,13 +242,14 @@ def find_boxes(pages: list[str]) -> list[Box]:
                     ran_off = False
                     break
                 blanks = 0
-                g = GRADE_AT_END.search(nxt)
-                symbol = g.group(1) if g else None
+                g = grade_re.search(nxt)
+                symbol = legend.get(g.group(1), g.group(1)) if g else None
                 if g:
                     nxt = nxt[: g.start()]
                 body.append((nxt, symbol))
                 j += 1
-            for suffix, part in _parts(body):
+            split, shared = _parts(body)
+            for suffix, part in split:
                 symbols = {sym for _, sym in part if sym}
                 boxes.append(Box(
                     number=m.group("number") + suffix,
@@ -216,18 +263,111 @@ def find_boxes(pages: list[str]) -> list[Box]:
                     printed_page=printed,
                     section=section,
                     ran_off_page=ran_off,
+                    preamble=shared if suffix else 0,
                 ))
             i = j
+    return boxes
+
+
+DEGAM_HEADER = re.compile(
+    r"^\s*(?P<number>\d{1,2}(?:\.\d+)?-\d{1,3}[a-z]?)\s+(?P<kind>Empfehlung|Statement)\s+"
+    r"(?P<basis>evidenzbasiert|konsensbasiert)\s+(?P<status>(?:neu|bestätigt|modifiziert|geprüft)\s+\d{4})(?:\s.*)?$"
+)
+DEGAM_END = re.compile(r"^\s*(Ergebnis Konsensverfahren|Qualität der Evidenz|Rationale\s*$|Hintergrund\s*$)")
+CONSENSUS = re.compile(r"Ergebnis Konsensverfahren:\s*(?P<c>[^()]{1,40}?)\s*(?:\(|$)")
+DEGAM_GRADES = {"A", "B", "0", "EK", "Statement"}
+
+
+@dataclasses.dataclass
+class DegamBox(Box):
+    consensus: str | None = None
+    dissent: bool = False
+
+
+def find_degam_boxes(pages: list[str]) -> list[Box]:
+    """The DEGAM dialect: "9.1-2 Empfehlung evidenzbasiert neu 2024", the grade letter in a column
+    to the right, parts a), b), c), a dissent note in a third column, the consensus below. A box may
+    run over a page end: the page number and the running head are skipped, and the box goes on."""
+    flat: list[tuple[int, str]] = []
+    printed: dict[int, int] = {}
+    for index, page in enumerate(pages, start=1):
+        for line in page.split("\n"):
+            m = PAGE_ONLY.match(line)
+            if m:
+                printed[index] = int(m.group("page"))
+            flat.append((index, line))
+    running_head = re.compile(r"^\s*DEGAM[- ]Leitlinie|^\s*(?:S3-)?Leitlinie\b.*\bDEGAM\b")
+    boxes: list[Box] = []
+    section: str | None = None
+    i = 0
+    while i < len(flat):
+        index, line = flat[i]
+        h = HEADING.match(line)
+        if h:
+            section = f"{h.group('num')} {h.group('title')}"
+        m = DEGAM_HEADER.match(line)
+        if not m:
+            i += 1
+            continue
+        body: list[tuple[str, str | None]] = []
+        consensus, dissent, crossed, ended = None, False, False, False
+        j = i + 1
+        while j < len(flat) and j - i < 90:
+            at, nxt = flat[j]
+            if DEGAM_HEADER.match(nxt):
+                ended = True
+                break
+            if PAGE_ONLY.match(nxt) or running_head.match(nxt):
+                j += 1
+                continue
+            if at != index:
+                crossed = True
+            if DEGAM_END.match(nxt):
+                c = CONSENSUS.search(nxt)
+                consensus = c.group("c").strip() if c else None
+                ended = True
+                break
+            left, right = split_columns(nxt)
+            grade = None
+            for token in re.split(r"\s{3,}", right) if right else []:
+                if token in DEGAM_GRADES:
+                    grade = token
+                elif token.startswith("Dissens"):
+                    dissent = True
+            if left.strip() or grade:
+                body.append((" " + left.strip() if left.strip() else "", grade))
+            j += 1
+        split, shared = _parts(body)
+        for suffix, part in split:
+            grades = {g for _, g in part if g}
+            grade = grades.pop() if len(grades) == 1 else ("?" if grades else None)
+            kind = "statement" if m.group("kind") == "Statement" or grade == "Statement" else "recommendation"
+            boxes.append(DegamBox(
+                number=m.group("number") + suffix, kind=kind,
+                basis="evidence" if m.group("basis") == "evidenzbasiert" else "consensus",
+                status=m.group("status").strip(), lines=[t for t, _ in part],
+                grade=None if grade == "Statement" else grade, page=index, printed_page=printed.get(index),
+                section=section, ran_off_page=not ended, preamble=shared if suffix else 0,
+                consensus=consensus, dissent=dissent,
+            ))
+        i = j
     return boxes
 
 
 PART = re.compile(r"^\s*([a-h])\)\s*(.*)$")
 
 
-def _parts(body: list[tuple[str, str | None]]) -> list[tuple[str, list[tuple[str, str | None]]]]:
-    """A box with parts a), b), c) is one recommendation per part, each with its own grade."""
-    if not any(PART.match(text) for text, _ in body[:2]):
-        return [("", body)]
+def _parts(body: list[tuple[str, str | None]]) -> tuple[list[tuple[str, list[tuple[str, str | None]]]], int]:
+    """A box with parts a), b), c) is one recommendation per part, each with its own grade.
+
+    Returns the parts and the number of preamble lines each part starts with (0 for none)."""
+    first = next((k for k, (text, _) in enumerate(body) if PART.match(text)), None)
+    if first is None:
+        return [("", body)], 0
+    # "Personen ohne … a) soll … b) sollte …": the lines before a) belong to every part.
+    preamble = [(t, sym) for t, sym in body[:first] if t.strip()]
+    if preamble:
+        body = [("", sym) for _, sym in body[:first] if sym] + body[first:]
     parts: list[tuple[str, list[tuple[str, str | None]]]] = []
     for text, symbol in body:
         m = PART.match(text)
@@ -235,7 +375,15 @@ def _parts(body: list[tuple[str, str | None]]) -> list[tuple[str, list[tuple[str
             parts.append((m.group(1), [(" " + m.group(2), symbol)] if m.group(2) or symbol else []))
         elif parts:
             parts[-1][1].append((text, symbol))
-    return parts
+        elif symbol:  # a grade printed beside the box header, before part a)
+            parts.append(("", [("", symbol)]))
+    if parts and parts[0][0] == "":
+        lead = parts.pop(0)[1]
+        if parts:
+            parts[0][1][:0] = lead
+    if preamble:
+        parts = [(letter, [(t, None) for t, _ in preamble] + lines) for letter, lines in parts]
+    return parts, len(preamble)
 
 
 # ── checks ──────────────────────────────────────────────────────────────────
@@ -243,7 +391,7 @@ def _parts(body: list[tuple[str, str | None]]) -> list[tuple[str, list[tuple[str
 MODAL = re.compile(r"\b(soll|sollen|sollte|sollten|kann|können)\b")
 MODAL_LETTER = {"soll": "A", "sollen": "A", "sollte": "B", "sollten": "B", "kann": "0", "können": "0"}
 NEGATION = re.compile(
-    r"\b(nicht|kein|keine|keinen|keinem|keiner|keines"
+    r"\b(nicht(?!-)|kein|keine|keinen|keinem|keiner|keines"
     r"|vermieden|vermeiden|verzichtet|verzichten|unterlassen|unterbleiben|abgeraten|abraten)\b"
 )
 # Where the clause that carries the action ends. A gender colon (Patient:innen)
@@ -256,8 +404,21 @@ CLAUSE_END = re.compile(
 )
 
 
+RELATIVE = re.compile(r",\s*(?:die|der|das|dem|den|denen|deren|dessen|welche[rsnm]?)\s[^,]*?,")
+
+
+def without_relative_clauses(text: str) -> str:
+    """", die … können (Tabelle 18), soll …": a relative clause describes a noun, it is not the action."""
+    return RELATIVE.sub(",", text)
+
+
+def first_modal(text: str) -> re.Match | None:
+    return MODAL.search(without_relative_clauses(text))
+
+
 def main_clause(wording: str) -> str | None:
-    """From the first modal verb to where the action's clause ends."""
+    """From the first modal verb (outside relative clauses) to where the action's clause ends."""
+    wording = without_relative_clauses(wording)
     m = MODAL.search(wording)
     if not m:
         return None
@@ -274,16 +435,55 @@ def main_clause(wording: str) -> str | None:
 
 def check_record(wording: str, grade: str | None, kind: str) -> list[str]:
     """Findings that hold a record back (empty = it passes)."""
+    return interpret(wording, grade, kind)["findings"]
+
+
+def interpret(wording: str, grade: str | None, kind: str) -> dict:
+    """Strength, direction and the findings that hold a record back.
+
+    An arrow carries both strength and direction, so the wording is checked against it. A letter
+    (A, B, 0) carries the strength only: the modal verb is checked against it and the direction is
+    read from the main clause. EK (expert consensus) carries neither: both come from the wording.
+    """
+    if kind == "statement":
+        return {"strength": None, "direction": None, "letter": None, "findings": []}
+    if grade in LETTERS or grade == "EK":
+        return _interpret_letter(wording.replace("\n", " "), grade)
+    findings = _check_arrow(wording, grade)
+    g = GRADES.get(grade or "", {})
+    return {"strength": g.get("strength"), "direction": g.get("direction"), "letter": g.get("letter"),
+            "findings": findings}
+
+
+def _interpret_letter(flat: str, grade: str) -> dict:
+    findings: list[str] = []
+    m = first_modal(flat)
+    if not m:
+        return {"strength": None, "direction": None, "letter": None,
+                "findings": ["no modal verb (soll, sollte, kann) in the wording"]}
+    letter = MODAL_LETTER[m.group(1)]
+    if grade in LETTERS and letter != grade:
+        findings.append(f"modal verb '{m.group(1)}' does not match grade {grade} ({LETTERS[grade]})")
+        letter = grade
+    if letter == "0":
+        return {"strength": "kann", "direction": "open", "letter": letter, "findings": findings}
+    negations = NEGATION.findall(main_clause(flat) or "")
+    if len(negations) > 1:
+        findings.append("more than one negation in the main clause; direction needs a person")
+    direction = "do not" if negations else "do"
+    strength = LETTERS[letter] + (" nicht" if negations else "")
+    return {"strength": strength, "direction": direction, "letter": letter, "findings": findings}
+
+
+def _check_arrow(wording: str, grade: str | None) -> list[str]:
     findings: list[str] = []
     flat = wording.replace("\n", " ")
-    if kind == "statement":
-        return findings
     if grade is None:
         return ["no grade symbol found in the box"]
     if grade not in GRADES:
         return ["two different grade symbols in one box"]
     expected = GRADES[grade]
-    m = MODAL.search(flat)
+    m = first_modal(flat)
     if not m:
         findings.append("no modal verb (soll, sollte, kann) in the wording")
     elif MODAL_LETTER[m.group(1)] != expected["letter"]:
@@ -320,6 +520,19 @@ MARKERS: list[tuple[str, str, list[str]]] = [
     ("NT-proBNP", r"NT-proBNP|\bBNP\b", ["33762-6", "30934-4"]),
     ("Blutdruck", r"[Bb]lutdruck", ["8480-6", "8462-4", "85354-9", "55284-4"]),
 ]
+
+
+# A recommendation that turns on the 10-year cardiovascular risk (statins, aspirin) is linked to
+# the risk score Klarbefund computes for it. Again lexical: the box names that risk.
+SCORES: list[tuple[str, str, list[str]]] = [
+    ("kardiovaskuläres Risiko",
+     r"(?:absolute[sn]?|globale[sn]?|individuelle[sn]?)\s+(?:kardiovaskuläre[sn]?\s+)?Risiko"
+     r"|kardiovaskuläre[sn]?\s+Risiko|Risiko für kardiovaskuläre Ereignisse", ["score2"]),
+]
+
+
+def link_scores(wording: str) -> list[dict[str, str]]:
+    return [{"id": i, "term": term} for term, pattern, ids in SCORES if re.search(pattern, wording) for i in ids]
 
 
 def link_loinc(wording: str) -> list[dict[str, str]]:
@@ -373,8 +586,8 @@ def numbering_gaps(numbers: list[str]) -> list[str]:
 def extract_guideline(meta: dict, long_pdf: Path, short_pdf: Path | None,
                       pdf_url: str | None = None) -> tuple[dict, list[dict]]:
     pages = pdf_pages(long_pdf)
-    norm_pages = [normalise(p) for p in pages]
-    boxes = find_boxes(pages)
+    norm_pages = [normalise(text_column(p)) for p in pages]
+    boxes = all_boxes(pages)
     gid = meta["awmfId"]
     records: list[dict] = []
     seen: set[str] = set()
@@ -384,7 +597,9 @@ def extract_guideline(meta: dict, long_pdf: Path, short_pdf: Path | None,
             continue
         seen.add(b.number)
         reasons: list[str] = []
-        verbatim = normalise(wording) in norm_pages[b.page - 1]
+        near = " ".join(norm_pages[b.page - 1: b.page + 1])  # a box may cross a page end
+        pieces = ([_join_lines(b.lines[:b.preamble]), _join_lines(b.lines[b.preamble:])] if b.preamble else [wording])
+        verbatim = all(normalise(piece) in near for piece in pieces)
         if not verbatim:
             reasons.append("wording not found on the stated page")
         if b.ran_off_page:
@@ -392,8 +607,8 @@ def extract_guideline(meta: dict, long_pdf: Path, short_pdf: Path | None,
         kind = b.kind
         if kind == "recommendation" and b.grade is None and not MODAL.search(wording):
             kind = "statement"  # a definition printed in a recommendation box: nothing to grade
-        findings = check_record(wording, b.grade, kind)
-        grade = GRADES.get(b.grade or "", {})
+        meaning = interpret(wording, b.grade, kind)
+        findings = meaning["findings"]
         records.append({
             "id": f"{gid}:{b.number}",
             "guidelineId": gid,
@@ -403,19 +618,22 @@ def extract_guideline(meta: dict, long_pdf: Path, short_pdf: Path | None,
             "status": b.status,
             "wording": wording,  # in memory only; dropped before the artefact is written
             "grade": b.grade,
-            "strength": grade.get("strength"),
-            "direction": grade.get("direction") if kind == "recommendation" else None,
-            "gradeLetter": grade.get("letter"),
+            "strength": meaning["strength"],
+            "direction": meaning["direction"],
+            "gradeLetter": meaning["letter"],
             "page": b.page,
             "printedPage": b.printed_page,
             "section": b.section.split(" ", 1)[0] if b.section else None,
             "pdfUrl": f"{pdf_url}#page={b.page}" if pdf_url else None,
             "wordingSha256": hashlib.sha256(normalise(wording).encode("utf-8")).hexdigest(),
             "loinc": link_loinc(wording),
+            "scores": link_scores(wording),
+            "consensus": getattr(b, "consensus", None),
+            "dissent": getattr(b, "dissent", False),
             "checks": {"verbatim": verbatim, "gate": not findings, "shortVersion": None},
             "reviewReasons": reasons + findings,
         })
-    short = compare_short(records, find_boxes(pdf_pages(short_pdf))) if short_pdf else None
+    short = compare_short(records, all_boxes(pdf_pages(short_pdf))) if short_pdf else None
     for r in records:
         r["needsReview"] = bool(r["reviewReasons"])
         del r["wording"]
@@ -450,16 +668,49 @@ def extract_guideline(meta: dict, long_pdf: Path, short_pdf: Path | None,
     return guideline, records
 
 
+def all_boxes(pages: list[str]) -> list[Box]:
+    """Both dialects; a number found by both is taken once, in page order."""
+    seen: set[str] = set()
+    out = []
+    for b in sorted(find_boxes(pages) + find_degam_boxes(pages), key=lambda b: b.page):
+        if b.number not in seen:
+            seen.add(b.number)
+            out.append(b)
+    return out
+
+
 # ── the artefact ────────────────────────────────────────────────────────────
 
+USER_AGENT = "Klarbefund-guidelines/1.0 (+https://github.com/ma3u/relate-hackathon-team)"
 
-def public_pdf_url(meta: dict) -> str | None:
-    """Where the publisher offers the long version (leitlinien.de: <topic>/langfassung/<file>)."""
+
+def public_pdf_url(meta: dict, fetch=None) -> str | None:
+    """Where the publisher offers the long version.
+
+    leitlinien.de: <topic>/langfassung/<file>. degam.de: the long-version link on the guideline's
+    page (one request; its robots.txt allows it). None when it cannot be found.
+    """
     name = meta.get("files", {}).get("long", {}).get("pdf")
     page = meta.get("sourcePage") or ""
     if name and page.startswith("https://www.leitlinien.de/themen/"):
         return f"{page.rstrip('/')}/langfassung/{name}"
+    if page.startswith("https://www.degam.de/"):
+        try:
+            html = (fetch or _fetch)(page)
+        except OSError:
+            return None
+        aid = meta.get("awmfId") or ""
+        links = [h for h in re.findall(r'href="([^"]+\.pdf)"', html) if "langfassung" in h and aid in h]
+        if links:
+            return links[0] if links[0].startswith("https://") else "https://www.degam.de/" + links[0].lstrip("/")
     return None
+
+
+def _fetch(url: str) -> str:
+    import urllib.request
+    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    with urllib.request.urlopen(req, timeout=20) as r:
+        return r.read().decode("utf-8", "replace")
 
 
 def assert_no_text(artefact: dict) -> None:
@@ -529,6 +780,7 @@ SET e.guidelineId = r.guidelineId, e.register = r.register, e.number = r.number,
     e.printedPage = r.printedPage, e.section = r.section, e.pdfUrl = r.pdfUrl,
     e.wordingSha256 = r.wordingSha256, e.needsReview = r.needsReview,
     e.reviewReasons = r.reviewReasons, e.shortVersion = r.shortVersion,
+    e.consensus = r.consensus, e.dissent = r.dissent,
     e.guidelineTitle = g.title, e.guidelineVersion = g.version, e.checkedAt = $checkedAt
 MERGE (g)-[:HAS_RECOMMENDATION]->(e)
 RETURN count(e) AS recommendations
@@ -536,7 +788,7 @@ RETURN count(e) AS recommendations
 
 UNLINK_RECOMMENDATION_MENTIONS = """
 UNWIND $ids AS id
-MATCH (e:GuidelineRecommendation {id: id})-[x:MENTIONS]->(:LoincCode)
+MATCH (e:GuidelineRecommendation {id: id})-[x:MENTIONS]->()
 DELETE x
 RETURN count(*) AS unlinked
 """
@@ -548,6 +800,15 @@ MATCH (c:LoincCode {code: m.code})
 MERGE (e)-[x:MENTIONS]->(c)
 SET x.term = m.term
 RETURN count(x) AS mentions
+"""
+
+STORE_RECOMMENDATION_SCORES = """
+UNWIND $mentions AS m
+MATCH (e:GuidelineRecommendation {id: m.id})
+MATCH (s:RiskScore {id: m.score})
+MERGE (e)-[x:MENTIONS]->(s)
+SET x.term = m.term
+RETURN count(x) AS scores
 """
 
 PRUNE_RECOMMENDATIONS = """
@@ -579,6 +840,8 @@ def register_of(guideline_id: str) -> str:
 def validate(artefact: dict) -> tuple[list[dict], list[dict]]:
     """Checks an artefact and returns (recommendation rows, mention rows). ValueError names the problem.
 
+    A mention row names a LOINC code (`code`) or a risk score (`score`).
+
     The same rules as `GuidelineRecommendations.validate` in Swift: only the fact fields, short strings,
     known grades, well-formed ids and LOINC codes, so no guideline text reaches the graph.
     """
@@ -589,7 +852,7 @@ def validate(artefact: dict) -> tuple[list[dict], list[dict]]:
     recs = artefact.get("recommendations")
     if not isinstance(recs, list) or len(recs) > 5000:
         raise ValueError("recommendations: a list of at most 5000")
-    rows, mentions = [], []
+    rows, mentions, score_mentions = [], [], []
     for i, r in enumerate(recs, start=1):
         where = f"recommendation {i}"
         if not isinstance(r, dict):
@@ -603,9 +866,10 @@ def validate(artefact: dict) -> tuple[list[dict], list[dict]]:
         gid = r.get("guidelineId")
         if gid not in versions or not rid.startswith(f"{gid}:"):
             raise ValueError(f"{rid}: guideline '{gid}' is not an extracted guideline of this artefact")
-        if r.get("grade") not in (*GRADES, "?", None):
+        if r.get("grade") not in (*ALLOWED_GRADES, "?", None):
             raise ValueError(f"{rid}: grade '{r.get('grade')}' unknown")
-        for key in ("number", "type", "basis", "status", "strength", "direction", "gradeLetter", "section"):
+        for key in ("number", "type", "basis", "status", "strength", "direction", "gradeLetter", "section",
+                    "consensus"):
             v = r.get(key)
             if v is not None and (not isinstance(v, str) or len(v) > 40):
                 raise ValueError(f"{rid}: {key} must be a short string")
@@ -631,6 +895,14 @@ def validate(artefact: dict) -> tuple[list[dict], list[dict]]:
                     or not isinstance(link.get("term"), str) or len(link["term"]) > 40):
                 raise ValueError(f"{rid}: loinc entries are {{code, term}}")
             mentions.append({"id": rid, "code": link["code"], "term": link["term"]})
+        scores = r.get("scores") or []
+        if not isinstance(scores, list) or len(scores) > 10 or any(
+                not isinstance(x, dict) or not re.fullmatch(r"[a-z0-9-]{1,30}", str(x.get("id", "")))
+                or not isinstance(x.get("term"), str) or len(x["term"]) > 40 for x in scores):
+            raise ValueError(f"{rid}: scores entries are {{id, term}}")
+        score_mentions.extend({"id": rid, "score": x["id"], "term": x["term"]} for x in scores)
+        if not isinstance(r.get("dissent", False), bool):
+            raise ValueError(f"{rid}: dissent must be true or false")
         checks = r.get("checks") or {}
         short = checks.get("shortVersion") if isinstance(checks, dict) else None
         rows.append({
@@ -641,8 +913,9 @@ def validate(artefact: dict) -> tuple[list[dict], list[dict]]:
             "printedPage": r.get("printedPage"), "section": r.get("section"), "pdfUrl": url,
             "wordingSha256": sha, "needsReview": bool(r.get("needsReview") or reasons),
             "reviewReasons": reasons, "shortVersion": short if isinstance(short, str) and len(short) <= 40 else None,
+            "consensus": r.get("consensus"), "dissent": bool(r.get("dissent", False)),
         })
-    return rows, mentions
+    return rows, mentions + score_mentions
 
 
 def store(conn, artefact: dict, checked_at: str | None = None) -> dict:
@@ -668,7 +941,9 @@ def store(conn, artefact: dict, checked_at: str | None = None) -> dict:
             "recommendations": matched, "checkedAt": checked_at}).single()))
         conn.execute(UNLINK_RECOMMENDATION_MENTIONS, {"ids": sorted(ids)})
         counts.update(dict(conn.execute(STORE_RECOMMENDATION_MENTIONS, {
-            "mentions": [m for m in mentions if m["id"] in ids]}).single()))
+            "mentions": [m for m in mentions if m["id"] in ids and "code" in m]}).single()))
+        counts.update(dict(conn.execute(STORE_RECOMMENDATION_SCORES, {
+            "mentions": [m for m in mentions if m["id"] in ids and "score" in m]}).single()))
         conn.commit()
         return counts
     except Exception:
