@@ -49,6 +49,8 @@ xcodegen generate
 open Klarbefund.xcodeproj      # or: xcodebuild -scheme Klarbefund build
 ```
 
+**TestFlight without a login.** `scripts/testflight_mac.sh` archives, exports, validates and uploads a build with an App Store Connect API key, so neither the Organizer nor the Apple ID in Xcode's Accounts is needed. The key stays outside the repository: the `.p8` file in `~/.appstoreconnect/private_keys/` (mode 600), and a line `ASC_ISSUER_ID=<issuer id>` in `~/.appstoreconnect/config` (App Store Connect, Users and Access, Integrations, App Store Connect API, shown above the keys). Raise `CURRENT_PROJECT_VERSION` in `project.yml` first; `--check` tests the key offline, `--validate-only` stops before the upload.
+
 Keep archives in `apps/mac/build/archives.noindex/`: Spotlight skips a `.noindex` folder, so macOS never launches an archived build instead of the TestFlight app (on Nov 16, 2026 it opened a build 5 archive, and Claude got its old extension).
 
 | Part | Where | What it does |
