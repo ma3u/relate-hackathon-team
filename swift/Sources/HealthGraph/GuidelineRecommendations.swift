@@ -9,7 +9,8 @@ import Relate
 /// `validate` refuses any field outside `GuidelineRules.recordFields`, long strings and unknown grades, so
 /// an artefact that carries wording never reaches the graph. Same rules as `validate()` in guidelines.py.
 public enum GuidelineRecommendations {
-  /// (recommendation rows, mention rows) ready for the Cypher in `Cypher.guideline*`.
+  /// (recommendation rows, mention rows) ready for the Cypher in `Cypher.guideline*`. A mention row names a
+  /// LOINC code (`code`), a risk score (`score`) or a clinical question (`question`).
   public static func validate(_ artefact: JSONObject) throws -> (rows: [JSONObject], mentions: [JSONObject]) {
     func fail(_ s: String) -> HealthGraphError { .invalid(s) }
     guard artefact["schemaVersion"] as? String == GuidelineRules.schemaVersion else {
@@ -25,6 +26,8 @@ public enum GuidelineRecommendations {
     let idRe = try NSRegularExpression(pattern: GuidelineRules.idPattern)
     let loincRe = try NSRegularExpression(pattern: GuidelineRules.loincPattern)
     let shaRe = try NSRegularExpression(pattern: "^[0-9a-f]{64}$")
+    let questionRe = try NSRegularExpression(pattern: GuidelineRules.questionPattern)
+    let codeRe = try NSRegularExpression(pattern: GuidelineRules.codePattern)
     func matches(_ re: NSRegularExpression, _ s: String) -> Bool {
       re.firstMatch(in: s, range: NSRange(s.startIndex..., in: s)) != nil
     }
@@ -90,6 +93,25 @@ public enum GuidelineRecommendations {
       guard r["dissent"] == nil || r["dissent"] is NSNull || r["dissent"] is Bool else {
         throw fail("\(rid): dissent must be true or false")
       }
+      let questionsAny = r["questions"] ?? [Any]()
+      guard let questions = (questionsAny is NSNull ? [Any]() : questionsAny as? [Any]), questions.count <= 10,
+        questions.allSatisfy({ ($0 as? String).map { matches(questionRe, $0) } ?? false })
+      else { throw fail("\(rid): questions: at most 10 question ids (q-…)") }
+      var seenQuestions = Set<String>()
+      for case let q as String in questions where seenQuestions.insert(q).inserted {
+        mentions.append(["id": rid, "question": q])
+      }
+      let codesAny = r["codes"] ?? [Any]()
+      guard let codeList = (codesAny is NSNull ? [Any]() : codesAny as? [Any]), codeList.count <= 40 else {
+        throw fail("\(rid): codes entries are {system, code} (SNOMED-CT, ICD-10, ICPC-2)")
+      }
+      var codes: [String] = []
+      for c in codeList {
+        guard let c = c as? JSONObject, let system = c["system"] as? String,
+          GuidelineRules.codeSystems.contains(system), let code = c["code"] as? String, matches(codeRe, code)
+        else { throw fail("\(rid): codes entries are {system, code} (SNOMED-CT, ICD-10, ICPC-2)") }
+        codes.append("\(system)|\(code)")
+      }
       let short = ((r["checks"] as? JSONObject)?["shortVersion"] as? String).flatMap { $0.count <= 40 ? $0 : nil }
       func value(_ key: String) -> Any { r[key] ?? NSNull() }
       rows.append([
@@ -100,15 +122,18 @@ public enum GuidelineRecommendations {
         "section": value("section"), "pdfUrl": url ?? NSNull(), "wordingSha256": sha,
         "needsReview": (r["needsReview"] as? Bool ?? false) || !reasons.isEmpty, "reviewReasons": reasons,
         "shortVersion": short ?? NSNull(), "consensus": value("consensus"),
-        "dissent": r["dissent"] as? Bool ?? false,
+        "dissent": r["dissent"] as? Bool ?? false, "codes": codes,
       ])
     }
     return (rows, mentions)
   }
 
-  /// The register number as the knowledge layer writes it (evidence.GUIDELINES): "NVL 009", "AWMF 053-048".
+  /// The register number as the knowledge layer writes it (evidence.GUIDELINES): "NVL 009", "AWMF 053-048",
+  /// "HDIR hjerte-kar" (Helsedirektoratet, Norway).
   public static func register(of guidelineId: String) -> String {
-    guidelineId.hasPrefix("nvl-") ? "NVL " + guidelineId.dropFirst(4) : "AWMF " + guidelineId
+    if guidelineId.hasPrefix("nvl-") { return "NVL " + guidelineId.dropFirst(4) }
+    if guidelineId.hasPrefix("hdir-") { return "HDIR " + guidelineId.dropFirst(5) }
+    return "AWMF " + guidelineId
   }
 }
 
@@ -143,10 +168,15 @@ extension HealthStore {
       let scored = try c.query(Cypher.guidelineStoreScores, [
         "mentions": JSON.cypher(mine.filter { $0["score"] != nil }),
       ])
+      _ = try c.query(Cypher.guidelineUnlinkQuestions, ["ids": JSON.cypher(ids.sorted())])
+      let answered = try c.query(Cypher.guidelineStoreQuestions, [
+        "mentions": JSON.cypher(mine.filter { $0["question"] != nil }),
+      ])
       return [
         "recommendations": Int(stored.records.first?["recommendations"]?.intValue ?? 0),
         "mentions": Int(linked.records.first?["mentions"]?.intValue ?? 0),
         "scores": Int(scored.records.first?["scores"]?.intValue ?? 0),
+        "answers": Int(answered.records.first?["answers"]?.intValue ?? 0),
         "pruned": Int(pruned.records.first?["pruned"]?.intValue ?? 0),
         "unmatched": rows.count - matched.count,
       ]

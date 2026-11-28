@@ -403,7 +403,7 @@ def fingerprint() -> str:
     """Changes whenever any seeded fact changes, so seeding runs only then."""
     blob = json.dumps([HEALTH_RISKS, RISK_SCORES, _marker_rows(), _range_rows(), STUDIES, RISK_LINKS, CODE_NAMES,
                        STUDY_CITATIONS, TOPIC_OF_RISK, TOPIC_OF_GROUP, STUDY_ABOUT, evidence.GUIDELINE_CITES,
-                       evidence.AFTER_CUTOFF, evidence.DISAGREES],
+                       evidence.AFTER_CUTOFF, evidence.DISAGREES, evidence.QUESTIONS],
                       sort_keys=True)
     return hashlib.sha256(blob.encode()).hexdigest()[:16]
 
@@ -526,6 +526,7 @@ RETURN count(DISTINCT st) AS rangeSources
 
 SEED_STUDY_AFTER_CUTOFF = evidence.SEED_STUDY_AFTER_CUTOFF
 SEED_STUDY_DISAGREES = evidence.SEED_STUDY_DISAGREES
+SEED_QUESTIONS = evidence.SEED_QUESTIONS
 
 SEED_VERSION = """
 MERGE (k:Knowledge {id: 'health-graph'})
@@ -557,6 +558,7 @@ def seed(conn, force: bool = False) -> dict[str, int]:
         counts.update(dict(conn.execute(SEED_STUDY_RISKS, {"about": _about_rows()}).single()))
         counts.update(dict(conn.execute(SEED_STUDY_AFTER_CUTOFF, {"afterCutoff": evidence.after_cutoff_rows()}).single()))
         counts.update(dict(conn.execute(SEED_STUDY_DISAGREES, {"disagrees": evidence.disagree_rows()}).single()))
+        counts.update(dict(conn.execute(SEED_QUESTIONS, {"questions": evidence.question_rows()}).single()))
         source = json.loads((HERE / "reference_ranges.json").read_text())["source"]
         conn.execute(SEED_VERSION, {"fingerprint": fp, "rangesSource": source})
         conn.commit()

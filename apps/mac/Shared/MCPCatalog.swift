@@ -597,6 +597,10 @@ enum MCPCatalog {
           - Guideline recommendations that name a marker: MATCH (c:LoincCode {code: '4548-4'})<-[:MENTIONS]-\
           (e:GuidelineRecommendation) WHERE e.needsReview = false RETURN e.register, e.number, e.grade, e.strength, \
           e.printedPage, e.pdfUrl
+          - German and other answers to a question, with the reason another is shown: MATCH (q:ClinicalQuestion)\
+          <-[:ANSWERS]-(e:GuidelineRecommendation)<-[:HAS_RECOMMENDATION]-(g:Study) WHERE e.needsReview = false \
+          AND (g.country = 'DE' OR size(q.reasons) > 0) RETURN q.title, q.reasons, g.country, g.register, e.number, \
+          e.grade, e.direction, e.pdfUrl ORDER BY q.id, g.country
           """),
       Guide(
         uri: "klarbefund://guide/graph", name: "graph", title: "The health graph and the 3D view",
@@ -615,6 +619,9 @@ enum MCPCatalog {
           - Guideline recommendations: (:Study {kind: 'guideline'})-[:HAS_RECOMMENDATION]->(:GuidelineRecommendation)\
           -[:MENTIONS]->(:LoincCode): the graded boxes (⇑⇑ soll … ⇓⇓ soll nicht) whose wording names a lab value, \
           with chapter, page and a link to the guideline at that page. No wording is stored; read it in the guideline.
+          - Clinical questions: (:GuidelineRecommendation)-[:ANSWERS]->(:ClinicalQuestion). The German guideline \
+          answers first; a Norwegian recommendation (Helsedirektoratet) stands next to it only when the question \
+          has a reason (q.reasons: disputed, dissent, or a newer study through the quality gate).
           - Research copy: (:OMOPPerson), (:OMOPMeasurement).
 
           A HealthRisk is a condition the knowledge layer tracks for everyone, not a diagnosis: nothing \

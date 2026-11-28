@@ -107,4 +107,50 @@ struct GuidelineRecommendationTests {
     #expect(lines.filter { !$0.isEmpty } == ["Recommends doing it", "Chapter 3.2, page 22", "Evidence-based", "neu 2023",
                       "Nationale VersorgungsLeitlinie Hypertonie, version 1.0"])
   }
+
+  /// Port of tests/test_norway.py: a Norwegian recommendation and a German box meet at a clinical question.
+  @Test func norwegianAndGermanAnswersMeetAtTheQuestion() throws {
+    let store = try Self.store()
+    let norway: JSONObject = [
+      "schemaVersion": GuidelineRules.schemaVersion, "generatedAt": "2026-11-28T12:00:00+00:00",
+      "guidelines": [["id": "hdir-hjerte-kar", "version": "2024-12-05", "extracted": true]],
+      "recommendations": [[
+        "id": "hdir-hjerte-kar:0006-0002-a2", "guidelineId": "hdir-hjerte-kar", "number": "0006-0002-a2",
+        "type": "recommendation", "grade": "sterk", "strength": "strong", "direction": "do not",
+        "wordingSha256": String(repeating: "0", count: 64), "loinc": [["code": "10835-7", "term": "Lp(a)"]],
+        "questions": ["q-lpa-measurement"], "codes": [["system": "SNOMED-CT", "code": "414916001"]],
+      ]],
+    ]
+    let german = Self.artefact([
+      "id": "053-024:7-2", "guidelineId": "053-024", "number": "7-2", "grade": "B", "direction": "do not",
+      "loinc": [Any](), "questions": ["q-lpa-measurement"],
+    ])
+    var g = german
+    g["guidelines"] = [["id": "053-024", "version": "2.3", "extracted": true]]
+    let n = try store.storeGuidelineRecommendations(norway)
+    _ = try store.storeGuidelineRecommendations(g)
+    #expect(n["recommendations"] as? Int == 1 && n["answers"] as? Int == 1 && n["unmatched"] as? Int == 0)
+    let rows = try store.rows(cypher: """
+      MATCH (q:ClinicalQuestion {id: 'q-lpa-measurement'})<-[:ANSWERS]-(e:GuidelineRecommendation)
+            <-[:HAS_RECOMMENDATION]-(s:Study)
+      RETURN s.country AS country, s.licenceClass AS licence, e.direction AS dir
+      ORDER BY country
+      """)
+    #expect(rows == [["country": "DE", "licence": "permission", "dir": "do not"],
+                     ["country": "NO", "licence": "open", "dir": "do not"]])
+    let reasons = try store.rows(cypher: """
+      MATCH (q:ClinicalQuestion) RETURN q.id AS id, size(q.reasons) AS n ORDER BY id
+      """)
+    #expect(reasons.contains(["id": "q-statin-over-75", "n": "0"]))
+    #expect(GuidelineRecommendations.register(of: "hdir-hjerte-kar") == "HDIR hjerte-kar")
+  }
+
+  @Test func badQuestionsAndCodesAreRefused() throws {
+    #expect(throws: (any Error).self) { try GuidelineRecommendations.validate(Self.artefact(["questions": ["statins"]])) }
+    #expect(throws: (any Error).self) {
+      try GuidelineRecommendations.validate(Self.artefact(["codes": [["system": "LOINC", "code": "1-1"]]]))
+    }
+    let (_, mentions) = try GuidelineRecommendations.validate(Self.artefact(["questions": ["q-ldl-target", "q-ldl-target"]]))
+    #expect(mentions.filter { $0["question"] != nil }.count == 1)
+  }
 }

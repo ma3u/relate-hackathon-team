@@ -47,6 +47,11 @@ let instructions = """
   They hold no wording (copyright): name the guideline, the box number, the grade (⇑⇑ soll, ⇑ sollte, ⇔ kann, \
   ⇓ sollte nicht, ⇓⇓ soll nicht) and the page, give e.pdfUrl so the person reads it there, and never invent its text. \
   Skip e.needsReview = true (a check failed). MENTIONS means the wording names the value, not that it applies to them.
+  - Clinical questions, German first: (:GuidelineRecommendation)-[:ANSWERS]->(:ClinicalQuestion {id, topic, title, \
+  reasons}). The German guideline (Study.country 'DE') is the answer. Show another country's recommendation \
+  (Study.country 'NO', Helsedirektoratet, grade sterk or svak) only when q.reasons is not empty, and say the reason \
+  (disputed, dissent inside the guideline, or a newer study). Name Helsedirektoratet as its source; its thresholds \
+  use NORRISK 2, not SCORE2. Never pick one answer for the person: show both and suggest asking the doctor.
   - OMOP research copies: (:OMOPPerson), (:OMOPMeasurement).
   - Anamnesis, when the person answered one: (:Patient)-[:HAS_RESPONSE]->(:QuestionnaireResponse {authored})-[:HAS_ANSWER]->\
   (:Answer {linkId, question, labels, text, riskFactor})-[:RISK_FACTOR_FOR]->(:HealthRisk); (:Answer)-[:BASED_ON]->(:LoincCode). \

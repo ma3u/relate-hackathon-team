@@ -44,6 +44,7 @@ enum Cypher {
   CREATE CONSTRAINT study_id IF NOT EXISTS FOR (n:Study) REQUIRE n.id IS UNIQUE;
   // Recommendations of a German guideline (health_graph/guidelines.py): facts about each box, no guideline text.
   CREATE CONSTRAINT guideline_recommendation_id IF NOT EXISTS FOR (n:GuidelineRecommendation) REQUIRE n.id IS UNIQUE;
+  CREATE CONSTRAINT clinical_question_id IF NOT EXISTS FOR (n:ClinicalQuestion) REQUIRE n.id IS UNIQUE;
   CREATE CONSTRAINT questionnaire_id IF NOT EXISTS FOR (n:Questionnaire) REQUIRE n.id IS UNIQUE;
   CREATE CONSTRAINT questionnaire_item_id IF NOT EXISTS FOR (n:QuestionnaireItem) REQUIRE n.id IS UNIQUE;
   CREATE CONSTRAINT questionnaire_response_id IF NOT EXISTS FOR (n:QuestionnaireResponse) REQUIRE n.id IS UNIQUE;
@@ -343,6 +344,14 @@ enum Cypher {
   MERGE (a)-[k:DISAGREES_WITH {topic: d.topic}]->(b)
   SET k.summary = d.summary
   RETURN count(k) AS disagreements
+  """#
+
+  static let seedQuestions = #"""
+  UNWIND $questions AS q
+  MERGE (c:ClinicalQuestion {id: q.id})
+  SET c.topic = q.topic, c.title = q.title, c.population = q.population,
+      c.intervention = q.intervention, c.reasons = q.reasons
+  RETURN count(c) AS questions
   """#
 
   static let seedVersion = #"""
@@ -777,7 +786,7 @@ enum Cypher {
       e.printedPage = r.printedPage, e.section = r.section, e.pdfUrl = r.pdfUrl,
       e.wordingSha256 = r.wordingSha256, e.needsReview = r.needsReview,
       e.reviewReasons = r.reviewReasons, e.shortVersion = r.shortVersion,
-      e.consensus = r.consensus, e.dissent = r.dissent,
+      e.consensus = r.consensus, e.dissent = r.dissent, e.codes = r.codes,
       e.guidelineTitle = g.title, e.guidelineVersion = g.version, e.checkedAt = $checkedAt
   MERGE (g)-[:HAS_RECOMMENDATION]->(e)
   RETURN count(e) AS recommendations
@@ -807,6 +816,21 @@ enum Cypher {
   SET x.term = m.term
   RETURN count(x) AS scores
   """#
+
+  static let guidelineUnlinkQuestions = #"""
+  UNWIND $ids AS id
+  MATCH (e:GuidelineRecommendation {id: id})-[x:ANSWERS]->()
+  DELETE x
+  RETURN count(*) AS unlinked
+  """#
+
+  static let guidelineStoreQuestions = #"""
+  UNWIND $mentions AS m
+  MATCH (e:GuidelineRecommendation {id: m.id})
+  MATCH (q:ClinicalQuestion {id: m.question})
+  MERGE (e)-[x:ANSWERS]->(q)
+  RETURN count(x) AS answers
+  """#
 }
 
 /// The rules an assessment follows (assessment.py): its finding kinds, severities and limits.
@@ -823,10 +847,13 @@ public enum AssessmentRules {
 /// The rules a guideline artefact follows (guidelines.py): the fields a record may carry and its limits.
 public enum GuidelineRules {
   public static let schemaVersion = "1.0"
-  public static let recordFields: Set<String> = ["basis", "checks", "consensus", "direction", "dissent", "grade", "gradeLetter", "guidelineId", "id", "loinc", "needsReview", "number", "page", "pdfUrl", "printedPage", "reviewReasons", "scores", "section", "status", "strength", "type", "wordingSha256"]
-  public static let grades: [String] = ["⇑⇑", "⇑", "⇔", "⇓", "⇓⇓", "A", "B", "0", "EK"]
-  public static let idPattern = "^(?:nvl-\\d{3}|\\d{3}-\\d{3}(?:OL)?):\\d{1,2}(?:\\.\\d+)?-\\d{1,3}[a-z]{0,2}$"
+  public static let recordFields: Set<String> = ["basis", "checks", "codes", "consensus", "direction", "dissent", "grade", "gradeLetter", "guidelineId", "id", "loinc", "needsReview", "number", "page", "pdfUrl", "printedPage", "questions", "reviewReasons", "scores", "section", "status", "strength", "type", "wordingSha256"]
+  public static let grades: [String] = ["⇑⇑", "⇑", "⇔", "⇓", "⇓⇓", "A", "B", "0", "EK", "sterk", "svak"]
+  public static let idPattern = "^(?:(?:nvl-\\d{3}|\\d{3}-\\d{3}(?:OL)?):\\d{1,2}(?:\\.\\d+)?-\\d{1,3}[a-z]{0,2}|hdir-[a-z-]{1,30}:[A-Za-z0-9-]{1,60})$"
   public static let loincPattern = "^\\d{1,7}-\\d$"
+  public static let questionPattern = "^q-[a-z0-9-]{1,40}$"
+  public static let codePattern = "^[A-Za-z0-9.-]{1,20}$"
+  public static let codeSystems: [String] = ["SNOMED-CT", "ICD-10", "ICPC-2"]
   public static let maxText = 120
 }
 
