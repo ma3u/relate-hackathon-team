@@ -38,6 +38,7 @@ KNOWLEDGE = [
     ("seedStudyRisks", "SEED_STUDY_RISKS"),
     ("seedStudyAfterCutoff", "SEED_STUDY_AFTER_CUTOFF"),
     ("seedStudyDisagrees", "SEED_STUDY_DISAGREES"),
+    ("seedQuestions", "SEED_QUESTIONS"),
     ("seedVersion", "SEED_VERSION"),
 ]
 
@@ -90,6 +91,8 @@ GUIDELINES = [
     ("guidelineUnlinkMentions", "UNLINK_RECOMMENDATION_MENTIONS"),
     ("guidelineStoreMentions", "STORE_RECOMMENDATION_MENTIONS"),
     ("guidelineStoreScores", "STORE_RECOMMENDATION_SCORES"),
+    ("guidelineUnlinkQuestions", "UNLINK_RECOMMENDATION_QUESTIONS"),
+    ("guidelineStoreQuestions", "STORE_RECOMMENDATION_QUESTIONS"),
 ]
 
 # Swift name -> letter.py constant: what the doctor's letter reads.
@@ -181,6 +184,9 @@ def render() -> str:
         f"  public static let grades: [String] = [{', '.join(swift_string(g) for g in guidelines.ALLOWED_GRADES)}]",
         f"  public static let idPattern = {swift_string(guidelines.ID_RE.pattern)}",
         f"  public static let loincPattern = {swift_string(guidelines.LOINC_RE.pattern)}",
+        f"  public static let questionPattern = {swift_string(guidelines.QUESTION_RE.pattern)}",
+        f"  public static let codePattern = {swift_string(guidelines.CODE_RE.pattern)}",
+        f"  public static let codeSystems: [String] = [{', '.join(swift_string(c) for c in guidelines.CODE_SYSTEMS)}]",
         f"  public static let maxText = {guidelines.MAX_TEXT}",
     ]
     out += [
@@ -218,6 +224,7 @@ def render_knowledge() -> str:
         "links": knowledge.RISK_LINKS,
         "afterCutoff": knowledge.evidence.after_cutoff_rows(),
         "disagrees": knowledge.evidence.disagree_rows(),
+        "questions": knowledge.evidence.question_rows(),
     }
     source = json.loads((ROOT / "health_graph/reference_ranges.json").read_text())["source"]
     blob = json.dumps(data, ensure_ascii=False, sort_keys=True, indent=1)

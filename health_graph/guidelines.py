@@ -62,7 +62,19 @@ RECORD_FIELDS = {
     "id", "guidelineId", "number", "type", "basis", "status", "grade", "strength",
     "direction", "gradeLetter", "page", "printedPage", "section", "pdfUrl",
     "wordingSha256", "loinc", "scores", "consensus", "dissent", "checks", "needsReview",
-    "reviewReasons",
+    "reviewReasons", "questions", "codes",
+}
+
+# ── clinical questions ─────────────────────────────────────────────────────
+# A German box answers a clinical question (evidence.QUESTIONS), so a recommendation from another
+# country can stand next to it. Assigned by hand from the boxes' topic, checked against the PDF.
+QUESTION_OF: dict[str, list[str]] = {
+    **{f"053-024:9.1-2{p}": ["q-statin-primary"] for p in "abc"},
+    "053-024:9.1-3": ["q-ldl-target"],
+    "053-024:7-2": ["q-lpa-measurement"],
+    **{f"053-024:9.1-7{p}": ["q-statin-over-75"] for p in "ab"},
+    "053-024:9.1-4a": ["q-statin-muscle"], "053-024:9.1-4b": ["q-statin-muscle"],
+    "053-024:9.1-5": ["q-statin-muscle"],
 }
 
 # ── grades ──────────────────────────────────────────────────────────────────
@@ -80,7 +92,10 @@ GRADES: dict[str, dict[str, str]] = {
 # The DEGAM prints the letter (A, B, 0) or EK (expert consensus); the letter says how strong,
 # the wording says which way: "soll" and "soll nicht" are both A.
 LETTERS: dict[str, str] = {"A": "soll", "B": "sollte", "0": "kann"}
-ALLOWED_GRADES = [*GRADES, *LETTERS, "EK"]
+# Helsedirektoratet (Norway) grades by GRADE: a strong or a weak recommendation; the direction is
+# its own field, as for the German boxes (norway.py).
+NORWAY_GRADES = {"sterk": "strong", "svak": "weak"}
+ALLOWED_GRADES = [*GRADES, *LETTERS, "EK", *NORWAY_GRADES]
 PUA = "\uf000-\uf8ff"  # a symbol font's private-use glyphs, as pdftotext prints them
 ARROW_FOR = {"soll": "⇑⇑", "sollte": "⇑", "kann": "⇔", "sollte nicht": "⇓", "soll nicht": "⇓⇓"}
 LEGEND_ROW = re.compile(rf"^\s*([{PUA}]{{1,2}})\s{{2,}}(soll nicht|sollte nicht|sollte|soll|kann)\b")
@@ -632,6 +647,7 @@ def extract_guideline(meta: dict, long_pdf: Path, short_pdf: Path | None,
             "dissent": getattr(b, "dissent", False),
             "checks": {"verbatim": verbatim, "gate": not findings, "shortVersion": None},
             "reviewReasons": reasons + findings,
+            "questions": QUESTION_OF.get(f"{gid}:{b.number}", []),
         })
     short = compare_short(records, all_boxes(pdf_pages(short_pdf))) if short_pdf else None
     for r in records:
@@ -780,7 +796,7 @@ SET e.guidelineId = r.guidelineId, e.register = r.register, e.number = r.number,
     e.printedPage = r.printedPage, e.section = r.section, e.pdfUrl = r.pdfUrl,
     e.wordingSha256 = r.wordingSha256, e.needsReview = r.needsReview,
     e.reviewReasons = r.reviewReasons, e.shortVersion = r.shortVersion,
-    e.consensus = r.consensus, e.dissent = r.dissent,
+    e.consensus = r.consensus, e.dissent = r.dissent, e.codes = r.codes,
     e.guidelineTitle = g.title, e.guidelineVersion = g.version, e.checkedAt = $checkedAt
 MERGE (g)-[:HAS_RECOMMENDATION]->(e)
 RETURN count(e) AS recommendations
@@ -811,6 +827,23 @@ SET x.term = m.term
 RETURN count(x) AS scores
 """
 
+UNLINK_RECOMMENDATION_QUESTIONS = """
+UNWIND $ids AS id
+MATCH (e:GuidelineRecommendation {id: id})-[x:ANSWERS]->()
+DELETE x
+RETURN count(*) AS unlinked
+"""
+
+# (:GuidelineRecommendation)-[:ANSWERS]->(:ClinicalQuestion): the knowledge layer seeds the questions
+# (evidence.QUESTIONS); a question id the graph does not know links nothing.
+STORE_RECOMMENDATION_QUESTIONS = """
+UNWIND $mentions AS m
+MATCH (e:GuidelineRecommendation {id: m.id})
+MATCH (q:ClinicalQuestion {id: m.question})
+MERGE (e)-[x:ANSWERS]->(q)
+RETURN count(x) AS answers
+"""
+
 PRUNE_RECOMMENDATIONS = """
 UNWIND $guidelines AS gl
 MATCH (e:GuidelineRecommendation {guidelineId: gl.id})
@@ -825,7 +858,11 @@ WHERE g.register IS NOT NULL
 RETURN g.register AS register, g.version AS version
 """
 
-ID_RE = re.compile(r"^(?:nvl-\d{3}|\d{3}-\d{3}(?:OL)?):\d{1,2}(?:\.\d+)?-\d{1,3}[a-z]{0,2}$")
+ID_RE = re.compile(r"^(?:(?:nvl-\d{3}|\d{3}-\d{3}(?:OL)?):\d{1,2}(?:\.\d+)?-\d{1,3}[a-z]{0,2}"
+                   r"|hdir-[a-z-]{1,30}:[A-Za-z0-9-]{1,60})$")
+QUESTION_RE = re.compile(r"^q-[a-z0-9-]{1,40}$")
+CODE_SYSTEMS = ["SNOMED-CT", "ICD-10", "ICPC-2"]
+CODE_RE = re.compile(r"^[A-Za-z0-9.-]{1,20}$")
 LOINC_RE = re.compile(r"^\d{1,7}-\d$")
 MAX_TEXT = 120
 
@@ -834,13 +871,15 @@ def register_of(guideline_id: str) -> str:
     """The register number as the knowledge layer writes it (evidence.GUIDELINES)."""
     if guideline_id.startswith("nvl-"):
         return "NVL " + guideline_id[4:]
+    if guideline_id.startswith("hdir-"):
+        return "HDIR " + guideline_id[5:]
     return "AWMF " + guideline_id
 
 
 def validate(artefact: dict) -> tuple[list[dict], list[dict]]:
     """Checks an artefact and returns (recommendation rows, mention rows). ValueError names the problem.
 
-    A mention row names a LOINC code (`code`) or a risk score (`score`).
+    A mention row names a LOINC code (`code`), a risk score (`score`) or a clinical question (`question`).
 
     The same rules as `GuidelineRecommendations.validate` in Swift: only the fact fields, short strings,
     known grades, well-formed ids and LOINC codes, so no guideline text reaches the graph.
@@ -852,7 +891,7 @@ def validate(artefact: dict) -> tuple[list[dict], list[dict]]:
     recs = artefact.get("recommendations")
     if not isinstance(recs, list) or len(recs) > 5000:
         raise ValueError("recommendations: a list of at most 5000")
-    rows, mentions, score_mentions = [], [], []
+    rows, mentions, score_mentions, question_mentions = [], [], [], []
     for i, r in enumerate(recs, start=1):
         where = f"recommendation {i}"
         if not isinstance(r, dict):
@@ -903,6 +942,16 @@ def validate(artefact: dict) -> tuple[list[dict], list[dict]]:
         score_mentions.extend({"id": rid, "score": x["id"], "term": x["term"]} for x in scores)
         if not isinstance(r.get("dissent", False), bool):
             raise ValueError(f"{rid}: dissent must be true or false")
+        questions = r.get("questions") or []
+        if not isinstance(questions, list) or len(questions) > 10 or any(
+                not isinstance(q, str) or not QUESTION_RE.match(q) for q in questions):
+            raise ValueError(f"{rid}: questions: at most 10 question ids (q-…)")
+        question_mentions.extend({"id": rid, "question": q} for q in dict.fromkeys(questions))
+        codes = r.get("codes") or []
+        if not isinstance(codes, list) or len(codes) > 40 or any(
+                not isinstance(c, dict) or c.get("system") not in CODE_SYSTEMS
+                or not CODE_RE.match(str(c.get("code", ""))) for c in codes):
+            raise ValueError(f"{rid}: codes entries are {{system, code}} (SNOMED-CT, ICD-10, ICPC-2)")
         checks = r.get("checks") or {}
         short = checks.get("shortVersion") if isinstance(checks, dict) else None
         rows.append({
@@ -914,8 +963,9 @@ def validate(artefact: dict) -> tuple[list[dict], list[dict]]:
             "wordingSha256": sha, "needsReview": bool(r.get("needsReview") or reasons),
             "reviewReasons": reasons, "shortVersion": short if isinstance(short, str) and len(short) <= 40 else None,
             "consensus": r.get("consensus"), "dissent": bool(r.get("dissent", False)),
+            "codes": [f"{c['system']}|{c['code']}" for c in codes],
         })
-    return rows, mentions + score_mentions
+    return rows, mentions + score_mentions + question_mentions
 
 
 def store(conn, artefact: dict, checked_at: str | None = None) -> dict:
@@ -944,6 +994,9 @@ def store(conn, artefact: dict, checked_at: str | None = None) -> dict:
             "mentions": [m for m in mentions if m["id"] in ids and "code" in m]}).single()))
         counts.update(dict(conn.execute(STORE_RECOMMENDATION_SCORES, {
             "mentions": [m for m in mentions if m["id"] in ids and "score" in m]}).single()))
+        conn.execute(UNLINK_RECOMMENDATION_QUESTIONS, {"ids": sorted(ids)})
+        counts.update(dict(conn.execute(STORE_RECOMMENDATION_QUESTIONS, {
+            "mentions": [m for m in mentions if m["id"] in ids and "question" in m]}).single()))
         conn.commit()
         return counts
     except Exception:

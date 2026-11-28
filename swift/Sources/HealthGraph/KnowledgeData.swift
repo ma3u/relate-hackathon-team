@@ -3,7 +3,7 @@
 // swiftlint:disable line_length
 
 enum KnowledgeData {
-  static let fingerprint = "ba978dfbdb44ba81"
+  static let fingerprint = "260f25be68753314"
   static let rangesSource = "services/epa-ingest/src/reference-ranges.ts (MinimumViableHealthDataspacev2)"
   static let json = #"""
   {
@@ -75,6 +75,10 @@ enum KnowledgeData {
     {
      "risk": "cardiovascular",
      "study": "nvl-herzinsuffizienz-4"
+    },
+    {
+     "risk": "cardiovascular",
+     "study": "hdir-hjerte-kar"
     },
     {
      "risk": "cardiovascular",
@@ -1108,6 +1112,31 @@ enum KnowledgeData {
     {
      "code": "22748-8",
      "name": null,
+     "study": "hdir-hjerte-kar"
+    },
+    {
+     "code": "13457-7",
+     "name": null,
+     "study": "hdir-hjerte-kar"
+    },
+    {
+     "code": "18262-6",
+     "name": null,
+     "study": "hdir-hjerte-kar"
+    },
+    {
+     "code": "2089-1",
+     "name": null,
+     "study": "hdir-hjerte-kar"
+    },
+    {
+     "code": "10835-7",
+     "name": null,
+     "study": "hdir-hjerte-kar"
+    },
+    {
+     "code": "22748-8",
+     "name": null,
      "study": "keto-cta-2025"
     },
     {
@@ -1689,6 +1718,60 @@ enum KnowledgeData {
      "loinc": "41950-7",
      "risk": "fitness",
      "source": "Paluch et al., Lancet Public Health 2022 (daily steps and mortality)"
+    }
+   ],
+   "questions": [
+    {
+     "id": "q-statin-primary",
+     "intervention": "statin",
+     "population": "adults without cardiovascular disease",
+     "reasons": [
+      "dissent inside the guideline: DEGAM 053-024 box 9.1-2: DGK, DGIM, DDG, DHL, DGSP and DGPR dissent, a statin from a lower risk"
+     ],
+     "title": "A statin to prevent a first heart attack or stroke, by absolute risk",
+     "topic": "Statins in primary prevention"
+    },
+    {
+     "id": "q-ldl-target",
+     "intervention": "LDL target",
+     "population": "adults on a statin",
+     "reasons": [
+      "disputed: AWMF 053-024 and ESC/EAS 2025 dyslipidaemia update answer differently",
+      "dissent inside the guideline: DEGAM 053-024 box 9.1-3: DGK, DGIM, DDG, DHL, DGSP and DGPR dissent from the fixed dose"
+     ],
+     "title": "A fixed moderate statin dose, or treatment to an LDL target",
+     "topic": "LDL cholesterol"
+    },
+    {
+     "id": "q-lpa-measurement",
+     "intervention": "Lp(a) measurement",
+     "population": "adults without cardiovascular disease",
+     "reasons": [
+      "disputed: AWMF 053-024 and ESC/EAS 2025 dyslipidaemia update answer differently",
+      "dissent inside the guideline: DEGAM 053-024 box 7-2: DGK, DGIM, DDG, DHL, DGSP and DGPR dissent, one Lp(a) measurement in adulthood",
+      "newer study through the gate (provisional): Lp(a)HORIZON, Cho et al., N Engl J Med 2026"
+     ],
+     "title": "Measuring lipoprotein(a) once to estimate cardiovascular risk",
+     "topic": "Lipoprotein(a)"
+    },
+    {
+     "id": "q-statin-over-75",
+     "intervention": "statin",
+     "population": "adults older than 75",
+     "reasons": [],
+     "title": "Starting, continuing or stopping a statin after the age of 75",
+     "topic": "Statins after 75"
+    },
+    {
+     "id": "q-statin-muscle",
+     "intervention": "statin change or stop",
+     "population": "adults on a statin with muscle symptoms",
+     "reasons": [
+      "dissent inside the guideline: DEGAM 053-024 box 9.1-5: DGK, DGIM, DDG, DHL, DGSP and DGPR dissent",
+      "newer study through the gate (provisional): CTT Collaboration, Lancet 2026;407:689"
+     ],
+     "title": "Muscle symptoms on a statin: what to try, and when to change",
+     "topic": "Statin side effects"
     }
    ],
    "rangeIds": [
@@ -6727,6 +6810,7 @@ enum KnowledgeData {
     {
      "adoptedDate": "2025-08-01",
      "citation": "DEGAM S3-Leitlinie 053-024, Version 2.3 (2025)",
+     "country": "DE",
      "currency": [
       "Lipoprotein(a): advises against routine measurement on one 2012 meta-analysis (ERFC, c-statistic +0.0016, retrieved September 2023); its search update found nothing newer. Six societies (DGK, DGIM, DDG, DHL, DGSP, DGPR) dissent and favour one measurement in adulthood.",
       "Not cited although published before adoption: EPIC-Norfolk 2025 (Lp(a), LDL and hsCRP once, 20 years).",
@@ -6738,13 +6822,18 @@ enum KnowledgeData {
      "evidenceMedianAge": 7,
      "guidelineClass": "S3",
      "id": "degam-053-024",
+     "interface": "pdf",
      "kind": "guideline",
+     "language": "de",
+     "licence": "Publisher's imprint: storing the text needs written consent",
+     "licenceClass": "permission",
      "newestCitedYear": 2024,
      "pmid": null,
      "publisher": "DEGAM",
      "pubmedUrl": null,
      "referencesCount": 255,
      "register": "AWMF 053-024",
+     "riskModel": "SCORE2",
      "title": "Hausärztliche Risikoberatung zur kardiovaskulären Prävention",
      "topics": [
       "Heart and vessels"
@@ -6758,19 +6847,25 @@ enum KnowledgeData {
     {
      "adoptedDate": "2024-11-01",
      "citation": "DEGAM S3-Leitlinie 053-048, Version 2.0 (2024)",
+     "country": "DE",
      "currency": [],
      "design": "clinical practice guideline (S3, DEGAM)",
      "earliestValidUntil": "2029-06-30",
      "evidenceMedianAge": 7,
      "guidelineClass": "S3",
      "id": "degam-053-048",
+     "interface": "pdf",
      "kind": "guideline",
+     "language": "de",
+     "licence": "Publisher's imprint: storing the text needs written consent",
+     "licenceClass": "permission",
      "newestCitedYear": 2024,
      "pmid": null,
      "publisher": "DEGAM",
      "pubmedUrl": null,
      "referencesCount": 250,
      "register": "AWMF 053-048",
+     "riskModel": null,
      "title": "Versorgung von Patient*innen mit chronischer, nicht-nierenersatztherapiepflichtiger Nierenkrankheit in der Hausarztpraxis",
      "topics": [
       "Kidney"
@@ -6784,6 +6879,7 @@ enum KnowledgeData {
     {
      "adoptedDate": "2023-06-29",
      "citation": "Nationale VersorgungsLeitlinie Hypertonie, Version 1.0 (2023)",
+     "country": "DE",
      "currency": [
       "Cites the Hygia Chronotherapy Trial, which carries an expression of concern (no recommendation is derived from it)."
      ],
@@ -6792,7 +6888,11 @@ enum KnowledgeData {
      "evidenceMedianAge": 6,
      "guidelineClass": "S3",
      "id": "nvl-hypertonie-1",
+     "interface": "pdf",
      "kind": "guideline",
+     "language": "de",
+     "licence": "Publisher's imprint: storing the text needs written consent",
+     "licenceClass": "permission",
      "newestCitedYear": 2023,
      "page": "https://www.leitlinien.de/themen/hypertonie",
      "pmid": null,
@@ -6800,6 +6900,7 @@ enum KnowledgeData {
      "pubmedUrl": null,
      "referencesCount": 182,
      "register": "NVL 009",
+     "riskModel": null,
      "title": "Nationale VersorgungsLeitlinie Hypertonie",
      "topics": [
       "Heart and vessels",
@@ -6814,6 +6915,7 @@ enum KnowledgeData {
     {
      "adoptedDate": "2023-05-15",
      "citation": "Nationale VersorgungsLeitlinie Typ-2-Diabetes, Version 3.0 (2023)",
+     "country": "DE",
      "currency": [
       "FLOW (semaglutide in diabetes with kidney disease, NEJM 2024) came a year after adoption."
      ],
@@ -6822,7 +6924,11 @@ enum KnowledgeData {
      "evidenceMedianAge": 5,
      "guidelineClass": "S3",
      "id": "nvl-diabetes-3",
+     "interface": "pdf",
      "kind": "guideline",
+     "language": "de",
+     "licence": "Publisher's imprint: storing the text needs written consent",
+     "licenceClass": "permission",
      "newestCitedYear": 2023,
      "page": "https://www.leitlinien.de/themen/diabetes",
      "pmid": null,
@@ -6830,6 +6936,7 @@ enum KnowledgeData {
      "pubmedUrl": null,
      "referencesCount": 228,
      "register": "NVL 001",
+     "riskModel": null,
      "title": "Nationale VersorgungsLeitlinie Typ-2-Diabetes",
      "topics": [
       "Metabolism"
@@ -6843,6 +6950,7 @@ enum KnowledgeData {
     {
      "adoptedDate": "2024-08-15",
      "citation": "Nationale VersorgungsLeitlinie Chronische KHK, Version 7.0 (2024)",
+     "country": "DE",
      "currency": [
       "For people with coronary heart disease, not for primary prevention."
      ],
@@ -6851,7 +6959,11 @@ enum KnowledgeData {
      "evidenceMedianAge": 11,
      "guidelineClass": "S3",
      "id": "nvl-khk-7",
+     "interface": "pdf",
      "kind": "guideline",
+     "language": "de",
+     "licence": "Publisher's imprint: storing the text needs written consent",
+     "licenceClass": "permission",
      "newestCitedYear": 2024,
      "page": "https://www.leitlinien.de/themen/khk",
      "pmid": null,
@@ -6859,6 +6971,7 @@ enum KnowledgeData {
      "pubmedUrl": null,
      "referencesCount": 389,
      "register": "NVL 004",
+     "riskModel": null,
      "title": "Nationale VersorgungsLeitlinie Chronische KHK",
      "topics": [
       "Heart and vessels"
@@ -6872,6 +6985,7 @@ enum KnowledgeData {
     {
      "adoptedDate": "2023-12-12",
      "citation": "Nationale VersorgungsLeitlinie Chronische Herzinsuffizienz, Version 4.0 (2023)",
+     "country": "DE",
      "currency": [
       "Only the chapter on drug therapy was renewed in 2023; all other chapters are from 2019 and expired on 2024-10-22."
      ],
@@ -6880,7 +6994,11 @@ enum KnowledgeData {
      "evidenceMedianAge": 9,
      "guidelineClass": "S3",
      "id": "nvl-herzinsuffizienz-4",
+     "interface": "pdf",
      "kind": "guideline",
+     "language": "de",
+     "licence": "Publisher's imprint: storing the text needs written consent",
+     "licenceClass": "permission",
      "newestCitedYear": 2023,
      "page": "https://www.leitlinien.de/themen/herzinsuffizienz",
      "pmid": null,
@@ -6888,6 +7006,7 @@ enum KnowledgeData {
      "pubmedUrl": null,
      "referencesCount": 628,
      "register": "NVL 006",
+     "riskModel": null,
      "title": "Nationale VersorgungsLeitlinie Chronische Herzinsuffizienz",
      "topics": [
       "Heart and vessels"
@@ -6897,6 +7016,41 @@ enum KnowledgeData {
      "validity": "partly-expired",
      "version": "4.0",
      "year": 2023
+    },
+    {
+     "adoptedDate": null,
+     "citation": "Helsedirektoratet, Nasjonal faglig retningslinje for forebygging av hjerte- og karsykdom (2017, last professional change 2024-12-05)",
+     "country": "NO",
+     "currency": [
+      "Statins in primary prevention last changed on 2024-12-05; risk assessment, targets and secondary prevention are unchanged since 2018-03-05.",
+      "Estimates risk with NORRISK 2, calibrated for Norway, not with SCORE2: its treatment thresholds do not apply to a SCORE2 result."
+     ],
+     "design": "national clinical guideline (Helsedirektoratet, GRADE)",
+     "earliestValidUntil": null,
+     "evidenceMedianAge": null,
+     "guidelineClass": "national clinical guideline",
+     "id": "hdir-hjerte-kar",
+     "interface": "api",
+     "kind": "guideline",
+     "language": "nb",
+     "licence": "NLOD 2.0 and the HAPI terms of use",
+     "licenceClass": "open",
+     "newestCitedYear": null,
+     "pmid": null,
+     "publisher": "Helsedirektoratet (Norway)",
+     "pubmedUrl": null,
+     "referencesCount": null,
+     "register": "HDIR hjerte-kar",
+     "riskModel": "NORRISK 2",
+     "title": "Nasjonal faglig retningslinje for forebygging av hjerte- og karsykdom",
+     "topics": [
+      "Heart and vessels"
+     ],
+     "url": "https://www.helsedirektoratet.no/retningslinjer/forebygging-av-hjerte-og-karsykdom",
+     "validUntil": null,
+     "validity": "active",
+     "version": "2024-12-05",
+     "year": 2017
     },
     {
      "appraisalChecked": [

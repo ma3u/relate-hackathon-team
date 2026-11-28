@@ -454,11 +454,12 @@ struct KnowledgeTests {
     #expect(try store.count("ReferenceRange") == 173)
     let markers = try store.rows(cypher: "MATCH (:LoincCode)-[k:MARKER_OF]->(:HealthRisk) RETURN count(k) AS n")
     #expect(markers.first?["n"] == "55")
-    #expect(try store.count("Study") == 67)  // 22 risk links and newer views, 27 ranges, 18 guidelines and appraisals
+    #expect(try store.count("Study") == 68)  // 22 risk links and newer views, 27 ranges, 19 guidelines and appraisals
     let links = try store.rows(cypher: "MATCH (:HealthRisk)-[k:RAISES_RISK_OF]->(:HealthRisk) RETURN count(k) AS n")
     #expect(links.first?["n"] == "10")
     let examines = try store.rows(cypher: "MATCH (:Study)-[k:EXAMINES]->(:LoincCode) RETURN count(k) AS n")
-    #expect(examines.first?["n"] == "190")
+    #expect(examines.first?["n"] == "195")
+    #expect(try store.count("ClinicalQuestion") == 5)
     let dissent = try store.rows(cypher: "MATCH (:Study {id: 'degam-053-024'})-[k:DISAGREES_WITH]->(:Study) RETURN count(k) AS n")
     #expect(dissent.first?["n"] == "2")
     let later = try store.rows(cypher: "MATCH (:Study)-[k:AFTER_CUTOFF_OF]->(:Study {id: 'degam-053-024'}) RETURN count(k) AS n")

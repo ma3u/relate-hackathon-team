@@ -114,7 +114,36 @@ GUIDELINES = [
      "currency": ["Only the chapter on drug therapy was renewed in 2023; all other chapters are from 2019 and "
                   "expired on 2024-10-22."],
      "examines": ["33762-6"], "informs": [], "topics": ["Heart and vessels"]},
+    # Another country's guideline, consulted only for a stated reason (QUESTIONS below). Read through
+    # Helsedirektoratet's open API (norway.py); NLOD allows storing its text, but the reader keeps the
+    # same facts as for the German boxes until a person has checked the API's fields.
+    {"id": "hdir-hjerte-kar", "year": 2017, "design": "national clinical guideline (Helsedirektoratet, GRADE)",
+     "citation": "Helsedirektoratet, Nasjonal faglig retningslinje for forebygging av hjerte- og karsykdom "
+                 "(2017, last professional change 2024-12-05)",
+     "title": "Nasjonal faglig retningslinje for forebygging av hjerte- og karsykdom",
+     "url": "https://www.helsedirektoratet.no/retningslinjer/forebygging-av-hjerte-og-karsykdom", "pmid": None,
+     "publisher": "Helsedirektoratet (Norway)", "register": "HDIR hjerte-kar",
+     "guidelineClass": "national clinical guideline", "version": "2024-12-05",
+     "adoptedDate": None, "validUntil": None, "earliestValidUntil": None, "validity": "active",
+     "referencesCount": None, "evidenceMedianAge": None, "newestCitedYear": None,
+     "currency": ["Statins in primary prevention last changed on 2024-12-05; risk assessment, targets and "
+                  "secondary prevention are unchanged since 2018-03-05.",
+                  "Estimates risk with NORRISK 2, calibrated for Norway, not with SCORE2: its treatment "
+                  "thresholds do not apply to a SCORE2 result."],
+     "country": "NO", "language": "nb", "interface": "api", "riskModel": "NORRISK 2",
+     "licence": "NLOD 2.0 and the HAPI terms of use", "licenceClass": "open",
+     "examines": LDL + LPA, "informs": [], "topics": ["Heart and vessels"]},
 ]
+
+# Where a guideline comes from and what its licence lets the graph keep (issue #23). licenceClass:
+# open (the text may be stored), quote-with-attribution, non-commercial, permission (facts and link only).
+for _g in GUIDELINES:
+    _g.setdefault("country", "DE")
+    _g.setdefault("language", "de")
+    _g.setdefault("interface", "pdf")
+    _g.setdefault("riskModel", "SCORE2" if _g["id"] == "degam-053-024" else None)
+    _g.setdefault("licence", "Publisher's imprint: storing the text needs written consent")
+    _g.setdefault("licenceClass", "permission")
 
 # ── appraised studies: example 1, LDL and ApoB without a statin ─────────────
 # Appraised in full on 2026-11-19 (DRAFT, tests 1 to 3); status rechecked in PubMed on CHECKED.
@@ -361,6 +390,65 @@ DISAGREES = [  # (guideline, guideline, topic, summary)
      "DEGAM: do not measure Lp(a) routinely (six societies dissent inside the guideline). ESC/EAS: measure "
      "Lp(a) at least once in every adult."),
 ]
+
+
+# ── clinical questions: where a German answer meets another country's ──────
+# German first. Another country's recommendation on a question is shown only when the question has
+# a reason (question_rows): the German answer is disputed by another guideline (DISAGREES), dissented
+# inside the German guideline, or met by a newer study that passed the gate (AFTER_CUTOFF). A question
+# without a reason shows the German answer alone, however many other countries answer it.
+QUESTIONS = [
+    {"id": "q-statin-primary", "topic": "Statins in primary prevention",
+     "title": "A statin to prevent a first heart attack or stroke, by absolute risk",
+     "population": "adults without cardiovascular disease", "intervention": "statin",
+     "matches": [], "dissent": ["DEGAM 053-024 box 9.1-2: DGK, DGIM, DDG, DHL, DGSP and DGPR dissent, a statin from a lower risk"]},
+    {"id": "q-ldl-target", "topic": "LDL cholesterol",
+     "title": "A fixed moderate statin dose, or treatment to an LDL target",
+     "population": "adults on a statin", "intervention": "LDL target",
+     "matches": ["LDL cholesterol"], "dissent": ["DEGAM 053-024 box 9.1-3: DGK, DGIM, DDG, DHL, DGSP and DGPR dissent from the fixed dose"]},
+    {"id": "q-lpa-measurement", "topic": "Lipoprotein(a)",
+     "title": "Measuring lipoprotein(a) once to estimate cardiovascular risk",
+     "population": "adults without cardiovascular disease", "intervention": "Lp(a) measurement",
+     "matches": ["Lipoprotein(a)"], "dissent": ["DEGAM 053-024 box 7-2: DGK, DGIM, DDG, DHL, DGSP and DGPR dissent, one Lp(a) measurement "
+                                                "in adulthood"]},
+    {"id": "q-statin-over-75", "topic": "Statins after 75",
+     "title": "Starting, continuing or stopping a statin after the age of 75",
+     "population": "adults older than 75", "intervention": "statin",
+     "matches": [], "dissent": []},
+    {"id": "q-statin-muscle", "topic": "Statin side effects",
+     "title": "Muscle symptoms on a statin: what to try, and when to change",
+     "population": "adults on a statin with muscle symptoms", "intervention": "statin change or stop",
+     "matches": ["Statin side effects"], "dissent": ["DEGAM 053-024 box 9.1-5: DGK, DGIM, DDG, DHL, DGSP and DGPR dissent"]},
+]
+
+
+# Guidelines of the knowledge layer (knowledge.STUDIES) that a reason names.
+SHORT_NAMES = {"esc-eas-2025-lipids": "ESC/EAS 2025 dyslipidaemia update"}
+
+
+def question_rows() -> list[dict]:
+    """The questions with the reasons another country's answer may be shown; none means German only."""
+    names = {st["id"]: st["citation"] for st in STUDIES + LPA_STUDIES + STATIN_STUDIES}
+    names.update({g["id"]: g["register"] for g in GUIDELINES} | SHORT_NAMES)
+    rows = []
+    for q in QUESTIONS:
+        reasons = [f"disputed: {names.get(a, a)} and {names.get(b, b)} answer differently"
+                   for a, b, topic, _ in DISAGREES if topic in q["matches"]]
+        reasons += [f"dissent inside the guideline: {d}" for d in q["dissent"]]
+        reasons += [f"newer study through the gate{' (provisional)' if c['provisional'] else ''}: "
+                    f"{names.get(c['from'], c['from'])}"
+                    for c in after_cutoff_rows() if c["topic"] in q["matches"]]
+        rows.append({k: v for k, v in q.items() if k not in ("matches", "dissent")} | {"reasons": reasons})
+    return rows
+
+
+SEED_QUESTIONS = """
+UNWIND $questions AS q
+MERGE (c:ClinicalQuestion {id: q.id})
+SET c.topic = q.topic, c.title = q.title, c.population = q.population,
+    c.intervention = q.intervention, c.reasons = q.reasons
+RETURN count(c) AS questions
+"""
 
 
 # ── the gate a newer study must pass before it is set against a guideline ──
